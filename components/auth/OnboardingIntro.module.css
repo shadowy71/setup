@@ -7,6 +7,9 @@
 }
 
 .intro {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--cp-border-subtle);
   color: var(--cp-text-primary);
   font-size: 1rem;
   line-height: 1.6;
@@ -71,8 +74,8 @@
   transform: rotate(-4deg);
 }
 
-.note h2,
-.guide h2 {
+.note h3,
+.guide h3 {
   font-size: 1rem;
   line-height: 1.4;
 }
@@ -124,10 +127,10 @@
 }
 
 .profile {
-  margin-top: 1.5rem;
+  margin-top: 0;
 }
 
-.profile h2 {
+.profile h1 {
   font-size: 1.25rem;
 }
 

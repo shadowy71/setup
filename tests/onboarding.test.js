@@ -32,11 +32,14 @@ beforeEach(() => {
 });
 
 describe('first-profile onboarding lifecycle', () => {
-  it('renders one introduction before the existing profile form', async () => {
+  it('renders the existing profile form before the introduction and guide', async () => {
     const html = htmlOf(await OnboardingPage());
     expect(html.match(/<h1\b/g)).toHaveLength(1);
     expect(html).toContain('Campus life, a little less');
-    expect(html.indexOf('Where do I go first?')).toBeLessThan(html.indexOf('<form'));
+    expect(html.indexOf('</form>')).toBeLessThan(html.indexOf('id="onboarding-heading"'));
+    expect(html.indexOf('</form>')).toBeLessThan(html.indexOf('Where do I go first?'));
+    expect(html).toContain('<h1 id="profile-heading"');
+    expect(html).toContain('<h2 id="onboarding-heading"');
     expect(html).toContain('aria-labelledby="profile-heading"');
   });
 
@@ -86,7 +89,7 @@ describe('profile form presentation stays intact', () => {
     }
     expect(html).toContain('Prefer not to say');
     expect(html).toMatch(/<button[^>]*disabled=""/);
-    // Autofocus would skip the introduction and open a phone keyboard on load.
+    // Keep the phone keyboard closed until the student chooses an input.
     expect(html).not.toContain('autofocus');
   });
 

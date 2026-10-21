@@ -25,9 +25,8 @@ export default async function OnboardingPage() {
   return (
     <main className={styles.page}>
       <PublicShell width="lg">
-        <OnboardingIntro />
         <section className={styles.profile} aria-labelledby="profile-heading">
-          <h2 id="profile-heading">Make yourself at home</h2>
+          <h1 id="profile-heading">Make yourself at home</h1>
           <p className={styles.profileCopy}>
             Start with your profile. Your public username is how students find and mention you.
             Your email stays private from other students.
@@ -47,6 +46,7 @@ export default async function OnboardingPage() {
             You can change it later from Settings, subject to the platform cooldown.
           </li>
         </ul>
+        <OnboardingIntro />
       </PublicShell>
     </main>
   );
