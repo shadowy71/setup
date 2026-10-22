@@ -307,6 +307,12 @@
     max-width: 30rem;
     border-radius: var(--radius-xl);
     background-color: var(--cp-bg-glass-strong);
+    /* The floating tier's specular stack, so dialogs, sheets and the command
+       palette are lit by the same room as the header and the menus. */
+    background-image:
+      linear-gradient(180deg, var(--cp-edge-light) 0, transparent 1px),
+      linear-gradient(180deg, color-mix(in oklab, var(--cp-edge-light) 45%, transparent) 0, transparent 3rem),
+      linear-gradient(155deg, var(--cp-glass-tint), transparent 62%);
     color: var(--cp-text-primary);
     -webkit-backdrop-filter: blur(26px) saturate(160%);
     backdrop-filter: blur(26px) saturate(160%);
@@ -372,34 +378,95 @@
     margin-top: 1.125rem;
   }
 
-  /* Dropdown menus (Create, account, row actions) sit on a SOLID surface,
-     never glass. A menu is a reading surface, and a translucent token plus a
-     backdrop-filter is a needless failure mode for one: inside the glass
-     sidebar, over the animated night sky, stacked backdrop-filters washed the
-     Create menu out until its item text was effectively invisible. The opaque
-     elevated token keeps the same visual family with a contrast guarantee
-     that does not depend on what paints behind the panel. */
+  /* Dropdown menus (Create, account, row actions) are tier-2 floating glass —
+     with a backing that can be depended on. Three things used to make the
+     sidebar Create menu unreadable, and none of them was the old rule's
+     background colour (the elevated token was already opaque):
+
+       1. Stacking: the menu lived inside the sidebar, where every direct
+          child is a `z-index: 1` stacking context, so the nav rows after it
+          in the DOM painted *over* it no matter what z-index it carried.
+       2. Clipping: the panel's `overflow: hidden auto` made the menu a
+          scrollport prisoner — clipped by the panel's rounded corners and
+          scrolled with its content.
+       3. Separation: flat colour one shade from the rail behind it.
+
+     The Dropdown component now portals to `document.body` (see overlays.js),
+     which is what actually fixes 1 and 2 — and, out of the sidebar's nested
+     backdrop-filter, a real frosted material becomes safe again. This rule
+     answers 3 and keeps the contrast guarantee independent of whatever
+     paints behind the menu: the base composites to ~93% opaque deep teal
+     (72% of the 0.90-alpha strong glass token over the opaque elevated
+     token), the blur frosts what little shows through, and where
+     backdrop-filter does not exist the panel falls back to the fully
+     opaque token. The specular layers match `.glass-floating`: a lit top
+     hairline, a soft band beneath it, and the room's teal cast. */
   .cp-menu {
-    background-color: var(--cp-bg-elevated);
+    background-color: color-mix(in oklab, var(--cp-bg-glass-strong) 72%, var(--cp-bg-elevated));
+    background-image:
+      linear-gradient(180deg, var(--cp-edge-light) 0, transparent 1px),
+      linear-gradient(180deg, color-mix(in oklab, var(--cp-edge-light) 45%, transparent) 0, transparent 2.5rem),
+      linear-gradient(155deg, var(--cp-glass-tint), transparent 62%);
     color: var(--cp-text-primary);
-    border: 1px solid var(--c-line-strong);
-    box-shadow: var(--shadow-float), var(--shadow-inset-top);
+    border: 1px solid color-mix(in oklab, var(--cp-glass-border) 92%, transparent);
+    -webkit-backdrop-filter: blur(26px) saturate(175%);
+    backdrop-filter: blur(26px) saturate(175%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      var(--shadow-float),
+      0 0 34px -24px var(--cp-glow-accent);
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    animation: campus-pop 0.16s var(--ease-out-soft);
+  }
+
+  /* No backdrop-filter, no translucency: the same panel, fully opaque. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .cp-menu {
+      background-color: var(--cp-bg-elevated);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cp-menu {
+      animation: none;
+    }
   }
 
   .cp-menu-item {
     color: var(--cp-text-primary);
     background-color: transparent;
-    transition: background-color 0.16s ease;
+    min-height: 2.375rem;
+    transition:
+      background-color 0.16s ease,
+      color 0.16s ease;
   }
 
   .cp-menu-item__icon {
     color: var(--cp-icon-muted);
+    transition: color 0.16s ease;
   }
 
   .cp-menu-item:hover:not(:disabled),
   .cp-menu-item:focus-visible {
-    background-color: var(--cp-hover-bg);
+    background-color: color-mix(in oklab, var(--cp-bg-accent) 13%, var(--cp-hover-bg));
     color: var(--cp-hover-text);
+  }
+
+  .cp-menu-item:hover:not(:disabled) .cp-menu-item__icon,
+  .cp-menu-item:focus-visible .cp-menu-item__icon {
+    color: var(--cp-accent-cyan);
+  }
+
+  /* Keyboard focus is a ring, not just the hover wash, so the active row is
+     distinguishable without relying on colour alone. */
+  .cp-menu-item:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--cp-focus);
+  }
+
+  .cp-menu-item:active:not(:disabled) {
+    background-color: color-mix(in oklab, var(--cp-bg-accent) 22%, var(--cp-hover-bg));
   }
 
   .cp-menu-item:disabled {
@@ -421,6 +488,7 @@
     border-radius: 999px;
     border: 1px solid var(--cp-toast-border);
     background-color: var(--cp-toast-bg);
+    background-image: linear-gradient(180deg, color-mix(in oklab, var(--cp-edge-light) 70%, transparent) 0, transparent 1px);
     color: var(--cp-toast-text);
     padding: 0.5rem 0.9375rem;
     font-size: 0.8125rem;

@@ -502,6 +502,209 @@
 }
 
 /* --------------------------------------------------------------------------
+   THE TWO DOORS — Clubs and Gigs feature tiles (HomeFeatureTiles).
+
+   Tier-3 featured glass (the composer's material, from surfaces.css) with
+   each destination's own light: Clubs is lit teal from the leading corner,
+   Gigs carries the restrained sand counter-glow from the trailing one. The
+   whole card is the link; the glow layer is decoration and never takes a
+   pointer event. Text sits on the backed part of the sheet, never inside a
+   fading reflection, and the two tiles keep equal weight side by side,
+   then stack with full-size touch targets on phones.
+   -------------------------------------------------------------------------- */
+
+.home-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-block: clamp(0.5rem, 1.5vh, 1rem) clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.home-features__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .home-features__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+  }
+}
+
+.feature-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.125rem;
+  min-height: 10.5rem;
+  padding: clamp(1.125rem, 2.4vw, 1.5rem);
+  color: var(--cp-text-primary);
+  text-decoration: none;
+}
+
+/* The tile's own light. Under the content, inert to pointers. */
+.feature-tile > .feature-tile__glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.feature-tile--clubs > .feature-tile__glow {
+  background-image: radial-gradient(
+    72% 95% at 0% 0%,
+    color-mix(in oklab, var(--cp-bg-accent) 17%, transparent),
+    transparent 66%
+  );
+}
+
+.feature-tile--gigs {
+  border-color: color-mix(in oklab, var(--brand-sand) 30%, var(--cp-glass-border));
+}
+
+.feature-tile--gigs > .feature-tile__glow {
+  background-image:
+    radial-gradient(72% 95% at 100% 0%, color-mix(in oklab, var(--brand-sand) 11%, transparent), transparent 66%),
+    radial-gradient(55% 65% at 108% 112%, var(--cp-glass-warmth), transparent 72%);
+}
+
+.feature-tile__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  border: 1px solid;
+  box-shadow: var(--shadow-inset-top);
+}
+
+.feature-tile--clubs .feature-tile__icon {
+  color: var(--cp-accent-cyan);
+  border-color: color-mix(in oklab, var(--cp-bg-accent) 48%, var(--cp-glass-border));
+  background-image: linear-gradient(160deg, color-mix(in oklab, var(--cp-bg-accent) 20%, transparent), transparent 68%);
+  box-shadow:
+    var(--shadow-inset-top),
+    0 0 24px -10px var(--cp-glow-accent);
+}
+
+.feature-tile--gigs .feature-tile__icon {
+  color: var(--brand-sand);
+  border-color: color-mix(in oklab, var(--brand-sand) 42%, var(--cp-glass-border));
+  background-image: linear-gradient(160deg, color-mix(in oklab, var(--brand-sand) 14%, transparent), transparent 68%);
+  box-shadow:
+    var(--shadow-inset-top),
+    0 0 24px -10px var(--cp-glow-warm);
+}
+
+.feature-tile__body {
+  display: block;
+  min-width: 0;
+}
+
+.feature-tile__eyebrow {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.feature-tile--clubs .feature-tile__eyebrow {
+  color: var(--cp-accent-cyan);
+}
+
+.feature-tile--gigs .feature-tile__eyebrow {
+  color: var(--brand-sand);
+}
+
+.feature-tile__title {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: clamp(1.25rem, 1.6vw + 0.6rem, 1.5rem);
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.feature-tile__copy {
+  display: block;
+  margin-top: 0.45rem;
+  max-width: 40ch;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--cp-text-secondary);
+}
+
+.feature-tile__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--cp-text-primary);
+}
+
+.feature-tile__arrow {
+  transition: transform 0.2s var(--ease-out-soft);
+}
+
+.feature-tile--clubs .feature-tile__arrow {
+  color: var(--cp-accent-cyan);
+}
+
+.feature-tile--gigs .feature-tile__arrow {
+  color: var(--brand-sand);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .feature-tile:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--cp-bg-accent) 54%, var(--cp-glass-border));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.26),
+      0 34px 74px -42px var(--cp-scrim),
+      0 0 52px -26px var(--cp-glow-accent);
+  }
+
+  .feature-tile--gigs:hover {
+    border-color: color-mix(in oklab, var(--brand-sand) 52%, var(--cp-glass-border));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.26),
+      0 34px 74px -42px var(--cp-scrim),
+      0 0 52px -26px var(--cp-glow-warm);
+  }
+
+  .feature-tile:hover .feature-tile__arrow {
+    transform: translate(2px, -2px);
+  }
+}
+
+.feature-tile:active {
+  transform: translateY(-1px);
+}
+
+.feature-tile:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-tile,
+  .feature-tile__arrow {
+    transition: none;
+  }
+
+  .feature-tile:hover,
+  .feature-tile:active,
+  .feature-tile:hover .feature-tile__arrow {
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
    2. THE WORKS
    -------------------------------------------------------------------------- */
 

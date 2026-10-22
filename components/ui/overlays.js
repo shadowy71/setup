@@ -117,55 +117,187 @@ export function Sheet(props) {
 }
 
 /**
- * A small anchored menu. Keyboard: Escape closes, outside pointer closes, the
- * trigger reports its expanded state.
+ * A small anchored menu, rendered through the same body portal as the dialogs
+ * above — and for the same reason, only sharper. An anchored (absolutely
+ * positioned) menu inherits its trigger's stacking context and scroll
+ * container: inside the desktop sidebar every direct child is its own
+ * `z-index: 1` stacking context (see `.side-panel > *` in navigation.css),
+ * so the Create menu painted *behind* the nav rows that follow it in the
+ * DOM — its own `z-index` could never escape — and the panel's
+ * `overflow: hidden auto` clipped and scrolled it. The menu looked
+ * transparent because the content behind it was, in fact, in front of it.
+ *
+ * Portalling to `document.body` with trigger-anchored fixed coordinates
+ * removes both failure modes at once: no ancestor stacking context, no
+ * clipping scrollport, no nested backdrop-filter. Position is recomputed on
+ * resize and on any scroll (capture phase, so the sidebar's own scrolling
+ * counts), clamped to the viewport, flipped above the trigger when the
+ * space below runs out, and height-capped with internal scrolling.
+ *
+ * Keyboard: Escape closes and returns focus to the trigger; ArrowDown /
+ * ArrowUp on the trigger open the menu onto its first / last item; arrows,
+ * Home and End move between items; Tab closes. Opening with the pointer
+ * never steals focus. Outside pointer closes, as before, and the trigger
+ * reports its expanded state.
  */
-export function Dropdown({ label, trigger, children, align = 'right', className = '', menuClassName = '' }) {
+export function Dropdown({ label, trigger, children, align = 'right', className = '', menuClassName = '', matchTriggerWidth = false }) {
+  const mounted = useMounted();
   const [open, setOpen] = useState(false);
+  /* 'first' | 'last' when the pending open came from the keyboard, so focus
+     lands in the menu; null for pointer opens, which never steal focus. */
+  const [pendingFocus, setPendingFocus] = useState(null);
   const containerRef = useRef(null);
+  const menuRef = useRef(null);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  const focusTrigger = useCallback(() => {
+    containerRef.current?.querySelector('button')?.focus();
+  }, []);
+
+  /* Placement is imperative DOM sync, not state: the menu is measured and
+     positioned in place, so scrolling never triggers a render and the panel
+     is never painted at stale coordinates between state updates. */
+  const place = useCallback(() => {
+    const anchor = containerRef.current;
+    const menu = menuRef.current;
+    if (!anchor || !menu) return;
+    const rect = anchor.getBoundingClientRect();
+    const gap = 8;
+    const margin = 8;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const menuWidth = matchTriggerWidth ? rect.width : menu.offsetWidth || 208;
+
+    const desiredLeft = align === 'left' ? rect.left : rect.right - menuWidth;
+    const left = Math.round(Math.min(Math.max(desiredLeft, margin), Math.max(margin, viewportWidth - menuWidth - margin)));
+
+    const spaceBelow = viewportHeight - rect.bottom - gap - margin;
+    const spaceAbove = rect.top - gap - margin;
+    const flipUp = spaceBelow < 176 && spaceAbove > spaceBelow;
+
+    menu.style.width = matchTriggerWidth ? `${Math.round(rect.width)}px` : '';
+    menu.style.left = `${left}px`;
+    menu.style.top = flipUp ? '' : `${Math.round(rect.bottom + gap)}px`;
+    menu.style.bottom = flipUp ? `${Math.round(viewportHeight - rect.top + gap)}px` : '';
+    menu.style.maxHeight = `${Math.max(120, Math.floor(flipUp ? spaceAbove : spaceBelow))}px`;
+    menu.style.visibility = 'visible';
+  }, [align, matchTriggerWidth]);
+
+  /* First placement runs with the menu mounted but hidden, so its real width
+     can be measured before anything paints in the wrong place. */
+  useEffect(() => {
+    if (open) place();
+  }, [open, place]);
 
   useEffect(() => {
     if (!open) return undefined;
+    let frame = 0;
+    const reposition = (event) => {
+      /* The menu's own internal scrolling must not re-anchor it. */
+      if (event && event.target === menuRef.current) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(place);
+    };
     const onKey = (event) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        focusTrigger();
+      }
     };
     const onPointer = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) setOpen(false);
+      if (containerRef.current?.contains(event.target) || menuRef.current?.contains(event.target)) return;
+      setOpen(false);
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('mousedown', onPointer);
     document.addEventListener('touchstart', onPointer);
+    window.addEventListener('resize', reposition);
+    window.addEventListener('scroll', reposition, true);
     return () => {
+      cancelAnimationFrame(frame);
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('mousedown', onPointer);
       document.removeEventListener('touchstart', onPointer);
+      window.removeEventListener('resize', reposition);
+      window.removeEventListener('scroll', reposition, true);
     };
-  }, [open]);
+  }, [open, place, focusTrigger]);
 
-  const close = useCallback(() => setOpen(false), []);
+  const menuItems = useCallback(
+    () => [...(menuRef.current?.querySelectorAll('[role="menuitem"]:not(:disabled):not([aria-disabled="true"])') || [])],
+    [],
+  );
+
+  /* Land keyboard focus in the menu once it is open. */
+  useEffect(() => {
+    if (!open || !pendingFocus) return;
+    const items = menuItems();
+    const target = pendingFocus === 'last' ? items[items.length - 1] : items[0];
+    target?.focus();
+  }, [open, pendingFocus, menuItems]);
+
+  const toggle = useCallback((event) => {
+    /* A click with `detail: 0` was synthesised by keyboard activation
+       (Enter/Space on the trigger) — a real pointer press reports >= 1. */
+    setPendingFocus(event && typeof event.detail === 'number' && event.detail === 0 ? 'first' : null);
+    setOpen((value) => !value);
+  }, []);
+
+  const onTriggerKeyDown = (event) => {
+    if (open || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')) return;
+    if (!(event.target instanceof HTMLElement) || !event.target.closest('button')) return;
+    event.preventDefault();
+    setPendingFocus(event.key === 'ArrowUp' ? 'last' : 'first');
+    setOpen(true);
+  };
+
+  const onMenuKeyDown = (event) => {
+    if (event.key === 'Tab') {
+      setOpen(false);
+      return;
+    }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    const items = menuItems();
+    if (!items.length) return;
+    event.preventDefault();
+    const current = items.indexOf(document.activeElement);
+    const next =
+      event.key === 'Home'
+        ? items[0]
+        : event.key === 'End'
+          ? items[items.length - 1]
+          : event.key === 'ArrowDown'
+            ? items[(current + 1 + items.length) % items.length]
+            : items[(current - 1 + items.length) % items.length];
+    next?.focus();
+  };
 
   return (
-    <div className={cn('relative', className)} ref={containerRef}>
+    <div className={cn('relative', className)} ref={containerRef} onKeyDown={onTriggerKeyDown}>
       {typeof trigger === 'function' ? (
-        trigger({ open, toggle: () => setOpen((value) => !value), close })
+        trigger({ open, toggle, close })
       ) : (
-        <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-haspopup="menu" aria-label={label} className="icon-btn">
+        <button type="button" onClick={toggle} aria-expanded={open} aria-haspopup="menu" aria-label={label} className="icon-btn">
           {trigger}
         </button>
       )}
-      {open ? (
-        <div
-          role="menu"
-          onClick={close}
-          className={cn(
-            'cp-menu absolute z-40 mt-2 min-w-52 overflow-hidden rounded-[var(--radius-lg)] py-1',
-            align === 'right' ? 'right-0' : 'left-0',
-            menuClassName,
-          )}
-        >
-          {children}
-        </div>
-      ) : null}
+      {mounted && open
+        ? createPortal(
+            <div
+              ref={menuRef}
+              role="menu"
+              aria-label={label}
+              onClick={close}
+              onKeyDown={onMenuKeyDown}
+              className={cn('cp-menu fixed z-[80] min-w-52 overflow-y-auto rounded-[var(--radius-lg)] py-1', menuClassName)}
+              style={{ visibility: 'hidden' }}
+            >
+              {children}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

@@ -120,16 +120,39 @@ for (const theme of ['dark']) {
       }
     });
 
-    it('keeps dropdown menus on a fully opaque surface, never glass', () => {
-      // The sidebar Create menu was washed out to invisibility by a translucent
-      // glass token stacked inside the glass sidebar's own backdrop-filter.
-      // Menus are reading surfaces: their background must be the opaque
-      // elevated token, independent of whatever paints behind the panel.
+    it('keeps dropdown menus dependable: backed glass, opaque fallback, portalled', () => {
+      // The sidebar Create menu's invisibility was never a background-alpha
+      // problem: `.side-panel > *` makes every sidebar child a z-index:1
+      // stacking context, so the nav rows after the Create wrapper painted
+      // OVER the anchored menu, and the panel's overflow clipped it. The
+      // menu therefore renders through a body portal now, and its glass is
+      // backed: the mix composites to >=90% opaque over ANY underlay, with a
+      // fully opaque fallback where backdrop-filter does not exist.
       const feedback = fs.readFileSync('app/styles/feedback.css', 'utf8');
-      expect(feedback).toMatch(/\.cp-menu\s*\{[^}]*background-color: var\(--cp-bg-elevated\)/);
+      const mix = feedback.match(/\.cp-menu\s*\{[^}]*background-color: color-mix\(in oklab, var\(--cp-bg-glass-strong\) (\d+)%, var\(--cp-bg-elevated\)\)/);
+      expect(mix, '.cp-menu must mix the strong glass token over the opaque elevated token').toBeTruthy();
+      expect(feedback).toMatch(/@supports not \(\(backdrop-filter: blur\(1px\)\)[^{]*\{\s*\.cp-menu \{\s*background-color: var\(--cp-bg-elevated\)/);
+
+      const share = Number(mix[1]) / 100;
+      const glassStrong = read('bg-glass-strong', theme);
+      const elevated = read('bg-elevated', theme);
+      const mixedAlpha = share * glassStrong[3] + (1 - share) * elevated[3];
+      expect(mixedAlpha).toBeGreaterThanOrEqual(0.9);
+      const mixed = glassStrong
+        .slice(0, 3)
+        .map((channel, i) => (share * glassStrong[3] * channel + (1 - share) * elevated[3] * elevated[i]) / mixedAlpha)
+        .concat(mixedAlpha);
+      for (const underlay of [[0, 0, 0, 1], [255, 255, 255, 1]]) {
+        const background = composite(mixed, underlay);
+        for (const text of textRoles) {
+          const ratio = contrast(read(text, theme), background);
+          expect(ratio, `${theme} ${text} over menu glass: ${ratio.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+
       const overlays = fs.readFileSync('components/ui/overlays.js', 'utf8');
-      expect(overlays).toContain("'cp-menu absolute z-40");
-      expect(overlays).not.toContain("'glass-strong absolute");
+      expect(overlays).toContain("'cp-menu fixed z-[80]");
+      expect(overlays).not.toContain("'cp-menu absolute");
     });
 
     it('bounds glass contrast over even the darkest/brightest underlays', () => {

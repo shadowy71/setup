@@ -18,7 +18,7 @@ export function CreateMenu({ items = [] }) {
       label="Create"
       align="left"
       className="w-full"
-      menuClassName="w-full"
+      matchTriggerWidth
       trigger={({ open, toggle }) => (
         <Button
           variant="primary"
