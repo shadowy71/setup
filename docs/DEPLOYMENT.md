@@ -38,6 +38,7 @@ cp .env.example .env.local
 | `GIPHY_CONTENT_RATING` | optional | `g` \| `pg` \| `pg-13` \| `r`, default `pg-13` |
 | `NEXT_PUBLIC_PLATFORM_NAME` | optional | display name, default `Campus+` |
 | `NEXT_PUBLIC_COLLEGE_NAME` | optional | display name, default `PCCOE` |
+| `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL` | recommended | public mailbox shown on `/legal` for rights-holder enquiries; until set, the page states that no dedicated address has been published (the app never invents one) |
 
 `npm run check:env` verifies all of this, refuses placeholders, and fails if a
 secret has been placed in a `NEXT_PUBLIC_*` variable. Campus+ boots without

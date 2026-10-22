@@ -6,7 +6,8 @@ import { describeAuthError, safeNextPath } from '@/lib/auth/oauth';
 import { ROUTES } from '@/lib/constants';
 import { Icon } from '@/components/ui/icons';
 import { Notice } from '@/components/ui';
-import { BrandLockup, CollegeCrest } from '@/components/brand/Brand';
+import { BrandLockup } from '@/components/brand/Brand';
+import { IndependenceNotice } from '@/components/brand/IndependenceNotice';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { GhostScene } from '@/components/atmosphere/GhostScene';
 
@@ -56,10 +57,9 @@ export default async function LoginPage({ searchParams }) {
         {/* Brand area: the logo carries the identity before a single word is read. */}
         <div className="login-intro login-sky flex flex-col items-start">
           <BrandLockup href="/" size="lg" className="login-halo w-fit" wordClass="text-[1.3125rem]" />
-          <div className="mt-6 flex items-center gap-3">
-            <CollegeCrest size={56} />
-            <p className="t-label">Unofficial student project</p>
-          </div>
+          {/* The independence label stays with the brand; the crest itself
+              appears once, beside the full disclosure by the controls below. */}
+          <p className="t-label mt-6">Unofficial student project</p>
           <h1 className="login-title mt-3">
             The campus, <span className="login-title-accent">in one place</span>
           </h1>
@@ -85,6 +85,11 @@ export default async function LoginPage({ searchParams }) {
           </LoginForm>
         </div>
 
+        {/* Independence disclosure: reading-size, beside the sign-in controls
+            and visible before authentication on every viewport. The crest
+            identifies the institution referred to; it confers no affiliation. */}
+        <IndependenceNotice className="login-intro mt-6" />
+
         <ul className="login-intro login-sky mt-9 flex flex-col gap-2.5 text-[0.8125rem] text-muted">
           <li className="flex items-start gap-2.5">
             <span className="login-fact">
@@ -109,8 +114,7 @@ export default async function LoginPage({ searchParams }) {
         </ul>
 
         <p className="login-intro login-sky mt-8 text-2xs leading-relaxed text-muted">
-          Campus+ is not affiliated with or endorsed by PCCOE. By continuing you agree to keep the space
-          respectful and to follow the{' '}
+          By continuing you agree to keep the space respectful and to follow the{' '}
           <Link href="/rules" className="font-semibold text-ink underline">
             community rules
           </Link>

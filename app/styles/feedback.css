@@ -372,6 +372,20 @@
     margin-top: 1.125rem;
   }
 
+  /* Dropdown menus (Create, account, row actions) sit on a SOLID surface,
+     never glass. A menu is a reading surface, and a translucent token plus a
+     backdrop-filter is a needless failure mode for one: inside the glass
+     sidebar, over the animated night sky, stacked backdrop-filters washed the
+     Create menu out until its item text was effectively invisible. The opaque
+     elevated token keeps the same visual family with a contrast guarantee
+     that does not depend on what paints behind the panel. */
+  .cp-menu {
+    background-color: var(--cp-bg-elevated);
+    color: var(--cp-text-primary);
+    border: 1px solid var(--c-line-strong);
+    box-shadow: var(--shadow-float), var(--shadow-inset-top);
+  }
+
   .cp-menu-item {
     color: var(--cp-text-primary);
     background-color: transparent;
