@@ -7,6 +7,7 @@ import { IdentityMark, StaffDot } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { BrandLockup, CollegeCrest } from '@/components/brand/Brand';
 import { CreateMenu } from '@/components/layout/CreateMenu';
+import { getTimetableHref } from '@/lib/timetable/meta';
 
 /**
  * Desktop navigation: a suspended sheet of frosted glass carrying the Campus+
@@ -48,6 +49,16 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
             {item.label}
           </Link>
         ))}
+        {/* Public pages, personalised landing: a saved division opens its
+            own timetable; without one, the selector. Never inferred. */}
+        <Link
+          href={getTimetableHref(user?.division)}
+          aria-current={pathname.startsWith('/timetable') ? 'page' : undefined}
+          className="nav-item"
+        >
+          <Icon name="calendar" size={18} className="nav-icon" />
+          Timetable
+        </Link>
       </nav>
 
       <div className="side-panel__rule my-3" aria-hidden="true" />

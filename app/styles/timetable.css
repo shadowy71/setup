@@ -1,0 +1,300 @@
+/* ==========================================================================
+   Timetable — public division selector + per-division master timetable
+   --------------------------------------------------------------------------
+   Text-first and backed: cells are solid elevated panels (never glass over
+   the animated sky), because a timetable is read at 8:55 in a corridor, not
+   admired. The only accents are kind markers — a teal leading edge for
+   batch-wise practicals, a quiet wash for lunch, sand for the empowerment
+   hour — and a warning edge for the entries the source itself flags as
+   needing verification. No backdrop-filter here: the page can hold ~90
+   cells and must stay cheap to scroll on a phone.
+   ========================================================================== */
+
+/* ------------------------------------------------------------ selector */
+
+.tt-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .tt-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .tt-tiles {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.875rem;
+  }
+}
+
+.tt-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 1rem 1.125rem;
+  min-height: 6.5rem;
+  text-decoration: none;
+}
+
+.tt-tile:hover {
+  text-decoration: none;
+}
+
+.tt-tile:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 2px;
+}
+
+.tt-tile__letter {
+  font-size: 1.75rem;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--cp-text-primary);
+}
+
+.tt-tile__branch {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--cp-text-secondary);
+}
+
+.tt-tile__friendly {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--cp-text-muted);
+}
+
+/* ---------------------------------------------------------------- table */
+
+.tt-scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--cp-border-subtle);
+  background-color: var(--cp-bg-elevated);
+  box-shadow: var(--shadow-card), var(--shadow-inset-top);
+  scrollbar-gutter: stable;
+}
+
+.tt-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 84rem;
+  width: 100%;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--cp-text-primary);
+}
+
+.tt-table th,
+.tt-table td {
+  border-right: 1px solid var(--cp-border-subtle);
+  border-bottom: 1px solid var(--cp-border-subtle);
+  padding: 0.5rem 0.625rem;
+  vertical-align: top;
+  min-width: 8.5rem;
+  background-color: var(--cp-bg-elevated);
+}
+
+.tt-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: var(--cp-bg-strong);
+  color: var(--cp-text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tt-table tbody th[scope='row'] {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 6.5rem;
+  background-color: var(--cp-bg-strong);
+  color: var(--cp-text-primary);
+  font-size: 0.75rem;
+  font-weight: 680;
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+
+.tt-table thead th:first-child {
+  left: 0;
+  z-index: 3;
+  min-width: 6.5rem;
+}
+
+.tt-table tr:last-child th,
+.tt-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.tt-table th:last-child,
+.tt-table td:last-child {
+  border-right: 0;
+}
+
+/* Event text: subject leads, faculty/room lines follow verbatim. Long batch
+   allocations wrap rather than widen the column. */
+.tt-line {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.tt-line--subject {
+  font-weight: 640;
+  color: var(--cp-text-primary);
+}
+
+.tt-line--meta {
+  font-size: 0.6875rem;
+  color: var(--cp-text-muted);
+}
+
+/* Kind markers — shape + colour, never colour alone where it matters. */
+.tt-cell--batch {
+  box-shadow: inset 3px 0 0 var(--cp-bg-accent);
+}
+
+.tt-cell--lunch {
+  background-color: var(--cp-bg-subtle);
+  color: var(--cp-text-muted);
+  text-align: center;
+  vertical-align: middle;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tt-cell--special {
+  background-color: color-mix(in oklab, var(--brand-sand) 7%, var(--cp-bg-elevated));
+  box-shadow: inset 3px 0 0 color-mix(in oklab, var(--brand-sand) 55%, transparent);
+}
+
+.tt-cell--blank {
+  background-color: color-mix(in oklab, var(--cp-bg-elevated) 55%, var(--cp-bg-page));
+}
+
+.tt-cell--flagged {
+  box-shadow: inset 0 0 0 1px var(--cp-warning-border);
+}
+
+.tt-verify {
+  display: inline-flex;
+  margin-top: 0.3125rem;
+}
+
+/* ------------------------------------------------------- mobile timeline */
+
+.tt-daytabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4375rem;
+}
+
+.tt-daytab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0.4375rem 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--cp-border-subtle);
+  background-color: var(--cp-bg-elevated);
+  color: var(--cp-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tt-daytab:hover {
+  color: var(--cp-text-primary);
+  border-color: var(--cp-border-control, var(--cp-border));
+  text-decoration: none;
+}
+
+.tt-daytab[aria-current='true'] {
+  background-color: var(--cp-selected-bg, var(--cp-bg-accent-soft));
+  border-color: var(--cp-selected-border);
+  color: var(--cp-text-primary);
+}
+
+.tt-daytab:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 2px;
+}
+
+.tt-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tt-slot {
+  display: flex;
+  gap: 0.875rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.875rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--cp-border-subtle);
+  background-color: var(--cp-bg-elevated);
+  font-size: 0.8125rem;
+}
+
+.tt-slot__time {
+  flex-shrink: 0;
+  width: 6.75rem;
+  padding-top: 0.0625rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--cp-text-muted);
+  white-space: nowrap;
+}
+
+.tt-slot--batch {
+  box-shadow: inset 3px 0 0 var(--cp-bg-accent);
+}
+
+.tt-slot--lunch {
+  background-color: var(--cp-bg-subtle);
+  color: var(--cp-text-muted);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.tt-slot--special {
+  background-color: color-mix(in oklab, var(--brand-sand) 7%, var(--cp-bg-elevated));
+  box-shadow: inset 3px 0 0 color-mix(in oklab, var(--brand-sand) 55%, transparent);
+}
+
+.tt-slot--blank {
+  border-style: dashed;
+  background-color: transparent;
+  color: var(--cp-text-muted);
+  font-size: 0.75rem;
+}
+
+.tt-slot--flagged {
+  border-color: var(--cp-warning-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-daytab {
+    transition: none;
+  }
+}

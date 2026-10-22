@@ -19,8 +19,12 @@ import { originFromHeaders } from '@/lib/auth/oauth';
 
 /** Routes that must be reachable without a session. `/legal` and `/rules` are
  * linked from the sign-in screen itself (the independence disclosure and the
- * rules a student agrees to by continuing), so both must render signed out. */
-const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules'];
+ * rules a student agrees to by continuing), so both must render signed out.
+ * `/timetable` (and every `/timetable/[division]` under it, via the prefix
+ * match below) is a public read-only mirror of the department master
+ * timetable — it must work from a shared link before a student has an
+ * account, and it changes nothing about any other route's protection. */
+const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules', '/timetable'];
 
 /**
  * The one-time-code step (and its route) was replaced by Google sign-in.

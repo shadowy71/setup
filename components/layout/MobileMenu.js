@@ -18,6 +18,7 @@ import { Icon } from '@/components/ui/icons';
 import { IdentityMark, Sheet, StaffDot } from '@/components/ui';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { openCommandPalette } from '@/components/search/CommandPalette';
+import { getTimetableHref } from '@/lib/timetable/meta';
 
 function SheetLink({ href, icon, label, count = 0, onNavigate }) {
   return (
@@ -65,6 +66,7 @@ export function MobileMenu({ user = null, isStaff = false, canModerate = false, 
           <SheetLink href={ROUTES.clubs} icon="star" label="Clubs" onNavigate={close} />
           <SheetLink href={ROUTES.communities} icon="users" label="Communities" onNavigate={close} />
           <SheetLink href={ROUTES.campus} icon="building" label="Campus" onNavigate={close} />
+          <SheetLink href={getTimetableHref(user?.division)} icon="calendar" label="Timetable" onNavigate={close} />
           <SheetLink href={ROUTES.study} icon="book" label="Study finder" onNavigate={close} />
           <SheetLink href={ROUTES.notifications} icon="bell" label="Notifications" onNavigate={close} />
           <SheetLink href={ROUTES.settings} icon="settings" label="Settings" onNavigate={close} />
