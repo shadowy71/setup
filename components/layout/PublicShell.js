@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { ROUTES } from '@/lib/constants';
 import { BrandLockup, CollegeCrest } from '@/components/brand/Brand';
 
 /**
@@ -26,7 +28,10 @@ export function PublicShell({ eyebrow = null, title = null, description = null, 
         <div className="mt-7 flex items-start gap-3">
           <CollegeCrest size={44} />
           <p className="text-2xs leading-relaxed text-muted-soft">
-            Campus+ is an unofficial student project for PCCOE, not affiliated with or endorsed by the college.
+            Campus+ is an unofficial student project for PCCOE, not affiliated with or endorsed by the college.{' '}
+            <Link href={ROUTES.legal} className="font-semibold text-muted underline underline-offset-2 hover:text-ink">
+              Legal &amp; Institutional Independence
+            </Link>
           </p>
         </div>
       </div>

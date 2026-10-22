@@ -120,6 +120,18 @@ for (const theme of ['dark']) {
       }
     });
 
+    it('keeps dropdown menus on a fully opaque surface, never glass', () => {
+      // The sidebar Create menu was washed out to invisibility by a translucent
+      // glass token stacked inside the glass sidebar's own backdrop-filter.
+      // Menus are reading surfaces: their background must be the opaque
+      // elevated token, independent of whatever paints behind the panel.
+      const feedback = fs.readFileSync('app/styles/feedback.css', 'utf8');
+      expect(feedback).toMatch(/\.cp-menu\s*\{[^}]*background-color: var\(--cp-bg-elevated\)/);
+      const overlays = fs.readFileSync('components/ui/overlays.js', 'utf8');
+      expect(overlays).toContain("'cp-menu absolute z-40");
+      expect(overlays).not.toContain("'glass-strong absolute");
+    });
+
     it('bounds glass contrast over even the darkest/brightest underlays', () => {
       for (const surface of ['bg-glass', 'bg-glass-soft', 'bg-glass-strong', 'bg-cinematic-glass']) {
         for (const underlay of [[0, 0, 0, 1], [255, 255, 255, 1]]) {

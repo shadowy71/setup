@@ -17,8 +17,10 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { originFromHeaders } from '@/lib/auth/oauth';
 
-/** Routes that must be reachable without a session. */
-const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup'];
+/** Routes that must be reachable without a session. `/legal` and `/rules` are
+ * linked from the sign-in screen itself (the independence disclosure and the
+ * rules a student agrees to by continuing), so both must render signed out. */
+const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules'];
 
 /**
  * The one-time-code step (and its route) was replaced by Google sign-in.

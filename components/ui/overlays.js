@@ -158,7 +158,7 @@ export function Dropdown({ label, trigger, children, align = 'right', className 
           role="menu"
           onClick={close}
           className={cn(
-            'glass-strong absolute z-40 mt-2 min-w-52 overflow-hidden rounded-[var(--radius-lg)] py-1',
+            'cp-menu absolute z-40 mt-2 min-w-52 overflow-hidden rounded-[var(--radius-lg)] py-1',
             align === 'right' ? 'right-0' : 'left-0',
             menuClassName,
           )}

@@ -140,7 +140,7 @@ describe('no presence, no typing indicators (spec §8, §22)', () => {
 });
 
 describe('secrets never reach the browser bundle (spec §74, §93)', () => {
-  it('exposes only the two public Supabase variables', () => {
+  it('exposes only the declared public variables (two Supabase + public config)', () => {
     const publicVars = new Set();
     for (const file of allSource) {
       for (const match of read(file).matchAll(/NEXT_PUBLIC_[A-Z0-9_]+/g)) publicVars.add(match[0]);
@@ -149,6 +149,7 @@ describe('secrets never reach the browser bundle (spec §74, §93)', () => {
     // NEXT_PUBLIC_ variable would be shipped to the browser.
     expect([...publicVars].sort()).toEqual([
       'NEXT_PUBLIC_COLLEGE_NAME',
+      'NEXT_PUBLIC_LEGAL_CONTACT_EMAIL',
       'NEXT_PUBLIC_LOCAL_PREVIEW',
       'NEXT_PUBLIC_PLATFORM_NAME',
       'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
