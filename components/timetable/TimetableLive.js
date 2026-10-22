@@ -1,0 +1,355 @@
+'use client';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Icon } from '@/components/ui/icons';
+import { VerifyBadge } from '@/components/timetable/EventText';
+import { CAMPUS_TIME_ZONE, getCampusTime, resolveDaySelection, timetableDayFor } from '@/lib/timetable/clock';
+import { getDayStatus } from '@/lib/timetable/schedule';
+import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
+
+/**
+ * The live half of a division timetable.
+ *
+ * Since this has to know the time, it is the one client component on the
+ * page — and it owns the only timer: one `setInterval` for the clock, cleared
+ * on unmount. Everything time-dependent (which weekday opens, the NOW/NEXT
+ * status, the date) is derived from `Asia/Kolkata`, so the schedule never
+ * disagrees with the institute's wall clock, and it keeps moving while the
+ * page stays open: at a period boundary the NOW badge moves to the next
+ * session on its own.
+ *
+ * The initial values arrive from the server (`initialNow` as an ISO instant,
+ * `initialDay` already resolved in the campus timezone), so the server HTML
+ * and the first client render are identical — no hydration mismatch and no
+ * flash of Monday before the real day appears.
+ */
+
+const DAY_SHORT = {
+  Monday: 'Mon',
+  Tuesday: 'Tue',
+  Wednesday: 'Wed',
+  Thursday: 'Thu',
+  Friday: 'Fri',
+};
+
+function subjectLabel(event) {
+  if (!event) return '';
+  return event.subject || event.lines[0];
+}
+
+function nextSentence(status) {
+  if (!status?.next) return ' No more classes today.';
+  return ` Next: ${subjectLabel(status.next)} at ${status.next.time.from}.`;
+}
+
+/** One calm sentence that mirrors the NOW/NEXT badges in words. */
+function describeStatus(status) {
+  if (!status) return '';
+  if (status.ongoing) {
+    return `Now: ${subjectLabel(status.ongoing)} · ${status.ongoing.time.from}–${status.ongoing.time.to}.${nextSentence(status)}`;
+  }
+  switch (status.phase) {
+    case 'lunch':
+      return `Lunch break until ${status.current.time.to}.${nextSentence(status)}`;
+    case 'special':
+      return `${status.current.lines.join(' ')} until ${status.current.time.to}.${nextSentence(status)}`;
+    case 'free':
+      return `Free period until ${status.currentFree.to}.${nextSentence(status)}`;
+    case 'before':
+      return `First class at ${status.first.time.from}.`;
+    case 'gap':
+      return status.next ? `Next class: ${subjectLabel(status.next)} at ${status.next.time.from}.` : 'No more classes today.';
+    case 'after':
+      return 'No more classes today.';
+    case 'empty':
+      return 'No classes are printed for this day.';
+    default:
+      return '';
+  }
+}
+
+function EventRow({ event, ongoing, next }) {
+  const subject = event.kind === 'special' ? event.lines.join(' ') : event.lines[0];
+  const meta = event.kind === 'lunch' || event.kind === 'special' ? [] : event.lines.slice(1);
+
+  return (
+    <li
+      className={[
+        'tt-item',
+        `tt-item--${event.kind}`,
+        ongoing ? 'tt-item--now' : '',
+        next ? 'tt-item--next' : '',
+        event.needsVerification ? 'tt-item--flagged' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      style={
+        event.kind === 'standard' || event.kind === 'batch'
+          ? { '--tt-accent': `var(--tt-hue-${event.accent})` }
+          : undefined
+      }
+    >
+      <div className="tt-item__time">
+        <span className="tt-item__from">{event.time.from}</span>
+        <span className="tt-item__to">{event.time.to}</span>
+        {event.span > 1 ? <span className="tt-item__span">{event.span} periods</span> : null}
+      </div>
+
+      <div className="tt-item__body">
+        <div className="tt-item__head">
+          <span className="tt-item__dot" aria-hidden="true" />
+          {event.kind === 'lunch' ? (
+            <span className="tt-item__subject tt-item__subject--label">
+              <Icon name="utensils" size={13} aria-hidden="true" />
+              {subject}
+            </span>
+          ) : (
+            <span className="tt-item__subject">{subject}</span>
+          )}
+          {event.kind === 'batch' ? <span className="tt-tag">Batches</span> : null}
+          {event.needsVerification ? <VerifyBadge /> : null}
+          {ongoing ? <span className="tt-badge tt-badge--now">NOW</span> : null}
+          {next ? <span className="tt-badge tt-badge--next">NEXT</span> : null}
+        </div>
+
+        {meta.map((line, index) => (
+          <span key={`${index}-${line}`} className="tt-item__meta">
+            {line}
+          </span>
+        ))}
+      </div>
+    </li>
+  );
+}
+
+function FreeRow({ range }) {
+  return (
+    <li className="tt-item tt-item--free">
+      <div className="tt-item__time">
+        <span className="tt-item__from">{range.from}</span>
+        <span className="tt-item__to">{range.to}</span>
+        {range.endIndex > range.startIndex ? (
+          <span className="tt-item__span">{range.endIndex - range.startIndex + 1} periods</span>
+        ) : null}
+      </div>
+      <div className="tt-item__body">
+        <div className="tt-item__head">
+          <span className="tt-item__dot" aria-hidden="true" />
+          <span className="tt-item__subject">Free</span>
+        </div>
+        <span className="tt-item__meta">No class printed in this slot</span>
+      </div>
+    </li>
+  );
+}
+
+export default function TimetableLive({
+  division,
+  label,
+  friendly,
+  days,
+  subjects,
+  initialDay,
+  initialPinned = false,
+  initialNow,
+  children,
+}) {
+  const [now, setNow] = useState(() => new Date(initialNow));
+  const [selected, setSelected] = useState(initialDay ?? null);
+  const pinnedRef = useRef(Boolean(initialPinned));
+
+  // The one timer. Recreated only on mount; always cleared on unmount.
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const parts = useMemo(() => getCampusTime(now), [now]);
+  const today = timetableDayFor(parts.weekday);
+
+  // Follow the institute's weekday — across midnight and into/out of the
+  // weekend — unless the visitor has chosen a day themselves.
+  useEffect(() => {
+    setSelected((previous) => resolveDaySelection({ selected: previous, pinned: pinnedRef.current, today }));
+  }, [today]);
+
+  const day = selected ? days.find((entry) => entry.day === selected) ?? null : null;
+  const isToday = Boolean(selected && selected === today);
+
+  const status = useMemo(
+    () =>
+      day
+        ? getDayStatus({
+            events: day.events,
+            freeRanges: day.freeRanges,
+            nowMinutes: parts.minutesOfDay,
+            isToday,
+          })
+        : null,
+    [day, parts.minutesOfDay, isToday],
+  );
+
+  const entries = useMemo(() => {
+    if (!day) return [];
+    return [
+      ...day.events.map((event) => ({ key: `event-${event.id}`, startIndex: event.start, event })),
+      ...day.freeRanges.map((range) => ({ key: `free-${range.startIndex}`, startIndex: range.startIndex, range })),
+    ].sort((a, b) => a.startIndex - b.startIndex);
+  }, [day]);
+
+  function syncUrl(nextDay) {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (nextDay) url.searchParams.set('day', nextDay);
+    else url.searchParams.delete('day');
+    // Search params only: keep the App Router state, skip a server round trip.
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  function chooseDay(name) {
+    pinnedRef.current = true;
+    setSelected(name);
+    syncUrl(name);
+  }
+
+  function showToday() {
+    pinnedRef.current = false;
+    setSelected(today);
+    syncUrl(today);
+  }
+
+  // Another weekday is a preview, not a live claim: name its first academic
+  // session in words instead of borrowing the NOW/NEXT badges.
+  let dayNote = null;
+  if (selected && !today) dayNote = `It’s the weekend — showing ${selected}.`;
+  else if (selected && selected !== today) {
+    dayNote = status?.first
+      ? `Not today — ${selected}’s first class is ${status.first.lines[0]} at ${status.first.time.from}.`
+      : 'Not today.';
+  }
+
+  return (
+    <div className="tt-live">
+      <header className="tt-head">
+        <div className="tt-head__intro">
+          <p className="t-label">
+            {TIMETABLE_SOURCE.department} · {TIMETABLE_SOURCE.semester} · {TIMETABLE_SOURCE.academicYear}
+          </p>
+          <h1 className="t-display mt-2">Division {division}</h1>
+          <p className="t-secondary mt-2">
+            {label}
+            {friendly ? ` · ${friendly}` : ''}
+          </p>
+        </div>
+
+        <div className="tt-clock">
+          <span className="tt-clock__time">
+            <time dateTime={parts.iso}>
+              {parts.timeLabel}
+              <span className="tt-clock__seconds">:{parts.secondLabel}</span>
+            </time>
+          </span>
+          <span className="tt-clock__date">{parts.dateLabel}</span>
+          <span className="tt-clock__zone">IST · {CAMPUS_TIME_ZONE}</span>
+        </div>
+      </header>
+
+      <p className="tt-help">
+        How to read practicals: an entry like <span className="text-ink-soft">EG-1/ENG-2/FES-3</span> means the three
+        batches are in different rooms at the same time — the [faculty] and [room] lists below it follow the same batch
+        order. Lunch is wherever this division’s row puts it. All times are the institute’s, {CAMPUS_TIME_ZONE}.
+      </p>
+
+      <div className="tt-tabsbar">
+        <div className="tt-tabs" role="group" aria-label="Choose a weekday">
+          {days.map(({ day: name }) => {
+            const isRealToday = today === name;
+            return (
+              <button
+                key={name}
+                type="button"
+                className="tt-tab"
+                aria-pressed={selected === name}
+                aria-label={isRealToday ? `${name}, today` : name}
+                onClick={() => chooseDay(name)}
+              >
+                {DAY_SHORT[name] ?? name}
+                {isRealToday ? <span className="tt-tab__today" aria-hidden="true" /> : null}
+              </button>
+            );
+          })}
+        </div>
+
+        {today && selected !== today ? (
+          <button type="button" className="tt-jump" onClick={showToday}>
+            <Icon name="calendar" size={14} aria-hidden="true" />
+            Today
+          </button>
+        ) : null}
+      </div>
+
+      <div className="tt-dayhead">
+        <h2 className="tt-dayhead__title">{selected || 'Weekend'}</h2>
+        {isToday ? <span className="tt-dayhead__today">Today</span> : null}
+        {dayNote ? <p className="tt-dayhead__note">{dayNote}</p> : null}
+      </div>
+
+      {isToday && status ? (
+        <p className="tt-status" role="status">
+          {describeStatus(status)}
+        </p>
+      ) : null}
+
+      {!selected ? (
+        <div className="tt-weekend">
+          <span className="tt-weekend__icon" aria-hidden="true">
+            <Icon name="calendar" size={18} />
+          </span>
+          <div>
+            <p className="tt-weekend__title">No classes this weekend</p>
+            <p className="tt-weekend__body">
+              The master timetable runs Monday to Friday. Pick a weekday above to see Division {division}’s schedule —
+              nothing scheduled today is hidden or invented.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <ol className="tt-day" aria-label={`${selected} timetable for Division ${division}`}>
+          {entries.map((entry) =>
+            entry.event ? (
+              <EventRow
+                key={entry.key}
+                event={entry.event}
+                ongoing={status?.ongoing?.id === entry.event.id}
+                next={status?.next?.id === entry.event.id}
+              />
+            ) : (
+              <FreeRow key={entry.key} range={entry.range} />
+            ),
+          )}
+        </ol>
+      )}
+
+      {selected && subjects.length ? (
+        <ul className="tt-legend" aria-label="Subject colours">
+          {subjects.map(({ code, accent }) => (
+            <li key={code}>
+              <span className="tt-legend__dot" style={{ backgroundColor: `var(--tt-hue-${accent})` }} aria-hidden="true" />
+              {code}
+            </li>
+          ))}
+          <li>
+            <span className="tt-legend__dot tt-legend__dot--lunch" aria-hidden="true" />
+            Lunch
+          </li>
+          <li>
+            <span className="tt-legend__dot tt-legend__dot--special" aria-hidden="true" />
+            Empowerment Hour
+          </li>
+        </ul>
+      ) : null}
+
+      {children}
+    </div>
+  );
+}

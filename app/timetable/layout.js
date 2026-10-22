@@ -15,7 +15,7 @@ import { ROUTES } from '@/lib/constants';
  */
 export default function TimetableLayout({ children }) {
   return (
-    <div className="mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6 sm:py-10">
+    <div className="tt-shell mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <BrandLockup href="/" size="lg" className="w-fit" />
         <Link
