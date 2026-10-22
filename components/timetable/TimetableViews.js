@@ -1,64 +1,22 @@
-import Link from 'next/link';
 import { TIMETABLE_PERIODS } from '@/lib/timetable';
 import { Notice } from '@/components/ui';
+import { SourceLines, VerifyBadge } from '@/components/timetable/EventText';
 
 /**
- * Timetable rendering (server components — no client JavaScript).
+ * The full-week grid — a server-rendered reference view.
  *
- * Two readings of the same source rows:
- *   - `WeekTable`: the full Mon–Fri grid for wide screens, events spanning
- *     their source columns, sticky period header and day rail.
- *   - `DayTimeline`: one day as a vertical list for phones, chosen with
- *     plain `?day=` links (`DayTabs`) so back/forward and refresh behave
- *     like any other navigation.
- *
- * Nothing here rewrites source text. Batch allocations render as their
- * three source lines kept together (subjects / faculty / rooms, in batch
- * order), blanks stay visibly blank, and entries the source flags carry a
- * "Needs verification" badge instead of a guess.
+ * The live day view (TimetableLive) is the primary reading: it opens on the
+ * institute's weekday and carries the clock, NOW/NEXT status and the day
+ * tabs. This grid stays as the "see the whole week at a glance" companion,
+ * printed-source style: events span their printed columns, every cell keeps
+ * its subject accent edge, and nothing is rewritten.
  */
 
-function VerifyBadge() {
-  return (
-    <span className="badge badge-warning tt-verify" title="This entry could not be reconstructed with certainty from the source PDF">
-      Needs verification
-    </span>
-  );
-}
-
-/** One event's source lines: subject first, then faculty/room lines. */
-function EventLines({ event }) {
-  if (event.kind === 'special') {
-    // 'Empowerment' / 'Hour' are two printed lines of one label; both are
-    // shown with subject emphasis, in source order.
-    return (
-      <>
-        {event.lines.map((line) => (
-          <span key={line} className="tt-line tt-line--subject">
-            {line}
-          </span>
-        ))}
-        {event.needsVerification ? <VerifyBadge /> : null}
-      </>
-    );
-  }
-  return (
-    <>
-      {event.lines.map((line, index) => (
-        <span key={`${index}-${line}`} className={index === 0 ? 'tt-line tt-line--subject' : 'tt-line tt-line--meta'}>
-          {line}
-        </span>
-      ))}
-      {event.needsVerification ? <VerifyBadge /> : null}
-    </>
-  );
-}
-
 const KIND_CLASS = {
-  batch: 'tt-cell--batch',
+  batch: 'tt-cell--accent',
+  standard: 'tt-cell--accent',
   lunch: 'tt-cell--lunch',
   special: 'tt-cell--special',
-  standard: '',
 };
 
 export function WeekTable({ days, division }) {
@@ -97,11 +55,16 @@ export function WeekTable({ days, division }) {
                   <td
                     key={index}
                     colSpan={event.span > 1 ? event.span : undefined}
+                    style={
+                      event.kind === 'standard' || event.kind === 'batch'
+                        ? { '--tt-accent': `var(--tt-hue-${event.accent})` }
+                        : undefined
+                    }
                     className={[KIND_CLASS[event.kind], event.needsVerification ? 'tt-cell--flagged' : '']
                       .filter(Boolean)
                       .join(' ')}
                   >
-                    {event.kind === 'lunch' ? 'Lunch' : <EventLines event={event} />}
+                    {event.kind === 'lunch' ? 'Lunch' : <SourceLines event={event} />}
                   </td>
                 );
               })}
@@ -109,62 +72,6 @@ export function WeekTable({ days, division }) {
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-export function DayTabs({ days, selectedDay }) {
-  return (
-    <nav className="tt-daytabs" aria-label="Choose a day">
-      {days.map(({ day }) => (
-        <Link
-          key={day}
-          href={`?day=${day}`}
-          scroll={false}
-          aria-current={day === selectedDay ? 'true' : undefined}
-          className="tt-daytab"
-        >
-          {day.slice(0, 3)}
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
-const SLOT_KIND_CLASS = {
-  batch: 'tt-slot--batch',
-  lunch: 'tt-slot--lunch',
-  special: 'tt-slot--special',
-  standard: '',
-};
-
-export function DayTimeline({ day }) {
-  return (
-    <div className="tt-timeline" role="list" aria-label={`${day.day} timetable`}>
-      {day.slots.map((slot, index) => {
-        if (slot.type === 'covered') return null;
-        if (slot.type === 'blank') {
-          return (
-            <div key={index} role="listitem" className="tt-slot tt-slot--blank">
-              <span className="tt-slot__time">{TIMETABLE_PERIODS[index]}</span>
-              <span>Blank in source</span>
-            </div>
-          );
-        }
-        const { event } = slot;
-        return (
-          <div
-            key={index}
-            role="listitem"
-            className={['tt-slot', SLOT_KIND_CLASS[event.kind], event.needsVerification ? 'tt-slot--flagged' : '']
-              .filter(Boolean)
-              .join(' ')}
-          >
-            <span className="tt-slot__time">{event.time.label}</span>
-            <span className="min-w-0">{event.kind === 'lunch' ? 'Lunch' : <EventLines event={event} />}</span>
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -189,3 +96,5 @@ export function FlaggedNotice({ flagged }) {
     </Notice>
   );
 }
+
+export { VerifyBadge };

@@ -1,15 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DIVISIONS, ROUTES } from '@/lib/constants';
-import {
-  adjacentDivisions,
-  currentTimetableDay,
-  getDivisionTimetable,
-  TIMETABLE_DAYS,
-  TIMETABLE_SOURCE,
-} from '@/lib/timetable';
+import { adjacentDivisions, getDivisionTimetable, TIMETABLE_DAYS } from '@/lib/timetable';
+import { getCampusTime, timetableDayFor } from '@/lib/timetable/clock';
 import { divisionTimetableHref } from '@/lib/timetable/meta';
-import { DayTabs, DayTimeline, FlaggedNotice, WeekTable } from '@/components/timetable/TimetableViews';
+import TimetableLive from '@/components/timetable/TimetableLive';
+import { FlaggedNotice, WeekTable } from '@/components/timetable/TimetableViews';
 import { Icon } from '@/components/ui/icons';
 
 /**
@@ -20,8 +16,10 @@ import { Icon } from '@/components/ui/icons';
  * (/timetable/O) resolve to the same division; anything that is not a
  * single A–R letter is a real 404 (see not-found.js beside this file).
  *
- * Layout: the full-week grid on wide screens; a one-day timeline with
- * `?day=` tabs on phones (defaulting to today in the campus timezone).
+ * The server resolves "today" in Asia/Kolkata and hands the client that
+ * instant plus the requested day, so the first paint already shows the right
+ * weekday and clock. Everything after that — the ticking clock, NOW/NEXT
+ * moving between periods, crossing midnight — happens in TimetableLive.
  */
 
 // Only A–R exist (both cases, so /timetable/O works like /timetable/o);
@@ -39,7 +37,7 @@ export async function generateMetadata({ params }) {
   const programme = timetable.friendly ? `${timetable.label} (${timetable.friendly})` : timetable.label;
   return {
     title: `Division ${timetable.division} timetable — ${programme}`,
-    description: `Monday–Friday class timetable for first-year Division ${timetable.division} (${programme}), ${TIMETABLE_SOURCE.semester} ${TIMETABLE_SOURCE.academicYear}. Lectures, batch practicals, faculty and rooms as printed in the master timetable.`,
+    description: `Monday–Friday class timetable for first-year Division ${timetable.division} (${programme}) with the live class for Asia/Kolkata time. Lectures, batch practicals, faculty and rooms as printed in the master timetable.`,
   };
 }
 
@@ -49,8 +47,15 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
   if (!timetable) notFound();
 
   const query = (await searchParams) || {};
-  const selectedDay = TIMETABLE_DAYS.includes(query.day) ? query.day : currentTimetableDay();
-  const mobileDay = timetable.days.find((entry) => entry.day === selectedDay) || timetable.days[0];
+  // An explicit ?day= is a deliberate (and shareable) choice; otherwise the
+  // page opens on the institute's real weekday — or the weekend state.
+  const requestedDay = TIMETABLE_DAYS.includes(query.day) ? query.day : null;
+  const now = new Date();
+  const campus = getCampusTime(now);
+  const initialDay = requestedDay ?? timetableDayFor(campus.weekday);
+
+  // Only what the live view needs: the week grid keeps its slots server-side.
+  const liveDays = timetable.days.map(({ day, events, freeRanges }) => ({ day, events, freeRanges }));
   const { previous, next } = adjacentDivisions(timetable.division);
 
   return (
@@ -62,39 +67,29 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
         </Link>
       </nav>
 
-      <header className="mt-4 max-w-3xl">
-        <p className="t-label">
-          {TIMETABLE_SOURCE.department} · {TIMETABLE_SOURCE.semester} · {TIMETABLE_SOURCE.academicYear}
-        </p>
-        <h1 className="t-display mt-2">Division {timetable.division}</h1>
-        <p className="t-secondary mt-2">
-          {timetable.label}
-          {timetable.friendly ? ` · ${timetable.friendly}` : ''}
-        </p>
-        <p className="mt-3 max-w-[68ch] text-[0.8125rem] leading-relaxed text-muted">
-          How to read practicals: an entry like <span className="text-ink-soft">EG-1/ENG-2/FES-3</span> means the
-          three batches are in different rooms at the same time — the [faculty] and [room] lists below it follow
-          the same batch order. Lunch is wherever this division&rsquo;s row puts it.
-        </p>
-      </header>
+      <TimetableLive
+        division={timetable.division}
+        label={timetable.label}
+        friendly={timetable.friendly}
+        days={liveDays}
+        subjects={timetable.subjects}
+        initialDay={initialDay}
+        initialPinned={Boolean(requestedDay)}
+        initialNow={now.toISOString()}
+      >
+        {timetable.flagged.length ? (
+          <div className="mt-8">
+            <FlaggedNotice flagged={timetable.flagged} />
+          </div>
+        ) : null}
 
-      {timetable.flagged.length ? (
-        <div className="mt-6">
-          <FlaggedNotice flagged={timetable.flagged} />
-        </div>
-      ) : null}
-
-      {/* Desktop: the whole week at once. */}
-      <section aria-label={`Full week timetable, Division ${timetable.division}`} className="mt-8 hidden lg:block">
-        <WeekTable days={timetable.days} division={timetable.division} />
-      </section>
-
-      {/* Mobile: one readable day at a time. */}
-      <section aria-label={`Daily timetable, Division ${timetable.division}`} className="mt-8 lg:hidden">
-        <DayTabs days={timetable.days} selectedDay={selectedDay} />
-        <h2 className="t-section mb-3 mt-5">{mobileDay.day}</h2>
-        <DayTimeline day={mobileDay} />
-      </section>
+        <details className="tt-week">
+          <summary>See the full week at a glance</summary>
+          <div className="tt-week__body">
+            <WeekTable days={timetable.days} division={timetable.division} />
+          </div>
+        </details>
+      </TimetableLive>
 
       <nav aria-label="Neighbouring divisions" className="mt-10 flex flex-wrap items-center justify-between gap-3">
         {previous ? (

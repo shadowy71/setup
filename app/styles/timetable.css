@@ -1,14 +1,33 @@
 /* ==========================================================================
    Timetable — public division selector + per-division master timetable
    --------------------------------------------------------------------------
-   Text-first and backed: cells are solid elevated panels (never glass over
-   the animated sky), because a timetable is read at 8:55 in a corridor, not
-   admired. The only accents are kind markers — a teal leading edge for
-   batch-wise practicals, a quiet wash for lunch, sand for the empowerment
-   hour — and a warning edge for the entries the source itself flags as
-   needing verification. No backdrop-filter here: the page can hold ~90
-   cells and must stay cheap to scroll on a phone.
+   Text-first and backed: session cards are solid elevated panels (never glass
+   over the animated sky), because a timetable is read at 8:55 in a corridor,
+   not admired. Exactly one surface on the page is glass — the live clock —
+   and it is backed at 90% opacity with a short blur, never stacked.
+
+   Colour does one job: a slim leading edge and a dot name the subject family,
+   so a week can be scanned without reading every code. Seven muted hues (plus
+   a neutral for the long tail) come from the brand triad; lunch and the
+   Empowerment Hour have their own quiet treatments, and the NOW / NEXT states
+   override the subject edge because status matters more than subject. Every
+   state also carries a word, so nothing depends on colour alone.
    ========================================================================== */
+
+.tt-shell {
+  /* Timetable-local accent ramp. Teal is the brand identity; sand and orange
+     are its warm partners; the rest sit at the same lightness so a 3px edge
+     reads equally everywhere and never competes with the teal focus ring.
+     Declared here, scoped to the timetable, not as global theme tokens. */
+  --tt-hue-teal: #2dd4bf;
+  --tt-hue-sky: #8cc9e8;
+  --tt-hue-violet: #c3b0f7;
+  --tt-hue-rose: #ffb4a8;
+  --tt-hue-orange: #fdba74;
+  --tt-hue-sand: #f4e3c1;
+  --tt-hue-mint: #8fe3bf;
+  --tt-hue-neutral: #8fa8a6;
+}
 
 /* ------------------------------------------------------------ selector */
 
@@ -67,6 +86,523 @@
   font-size: 0.75rem;
   line-height: 1.45;
   color: var(--cp-text-muted);
+}
+
+/* ------------------------------------------------------- division header */
+
+.tt-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.tt-head__intro {
+  flex: 1 1 18rem;
+  min-width: 0;
+  max-width: 46rem;
+}
+
+/* The page's only glass surface: one short blur over an opaque-enough
+   backing, with an opaque fallback where backdrop-filter is unavailable. */
+.tt-clock {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: 0.0625rem;
+  min-width: 10.5rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--cp-glass-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--cp-bg-glass-strong);
+  box-shadow: var(--shadow-card), var(--shadow-inset-top);
+  backdrop-filter: blur(10px) saturate(115%);
+  -webkit-backdrop-filter: blur(10px) saturate(115%);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tt-clock {
+    background-color: var(--cp-bg-elevated);
+  }
+}
+
+.tt-clock__time {
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--cp-text-primary);
+}
+
+.tt-clock__seconds {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--cp-text-secondary);
+}
+
+.tt-clock__date {
+  font-size: 0.75rem;
+  color: var(--cp-text-secondary);
+}
+
+.tt-clock__zone {
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cp-text-muted);
+}
+
+@media (max-width: 639px) {
+  .tt-clock {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.6rem;
+  }
+
+  .tt-clock__time {
+    margin-right: auto;
+  }
+}
+
+.tt-help {
+  max-width: 68ch;
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--cp-text-muted);
+}
+
+/* ------------------------------------------------------------ day tabs */
+
+.tt-tabsbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.tt-tabs {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.tt-tab,
+.tt-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: 999px;
+  background-color: var(--cp-bg-elevated);
+  color: var(--cp-text-secondary);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tt-jump {
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--cp-text-muted);
+}
+
+.tt-tab:hover,
+.tt-jump:hover {
+  border-color: var(--cp-border-control);
+  background-color: var(--cp-hover-bg);
+  color: var(--cp-text-primary);
+}
+
+.tt-tab:active,
+.tt-jump:active {
+  background-color: var(--cp-bg-strong);
+}
+
+.tt-tab[aria-pressed='true'] {
+  background-color: var(--cp-selected-bg);
+  border-color: var(--cp-selected-border);
+  color: var(--cp-selected-text);
+}
+
+.tt-tab:focus-visible,
+.tt-jump:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 2px;
+}
+
+/* The real weekday: a dot plus the accessible name "…, today" — a shape,
+   not a colour, so it survives any contrast setting. */
+.tt-tab__today {
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background-color: var(--cp-accent-cyan);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--cp-accent-cyan) 22%, transparent);
+}
+
+/* ------------------------------------------------------- day headline */
+
+.tt-dayhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.75rem;
+  margin: 1.25rem 0 0.6rem;
+}
+
+.tt-dayhead__title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--cp-text-primary);
+}
+
+.tt-dayhead__today {
+  padding: 0.08rem 0.45rem;
+  border: 1px solid var(--cp-selected-border);
+  border-radius: 999px;
+  color: var(--cp-selected-text);
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tt-dayhead__note {
+  font-size: 0.75rem;
+  color: var(--cp-text-muted);
+}
+
+/* One calm sentence mirroring the badges; a live region that only changes
+   when the period does, never once per second. */
+.tt-status {
+  display: inline-flex;
+  max-width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--cp-bg-subtle);
+  color: var(--cp-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------- session cards */
+
+.tt-day {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--cp-bg-elevated);
+  box-shadow: inset 3px 0 0 var(--tt-accent, transparent);
+}
+
+@media (min-width: 640px) {
+  .tt-item {
+    grid-template-columns: 6rem minmax(0, 1fr);
+    padding: 0.8rem 1rem;
+  }
+}
+
+.tt-item__time {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding-top: 0.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tt-item__from {
+  font-size: 0.8125rem;
+  font-weight: 680;
+  color: var(--cp-text-primary);
+}
+
+.tt-item__to {
+  font-size: 0.6875rem;
+  color: var(--cp-text-muted);
+}
+
+.tt-item__span {
+  margin-top: 0.15rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.02em;
+  color: var(--cp-text-subtle);
+}
+
+.tt-item__body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.tt-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.tt-item__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background-color: var(--tt-accent, transparent);
+}
+
+.tt-item__subject {
+  font-size: 0.875rem;
+  font-weight: 660;
+  line-height: 1.35;
+  color: var(--cp-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.tt-item__subject--label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.tt-item__meta {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  color: var(--cp-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.tt-tag {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--cp-text-secondary);
+}
+
+.tt-verify {
+  display: inline-flex;
+}
+
+/* Status. The word is always present; the ring and edge reinforce it. */
+.tt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 780;
+  line-height: 1.5;
+  letter-spacing: 0.1em;
+}
+
+.tt-badge--now {
+  background-color: var(--cp-bg-accent);
+  color: var(--cp-text-on-accent);
+}
+
+.tt-badge--next {
+  border: 1px solid color-mix(in oklab, var(--cp-accent-warm) 55%, var(--cp-border-subtle));
+  background-color: color-mix(in oklab, var(--cp-accent-warm) 10%, var(--cp-bg-elevated));
+  color: var(--cp-text-warm);
+}
+
+.tt-badge--next::before {
+  content: '';
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background-color: currentColor;
+  animation: tt-next-breathe 2.6s ease-in-out infinite;
+}
+
+/* Status outranks subject: the leading edge becomes teal (now) or warm
+   (next); the subject dot stays as a secondary cue. */
+.tt-item--now {
+  border-color: var(--cp-selected-border);
+  background-color: color-mix(in oklab, var(--cp-bg-accent-soft) 60%, var(--cp-bg-elevated));
+  box-shadow:
+    inset 4px 0 0 var(--cp-selected-border),
+    inset 0 0 0 1px var(--cp-selected-border);
+}
+
+.tt-item--next {
+  border-color: color-mix(in oklab, var(--cp-accent-warm) 48%, var(--cp-border-subtle));
+  box-shadow: inset 3px 0 0 var(--cp-text-warm);
+}
+
+.tt-item--lunch {
+  --tt-accent: color-mix(in oklab, var(--brand-sand) 55%, var(--cp-border-subtle));
+  background-color: var(--cp-bg-subtle);
+}
+
+.tt-item--lunch .tt-item__subject {
+  font-weight: 650;
+  color: var(--cp-text-secondary);
+}
+
+.tt-item--special {
+  --tt-accent: color-mix(in oklab, var(--brand-sand) 60%, var(--cp-border-subtle));
+  background-color: color-mix(in oklab, var(--brand-sand) 5%, var(--cp-bg-elevated));
+}
+
+.tt-item--free {
+  --tt-accent: transparent;
+  border-style: dashed;
+  background-color: transparent;
+}
+
+.tt-item--free .tt-item__subject,
+.tt-item--free .tt-item__from {
+  font-weight: 600;
+  color: var(--cp-text-muted);
+}
+
+.tt-item--flagged {
+  border-color: var(--cp-warning-border);
+}
+
+/* -------------------------------------------------------------- weekend */
+
+.tt-weekend {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: var(--cp-bg-elevated);
+}
+
+.tt-weekend__icon {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: 999px;
+  background-color: var(--cp-bg-subtle);
+  color: var(--cp-icon-muted);
+}
+
+.tt-weekend__title {
+  font-size: 0.9375rem;
+  font-weight: 680;
+  color: var(--cp-text-primary);
+}
+
+.tt-weekend__body {
+  max-width: 60ch;
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--cp-text-muted);
+}
+
+/* --------------------------------------------------------------- legend */
+
+.tt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.6875rem;
+  color: var(--cp-text-muted);
+}
+
+.tt-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.tt-legend__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.tt-legend__dot--lunch {
+  background-color: color-mix(in oklab, var(--brand-sand) 55%, var(--cp-border-subtle));
+}
+
+.tt-legend__dot--special {
+  border: 1px solid color-mix(in oklab, var(--brand-sand) 40%, var(--cp-border-subtle));
+  background-color: color-mix(in oklab, var(--brand-sand) 60%, transparent);
+}
+
+/* ------------------------------------------------------------- full week */
+
+.tt-week {
+  margin-top: 2rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: color-mix(in oklab, var(--cp-bg-elevated) 60%, var(--cp-bg-page));
+}
+
+.tt-week > summary {
+  padding: 0.85rem 1rem;
+  color: var(--cp-text-primary);
+  font-size: 0.875rem;
+  font-weight: 650;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.tt-week > summary:hover {
+  color: var(--cp-text-accent);
+}
+
+.tt-week > summary:focus-visible {
+  border-radius: var(--radius-lg);
+  outline: 2px solid var(--cp-focus);
+  outline-offset: -2px;
+}
+
+.tt-week__body {
+  padding: 0.75rem;
 }
 
 /* ---------------------------------------------------------------- table */
@@ -160,8 +696,8 @@
 }
 
 /* Kind markers — shape + colour, never colour alone where it matters. */
-.tt-cell--batch {
-  box-shadow: inset 3px 0 0 var(--cp-bg-accent);
+.tt-cell--accent {
+  box-shadow: inset 3px 0 0 var(--tt-accent, transparent);
 }
 
 .tt-cell--lunch {
@@ -185,116 +721,32 @@
 }
 
 .tt-cell--flagged {
-  box-shadow: inset 0 0 0 1px var(--cp-warning-border);
+  box-shadow:
+    inset 3px 0 0 var(--tt-accent, transparent),
+    inset 0 0 0 1px var(--cp-warning-border);
 }
 
-.tt-verify {
-  display: inline-flex;
-  margin-top: 0.3125rem;
-}
+/* --------------------------------------------------------------- motion */
 
-/* ------------------------------------------------------- mobile timeline */
+@keyframes tt-next-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
 
-.tt-daytabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4375rem;
-}
-
-.tt-daytab {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.5rem;
-  padding: 0.4375rem 0.875rem;
-  border-radius: 999px;
-  border: 1px solid var(--cp-border-subtle);
-  background-color: var(--cp-bg-elevated);
-  color: var(--cp-text-muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.tt-daytab:hover {
-  color: var(--cp-text-primary);
-  border-color: var(--cp-border-control, var(--cp-border));
-  text-decoration: none;
-}
-
-.tt-daytab[aria-current='true'] {
-  background-color: var(--cp-selected-bg, var(--cp-bg-accent-soft));
-  border-color: var(--cp-selected-border);
-  color: var(--cp-text-primary);
-}
-
-.tt-daytab:focus-visible {
-  outline: 2px solid var(--cp-focus);
-  outline-offset: 2px;
-}
-
-.tt-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.tt-slot {
-  display: flex;
-  gap: 0.875rem;
-  align-items: flex-start;
-  padding: 0.75rem 0.875rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--cp-border-subtle);
-  background-color: var(--cp-bg-elevated);
-  font-size: 0.8125rem;
-}
-
-.tt-slot__time {
-  flex-shrink: 0;
-  width: 6.75rem;
-  padding-top: 0.0625rem;
-  font-size: 0.6875rem;
-  font-weight: 650;
-  letter-spacing: 0.03em;
-  color: var(--cp-text-muted);
-  white-space: nowrap;
-}
-
-.tt-slot--batch {
-  box-shadow: inset 3px 0 0 var(--cp-bg-accent);
-}
-
-.tt-slot--lunch {
-  background-color: var(--cp-bg-subtle);
-  color: var(--cp-text-muted);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-}
-
-.tt-slot--special {
-  background-color: color-mix(in oklab, var(--brand-sand) 7%, var(--cp-bg-elevated));
-  box-shadow: inset 3px 0 0 color-mix(in oklab, var(--brand-sand) 55%, transparent);
-}
-
-.tt-slot--blank {
-  border-style: dashed;
-  background-color: transparent;
-  color: var(--cp-text-muted);
-  font-size: 0.75rem;
-}
-
-.tt-slot--flagged {
-  border-color: var(--cp-warning-border);
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tt-daytab {
+  .tt-tab,
+  .tt-jump {
     transition: none;
+  }
+
+  .tt-badge--next::before {
+    animation: none;
+    opacity: 0.85;
   }
 }
