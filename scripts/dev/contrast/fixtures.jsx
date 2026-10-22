@@ -43,6 +43,7 @@ function Fixture() {
         <div className="flex flex-wrap gap-3">
           <Button data-audit="primary" icon="send">Primary action</Button>
           <Button data-audit="accent" tone="accent" icon="plus">Accent action</Button>
+          <Button data-audit="warm" variant="warm" icon="send">Warm action</Button>
           <SheenButton data-audit="sheen" icon="search">Explore campus</SheenButton>
           {['secondary', 'quiet', 'subtle', 'danger'].map((variant) => (
             <Button key={variant} variant={variant} data-audit={variant} icon="check">{variant} action</Button>
@@ -111,7 +112,7 @@ function Fixture() {
         <TiltCard cardClassName="card card-feature p-4"><SampleCopy /><Button className="mt-3">Featured card action</Button></TiltCard>
       </Section>
       <Section id="glass" title="Glass over worst-case contrasting backdrops">
-        {['soft', 'floating', 'strong', 'featured', 'cinematic'].map((tone) => (
+        {['soft', 'floating', 'strong', 'featured', 'premium', 'cinematic', 'read'].map((tone) => (
           <div key={tone} className="p-3" style={{ background: 'linear-gradient(110deg, var(--cp-brand-plate), var(--cp-sky-bg))', borderRadius: 'var(--radius-lg)' }}>
             <GlassSurface tone={tone} className="glass-sheen p-4"><SampleCopy /></GlassSurface>
           </div>

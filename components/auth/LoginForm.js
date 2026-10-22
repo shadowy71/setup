@@ -78,12 +78,12 @@ export function LoginForm({ next = null, children = null }) {
         </Notice>
       ) : null}
 
-      <p className="text-2xs text-muted">
+      <p className="text-2xs text-ink-soft">
         You will be sent to Google to choose your account. Campus+ never sees your Google password and
         never posts anything on your behalf.
       </p>
 
-      <p className="flex items-center gap-1.5 text-2xs text-muted">
+      <p className="flex items-center gap-1.5 text-2xs text-ink-soft">
         <Icon name="lock" size={13} className="shrink-0" />
         Sessions are created on the server, only after Google confirms your address.
       </p>

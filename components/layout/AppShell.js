@@ -7,8 +7,9 @@ import { CommandPaletteHost } from '@/components/search/CommandPalette';
 /**
  * The one application frame.
  *
- * Desktop: a light rail with the brand, the Create action and navigation, plus
- * a glass header carrying search, notifications and the account.
+ * Desktop: a floating glass rail with the brand, the Create action and
+ * navigation, plus a floating glass header carrying search, notifications and
+ * the account.
  * Mobile: a compact glass header and the bottom tab bar, with everything else
  * behind the menu sheet.
  *
@@ -60,7 +61,7 @@ export function AppShell({
 
         <main
           id="content"
-          className="shell-content shell-main mx-auto w-full px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-8"
+          className="shell-content shell-main mx-auto w-full px-4 pb-28 pt-4 sm:px-6 lg:pb-16 lg:pt-5"
         >
           {children}
         </main>

@@ -312,33 +312,59 @@
    Level 2 — a destination that matters (the next events): a little more
              presence, without becoming a second primary. */
 
+/* Level 1 — the small rail islands: a quiet sheet of glass with a teal rim. */
 .island[data-elevation='1'] {
-  --island-surface: color-mix(in oklab, var(--cp-bg-subtle) 92%, transparent);
-  --island-edge: color-mix(in oklab, var(--cp-border-subtle) 82%, transparent);
-  --island-blur: 8px;
+  --island-surface: var(--cp-bg-glass-soft);
+  --island-edge: color-mix(in oklab, var(--cp-glass-border) 78%, transparent);
+  --island-blur: 20px;
   --island-depth: 1.25px;
   --island-shadow:
+    inset 0 1px 0 var(--cp-edge-light),
     0 1px 1px var(--cp-shade),
-    0 18px 34px -30px var(--cp-scrim);
+    0 22px 40px -32px var(--cp-scrim);
 }
 
+/* Level 2 — a destination that matters (the next events): more light, a
+   stronger rim, and a faint teal bloom of its own. */
 .island[data-elevation='2'] {
-  --island-surface: color-mix(in oklab, var(--cp-bg-elevated) 94%, transparent);
-  --island-edge: color-mix(in oklab, var(--cp-border-subtle) 88%, transparent);
-  --island-blur: 11px;
+  --island-surface: var(--cp-bg-glass);
+  --island-edge: color-mix(in oklab, var(--cp-bg-accent) 30%, var(--cp-glass-border));
+  --island-blur: 24px;
   --island-depth: 2px;
   --island-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 1px 1px var(--cp-shade),
-    0 26px 46px -34px var(--cp-scrim);
+    0 30px 52px -34px var(--cp-scrim),
+    0 0 34px -26px var(--cp-glow-accent);
 }
 
-/* Urgent islands carry the accent on the edge, not on the surface. */
-.island[data-tone='urgent'] {
-  border-color: color-mix(in oklab, var(--cp-bg-accent) 22%, var(--cp-border-subtle));
+/* Toned islands carry their colour on the eyebrow and the edge, never on the
+   surface. Warm for time-critical content, teal for community, sand for
+   opportunities. */
+.island[data-tone='urgent'],
+.island[data-tone='warm'] {
+  border-color: color-mix(in oklab, var(--cp-accent-warm) 34%, var(--cp-glass-border));
 }
 
-.island[data-tone='urgent'] .island__eyebrow {
-  --island-eyebrow: var(--cp-text-on-accent-soft);
+.island[data-tone='urgent'] .island__eyebrow,
+.island[data-tone='warm'] .island__eyebrow {
+  --island-eyebrow: var(--cp-text-warm);
+}
+
+.island[data-tone='teal'] {
+  border-color: color-mix(in oklab, var(--cp-bg-accent) 34%, var(--cp-glass-border));
+}
+
+.island[data-tone='teal'] .island__eyebrow {
+  --island-eyebrow: var(--cp-text-accent);
+}
+
+.island[data-tone='sand'] {
+  border-color: color-mix(in oklab, var(--brand-sand) 26%, var(--cp-glass-border));
+}
+
+.island[data-tone='sand'] .island__eyebrow {
+  --island-eyebrow: var(--cp-brand-sand);
 }
 
 /* Hover: a slow, small acknowledgment that this surface is a destination — no
@@ -370,6 +396,7 @@
 
   .island[data-elevation='1'] {
     --island-surface: color-mix(in oklab, var(--cp-bg-subtle) 97%, transparent);
+    --island-edge: color-mix(in oklab, var(--cp-glass-border) 70%, transparent);
   }
 
   .island[data-elevation='2'] {

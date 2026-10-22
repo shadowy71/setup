@@ -30,21 +30,21 @@
   background:
     radial-gradient(
       ellipse 78% 60% at 22% 20%,
-      rgba(40, 70, 150, 0.22),
+      rgba(20, 184, 166, 0.2),
       transparent 62%
     ),
     radial-gradient(
       ellipse 68% 52% at 84% 76%,
-      rgba(16, 40, 110, 0.2),
+      rgba(249, 115, 22, 0.14),
       transparent 64%
     ),
     linear-gradient(
       180deg,
-      #020613 0%,
-      #060d26 28%,
-      #070e2b 50%,
-      #050a1e 72%,
-      #02040b 88%,
+      #03100f 0%,
+      #061a20 28%,
+      #071d24 50%,
+      #05141a 72%,
+      #020c10 88%,
       #000 100%
     );
   transition: opacity 0.4s ease;
@@ -78,7 +78,7 @@
   top: 10%;
   background: radial-gradient(
     ellipse,
-    rgba(42, 78, 160, 0.18),
+    rgba(20, 184, 166, 0.18),
     transparent 70%
   );
   border-radius: 50%;
@@ -92,7 +92,7 @@
   bottom: 12%;
   background: radial-gradient(
     ellipse,
-    rgba(18, 46, 115, 0.16),
+    rgba(244, 227, 193, 0.1),
     transparent 72%
   );
 }
@@ -134,7 +134,7 @@
   transform: translate(-50%, -50%);
   width: min(860px, 92vw);
   height: 220px;
-  background: radial-gradient(ellipse, rgba(12, 24, 64, 0.32), transparent 72%);
+  background: radial-gradient(ellipse, rgba(4, 22, 26, 0.34), transparent 72%);
   filter: blur(16px);
   z-index: 1;
 }
@@ -168,13 +168,14 @@
     transparent,
     rgba(255, 255, 255, 0) 14%,
     #fff 50%,
-    rgba(180, 200, 255, 0.9) 52%,
+    rgba(196, 250, 240, 0.9) 52%,
     rgba(255, 255, 255, 0) 86%,
     transparent
   );
   box-shadow:
     0 0 16px #fff,
-    0 0 42px rgba(120, 150, 255, 0.42);
+    0 0 42px rgba(20, 184, 166, 0.46),
+    0 0 90px rgba(249, 115, 22, 0.16);
 }
 .flare::after {
   content: '';
@@ -284,9 +285,9 @@
   transform: translateX(-50%);
   min-height: 48px;
   padding: 12px 24px;
-  background: rgba(10, 18, 48, 0.85);
-  border: 1px solid #8198c9;
-  color: #e2eaff;
+  background: rgba(6, 26, 32, 0.88);
+  border: 1px solid #6f9a97;
+  color: #eefaf6;
   border-radius: 999px;
   font-family: 'Campus Galactic Space', sans-serif;
   font-weight: 400;
@@ -331,13 +332,13 @@
   100% {
     fill: #fff;
     stroke-width: 0;
-    filter: drop-shadow(0 0 10px rgba(150, 175, 255, 0.52))
-      drop-shadow(0 0 28px rgba(120, 150, 255, 0.18));
+    filter: drop-shadow(0 0 10px rgba(94, 234, 212, 0.5))
+      drop-shadow(0 0 28px rgba(249, 115, 22, 0.16));
   }
 }
 @keyframes tagIn {
   to {
-    color: rgba(215, 225, 255, 0.62);
+    color: rgba(199, 226, 220, 0.66);
   }
 }
 @keyframes breathe {
@@ -345,7 +346,7 @@
     filter: brightness(1);
   }
   to {
-    filter: brightness(1.07) drop-shadow(0 0 14px rgba(120, 150, 255, 0.28));
+    filter: brightness(1.07) drop-shadow(0 0 14px rgba(20, 184, 166, 0.3));
   }
 }
 @keyframes safety {

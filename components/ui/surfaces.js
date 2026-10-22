@@ -21,7 +21,9 @@ export function Card({ className = '', as: Tag = 'div', interactive = false, chi
  *   soft       quieter — panels that should recede
  *   strong     pronounced — sheets and popovers
  *   floating   level 2 — headers, menus, dialogs
- *   featured   level 3 — composer and featured controls
+ *   featured   level 3 — featured controls and hero panels
+ *   premium    level 3, interactive — the composer and featured cards, whose
+ *              specular highlight answers the pointer
  *   cinematic  the dark sky context
  *   read       long-form text, messages and forms — the least decorated tier,
  *              because immersion must stop where reading starts
@@ -33,6 +35,7 @@ export function GlassSurface({ className = '', tone = 'default', as: Tag = 'div'
     strong: 'glass-strong',
     floating: 'glass-floating',
     featured: 'glass-featured',
+    premium: 'glass-premium',
     cinematic: 'glass-cinematic',
     read: 'glass-read',
   };
