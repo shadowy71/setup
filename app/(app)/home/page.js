@@ -11,6 +11,7 @@ import { IslandMotion } from '@/components/home/IslandMotion';
 import { HomePulse, HomeZone, HomeCoda } from '@/components/home/HomePulse';
 import { StreamItem, StreamSlot } from '@/components/home/StreamItem';
 import { HomeRail } from '@/components/home/HomeRail';
+import { HomeFeatureTiles } from '@/components/home/HomeFeatureTiles';
 
 export const metadata = { title: 'Home' };
 
@@ -20,8 +21,9 @@ const QUICK_LINKS = [
   { href: '/campus/events', label: 'Events', icon: 'calendar' },
   { href: '/campus/lost-found', label: 'Lost & found', icon: 'search' },
   { href: '/explore/resources', label: 'Resources', icon: 'book' },
-  { href: '/explore/opportunities', label: 'Opportunities', icon: 'briefcase' },
+  { href: '/explore/opportunities', label: 'Opportunities', icon: 'trend' },
   { href: ROUTES.clubs, label: 'Clubs', icon: 'star' },
+  { href: ROUTES.gigs, label: 'Gigs', icon: 'briefcase' },
 ];
 
 /**
@@ -100,6 +102,10 @@ export default async function HomePage() {
       <DepthField />
 
       <HomePulse user={user} stats={stats} />
+
+      {/* The two doors: Clubs and Gigs, promoted out of the discovery-chip
+          deck into feature tiles a student cannot scroll past unseen. */}
+      <HomeFeatureTiles />
 
       <IslandMotion>
         <div className="home-body">

@@ -241,7 +241,10 @@
     background-image:
       linear-gradient(180deg, var(--cp-edge-light) 0, transparent 1px),
       linear-gradient(180deg, color-mix(in oklab, var(--cp-edge-light) 55%, transparent) 0, transparent 0.875rem),
-      linear-gradient(155deg, var(--cp-glass-tint), transparent 62%);
+      linear-gradient(155deg, var(--cp-glass-tint), transparent 62%),
+      /* A whisper of shade settling at the lower edge, so the sheet reads
+         as a volume lit from above rather than a decal on the page. */
+      linear-gradient(0deg, color-mix(in oklab, var(--cp-bg-page-deep) 14%, transparent), transparent 3.5rem);
     -webkit-backdrop-filter: blur(30px) saturate(180%);
     backdrop-filter: blur(30px) saturate(180%);
     border-color: color-mix(in oklab, var(--cp-glass-border) 88%, transparent);

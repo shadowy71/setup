@@ -24,13 +24,14 @@ import { SearchEntry } from '@/components/search/SearchEntry';
  * text clipping, so the headline can never disappear.
  */
 
-/** The campus areas that exist as routes. No counts, no invented activity. */
+/** The campus areas that exist as routes. No counts, no invented activity.
+ * Clubs and Gigs are deliberately absent: they are the two feature tiles
+ * directly below this band (`HomeFeatureTiles`), and a destination does not
+ * need to be announced twice on the same screen. */
 const DISCOVERY = [
   { href: ROUTES.explore, label: 'Explore', icon: 'search' },
   { href: '/campus/events', label: 'Events', icon: 'calendar' },
   { href: ROUTES.communities, label: 'Communities', icon: 'users' },
-  { href: ROUTES.clubs, label: 'Clubs', icon: 'star' },
-  { href: ROUTES.gigs, label: 'Gigs', icon: 'briefcase' },
   { href: '/explore/projects', label: 'Projects', icon: 'grid' },
   { href: ROUTES.market, label: 'Marketplace', icon: 'tag' },
 ];
