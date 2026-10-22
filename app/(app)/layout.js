@@ -2,6 +2,7 @@ import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
 import { ROUTES } from '@/lib/constants';
+import { getTimetableHref } from '@/lib/timetable/meta';
 import { AppShell } from '@/components/layout/AppShell';
 
 // Every page in this group depends on the signed-in student, so nothing here is
@@ -78,6 +79,9 @@ export default async function AppLayout({ children }) {
     { section: 'Navigation', label: 'Gigs', href: ROUTES.gigs, icon: 'briefcase' },
     { section: 'Navigation', label: 'Clubs', href: ROUTES.clubs, icon: 'star' },
     { section: 'Navigation', label: 'Noticeboard', href: '/campus/noticeboard', icon: 'megaphone' },
+    // Timetable is public; the saved profile division only personalises
+    // where this shortcut lands (division page vs. selector).
+    { section: 'Navigation', label: 'Timetable', href: getTimetableHref(user.profile?.division), icon: 'calendar', keywords: 'schedule classes lectures division' },
     { section: 'Navigation', label: 'Resources', href: '/explore/resources', icon: 'book' },
     { section: 'Navigation', label: 'Projects', href: '/explore/projects', icon: 'sparkle' },
     { section: 'Navigation', label: 'Opportunities', href: '/explore/opportunities', icon: 'briefcase' },
@@ -100,6 +104,7 @@ export default async function AppLayout({ children }) {
       user={{
         username: user.profile?.username,
         displayName: user.profile?.display_name,
+        division: user.profile?.division,
         roles: user.roles,
         staffLabel: user.roles?.includes('admin') ? 'Administrator' : undefined,
       }}
