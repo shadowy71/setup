@@ -5,6 +5,8 @@
  *   - primary  → the Campus+ action button: animated gradient frame around a
  *                deep navy face that reveals the gradient on hover and presses
  *                with a tactile scale. The default for ordinary actions.
+ *   - warm     → the sunset-orange call to action. At most one per screen: the
+ *                action that should lead it. Opaque light with deep ink.
  *   - sheen    → layered reflective light (hero-level actions: Home's Explore
  *                and featured cards) — deliberately dark text on bright light.
  *   - calm     → secondary / quiet / subtle (everything else)
@@ -37,6 +39,7 @@ const SHEEN_LAYERS = [
 ];
 
 const VARIANT = {
+  warm: 'btn-warm',
   secondary: 'btn-secondary',
   ghost: 'btn-quiet',
   quiet: 'btn-quiet',

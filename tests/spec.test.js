@@ -276,16 +276,21 @@ describe('design system (spec §4)', () => {
     expect(globals).toContain('@theme inline');
   });
 
-  it('keeps the blue identity and the designed night palette', () => {
-    expect(globals).toContain('#0b1120'); // midnight-blue canvas
-    expect(globals).toContain('#121824'); // elevated navy surface, not black
-    expect(globals).toContain('#f0f1f4'); // primary ink on the night canvas
-    expect(globals).toContain('#6f9bff'); // accent stays blue and luminous
-    expect(globals).toContain('#5b89f5'); // pressed blue
+  it('keeps the Teal Sand identity and the designed night palette', () => {
+    expect(globals).toContain('#07151d'); // midnight-navy canvas
+    expect(globals).toContain('#10242d'); // deep-ocean elevated surface, not black
+    expect(globals).toContain('#f8faf7'); // soft-ivory ink on the night canvas
+    expect(globals).toContain('#14b8a6'); // the teal identity
+    expect(globals).toContain('#2dd4bf'); // lit teal accent text
+    expect(globals).toContain('#f4e3c1'); // warm sand, the only warmth in type
+    expect(globals).toContain('#f97316'); // sunset orange, energy only
     expect(globals).not.toContain('#f7f5f1'); // the retired light canvas is gone
 
-    // The old orange identity is gone for good.
-    expect(globals).not.toContain('#ef6a1c');
+    // No leftover identity from the previous blue/purple direction: the one
+    // brand is Teal Sand, and an old accent cannot quietly reappear.
+    for (const retired of ['#6f9bff', '#5b89f5', '#9abbff', '#5cd8f7', '#0b1120', '#121824', '#ef6a1c']) {
+      expect(globals).not.toContain(retired);
+    }
     expect(globals).not.toMatch(/--c-accent:\s*#(f|e)[0-9a-f]{2}/i);
   });
 

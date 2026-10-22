@@ -68,7 +68,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   // The one Campus+ theme color (--cp-bg-page); it never follows the device.
-  themeColor: '#0b1120',
+  themeColor: '#07151d',
 };
 
 export default function RootLayout({ children }) {

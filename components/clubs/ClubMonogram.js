@@ -24,8 +24,25 @@ function hueFor(seed) {
   return hash;
 }
 
+/**
+ * The mark stays inside the Teal Sand arc.
+ *
+ * A free-running hue would scatter indigo, magenta and lime through a product
+ * whose entire identity is teal, sand and sunset — exactly the "random
+ * unrelated accents" the design system forbids. So the deterministic seed
+ * picks one of two families and a narrow hue inside it: ~80% teal, ~20% warm
+ * sand. Every club still has its own stable colour; none of them leaves the
+ * brand.
+ */
+function familyHue(seed) {
+  const hash = hueFor(seed);
+  const warm = hash % 5 === 0;
+  const hue = warm ? 20 + (hash % 18) : 166 + (hash % 28);
+  return { hue, hueEnd: hue + 14 };
+}
+
 export function ClubMonogram({ name, id = '', size = 56, className = '' }) {
-  const hue = hueFor(id || name);
+  const { hue, hueEnd } = familyHue(id || name);
   return (
     <span
       className={`club-monogram ${className}`}
@@ -35,7 +52,7 @@ export function ClubMonogram({ name, id = '', size = 56, className = '' }) {
         borderRadius: Math.round(size / 3.4),
         fontSize: size <= 40 ? '0.8125rem' : size <= 64 ? '1.0625rem' : '1.375rem',
         '--club-hue-a': `${hue}`,
-        '--club-hue-b': `${(hue + 46) % 360}`,
+        '--club-hue-b': `${hueEnd}`,
       }}
       aria-hidden="true"
     >

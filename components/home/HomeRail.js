@@ -31,6 +31,7 @@ export function HomeRail({ events = [], notices = [], trending = [], marketplace
         <RailCard
           variant="island"
           elevation={2}
+          tone="warm"
           className="rail-island rail-island--events"
           icon="calendar"
           title="Next on campus"
@@ -74,6 +75,7 @@ export function HomeRail({ events = [], notices = [], trending = [], marketplace
         <RailCard
           variant="island"
           elevation={1}
+          tone="teal"
           className="rail-island rail-island--notices"
           icon="megaphone"
           title="Noticeboard"
@@ -111,6 +113,7 @@ export function HomeRail({ events = [], notices = [], trending = [], marketplace
         <RailCard
           variant="island"
           elevation={1}
+          tone="teal"
           className="rail-island rail-island--activity"
           icon="trend"
           title="Busiest right now"
@@ -151,6 +154,7 @@ export function HomeRail({ events = [], notices = [], trending = [], marketplace
         <RailCard
           variant="island"
           elevation={1}
+          tone="sand"
           className="rail-island rail-island--market"
           icon="tag"
           title="Marketplace"

@@ -15,7 +15,7 @@ export function ShellSearch({ className = '' }) {
   return (
     <SearchField
       className={cn('w-full max-w-md', className)}
-      hint="Search people, posts, communities…"
+      hint="Search Campus+…"
       shortcut
     />
   );

@@ -30,7 +30,7 @@ describe('permanent dark theme', () => {
   it('always renders the root as dark, with the dark browser chrome color', () => {
     const layout = read('app/layout.js');
     expect(layout).toContain('<html lang="en" data-theme="dark">');
-    expect(layout).toContain("themeColor: '#0b1120'");
+    expect(layout).toContain("themeColor: '#07151d'");
     // Nothing about the root is chosen at runtime any more.
     expect(layout).not.toContain('readTheme');
     expect(layout).not.toContain('prefers-color-scheme');
@@ -45,9 +45,9 @@ describe('permanent dark theme', () => {
     expect(globals).not.toContain("[data-theme='system']");
     expect(globals).not.toContain('light-dark(');
     expect(globals).not.toMatch(/@media \(prefers-color-scheme/);
-    // The canonical dark palette is the one that ships.
-    expect(globals).toContain('--cp-bg-page: #0b1120');
-    expect(globals).toContain('--cp-text-primary: #f0f1f4');
+    // The canonical Teal Sand night palette is the one that ships.
+    expect(globals).toContain('--cp-bg-page: #07151d');
+    expect(globals).toContain('--cp-text-primary: #f8faf7');
   });
 
   it('has no light-theme overrides left in component CSS', () => {
