@@ -239,7 +239,7 @@ async function gallery(page, theme) {
     const id = await section.getAttribute('id');
     await paint(page, `${theme}-gallery-${id}`);
   }
-  for (const name of ['primary', 'accent', 'sheen', 'secondary', 'quiet', 'subtle', 'danger', 'delete', 'keycap', 'keycap-accent', 'icon-button', 'chip']) {
+  for (const name of ['primary', 'accent', 'warm', 'sheen', 'secondary', 'quiet', 'subtle', 'danger', 'delete', 'keycap', 'keycap-accent', 'icon-button', 'chip']) {
     const control = page.locator(`[data-audit="${name}"]`);
     await control.scrollIntoViewIfNeeded();
     await page.mouse.move(0, 0); await control.evaluate((element) => element.blur());
@@ -337,18 +337,27 @@ try {
         await context.clearCookies({ name: 'campus_intro' });
         const page = await context.newPage();
         await navigate(page, '/home');
-        await page.waitForFunction(() => {
-          const word = document.querySelector('.campus-intro__word');
-          return word && Number(getComputedStyle(word.parentElement).opacity) >= 0.99;
-        }, undefined, { timeout: 12000 });
+        // The launch overlay is the current implementation: a full-screen stage
+        // whose SVG wordmark is drawn with a stroke animation. Wait until it has
+        // actually started playing rather than for a DOM-string wordmark that no
+        // longer exists (the stale selector this probe used to query).
+        const INTRO = 'section[aria-label="Campus+ intro"]';
+        await page.waitForFunction(
+          (selector) => {
+            const stage = document.querySelector(selector);
+            return Boolean(stage) && stage.dataset.phase !== 'waiting';
+          },
+          INTRO,
+          { timeout: 20000 },
+        );
         const label = `${theme}-${mobile ? 'portrait' : 'desktop'}-intro`;
-        const mark = await page.locator('.campus-intro__word').boundingBox();
+        const mark = await page.locator(`${INTRO} svg`).boundingBox();
         const viewport = page.viewportSize();
         if (!mark || mark.x < -1 || mark.x + mark.width > viewport.width + 1 || mark.y < -1 || mark.y + mark.height > viewport.height + 1) throw new Error('Intro wordmark is cropped');
         report.layouts.push({ label, markFits: true, viewport });
         await screenshot(page, label, false, 60000);
         await page.keyboard.press('Escape');
-        await page.locator('.campus-intro').waitFor({ state: 'detached', timeout: 15000 });
+        await page.locator(INTRO).waitFor({ state: 'detached', timeout: 15000 });
         await paint(page, `${label}-handover`);
         await context.close();
       }

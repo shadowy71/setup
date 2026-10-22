@@ -36,147 +36,176 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Reading surfaces — "the campus after dark": a deep midnight blue canvas,
-     a darker void beneath it for recesses, and a stepped ladder of navy
-     surfaces above. Each rung is deliberately close to its neighbour so
-     depth reads as lighting, not as a stack of boxes. */
-  --cp-bg-page: #0b1120;
-  --cp-bg-page-deep: #060b16;
-  --cp-bg-elevated: #121824;
-  --cp-bg-subtle: #171e2e;
-  --cp-bg-strong: #1e2637;
-  --cp-text-primary: #f0f1f4;
-  --cp-text-secondary: #ccd2de;
-  --cp-text-muted: #afb9cc;
-  --cp-text-subtle: #a8b3c8;
-  --cp-text-inverse: #edf3ff;
-  --cp-bg-inverse: #151e30;
-  --cp-icon: #ccd2de;
-  --cp-icon-muted: #afb9cc;
-  --cp-border: #626f86;
-  --cp-border-subtle: #3d4960;
-  --cp-border-control: #7b89a2;
-  --cp-focus: #a9c4ff;
+  /* Brand — TEAL SAND.
+     ------------------------------------------------------------------------
+     The three identity colours, declared once. Components never reach for
+     these directly: they consume the semantic roles below, which are derived
+     from them. The distribution is 65% midnight/deep-ocean surfaces, 20% teal
+     illumination, 10% sand warmth, 5% orange energy — a *lighting* ratio, not
+     a paint-by-percentages rule. Teal is the identity, orange is excitement,
+     sand stops the dark from going sterile. */
+  --brand-teal: #14b8a6;
+  --brand-teal-bright: #2dd4bf;
+  --brand-sand: #f4e3c1;
+  --brand-orange: #f97316;
+
+  /* Reading surfaces — "the campus after dark", now lit by teal and sunset.
+     A midnight-navy canvas, a darker void beneath it for recesses, and a
+     stepped ladder of deep-ocean surfaces above. Each rung is deliberately
+     close to its neighbour so depth reads as lighting, not as a stack of
+     boxes. */
+  --cp-bg-page: #07151d;
+  --cp-bg-page-deep: #04101a;
+  --cp-bg-elevated: #10242d;
+  --cp-bg-subtle: #143039;
+  --cp-bg-strong: #1a3a44;
+  --cp-text-primary: #f8faf7;
+  --cp-text-secondary: #c8d8d4;
+  --cp-text-muted: #b7c8c6;
+  --cp-text-subtle: #b4c6c4;
+  --cp-text-inverse: #f4fbf8;
+  --cp-bg-inverse: #0c2029;
+  --cp-icon: #c8d8d4;
+  --cp-icon-muted: #b0c2c0;
+  --cp-border: #4e6a70;
+  --cp-border-subtle: #2a464e;
+  --cp-border-control: #75908f;
+  --cp-focus: #5eead4;
   --cp-focus-gap: var(--cp-bg-elevated);
 
-  /* Accent text vs. accent fill, each with its own intentional ink. */
-  --cp-text-accent: #9abbff;
-  --cp-text-on-accent-soft: #d0e0ff;
-  --cp-bg-accent: #6f9bff;
-  --cp-text-on-accent: #0d1730;
-  --cp-bg-accent-hover: #8db1ff;
-  --cp-bg-accent-pressed: #5b89f5;
-  --cp-bg-accent-deep: #3f6ce0;
-  --cp-bg-accent-soft: #293c5c;
-  --cp-bg-accent-tint: #23334e;
-  --cp-accent-pale: #365582;
-  --cp-accent-highlight: #a9c4ff;
-  /* The one cyan in the system: illumination, not a second brand colour. It
-     appears in focus rings, the active-navigation indicator and atmospheric
-     light fields — never as a large fill. */
-  --cp-accent-cyan: #5cd8f7;
+  /* Accent text vs. accent fill, each with its own intentional ink: teal
+     carried as light (text) and as a solid (fill) never share one ink. */
+  --cp-text-accent: #2dd4bf;
+  --cp-text-on-accent-soft: #cdeee7;
+  --cp-bg-accent: #14b8a6;
+  --cp-text-on-accent: #04211d;
+  --cp-bg-accent-hover: #2dd4bf;
+  --cp-bg-accent-pressed: #0f9488;
+  --cp-bg-accent-deep: #0b6e66;
+  --cp-bg-accent-soft: #123a3a;
+  --cp-bg-accent-tint: #0e2e2e;
+  --cp-accent-pale: #1f4f4c;
+  --cp-accent-highlight: #7de8d8;
+  /* The one illuminated cyan-teal: illumination, not a second brand colour.
+     It appears in focus rings, the active-navigation indicator and
+     atmospheric light fields — never as a large fill. */
+  --cp-accent-cyan: #5eead4;
+  /* The warm partner. Sunset orange is reserved for energy: the primary
+     call-to-action, the next event, a live moment. `--cp-text-warm` is its
+     readable text tint (orange itself never carries body copy). */
+  --cp-accent-warm: #f97316;
+  --cp-text-warm: #fdba74;
 
   /* Status text/icons and opaque tinted fills: safe even over glass/images. */
-  --cp-success-text: #75e4b4;
-  --cp-success-bg: #1d3c33;
-  --cp-success-border: #528e76;
-  --cp-warning-text: #f8cf7a;
-  --cp-warning-bg: #403622;
-  --cp-warning-border: #a18a51;
-  --cp-danger-text: #ffaba7;
-  --cp-danger-bg: #442d37;
-  --cp-danger-border: #b37481;
-  --cp-info-text: #93daf1;
-  --cp-info-bg: #213d4d;
-  --cp-info-border: #578eaa;
+  --cp-success-text: #6ee7b7;
+  --cp-success-bg: #0f3a33;
+  --cp-success-border: #2f7f6a;
+  --cp-warning-text: #fcd9a0;
+  --cp-warning-bg: #3a3220;
+  --cp-warning-border: #8f7a45;
+  --cp-danger-text: #ffb4a8;
+  --cp-danger-bg: #3e2029;
+  --cp-danger-border: #a4566a;
+  --cp-info-text: #8fe9df;
+  --cp-info-bg: #0e3238;
+  --cp-info-border: #3f8f8b;
 
   /* Stateful controls: no whole-element opacity to fade their labels. */
-  --cp-hover-bg: #303c51;
+  --cp-hover-bg: #1b3b44;
   --cp-hover-text: var(--cp-text-primary);
   --cp-selected-bg: var(--cp-bg-accent-soft);
   --cp-selected-text: var(--cp-text-on-accent-soft);
-  --cp-selected-border: #96b9ff;
-  --cp-disabled-bg: #293347;
-  --cp-disabled-text: #acb7cc;
-  --cp-disabled-border: #77859e;
-  --cp-disabled-selected-bg: #344c6b;
-  --cp-disabled-selected-text: #c1d5f2;
+  --cp-selected-border: #3fd0bd;
+  --cp-disabled-bg: #223c44;
+  --cp-disabled-text: #b7c8c6;
+  --cp-disabled-border: #6d888c;
+  --cp-disabled-selected-bg: #2b4f52;
+  --cp-disabled-selected-text: #cfeee7;
 
-  /* Buttons: deep-navy rest face, blue reveal, one readable light label.
+  /* Buttons: deep-ocean rest face, teal reveal, one readable light label.
      Every reveal stop is dark enough for normal-size light text. */
-  --cp-button-bg: #101c35;
-  --cp-button-text: #edf3ff;
-  --cp-button-gradient-start: #344fa3;
-  --cp-button-gradient-mid: #264ba0;
-  --cp-button-gradient-end: #175f80;
+  --cp-button-bg: #0b2a2e;
+  --cp-button-text: #f5fbf8;
+  --cp-button-gradient-start: #157a72;
+  --cp-button-gradient-mid: #0f6159;
+  --cp-button-gradient-end: #0a6e66;
   --cp-button-secondary-bg: var(--cp-bg-elevated);
   --cp-button-secondary-text: var(--cp-text-primary);
-  --cp-button-sheen-bg: #ccdafa;
-  --cp-button-sheen-text: #162641;
-  --cp-button-sheen-backing: rgba(204, 218, 250, 0.94);
-  --cp-button-delete-bg: #351f31;
-  --cp-button-delete-text: #fbeef1;
-  --cp-button-delete-border: #bc829b;
-  --cp-keycap-bg: #263348;
-  --cp-keycap-face: #33425d;
-  --cp-keycap-text: #e6edf9;
+  /* The sheen button is sand: warm light with deep ink on it. */
+  --cp-button-sheen-bg: #f4e3c1;
+  --cp-button-sheen-text: #16241f;
+  --cp-button-sheen-backing: rgba(244, 227, 193, 0.94);
+  --cp-button-delete-bg: #3a1f28;
+  --cp-button-delete-text: #ffdfe2;
+  --cp-button-delete-border: #b57e8d;
+  --cp-keycap-bg: #1b3b44;
+  --cp-keycap-face: #275257;
+  --cp-keycap-text: #eaf6f2;
 
   /* Fields own their foregrounds; a field on a sky is still a field. */
-  --cp-input-bg: #1a2130;
-  --cp-input-text: #f0f1f4;
-  --cp-input-placeholder: #afb9cc;
-  --cp-input-focus-bg: #1b2940;
-  --cp-search-bg-start: #223047;
-  --cp-search-bg-end: #1c293e;
-  --cp-search-glow: rgba(111, 155, 255, 0.12);
-  --cp-search-glow-soft: rgba(111, 155, 255, 0.08);
-  --cp-input-icon: #c3d6ff;
+  --cp-input-bg: #0e2630;
+  --cp-input-text: #f8faf7;
+  --cp-input-placeholder: #b7c8c6;
+  --cp-input-focus-bg: #11303a;
+  --cp-search-bg-start: #123039;
+  --cp-search-bg-end: #0e2730;
+  --cp-search-glow: rgba(20, 184, 166, 0.12);
+  --cp-search-glow-soft: rgba(45, 212, 191, 0.07);
+  --cp-input-icon: #7fe3d4;
   --cp-check-bg: var(--cp-bg-accent);
   --cp-check-mark: var(--cp-text-on-accent);
-  --cp-switch-thumb: #d4e1f8;
-  --cp-switch-thumb-checked: #102340;
-  --cp-switch-track: #465671;
+  --cp-switch-thumb: #d7ece5;
+  --cp-switch-thumb-checked: #04211d;
+  --cp-switch-track: #2c4a50;
 
-  /* Glass is backed, not merely blurred. Opacity bounds the worst case
-     over both a white image and the dark sky. Effects stay behind content. */
-  --cp-bg-glass: rgba(26, 33, 48, 0.97);
-  --cp-bg-glass-soft: rgba(26, 33, 48, 0.98);
-  --cp-bg-glass-strong: rgba(26, 33, 48, 0.99);
-  --cp-glass-tint: rgba(111, 155, 255, 0.035);
-  --cp-glass-border: var(--cp-border-subtle);
-  --cp-glass-reflection: rgba(159, 192, 255, 0.045);
-  --cp-scrim: rgba(5, 8, 14, 0.7);
-  --cp-toast-bg: #151e30;
-  --cp-toast-text: #edf3ff;
-  --cp-toast-border: #8a99b3;
+  /* Glass is backed, not merely blurred.
+     ------------------------------------------------------------------------
+     The contrast suite composites every glass token over pure black AND pure
+     white and requires 4.5:1 for every text tier, so the *backing* keeps a
+     high base opacity while these surfaces are far more translucent than a
+     card (14–20% of the environment shows through). Believable glass then
+     comes from light rather than from transparency: a top-edge highlight, a
+     teal rim, a specular gradient wash, a blurred and saturated backdrop, and
+     a deep, soft falloff shadow. */
+  --cp-bg-glass: rgba(13, 34, 41, 0.86);
+  --cp-bg-glass-soft: rgba(12, 31, 38, 0.84);
+  --cp-bg-glass-strong: rgba(11, 29, 36, 0.9);
+  --cp-glass-tint: rgba(45, 212, 191, 0.055);
+  --cp-glass-border: rgba(190, 245, 235, 0.2);
+  --cp-glass-reflection: rgba(233, 255, 250, 0.1);
+  --cp-glass-warmth: rgba(249, 115, 22, 0.06);
+  --cp-scrim: rgba(3, 10, 14, 0.72);
+  --cp-toast-bg: #0d2029;
+  --cp-toast-text: #f8faf7;
+  --cp-toast-border: #6f8d90;
 
   /* Cinematic contexts use named inverse pairings (never descendant overrides
      of .text-* utilities) so entry screens can keep their own deeper sky. */
-  --cp-sky-bg: #0c1526;
-  --cp-sky-text: #f2f6ff;
-  --cp-sky-secondary: #c7d5ef;
-  --cp-sky-muted: #b0c2df;
-  --cp-sky-icon-bg: #21334d;
-  --cp-sky-border: #7a90b2;
-  --cp-sky-wash: rgba(8, 17, 33, 0.42);
+  --cp-sky-bg: #061218;
+  --cp-sky-text: #f4fbf8;
+  --cp-sky-secondary: #cbe0db;
+  --cp-sky-muted: #b7c8c6;
+  --cp-sky-icon-bg: #16333c;
+  --cp-sky-border: #7f9a9c;
+  --cp-sky-wash: rgba(4, 16, 22, 0.38);
   /* The Home depth field: the environment the Campus Islands float over —
-     near-black navy with the accent lines carrying the only light. The
-     canvas reads these, and the ridge/vignette fallbacks paint with them, so
-     the WebGL scene and the no-WebGL composition can never disagree. */
-  --cp-depth-base: #05070f;
-  --cp-depth-line-a: #5ad1e6;
-  --cp-depth-line-b: #6f9bff;
-  --cp-bg-cinematic-glass: rgba(23, 34, 56, 0.98);
-  --cp-cinematic-border: #6d82a6;
+     near-black teal with the accent lines carrying the only light. The canvas
+     reads these, and the ridge/vignette fallbacks paint with them, so the
+     WebGL scene and the no-WebGL composition can never disagree. */
+  --cp-depth-base: #04101a;
+  --cp-depth-line-a: #2dd4bf;
+  --cp-depth-line-b: #f4e3c1;
+  --cp-bg-cinematic-glass: rgba(9, 26, 33, 0.92);
+  --cp-cinematic-border: #6f8d90;
   --cp-brand-plate: #fffdf9;
-  --cp-brand-bg: #87abff;
-  --cp-brand-bg-end: #6f9bff;
-  --cp-brand-mark: #102240;
+  --cp-brand-bg: #2dd4bf;
+  --cp-brand-bg-end: #14b8a6;
+  --cp-brand-mark: #04211d;
 
-  --cp-loader-track: #3a4962;
+  --cp-loader-track: #2a464e;
   --cp-loader-active: var(--cp-text-accent);
-  --cp-poll-track: #2d3b51;
-  --cp-poll-fill: #a2b3d3;
+  --cp-poll-track: #22404a;
+  --cp-poll-fill: #7de8d8;
 
   /* Material highlights/shading are decorative, never foreground ink. */
   --cp-highlight: #ffffff;
@@ -184,9 +213,9 @@
   --cp-shade: rgba(0, 0, 0, 0.3);
 
   /* ------------------------------------------------------------------------
-     Lighting language — "the campus after dark"
+     Lighting language — teal sand
      ------------------------------------------------------------------------
-     Blue is used as light, never as a background wash. Three kinds of value
+     Colour is used as light, never as a background wash. Three kinds of value
      live here, all decorative (none of them is ever foreground ink):
 
        illum-*  wide, low-alpha radial fields that suggest space behind the
@@ -195,16 +224,34 @@
                 to emit: the active nav indicator, focus rings, featured edges.
        edge-*   hairline highlights that catch the "light from above" on the
                 top edge of a raised surface. */
-  --cp-illum-core: rgba(70, 130, 255, 0.16);
-  --cp-illum-cyan: rgba(60, 190, 235, 0.11);
-  --cp-illum-deep: rgba(2, 6, 16, 0.55);
-  --cp-glow-accent: rgba(111, 155, 255, 0.42);
-  --cp-glow-cyan: rgba(92, 216, 245, 0.34);
-  --cp-glow-soft: rgba(111, 155, 255, 0.2);
-  --cp-edge-light: rgba(168, 200, 255, 0.09);
-  --cp-edge-accent: rgba(126, 168, 255, 0.3);
-  --cp-grain: rgba(176, 214, 255, 0.022);
-  --cp-scanline: rgba(176, 222, 255, 0.02);
+  --cp-illum-core: rgba(20, 184, 166, 0.2);
+  --cp-illum-cyan: rgba(45, 212, 191, 0.12);
+  --cp-illum-warm: rgba(249, 115, 22, 0.1);
+  --cp-illum-sand: rgba(244, 227, 193, 0.08);
+  --cp-illum-deep: rgba(2, 10, 14, 0.6);
+  --cp-glow-accent: rgba(20, 184, 166, 0.4);
+  --cp-glow-cyan: rgba(94, 234, 212, 0.3);
+  --cp-glow-warm: rgba(249, 115, 22, 0.26);
+  --cp-glow-soft: rgba(20, 184, 166, 0.18);
+  --cp-edge-light: rgba(198, 255, 246, 0.1);
+  --cp-edge-accent: rgba(45, 212, 191, 0.32);
+  --cp-grain: rgba(190, 230, 225, 0.022);
+  --cp-scanline: rgba(190, 230, 225, 0.018);
+
+  /* Brand-level material names. These are the spec's semantic layer over the
+     audited --cp-* backing above; components may use either, never a literal.
+     `--radius-glass` is the large, soft corner of a suspended sheet. */
+  --ambient-base: var(--cp-bg-page);
+  --ambient-elevated: var(--cp-bg-elevated);
+  --glass-base: var(--cp-bg-glass);
+  --glass-elevated: var(--cp-bg-glass-soft);
+  --glass-strong: var(--cp-bg-glass-strong);
+  --glass-border: var(--cp-glass-border);
+  --glass-highlight: var(--cp-glass-reflection);
+  --glow-teal: var(--cp-glow-accent);
+  --glow-orange: var(--cp-glow-warm);
+  --glow-sand: var(--cp-illum-sand);
+  --radius-glass: 1.375rem;
 
   /* Compatibility bridge — existing semantic utilities remain supported. */
   --c-canvas: var(--cp-bg-page);
@@ -318,6 +365,11 @@
   --color-unread: var(--c-unread);
   --color-ink-surface: var(--c-ink-surface);
 
+  --color-brand: var(--brand-teal);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-sand: var(--brand-sand);
+  --color-brand-orange: var(--brand-orange);
+  --color-warm: var(--cp-accent-warm);
   --color-icon: var(--cp-icon);
   --color-icon-muted: var(--cp-icon-muted);
   --color-control-border: var(--cp-border-control);
@@ -339,6 +391,7 @@
   --radius-lg: 1.125rem;
   --radius-xl: 1.5rem;
   --radius-2xl: 1.75rem;
+  --radius-glass: 1.375rem;
 
   --text-3xs: 0.625rem;
   --text-3xs--line-height: 0.875rem;
@@ -386,7 +439,12 @@
   --color-success: var(--c-success);
   --color-warning: var(--c-warning);
   --color-info: var(--c-info);
+  --color-warm: var(--cp-accent-warm);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-sand: var(--brand-sand);
+  --color-brand-orange: var(--brand-orange);
   --radius-card: var(--radius-lg);
+  --radius-glass: 1.375rem;
 }
 
 /* --------------------------------------------------------------------------
@@ -432,9 +490,12 @@
   body {
     overflow-x: clip;
     background-color: var(--c-canvas);
-    /* A single, whisper-soft warm wash at the top of the canvas: identity
-       without a "gradient background". */
-    background-image: radial-gradient(115% 55% at 50% -12%, color-mix(in oklab, var(--c-accent) 7%, transparent), transparent 70%);
+    /* Two whisper-soft washes at the top of the canvas — teal from the left,
+       warm sand from the right. They are the first painted suggestion of the
+       environment behind the shell, never a "gradient background". */
+    background-image:
+      radial-gradient(95% 48% at 18% -10%, color-mix(in oklab, var(--cp-bg-accent) 9%, transparent), transparent 72%),
+      radial-gradient(70% 42% at 88% -14%, color-mix(in oklab, var(--cp-accent-warm) 6%, transparent), transparent 70%);
     background-repeat: no-repeat;
     background-attachment: fixed;
     color: var(--c-ink);

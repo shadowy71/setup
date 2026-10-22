@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The framework's floating development badge is not part of the product
+  // surface; it overlaps the bottom-left of the rail in local preview.
+  devIndicators: false,
   // Campus+ is text-first: user uploads do not exist and the only external media
   // is a GIF from GIPHY, whose URL is validated against this same host list
   // before it is ever stored (lib/giphy). `unoptimized` keeps GIF animation and

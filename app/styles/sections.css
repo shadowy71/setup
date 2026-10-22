@@ -23,18 +23,21 @@
     position: absolute;
     inset: 0 auto 0 0;
     width: 3px;
+    /* Gigs are the board where work happens, so their rail is the warm half of
+       the palette: sunset orange. Clubs stay teal (people), marketplace stays
+       sand/price — three boards, three identities, one universe. */
     background: linear-gradient(
       to bottom,
-      color-mix(in oklab, var(--c-accent) 82%, transparent),
-      color-mix(in oklab, var(--c-accent) 16%, transparent)
+      color-mix(in oklab, var(--cp-accent-warm) 84%, transparent),
+      color-mix(in oklab, var(--cp-accent-warm) 14%, transparent)
     );
   }
 
   .gig-card:hover::before {
     background: linear-gradient(
       to bottom,
-      var(--c-accent),
-      color-mix(in oklab, var(--c-accent) 32%, transparent)
+      var(--cp-accent-warm),
+      color-mix(in oklab, var(--cp-accent-warm) 34%, transparent)
     );
   }
 
@@ -45,17 +48,17 @@
     width: 2.125rem;
     height: 2.125rem;
     border-radius: var(--radius-sm);
-    border: 1px solid color-mix(in oklab, var(--c-accent) 28%, var(--c-line));
-    background-color: color-mix(in oklab, var(--c-accent) 13%, var(--cp-bg-elevated));
-    color: color-mix(in oklab, var(--c-accent) 70%, var(--cp-text-primary));
+    border: 1px solid color-mix(in oklab, var(--cp-accent-warm) 30%, var(--c-line));
+    background-color: color-mix(in oklab, var(--cp-accent-warm) 12%, var(--cp-bg-elevated));
+    color: var(--cp-text-warm);
     transition:
       background-color 0.18s ease,
       border-color 0.18s ease;
   }
 
   .gig-card:hover .gig-card__glyph {
-    background-color: color-mix(in oklab, var(--c-accent) 20%, var(--cp-bg-elevated));
-    border-color: color-mix(in oklab, var(--c-accent) 44%, var(--c-line));
+    background-color: color-mix(in oklab, var(--cp-accent-warm) 20%, var(--cp-bg-elevated));
+    border-color: color-mix(in oklab, var(--cp-accent-warm) 48%, var(--c-line));
   }
 
   /* Skills are labels, not controls, unless rendered as an <a> in the filter
@@ -65,8 +68,8 @@
     align-items: center;
     gap: 0.25rem;
     border-radius: 999px;
-    border: 1px solid color-mix(in oklab, var(--c-accent) 22%, var(--c-line));
-    background-color: color-mix(in oklab, var(--c-accent) 8%, var(--cp-bg-subtle));
+    border: 1px solid color-mix(in oklab, var(--brand-sand) 24%, var(--c-line));
+    background-color: color-mix(in oklab, var(--brand-sand) 7%, var(--cp-bg-subtle));
     color: var(--cp-text-secondary);
     padding: 0.1875rem 0.5625rem;
     font-size: 0.6875rem;
@@ -89,8 +92,8 @@
   }
 
   a.gig-skill--link:hover {
-    border-color: color-mix(in oklab, var(--c-accent) 48%, var(--c-line));
-    background-color: color-mix(in oklab, var(--c-accent) 16%, var(--cp-bg-subtle));
+    border-color: color-mix(in oklab, var(--brand-sand) 52%, var(--c-line));
+    background-color: color-mix(in oklab, var(--brand-sand) 14%, var(--cp-bg-subtle));
     color: var(--cp-text-primary);
     text-decoration: none;
   }
@@ -160,7 +163,7 @@
     border-radius: 999px;
     background: radial-gradient(
       closest-side,
-      color-mix(in oklab, var(--c-accent) 12%, transparent),
+      color-mix(in oklab, var(--cp-bg-accent) 18%, transparent),
       transparent
     );
     opacity: 0;
@@ -178,11 +181,11 @@
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    color: #f7f9ff;
+    color: var(--cp-text-primary);
     background-image: linear-gradient(
       145deg,
-      hsl(var(--club-hue-a, 214) 52% 32%),
-      hsl(var(--club-hue-b, 196) 56% 22%)
+      hsl(var(--club-hue-a, 176) 46% 30%),
+      hsl(var(--club-hue-b, 190) 52% 20%)
     );
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.16),

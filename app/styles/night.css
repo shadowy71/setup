@@ -1,39 +1,45 @@
 /* ==========================================================================
-   Night — the shared atmospheric environment
+   Night — the shared atmospheric environment ("Teal Sand Glass Universe")
    --------------------------------------------------------------------------
-   "The digital campus after dark": one art-directed environment behind the
-   whole application shell, so no page sits on a flat solid colour.
+   One art-directed environment behind the whole application shell, so no page
+   sits on a flat solid colour. It is the room the glass is suspended in: warm
+   teal light from the upper left, a wide teal field in the centre-right, a
+   sunset-orange bloom low on the right and a whisper of sand at the foot.
 
-   Four composited layers, all decorative, all `pointer-events: none`:
+   Five composited layers, all decorative, all `pointer-events: none`:
 
-     1. light fields  wide radial illumination that suggests space behind the
-                      shell (top-left core, a colder cyan pocket, a deep
-                      vignette that anchors the bottom)
-     2. drifting bloom  two very slow, very dim light blooms that move on
-                      `transform` only, so they never trigger layout or paint
-     3. texture       a fine grain plus the reference's scanline raster, at
-                      strengths low enough to read as atmosphere, not noise
-     4. vignette      the reference's edge falloff, which is what makes the
-                      centre of the screen feel lit rather than flat
+     1. light fields   wide radial illumination that suggests space behind the
+                       shell (teal core top-left, teal field centre-right, warm
+                       sunset low-right, sand at the bottom edge, and a deep
+                       vignette that anchors the corners)
+     2. aurora         one very wide, very dim teal/sand band that travels a
+                       few percent on `transform` only — the environment's slow
+                       breathing, not a moving background
+     3. drifting bloom  two slow teal blooms plus one warm bloom, each on its
+                       own long loop, all `transform`/`opacity`
+     4. texture        a fine grain tile (so large dark fields never band) and
+                       the reference's scanline raster, held to a whisper
+     5. vignette       the edge falloff that makes the middle of the screen feel
+                       lit rather than flat
 
    Rules this file obeys:
 
      * This layer performs no backdrop blurring at all. Blur budgets belong to
-       the glass primitives in surfaces.css; an environment layer must stay
-       cheap, and a full-screen blur is the most expensive thing on the page.
+       the glass primitives in surfaces.css. A full-screen blur is the most
+       expensive thing on a page and belongs to nobody.
      * Nothing here may cover an interactive region: the whole tree is
        `pointer-events: none` and sits below the shell's stacking context.
-     * Motion is compositor-only (transform / opacity). Under
-       `prefers-reduced-motion` every loop stops and the environment becomes
-       a static, still treatment — the atmosphere survives, the movement does
-       not.
+     * Motion is compositor-only (transform / opacity), and every loop stops
+       under `prefers-reduced-motion` — the atmosphere survives, the movement
+       does not.
      * Every colour is a token. This file contains no palette literals.
+     * Phones drop the moving pieces and keep the static light: the same room,
+       without the cost.
 
    It is deliberately NOT a second atmosphere canvas. The sign-in stage keeps
    its ghost scene and Home mounts its own depth field
-   (components/atmosphere/DepthField.js); this layer is the calm,
-   always-present sky underneath every screen, and it costs no animation frame
-   at all.
+   (components/atmosphere/DepthField.js); this layer is the calm, always-present
+   sky underneath every screen, and it costs no animation frame at all.
    ========================================================================== */
 
 /* The environment itself. Fixed so it never scrolls, and behind everything. */
@@ -44,23 +50,46 @@
   pointer-events: none;
   contain: strict;
   background-color: var(--cp-bg-page);
-  /* Layer 1 — the light fields. Warm-cool asymmetry: the core light sits high
-     and to the left, the cyan pocket low and to the right, so the space reads
-     as a room with a light source rather than a symmetrical gradient. */
+  /* Layer 1 — the light fields. Asymmetric on purpose: teal light sits high and
+     to the left, a broad teal field glows in the centre-right, and the sunset
+     only reaches the lower right corner, so the space reads as a room with two
+     light sources (one cool, one warm) instead of a symmetrical gradient. */
   background-image:
-    radial-gradient(120% 78% at 12% -8%, var(--c-illum-core), transparent 62%),
-    radial-gradient(90% 62% at 88% 104%, var(--c-illum-cyan), transparent 68%),
-    linear-gradient(178deg, transparent 42%, var(--c-illum-deep) 100%);
+    radial-gradient(88% 62% at 10% -8%, var(--cp-illum-core), transparent 64%),
+    radial-gradient(70% 54% at 74% 14%, var(--cp-illum-cyan), transparent 70%),
+    radial-gradient(52% 46% at 104% 72%, var(--cp-illum-warm), transparent 72%),
+    radial-gradient(70% 44% at 8% 106%, var(--cp-illum-sand), transparent 74%),
+    linear-gradient(178deg, transparent 38%, var(--cp-illum-deep) 100%);
   background-repeat: no-repeat;
 }
 
-/* Layer 2 — the drifting blooms. Two elements, one long slow loop each, both
+/* Layer 2 — the aurora. One enormous, heavily blurred band travelling a few
+   percent horizontally (never vertically, never rotating). It is the slowest
+   thing in the product and the least noticeable: the light appears to settle,
+   not to animate. */
+.night-sky__aurora {
+  position: absolute;
+  top: -48%;
+  left: -22%;
+  width: 144%;
+  height: 132%;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    linear-gradient(104deg, transparent 22%, var(--cp-illum-cyan) 46%, transparent 62%),
+    linear-gradient(74deg, transparent 34%, var(--cp-illum-warm) 58%, transparent 76%);
+  filter: blur(72px);
+  will-change: transform;
+  animation: night-aurora calc(var(--dur-ambient) * 3.2) var(--ease-settle) infinite alternate;
+}
+
+/* Layer 3 — the drifting blooms. Three elements, one long slow loop each, all
    travelling on transform alone. They are dimmer than the static fields: their
-   job is to make the light feel like it is settling, not to be noticed. */
+   job is to make the light feel alive, never to be noticed. */
 .night-sky__bloom {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
+  filter: blur(64px);
   opacity: 0.5;
   will-change: transform;
 }
@@ -70,7 +99,7 @@
   left: -6rem;
   width: 34rem;
   height: 34rem;
-  background: radial-gradient(circle at 50% 50%, var(--c-glow-soft), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, var(--cp-glow-soft), transparent 70%);
   animation: night-drift-a var(--dur-ambient) var(--ease-settle) infinite alternate;
 }
 
@@ -79,9 +108,29 @@
   bottom: -12rem;
   width: 30rem;
   height: 30rem;
-  background: radial-gradient(circle at 50% 50%, var(--c-glow-cyan), transparent 72%);
+  background: radial-gradient(circle at 50% 50%, var(--cp-glow-cyan), transparent 72%);
   opacity: 0.28;
   animation: night-drift-b calc(var(--dur-ambient) * 1.4) var(--ease-settle) infinite alternate;
+}
+
+/* The warm bloom: sunset light catching the edge of the room. */
+.night-sky__bloom--warm {
+  top: 30%;
+  right: -14rem;
+  width: 26rem;
+  height: 26rem;
+  background: radial-gradient(circle at 50% 50%, var(--cp-glow-warm), transparent 70%);
+  opacity: 0.42;
+  animation: night-drift-c calc(var(--dur-ambient) * 1.8) var(--ease-settle) infinite alternate;
+}
+
+@keyframes night-aurora {
+  from {
+    transform: translate3d(-3%, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 1.5%, 0) scale(1.04);
+  }
 }
 
 @keyframes night-drift-a {
@@ -102,39 +151,65 @@
   }
 }
 
-/* Layer 3 — texture. The grain is a fine dither that stops large dark fields
-   from banding; the scanline raster is the reference's, held to a whisper. */
+@keyframes night-drift-c {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-3.5rem, -1.5rem, 0) scale(1.1);
+  }
+}
+
+/* Layer 4 — texture. Two static, once-rasterised layers in one paint: the
+   reference's scanline raster (felt on a large dark field, invisible on text)
+   and a fine grain tile that stops the very dark corners from banding. Both are
+   held to a whisper. No filter runs at runtime. */
 .night-sky::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    var(--c-scanline) 0,
-    var(--c-scanline) 1px,
-    transparent 1px,
-    transparent 4px
-  );
-  opacity: 0.55;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      var(--cp-scanline) 0,
+      var(--cp-scanline) 1px,
+      transparent 1px,
+      transparent 4px
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.24'/%3E%3C/svg%3E");
+  background-size:
+    auto,
+    140px 140px;
+  opacity: 0.42;
 }
 
+/* Layer 5 — the vignette: the edge falloff that makes the middle of the screen
+   feel lit rather than flat. */
 .night-sky::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* Layer 4 — the vignette, plus the grain in the same paint. */
   background-image:
-    radial-gradient(ellipse at 50% 46%, transparent 38%, var(--c-illum-deep) 100%);
-  box-shadow: inset 0 0 6rem var(--c-grain);
+    radial-gradient(ellipse at 50% 42%, transparent 34%, var(--cp-illum-deep) 100%);
+  box-shadow: inset 0 0 8rem var(--cp-grain);
 }
 
-/* On small screens the blooms would sit mostly off-canvas and cost fill for
-   nothing, so the environment reduces to its static light fields. */
+/* On small screens the moving pieces would sit mostly off-canvas and cost fill
+   for nothing, so the environment reduces to its static light fields. */
 @media (max-width: 767px) {
-  .night-sky__bloom {
+  .night-sky__bloom,
+  .night-sky__aurora {
     display: none;
+  }
+
+  .night-sky::before {
+    background-image: none;
+  }
+
+  .night-sky::after {
+    background-image: radial-gradient(ellipse at 50% 40%, transparent 42%, var(--cp-illum-deep) 100%);
   }
 }
 
@@ -143,7 +218,8 @@
    -------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .night-sky__bloom {
+  .night-sky__bloom,
+  .night-sky__aurora {
     animation: none;
     will-change: auto;
   }
@@ -219,7 +295,7 @@
   box-shadow: var(--shadow-inset-top);
 }
 
-/* The active-region outline: a quiet cyan edge, used for the current section
+/* The active-region outline: a quiet teal edge, used for the current section
    and for focused panels. Never a full-surface glow. */
 .lit-edge {
   box-shadow: var(--shadow-glow-cyan);
@@ -236,8 +312,8 @@
     transparent,
     var(--c-edge-accent) 22%,
     var(--cp-accent-cyan) 50%,
-    var(--c-edge-accent) 78%,
+    var(--cp-text-warm) 78%,
     transparent
   );
-  box-shadow: 0 0 14px var(--c-glow-soft);
+  box-shadow: 0 0 16px var(--cp-glow-soft);
 }

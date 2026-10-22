@@ -39,7 +39,7 @@ export function RsvpForm({ eventId, currentStatus = null, canRsvp = true }) {
             <Button
               type="submit"
               size="sm"
-              variant={currentStatus === option.value ? 'primary' : 'secondary'}
+              variant={currentStatus === option.value ? 'warm' : 'secondary'}
               disabled={rsvp.pending}
             >
               {option.label}

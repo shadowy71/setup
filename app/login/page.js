@@ -49,6 +49,10 @@ export default async function LoginPage({ searchParams }) {
       <div className="login-vignette" aria-hidden="true" />
 
       <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-5 py-10 sm:py-14">
+        {/* The dark wash behind the call to action. It is a background layer,
+            not a backdrop filter: the glass button has to keep sampling the
+            sky and the ghost directly (see app/styles/login.css). */}
+        <span className="login-cta-scrim" aria-hidden="true" />
         {/* Brand area: the logo carries the identity before a single word is read. */}
         <div className="login-intro login-sky flex flex-col items-start">
           <BrandLockup href="/" size="lg" className="login-halo w-fit" wordClass="text-[1.3125rem]" />

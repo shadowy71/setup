@@ -6,8 +6,11 @@
    and (where it does work) a loading state.
 
    The default action button is the supplied gradient-frame button: an
-   animated blue gradient frame around a deep navy face, the face sliding
-   away on hover to reveal the gradient, and a tactile pressed scale.
+   animated teal gradient frame around a deep-ocean face, the face sliding
+   away on hover to reveal the gradient, and a tactile pressed scale. The warm
+   variant (`.btn-warm`) is the sunset-orange call to action: solid light with
+   deep ink on it, so the one most important action on a screen can shout
+   without ever compromising its label.
    ========================================================================== */
 
 @layer components {
@@ -137,9 +140,9 @@
   }
 
   /* --- primary: the Campus+ action button -------------------------------
-     The supplied gradient-frame button, adapted to the warm vibrant blue
-     identity: an animated gradient frame (sky-blue to primary to cyan-blue)
-     around a deep navy face. Hover slides the face away to reveal the
+     The supplied gradient-frame button, adapted to the Teal Sand identity: an
+     animated gradient frame (lit teal to primary to deep sea) around a
+     deep-ocean face. Hover slides the face away to reveal the
      gradient; pressing scales the whole control down tactilely. The source's
      fixed 8px/6px radii ride the Campus+ shape scale. */
 
@@ -259,6 +262,55 @@
   }
 
 
+  /* --- warm: the sunset call to action --------------------------------
+     Used only where one action should lead the screen (publishing a post,
+     posting a gig, an event's primary action). It is a solid, fully opaque
+     light surface with deep ink, so it is the loudest thing on the page
+     without ever being the least readable. Orange is rationed: at most one of
+     these per view. */
+
+  .btn-warm {
+    background-color: var(--cp-accent-warm);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 54%);
+    border-color: color-mix(in oklab, var(--cp-accent-warm) 62%, var(--brand-sand));
+    color: var(--cp-text-on-accent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      0 12px 28px -14px var(--cp-glow-warm),
+      0 2px 6px -4px var(--cp-shade);
+    transition:
+      transform 0.16s var(--ease-out-soft),
+      box-shadow 0.24s ease,
+      background-color 0.2s ease;
+  }
+
+  .btn-warm:hover:not(:disabled):not([aria-disabled='true']) {
+    background-color: color-mix(in oklab, var(--cp-accent-warm) 88%, var(--brand-sand));
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 18px 36px -14px var(--cp-glow-warm),
+      0 0 26px -10px var(--cp-glow-warm);
+  }
+
+  .btn-warm:active:not(:disabled):not([aria-disabled='true']) {
+    transform: translateY(1px) scale(0.99);
+    box-shadow:
+      inset 0 2px 6px rgba(0, 0, 0, 0.18),
+      0 6px 16px -12px var(--cp-glow-warm);
+  }
+
+  .btn-warm:focus-visible {
+    outline: 2px solid var(--cp-focus);
+    outline-offset: 2px;
+  }
+
+  .btn-warm:disabled,
+  .btn-warm[aria-disabled='true'] {
+    background-image: none;
+  }
+
+
   .btn-label {
     position: relative;
     z-index: 1;
@@ -275,35 +327,36 @@
 
   /* --- glass: the sign-in call to action -------------------------------
      A floating piece of illuminated glass over the login scene. The face is
-     deliberately translucent, so the blue ghost and the particle sky show
-     through it; the backdrop blur and saturation make that visible. A cyan
-     rim, a bright top edge and a soft electric-blue glow give it an edge and
-     depth. Hover brightens the rim and lifts the glass; pressing settles it.
+     deliberately translucent, so the teal ghost and the particle sky show
+     through it; the backdrop blur and saturation make that visible. A teal rim,
+     a bright top edge and a warm counter-glow give it an edge and depth. Hover
+     brightens the rim and lifts the glass; pressing settles it.
      Every rule is scoped to .btn-glass, and the button is only used by the
-     sign-in action. Colours are fixed so it reads the same in both themes. */
+     sign-in action. Colours come from the token layer, so the material can
+     never drift away from the rest of the product. */
 
   .btn-glass {
-    --glass-rim: rgba(110, 226, 255, 0.6);
-    --glass-rim-hover: rgba(164, 240, 255, 0.92);
-    --glass-glow: rgba(12, 120, 255, 0.5);
-    --glass-glow-hover: rgba(12, 120, 255, 0.7);
+    --glass-rim: color-mix(in oklab, var(--cp-accent-cyan) 62%, transparent);
+    --glass-rim-hover: color-mix(in oklab, var(--cp-accent-highlight) 92%, transparent);
+    --glass-glow: color-mix(in oklab, var(--cp-bg-accent) 55%, transparent);
+    --glass-glow-hover: color-mix(in oklab, var(--cp-bg-accent) 78%, transparent);
     position: relative;
     min-height: 3.25rem;
-    color: #f4f9ff;
-    background-color: rgba(10, 36, 84, 0.16);
+    color: var(--cp-text-primary);
+    background-color: color-mix(in oklab, var(--cp-bg-accent) 14%, transparent);
     background-image:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.03) 46%, rgba(255, 255, 255, 0) 52%),
-      linear-gradient(118deg, rgba(12, 120, 255, 0.26), rgba(12, 120, 255, 0.04) 52%, rgba(87, 216, 255, 0.16));
-    -webkit-backdrop-filter: blur(22px) saturate(1.9) brightness(1.12);
-    backdrop-filter: blur(22px) saturate(1.9) brightness(1.12);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.03) 46%, rgba(255, 255, 255, 0) 52%),
+      linear-gradient(118deg, color-mix(in oklab, var(--cp-bg-accent) 30%, transparent), transparent 52%, color-mix(in oklab, var(--cp-accent-warm) 18%, transparent));
+    -webkit-backdrop-filter: blur(24px) saturate(1.9) brightness(1.1);
+    backdrop-filter: blur(24px) saturate(1.9) brightness(1.1);
     border: 1px solid var(--glass-rim);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -10px 18px -12px rgba(87, 216, 255, 0.35),
+      inset 0 -10px 18px -12px color-mix(in oklab, var(--cp-accent-cyan) 35%, transparent),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05),
       0 12px 34px -10px var(--glass-glow),
-      0 0 22px -6px rgba(87, 216, 255, 0.25);
-    text-shadow: 0 1px 2px rgba(2, 7, 19, 0.55);
+      0 0 24px -6px color-mix(in oklab, var(--cp-glow-warm) 70%, transparent);
+    text-shadow: 0 1px 2px var(--cp-scrim);
     transition:
       transform 0.28s var(--ease-out-soft),
       box-shadow 0.35s ease,
@@ -319,7 +372,7 @@
     inset: 0 0 auto 0;
     height: 46%;
     border-radius: inherit;
-    background: linear-gradient(180deg, rgba(220, 246, 255, 0.32), rgba(220, 246, 255, 0));
+    background: linear-gradient(180deg, rgba(236, 255, 250, 0.32), rgba(236, 255, 250, 0));
     pointer-events: none;
     z-index: 0;
   }
@@ -327,24 +380,24 @@
   .btn-glass:not(:disabled):not([aria-disabled='true']):hover {
     transform: translateY(-2px);
     border-color: var(--glass-rim-hover);
-    background-color: rgba(12, 44, 98, 0.2);
+    background-color: color-mix(in oklab, var(--cp-bg-accent) 20%, transparent);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.55),
-      inset 0 -10px 18px -12px rgba(87, 216, 255, 0.5),
+      inset 0 -10px 18px -12px color-mix(in oklab, var(--cp-accent-cyan) 50%, transparent),
       inset 0 0 0 1px rgba(255, 255, 255, 0.08),
       0 18px 42px -10px var(--glass-glow-hover),
-      0 0 30px -6px rgba(87, 216, 255, 0.4);
+      0 0 30px -6px color-mix(in oklab, var(--cp-glow-warm) 80%, transparent);
   }
 
   .btn-glass:not(:disabled):not([aria-disabled='true']):active {
     transform: translateY(1px) scale(0.99);
     box-shadow:
-      inset 0 2px 8px rgba(2, 7, 19, 0.36),
+      inset 0 2px 8px var(--cp-shade),
       0 4px 12px -8px var(--glass-glow);
   }
 
   .btn-glass:focus-visible {
-    outline: 2px solid #8fe6ff;
+    outline: 2px solid var(--cp-focus);
     outline-offset: 4px;
   }
 
@@ -353,14 +406,14 @@
      selector is more specific than the shared disabled rule on purpose. */
   .btn.btn-glass:disabled,
   .btn.btn-glass[aria-disabled='true'] {
-    color: #e6f0ff;
-    background-color: rgba(10, 36, 84, 0.2);
+    color: var(--cp-text-primary);
+    background-color: color-mix(in oklab, var(--cp-bg-accent) 18%, transparent);
     background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 50%);
-    border: 1px solid rgba(110, 226, 255, 0.45);
+    border: 1px solid color-mix(in oklab, var(--cp-accent-cyan) 45%, transparent);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.22),
       0 10px 28px -12px var(--glass-glow);
-    text-shadow: 0 1px 2px rgba(2, 7, 19, 0.55);
+    text-shadow: 0 1px 2px var(--cp-scrim);
     cursor: progress;
     transform: none;
     animation: btn-glass-pending 1.8s ease-in-out infinite;
@@ -369,16 +422,16 @@
   @keyframes btn-glass-pending {
     0%,
     100% {
-      border-color: rgba(110, 226, 255, 0.4);
+      border-color: color-mix(in oklab, var(--cp-accent-cyan) 40%, transparent);
     }
     50% {
-      border-color: rgba(164, 240, 255, 0.8);
+      border-color: color-mix(in oklab, var(--cp-accent-highlight) 80%, transparent);
     }
   }
 
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .btn-glass {
-      background-color: rgba(10, 34, 74, 0.92);
+      background-color: var(--cp-bg-glass-strong);
     }
   }
 
@@ -413,16 +466,16 @@
     overflow: clip;
     overflow-clip-margin: 4px;
     --btn-radius: 999px;
-    --sheen-layer-a: color-mix(in oklab, var(--c-highlight) 88%, var(--c-accent-pale));
-    --sheen-layer-b: var(--c-accent);
+    --sheen-layer-a: color-mix(in oklab, var(--brand-sand) 86%, var(--cp-accent-pale));
+    --sheen-layer-b: var(--cp-accent-warm);
     background-color: var(--cp-button-sheen-bg);
     border-color: var(--cp-border-control);
     color: var(--cp-button-sheen-text);
     box-shadow: var(--shadow-inset-top);
   }
 
-  /* A pearl-blue backing bounds the blended layers' luminance in every
-     animation frame. The liquid reflection is visible, but never becomes ink. */
+  /* A sand backing bounds the blended layers' luminance in every animation
+     frame. The liquid reflection is visible, but never becomes ink. */
   .btn-sheen::after {
     content: '';
     position: absolute;
@@ -718,8 +771,8 @@
   }
 
   .icon-btn:hover:not(:disabled):not([aria-disabled='true']) {
-    background-color: color-mix(in oklab, var(--c-ink) 6%, transparent);
-    color: var(--c-ink);
+    background-color: color-mix(in oklab, var(--cp-bg-accent) 14%, transparent);
+    color: var(--cp-text-primary);
   }
 
   .icon-btn:active:not(:disabled):not([aria-disabled='true']) {
@@ -750,14 +803,27 @@
       background-color 0.16s ease;
   }
 
+  .control {
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--cp-edge-light) 70%, transparent) 0,
+      transparent 1px
+    );
+  }
+
   .control:hover:not(:disabled):not([aria-disabled='true']) {
     border-color: var(--cp-border-control);
+    background-color: color-mix(in oklab, var(--cp-input-bg) 88%, var(--cp-bg-accent));
   }
 
   .control:focus {
     outline: 2px solid var(--cp-focus);
     outline-offset: 2px;
     border-color: var(--cp-focus);
+    background-color: var(--cp-input-focus-bg);
+    box-shadow:
+      0 0 0 4px color-mix(in oklab, var(--cp-glow-accent) 40%, transparent),
+      inset 0 1px 2px var(--c-shade);
     background-color: var(--cp-input-focus-bg);
     box-shadow: inset 0 1px 2px var(--c-shade);
   }
@@ -835,11 +901,11 @@
   }
 
   /* --- the Campus+ search pill ------------------------------------------
-     The supplied soft-blue search: a gradient frame around a lighter
-     gradient field, an offset highlight edge above and a glowing blue edge
-     below, closed by a round magnifier button. Scoped (`search-pill*`) so it
-     can live anywhere in the app, and drawn from the blue tokens so the same
-     liquid-glass light works in both themes. */
+     The supplied glass search: a gradient frame around a lighter gradient
+     field, an offset highlight edge above and a glowing teal edge below,
+     closed by a round magnifier button. Scoped (`search-pill*`) so it can live
+     anywhere in the app, and drawn from the token layer so the same
+     liquid-glass light appears on every screen. */
 
   .search-pill {
     position: relative;
@@ -855,12 +921,29 @@
     width: 100%;
     border-radius: 50px;
     padding: 5px;
-    border: 1px solid var(--cp-border-control);
+    border: 1px solid color-mix(in oklab, var(--cp-glass-border) 82%, var(--cp-border-control));
     background: linear-gradient(
       135deg,
       var(--cp-search-bg-start),
       var(--cp-search-bg-end) 100%
     );
+    box-shadow:
+      inset 0 1px 0 var(--cp-edge-light),
+      0 10px 26px -24px var(--cp-scrim);
+    transition:
+      border-color 200ms ease,
+      box-shadow 240ms ease;
+  }
+
+  .search-pill__shell:hover {
+    border-color: color-mix(in oklab, var(--cp-bg-accent) 46%, var(--cp-glass-border));
+  }
+
+  .search-pill__shell:focus-within {
+    border-color: color-mix(in oklab, var(--cp-bg-accent) 72%, var(--cp-glass-border));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      0 0 0 3px color-mix(in oklab, var(--cp-glow-accent) 32%, transparent);
   }
 
   .search-pill__shell::before,

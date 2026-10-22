@@ -52,8 +52,9 @@ export function PostComposer({ communityId = null, defaultKind = 'post', compact
       ref={formRef}
       action={run}
       className={cn(
-        // Level-3 featured glass: the one surface on the feed allowed to glow.
-        'glass-featured rounded-[var(--radius-lg)] overflow-hidden transition-shadow',
+        // Level-3 premium glass: the one surface on the feed allowed to glow,
+        // and the only one whose highlight answers the pointer.
+        'glass-premium rounded-[var(--radius-lg)] overflow-hidden transition-shadow',
         focused ? 'shadow-[var(--shadow-raised)]' : null,
       )}
       onSubmit={(event) => {
@@ -71,7 +72,7 @@ export function PostComposer({ communityId = null, defaultKind = 'post', compact
       }}
     >
       {!compact ? (
-        <div className="flex items-center gap-2 border-b border-line bg-surface-2 px-4 py-2.5">
+        <div className="flex items-center gap-2 border-b border-glass-border px-4 py-2.5">
           <span className="hidden items-center gap-1.5 text-2xs font-semibold text-muted sm:flex">
             <Icon name="plus" size={12} />
             New
@@ -189,7 +190,7 @@ export function PostComposer({ communityId = null, defaultKind = 'post', compact
               <div className="flex flex-wrap items-center gap-2">
                 <GifPicker value={gif} onPick={setGif} onRemove={() => setGif(null)} />
               </div>
-              <Button type="submit" tone="accent" size="lg" icon="send" loading={pending} disabled={!canSubmit}>
+              <Button type="submit" variant="warm" size="lg" icon="send" loading={pending} disabled={!canSubmit}>
                 {pending ? 'Posting…' : isPoll ? 'Publish poll' : kind === 'discussion' ? 'Start discussion' : 'Post'}
               </Button>
             </div>

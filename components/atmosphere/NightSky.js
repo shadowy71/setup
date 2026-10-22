@@ -8,6 +8,10 @@
  * The compositor owns the motion, and the browser pauses it on a hidden tab
  * for free.
  *
+ * The Teal Sand treatment lives in app/styles/night.css: teal light from the
+ * upper left, a broad teal field centre-right, a sunset bloom low on the right
+ * and sand at the foot — a room with two light sources, not a gradient.
+ *
  * It is deliberately not one of the canvases. The sign-in stage keeps its
  * ghost scene (`./GhostScene`) and Home mounts its own depth field
  * (`./DepthField`); this layer is the environment underneath everything, and
@@ -21,8 +25,10 @@
 export function NightSky() {
   return (
     <div className="night-sky" aria-hidden="true">
+      <div className="night-sky__aurora" />
       <div className="night-sky__bloom night-sky__bloom--a" />
       <div className="night-sky__bloom night-sky__bloom--b" />
+      <div className="night-sky__bloom night-sky__bloom--warm" />
     </div>
   );
 }

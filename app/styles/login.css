@@ -12,28 +12,37 @@
      the fallback eye pulse are all removed.
    ========================================================================== */
 
-/* The reference's deep navy atmospheric background: deep navy with subtle static radial blue illumination. */
+/* The entry sky: the same midnight/deep-ocean room as the rest of the product,
+   lit by a broad teal field behind the ghost and a sunset reach at the lower
+   right. The sign-in screen is the front door to the Glass Universe, not a
+   separate visual world. */
 .login-stage {
-  background-color: #020713;
+  background-color: var(--cp-sky-bg);
   background-image:
-    radial-gradient(circle at 50% 48%, rgba(20, 100, 220, 0.16) 0%, rgba(10, 45, 110, 0.08) 38%, transparent 70%),
-    radial-gradient(circle at 50% 12%, rgba(23, 136, 255, 0.07) 0%, transparent 45%);
+    radial-gradient(circle at 50% 46%, rgba(20, 184, 166, 0.18) 0%, rgba(9, 58, 60, 0.1) 38%, transparent 70%),
+    radial-gradient(circle at 50% 10%, rgba(45, 212, 191, 0.09) 0%, transparent 45%),
+    radial-gradient(circle at 88% 92%, rgba(249, 115, 22, 0.1) 0%, transparent 52%);
 }
 
 /* Decorative layers: the ghost canvas and the scanline/vignette overlay. */
 .login-ghost-layer {
+  /* The artwork is atmosphere, not a light source behind the copy: held at 0.78
+     so the ghost keeps its shape and its eyes while the text column above it
+     stays at reading luminance. */
+  opacity: 0.78;
+
   /* The reference's ghost palette. The WebGL scene reads these tokens, so the
      colours live here and nowhere in the component code. */
-  --ghost-body: #06284d;
-  --ghost-bright: #147dff;
-  --ghost-light: #5cdcff;
-  --ghost-eye: #4cdcff;
-  --ghost-socket: #00040a;
-  --ghost-ambient: #12355f;
-  --ghost-rim-a: #1788ff;
-  --ghost-rim-b: #69dfff;
-  --ghost-firefly: #6ce1ff;
-  --ghost-trail: #1688ff;
+  --ghost-body: #08302e;
+  --ghost-bright: #14b8a6;
+  --ghost-light: #5eead4;
+  --ghost-eye: #9df3e8;
+  --ghost-socket: #02100f;
+  --ghost-ambient: #0d3c3d;
+  --ghost-rim-a: #2dd4bf;
+  --ghost-rim-b: #f4e3c1;
+  --ghost-firefly: #99f6e4;
+  --ghost-trail: #14b8a6;
 
   position: absolute;
   inset: 0;
@@ -56,11 +65,11 @@
   z-index: 1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at center, transparent 36%, rgba(0, 3, 11, 0.56) 100%),
+    radial-gradient(ellipse at center, transparent 36%, rgba(2, 12, 14, 0.6) 100%),
     repeating-linear-gradient(
       to bottom,
-      rgba(176, 222, 255, 0.025) 0,
-      rgba(176, 222, 255, 0.025) 1px,
+      rgba(190, 240, 232, 0.025) 0,
+      rgba(190, 240, 232, 0.025) 1px,
       transparent 1px,
       transparent 4px
     );
@@ -87,24 +96,24 @@
 }
 
 .login-ghost-stop-a {
-  stop-color: #1688ff;
+  stop-color: #2dd4bf;
 }
 
 .login-ghost-stop-b {
-  stop-color: #0754aa;
+  stop-color: #0b6e66;
 }
 
 .login-ghost-stop-c {
-  stop-color: #031629;
+  stop-color: #04211f;
 }
 
 .login-ghost-socket {
-  fill: #010816;
+  fill: #01100e;
 }
 
 .login-ghost-eye {
-  fill: #55dfff;
-  filter: drop-shadow(0 0 7px #168dff);
+  fill: #a8f7ec;
+  filter: drop-shadow(0 0 7px #2dd4bf);
   transform-box: fill-box;
   transform-origin: center;
   animation: login-ghost-eye 2s ease-in-out infinite;
@@ -141,31 +150,30 @@
   line-height: 1.14;
   letter-spacing: -0.035em;
   text-transform: uppercase;
-  color: #effaff;
+  color: var(--cp-sky-text);
   text-shadow:
-    0 0 4px rgba(70, 180, 255, 0.42),
-    0 0 19px rgba(20, 125, 255, 0.5),
-    0 0 42px rgba(8, 83, 193, 0.28);
+    0 0 4px rgba(94, 234, 212, 0.4),
+    0 0 20px rgba(20, 184, 166, 0.46),
+    0 0 44px rgba(249, 115, 22, 0.16);
 }
 
-/* The reference's gradient on the last phrase. */
+/* The last phrase, lit. A solid mint-teal rather than gradient-clipped text:
+   painted-over glyphs cannot be measured for contrast (the paint is the text
+   itself), and at display size the sweep from sand to teal was invisible while
+   the solid tone measures 8:1 on the stage. The warmth stays in the glow. */
 .login-title-accent {
-  background: linear-gradient(105deg, #d8f2ff 7%, #52bbff 47%, #0d67dd 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: none;
-  filter: drop-shadow(0 0 14px rgba(20, 125, 255, 0.5));
+  color: var(--cp-accent-highlight);
+  text-shadow: 0 0 22px color-mix(in oklab, var(--cp-accent-highlight) 55%, transparent);
 }
 
-/* The reference's title rule: a blue line that fades at both ends. */
+/* The title rule: teal light with a sand core, fading at both ends. */
 .login-rule {
   display: block;
   width: min(196px, 45vw);
   height: 1px;
   margin-top: 1.1rem;
-  background: linear-gradient(90deg, transparent, #2998ff 23%, #c1f0ff 50%, #2998ff 77%, transparent);
-  box-shadow: 0 0 20px rgba(19, 137, 255, 0.58);
+  background: linear-gradient(90deg, transparent, #14b8a6 23%, #f4e3c1 50%, #14b8a6 77%, transparent);
+  box-shadow: 0 0 22px rgba(20, 184, 166, 0.55);
 }
 
 /* Supporting labels take the reference's DM Mono. */
@@ -200,4 +208,41 @@
   .login-ghost-eye {
     animation: none;
   }
+}
+
+
+/* The soft scrim behind the sign-in column.
+   --------------------------------------------------------------------------
+   The ghost is brightest exactly where the call to action sits, so a wide,
+   very soft dark ellipse is painted *behind* the column (never a filter, never
+   an ancestor with a backdrop effect) to hold the button's rim and the support
+   copy above the scene's luminance. It is the login screen's version of the
+   depth field's scrim: separation without dimming the artwork. */
+.login-cta-scrim {
+  position: absolute;
+  z-index: -1;
+  inset: -2rem -3rem;
+  pointer-events: none;
+  /* Fixed-length radii, and a fade that closes well before the box's own edge:
+     a percentage ellipse still carries a few percent of ink where its box is
+     cut, which paints a faint rectangle around the column. This one is fully
+     transparent by the time it reaches the edge. */
+  background-image:
+    radial-gradient(
+      ellipse 430px 360px at 50% 42%,
+      color-mix(in oklab, var(--cp-bg-page-deep) 90%, transparent) 0%,
+      color-mix(in oklab, var(--cp-bg-page-deep) 82%, transparent) 46%,
+      transparent 88%
+    ),
+    radial-gradient(
+      ellipse 380px 220px at 50% 74%,
+      color-mix(in oklab, var(--cp-bg-page-deep) 84%, transparent) 0%,
+      transparent 86%
+    );
+}
+
+/* The sign-in heading carries the identity: sand at the leading edge, teal
+   through the body, and a warm shadow that keeps it legible on the field. */
+.login-title {
+  text-wrap: balance;
 }

@@ -1,34 +1,82 @@
+import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { LinkButton } from '@/components/ui';
+import { Icon } from '@/components/ui/icons';
 import { SearchEntry } from '@/components/search/SearchEntry';
 
 /**
  * The threshold — the first thing a student sees on Home.
  *
  * Deliberately *not* a card: this is the environment, and the greeting is set
- * as editorial display type directly over it. Three things live here and
- * nothing else:
+ * as editorial display type directly over it. The band carries:
  *
- *   - who you are and when it is (a small live marker, the name at display
- *     size, one line of context),
+ *   - who you are and where you are (a small live marker, the greeting, one
+ *     line of context),
  *   - the two ways in (Explore, and the search door),
+ *   - the discovery deck: the campus areas this application actually has,
+ *     each one a real route, never a chip that pretends to filter,
  *   - a thin column of counts, each one a real length of something this page
- *     already loaded — never a fabricated metric, and never a number that
- *     implies activity the database does not have.
+ *     already loaded — never a fabricated metric.
  *
- * The counts are rendered from `stats`, so the page decides which of them exist;
- * a module with nothing in it simply does not appear.
+ * The name is lit from the leading edge and settles into sand by the trailing
+ * edge; that gradient is the one place on the page where the brand's three
+ * colours meet. `@supports` keeps the plain token colour for anything without
+ * text clipping, so the headline can never disappear.
  */
+
+/** The campus areas that exist as routes. No counts, no invented activity. */
+const DISCOVERY = [
+  { href: ROUTES.explore, label: 'Explore', icon: 'search' },
+  { href: '/campus/events', label: 'Events', icon: 'calendar' },
+  { href: ROUTES.communities, label: 'Communities', icon: 'users' },
+  { href: ROUTES.clubs, label: 'Clubs', icon: 'star' },
+  { href: ROUTES.gigs, label: 'Gigs', icon: 'briefcase' },
+  { href: '/explore/projects', label: 'Projects', icon: 'grid' },
+  { href: ROUTES.market, label: 'Marketplace', icon: 'tag' },
+];
+
+/**
+ * The greeting's gesture. An SVG rather than an emoji: emoji hands render as a
+ * completely different illustration on every platform (and on some Linux
+ * images as a colour square), whereas this one is drawn in the product's own
+ * teal-to-sand light and reads as part of the identity. It is decorative, so
+ * it is hidden from assistive technology; the greeting itself says "Hey".
+ */
+function HandWave() {
+  return (
+    <span className="home-pulse__wave" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="0.72em" height="0.72em" fill="none" focusable="false">
+        <defs>
+          <linearGradient id="campus-wave-gradient" x1="4" y1="22" x2="20" y2="4" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" style={{ stopColor: 'var(--cp-bg-accent)' }} />
+            <stop offset="55%" style={{ stopColor: 'var(--cp-accent-highlight)' }} />
+            <stop offset="100%" style={{ stopColor: 'var(--brand-sand)' }} />
+          </linearGradient>
+        </defs>
+        <path
+          d="M7.2 11.3V5.4a1.6 1.6 0 0 1 3.2 0v5.1m0-.6V3.8a1.6 1.6 0 0 1 3.2 0v6.4m0-.5V4.9a1.6 1.6 0 0 1 3.2 0v6.2m0-.3V7.4a1.5 1.5 0 0 1 3 0v7.1c0 3.9-2.6 6.6-6.5 6.6-3.1 0-5-1.5-6.4-4.3l-2.5-5a1.6 1.6 0 0 1 2.8-1.5l1.9 3.2"
+          stroke="url(#campus-wave-gradient)"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
 export function HomePulse({ user, stats = [] }) {
   const name = (user.profile.display_name || user.profile.username).split(' ')[0];
   const context =
     user.profile.branch && user.profile.show_branch_year
-      ? `${user.profile.branch} · everything happening around campus right now`
-      : 'Everything happening around campus right now';
+      ? `${user.profile.branch} · everything happening on campus, right now`
+      : 'Everything happening on campus, right now';
 
   return (
     <section className="home-pulse" aria-labelledby="home-greeting">
       <span className="home-pulse__aurora" aria-hidden="true" />
+      <span className="home-pulse__spark home-pulse__spark--teal" aria-hidden="true" />
+      <span className="home-pulse__spark home-pulse__spark--warm" aria-hidden="true" />
 
       <div className="home-pulse__grid">
         <div className="min-w-0">
@@ -37,8 +85,11 @@ export function HomePulse({ user, stats = [] }) {
             PCCOE · Campus feed
           </p>
           <h1 id="home-greeting" className="home-pulse__title">
-            Good to see you,
-            <span className="home-pulse__name">{name}</span>
+            <span className="home-pulse__greet">Hey,</span>
+            <span className="home-pulse__name">
+              {name}
+              <HandWave />
+            </span>
           </h1>
           <p className="home-pulse__lead">{context}</p>
 
@@ -47,9 +98,18 @@ export function HomePulse({ user, stats = [] }) {
               Explore campus
             </LinkButton>
             <div className="home-pulse__search">
-              <SearchEntry />
+              <SearchEntry hint="Search people, posts, events…" />
             </div>
           </div>
+
+          <nav className="home-discover" aria-label="Campus areas">
+            {DISCOVERY.map((item) => (
+              <Link key={item.href} href={item.href} className="discover-chip">
+                <Icon name={item.icon} size={13} />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </div>
 
         {stats.length ? (

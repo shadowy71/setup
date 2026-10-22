@@ -29,9 +29,9 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: clamp(1.75rem, 4vh, 3rem);
-  min-height: clamp(17rem, 38vh, 25rem);
-  padding-block: clamp(2.25rem, 6vh, 4.5rem) clamp(1.5rem, 3vh, 2.25rem);
+  gap: clamp(1.5rem, 3.4vh, 2.5rem);
+  min-height: clamp(15rem, 33vh, 22rem);
+  padding-block: clamp(1.75rem, 5vh, 3.5rem) clamp(1.25rem, 2.6vh, 2rem);
 }
 
 /* A single soft light behind the greeting — the only place on the page where
@@ -46,16 +46,97 @@
    overflow, so the glow still reaches the screen edge and the page still cannot
    be dragged sideways. Nothing about the composition changed — only what the
    browser is allowed to scroll. */
+/* The band's light: teal from the leading edge, sand through the middle, a
+   reach of sunset on the trailing side. It is the room's light catching the
+   greeting — the only place the three brand colours meet. */
 .home-pulse__aurora {
   position: absolute;
   z-index: 0;
-  inset: -30% -20% auto -20%;
-  height: 120%;
+  inset: -34% -20% auto -20%;
+  height: 128%;
   pointer-events: none;
-  opacity: 0.85;
+  opacity: 0.9;
   background-image:
-    radial-gradient(46% 62% at 18% 42%, color-mix(in oklab, var(--cp-accent-cyan) 13%, transparent) 0%, transparent 72%),
-    radial-gradient(38% 52% at 62% 22%, color-mix(in oklab, var(--cp-accent-highlight) 10%, transparent) 0%, transparent 76%);
+    radial-gradient(44% 60% at 16% 40%, color-mix(in oklab, var(--cp-bg-accent) 22%, transparent) 0%, transparent 72%),
+    radial-gradient(34% 48% at 54% 18%, color-mix(in oklab, var(--brand-sand) 9%, transparent) 0%, transparent 74%),
+    radial-gradient(30% 44% at 92% 62%, color-mix(in oklab, var(--cp-accent-warm) 12%, transparent) 0%, transparent 76%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-pulse__aurora {
+    animation: aurora-breathe 18s var(--ease-settle) infinite alternate;
+  }
+}
+
+@keyframes aurora-breathe {
+  from {
+    transform: translate3d(-1.5%, 0, 0) scale(1);
+    opacity: 0.78;
+  }
+  to {
+    transform: translate3d(1.5%, -1%, 0) scale(1.04);
+    opacity: 0.95;
+  }
+}
+
+/* Two specks of light in the empty band — the only decorations on the page
+   that are not attached to anything. They drift a few pixels on transform, are
+   invisible to assistive technology and disappear under reduced motion. */
+.home-pulse__spark {
+  position: absolute;
+  z-index: 0;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.home-pulse__spark--teal {
+  top: 18%;
+  left: 58%;
+  background-color: var(--cp-accent-cyan);
+  box-shadow:
+    0 0 10px 2px var(--cp-glow-cyan),
+    0 0 30px 6px var(--cp-glow-soft);
+}
+
+.home-pulse__spark--warm {
+  top: 52%;
+  left: 88%;
+  width: 0.25rem;
+  height: 0.25rem;
+  background-color: var(--cp-text-warm);
+  box-shadow:
+    0 0 10px 2px var(--cp-glow-warm),
+    0 0 26px 8px var(--cp-glow-warm);
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-pulse__spark--teal {
+    animation: spark-drift 13s var(--ease-settle) infinite alternate;
+  }
+
+  .home-pulse__spark--warm {
+    animation: spark-drift 17s var(--ease-settle) infinite alternate-reverse;
+  }
+}
+
+@keyframes spark-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0.75rem, -1.25rem, 0);
+  }
+}
+
+@media (max-width: 767px) {
+  .home-pulse__spark--warm,
+  .home-pulse__spark--teal {
+    display: none;
+  }
 }
 
 .home-pulse__grid {
@@ -97,22 +178,75 @@
 }
 
 .home-pulse__title {
-  margin-top: clamp(0.75rem, 2vh, 1.25rem);
+  margin-top: clamp(0.875rem, 2vh, 1.375rem);
   font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
   font-weight: 500;
   letter-spacing: 0.01em;
   color: var(--cp-text-muted);
 }
 
-.home-pulse__name {
+.home-pulse__greet {
   display: block;
+}
+
+.home-pulse__name {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
   margin-top: 0.35rem;
-  font-size: clamp(2.25rem, 1.35rem + 3.9vw, 4rem);
-  font-weight: 640;
+  font-size: clamp(2.375rem, 1.35rem + 4.1vw, 4.25rem);
+  font-weight: 660;
   line-height: 0.96;
-  letter-spacing: -0.038em;
+  letter-spacing: -0.04em;
   color: var(--cp-text-primary);
   text-wrap: balance;
+}
+
+/* The gesture: a drawn hand in the brand's own teal-to-sand light. It waves
+   twice on arrival and then rests — a greeting, not a loop competing with the
+   feed. */
+.home-pulse__wave {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: 0.78em;
+  line-height: 1;
+  padding-bottom: 0.04em;
+  transform-origin: 72% 84%;
+  filter: drop-shadow(0 4px 14px var(--cp-glow-accent));
+}
+
+.home-pulse__wave svg {
+  display: block;
+}
+
+/* Inside the gradient name, the hand keeps its own colours. */
+.home-pulse__name .home-pulse__wave {
+  color: var(--cp-accent-highlight);
+  -webkit-text-fill-color: initial;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-pulse__wave {
+    animation: pulse-wave 1.6s var(--ease-spring) 0.35s 2;
+  }
+}
+
+@keyframes pulse-wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(14deg);
+  }
+  55% {
+    transform: rotate(-6deg);
+  }
+  80% {
+    transform: rotate(8deg);
+  }
 }
 
 /* One selective electric-blue highlight, on the largest type on the page: the
@@ -122,14 +256,21 @@
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   .home-pulse__name {
     background-image: linear-gradient(
-      104deg,
-      color-mix(in oklab, var(--cp-accent-highlight) 82%, var(--cp-text-primary)) 0%,
-      color-mix(in oklab, var(--cp-accent-cyan) 46%, var(--cp-text-primary)) 38%,
-      var(--cp-text-primary) 82%
+      102deg,
+      color-mix(in oklab, var(--cp-accent-highlight) 90%, var(--cp-text-primary)) 0%,
+      color-mix(in oklab, var(--cp-text-accent) 52%, var(--cp-text-primary)) 30%,
+      color-mix(in oklab, var(--brand-sand) 72%, var(--cp-text-primary)) 68%,
+      var(--cp-text-primary) 96%
     );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* The wave sits outside the gradient's text clip. */
+  .home-pulse__name .home-pulse__wave {
+    -webkit-text-fill-color: initial;
+    color: var(--cp-text-primary);
   }
 }
 
@@ -163,11 +304,84 @@
   }
 }
 
+/* The discovery deck: frosted chips, each one a real destination. They wrap
+   rather than scroll — a horizontal scroller on a phone is a hidden control. */
+.home-discover {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4375rem;
+  margin-top: clamp(1rem, 2.4vh, 1.5rem);
+  max-width: 44rem;
+}
+
+.discover-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.6875rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--cp-glass-border) 85%, transparent);
+  background-color: color-mix(in oklab, var(--cp-bg-glass-soft) 66%, transparent);
+  background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.07), transparent 58%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  color: var(--cp-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--cp-edge-light) 90%, transparent);
+  transition:
+    transform var(--dur-fast) var(--ease-out-soft),
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    box-shadow var(--dur-base) ease;
+}
+
+.discover-chip:hover {
+  border-color: color-mix(in oklab, var(--cp-bg-accent) 58%, var(--cp-glass-border));
+  background-color: color-mix(in oklab, var(--cp-bg-accent) 14%, transparent);
+  color: var(--cp-text-primary);
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 22px -16px var(--cp-glow-accent);
+}
+
+.discover-chip:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.discover-chip:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  .discover-chip,
+  .home-pulse__stats {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: color-mix(in oklab, var(--cp-bg-elevated) 92%, transparent);
+  }
+}
+
 /* The instrument column: real counts of what this page actually loaded. */
 .home-pulse__stats {
   display: grid;
-  gap: 0;
-  border-top: 1px solid var(--cp-border-subtle);
+  gap: 0.375rem;
+  padding: 0.375rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--cp-glass-border);
+  background-color: color-mix(in oklab, var(--cp-bg-glass-soft) 62%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  backdrop-filter: blur(20px) saturate(155%);
+  box-shadow:
+    inset 0 1px 0 var(--cp-edge-light),
+    0 20px 40px -34px var(--cp-scrim);
 }
 
 .home-pulse__stat {
@@ -175,8 +389,12 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  padding-block: 0.6rem;
-  border-bottom: 1px solid var(--cp-border-subtle);
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.home-pulse__stat + .home-pulse__stat {
+  box-shadow: 0 -1px 0 color-mix(in oklab, var(--cp-border-subtle) 80%, transparent);
 }
 
 .home-pulse__stat dt {
@@ -207,18 +425,19 @@
      without one. */
   .home-pulse__stats {
     grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-    gap: 0.5rem;
-    border-top: 0;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-lg);
   }
 
+  /* Inside the instrument panel, each count is a quiet cell — the panel already
+     provides the frame, so a chip per row would only add noise. */
   .home-pulse__stat {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.15rem;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--cp-border-subtle);
-    border-radius: var(--radius-md);
-    background-color: color-mix(in oklab, var(--cp-bg-subtle) 80%, transparent);
+    gap: 0.1rem;
+    padding: 0.375rem 0.625rem;
+    box-shadow: none;
   }
 
   .home-pulse__stat dd {
@@ -370,6 +589,22 @@
 /* The composer sits on the stream like a command line for the campus. */
 .home-composer {
   position: relative;
+  isolation: isolate;
+}
+
+/* A teal pool of light beneath the composer: it is what the sheet appears to
+   be floating over, which is what makes its blur legible as glass. */
+.home-composer::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -1.25rem -0.75rem -1rem;
+  pointer-events: none;
+  border-radius: 2rem;
+  background-image:
+    radial-gradient(46% 68% at 20% 0%, color-mix(in oklab, var(--cp-bg-accent) 20%, transparent), transparent 74%),
+    radial-gradient(34% 54% at 92% 22%, color-mix(in oklab, var(--cp-accent-warm) 10%, transparent), transparent 76%);
+  filter: blur(18px);
 }
 
 .home-composer__label {
@@ -382,6 +617,15 @@
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--cp-text-muted);
+}
+
+.home-composer__label::before {
+  content: '';
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 999px;
+  background-color: var(--cp-accent-cyan);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--cp-accent-cyan) 16%, transparent);
 }
 
 /* --------------------------------------------------------------------------
@@ -418,17 +662,35 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--cp-border-subtle);
-  background-color: color-mix(in oklab, var(--cp-bg-elevated) 94%, transparent);
-  background-image: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--cp-edge-light) 42%, transparent) 0%,
-    transparent 12%
-  );
+  border: 1px solid color-mix(in oklab, var(--cp-glass-border) 78%, transparent);
+  background-color: var(--cp-bg-glass-soft);
+  background-image:
+    linear-gradient(180deg, var(--cp-edge-light) 0, transparent 1px),
+    linear-gradient(150deg, color-mix(in oklab, var(--cp-glass-reflection) 88%, transparent), transparent 36%),
+    linear-gradient(160deg, var(--cp-glass-tint), transparent 62%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
   color: var(--cp-text-primary);
   box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 1px 1px var(--cp-shade),
-    0 20px 40px -38px var(--cp-scrim);
+    0 24px 48px -40px var(--cp-scrim);
+  transition:
+    border-color 320ms var(--ease-out-soft),
+    box-shadow 360ms var(--ease-out-soft),
+    transform 240ms var(--ease-out-soft);
+}
+
+/* On a phone the blur is the most expensive thing in a scrolling feed: the
+   sheet becomes more opaque instead of more blurred. The glass reading
+   survives (it is a lit, translucent-looking surface over a moving field); the
+   cost does not. */
+@media (pointer: coarse), (max-width: 767px) {
+  .stream-card {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: color-mix(in oklab, var(--cp-bg-elevated) 96%, transparent);
+  }
 }
 
 .stream-card--row {
@@ -452,29 +714,31 @@
 }
 
 .stream-slot[data-kind='notice'] {
-  --stream-marker: color-mix(in oklab, var(--cp-accent-cyan) 78%, transparent);
+  --stream-marker: color-mix(in oklab, var(--cp-accent-cyan) 88%, transparent);
   --stream-marker-opacity: 1;
 }
 
+/* Events are the warm half of the campus: sunset orange marks them. */
 .stream-slot[data-kind='event'] {
-  --stream-marker: color-mix(in oklab, var(--cp-accent-highlight) 70%, transparent);
+  --stream-marker: color-mix(in oklab, var(--cp-accent-warm) 78%, transparent);
 }
 
 .stream-slot[data-kind='listing'] {
   --stream-marker: color-mix(in oklab, var(--cp-success-text) 62%, transparent);
 }
 
+/* Opportunities and projects are the sand thread: warm, quieter than events. */
 .stream-slot[data-kind='opportunity'],
 .stream-slot[data-kind='resource'],
 .stream-slot[data-kind='project'] {
-  --stream-marker: color-mix(in oklab, var(--cp-text-muted) 70%, transparent);
+  --stream-marker: color-mix(in oklab, var(--brand-sand) 62%, transparent);
 }
 
 /* Post entries carry their marker from the design system's accent. */
 .stream-slot[data-kind='post'],
 .stream-slot[data-kind='discussion'],
 .stream-slot[data-kind='poll'] {
-  --stream-marker: color-mix(in oklab, var(--cp-bg-accent) 55%, transparent);
+  --stream-marker: color-mix(in oklab, var(--cp-bg-accent) 72%, transparent);
 }
 
 .stream-card__title {
@@ -599,11 +863,13 @@
   }
 
   .stream-slot:hover .stream-card {
-    border-color: color-mix(in oklab, var(--cp-bg-accent) 20%, var(--cp-border));
+    border-color: color-mix(in oklab, var(--cp-bg-accent) 46%, var(--cp-glass-border));
+    transform: translateY(-3px);
     box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
       0 1px 1px var(--cp-shade),
-      0 24px 48px -38px var(--cp-scrim),
-      0 0 28px -22px var(--cp-glow-cyan);
+      0 30px 56px -38px var(--cp-scrim),
+      0 0 34px -20px var(--cp-glow-accent);
   }
 
   /* The travelling light along the top edge of the hovered entry. */
@@ -1013,11 +1279,23 @@
 @media (max-width: 767px) {
   .home-pulse {
     min-height: 0;
-    padding-block: 1.5rem 1.25rem;
+    padding-block: 1.25rem 1rem;
   }
 
   .home-pulse__name {
-    font-size: clamp(2rem, 1.4rem + 6vw, 2.75rem);
+    font-size: clamp(2.125rem, 1.4rem + 6.4vw, 2.875rem);
+    letter-spacing: -0.035em;
+  }
+
+  /* A blurred, static glow behind the composer is cheap on a desktop and pure
+     fill-rate on a phone: the sheet keeps its rim and highlight instead. */
+  .home-composer::before {
+    display: none;
+  }
+
+  .discover-chip {
+    padding: 0.4375rem 0.75rem;
+    font-size: 0.75rem;
   }
 
   .stream-card--row {
@@ -1038,3 +1316,19 @@
   }
 }
 
+
+/* On phones the composer label and its description compete for one row and the
+   description wraps into a stub two-line block above the dock. The description
+   is supplementary, so narrow screens keep only the primary label and the
+   leading dot. */
+@media (max-width: 639px) {
+  .home-composer__label {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .home-composer__label > span[aria-hidden='true'],
+  .home-composer__label > .text-muted-soft {
+    display: none;
+  }
+}
