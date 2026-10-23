@@ -8,19 +8,15 @@ import { PLATFORM } from '@/lib/constants';
    repository's assets (aminotkartik/loginpage). They are loaded once, here,
    and exposed as CSS variables on <body> so every screen can reach for them:
 
-     --font-display → Boldonse, used only for cinematic entry headings
      --font-micro   → DM Mono, used only for short technical micro-labels
+     --font-display → Boldonse, used only by the sign-in hero; it is declared in
+                      `app/login/layout.js` so its preload exists only on the
+                      route that renders it, not on every page in the product.
 
    Body copy stays on the Inter/UI stack: a display face at reading size would
    hurt the everyday feed, and a monospace face at paragraph size would hurt
    legibility more than it would add atmosphere. Both faces are `swap`, so a
    slow font never blocks first paint. */
-const displayFont = localFont({
-  src: './fonts/Boldonse-Regular.ttf',
-  variable: '--font-display',
-  display: 'swap',
-});
-
 const microFont = localFont({
   src: [
     { path: './fonts/DMMono-Regular.ttf', weight: '400', style: 'normal' },
@@ -82,7 +78,7 @@ export default function RootLayout({ children }) {
      them (and browsers do not warn about unused preloads). */
   return (
     <html lang="en" data-theme="dark">
-      <body className={`${displayFont.variable} ${microFont.variable} min-h-dvh bg-canvas text-ink antialiased`}>
+      <body className={`${microFont.variable} min-h-dvh bg-canvas text-ink antialiased`}>
         <LandingIntro>{children}</LandingIntro>
       </body>
     </html>

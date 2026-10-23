@@ -1,0 +1,1153 @@
+{
+  "label": "ab-after",
+  "base": "http://127.0.0.1:3100",
+  "rtt": 25,
+  "user": "student",
+  "measuredAt": "2026-10-23T16:31:33.517Z",
+  "pages": [
+    {
+      "label": "Home",
+      "href": "/home",
+      "pageStart": 1792773081807,
+      "ttfb": 15.571052999999893,
+      "total": 230.82885199999998,
+      "bytes": 198567,
+      "status": 200,
+      "requests": 9,
+      "supabaseMs": 292,
+      "slowestMs": 45,
+      "slowest": {
+        "t0": 1792773081876,
+        "t1": 1792773081921,
+        "ms": 45,
+        "method": "POST",
+        "path": "/rest/v1/rpc/campus_feed",
+        "query": "",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 9590
+      },
+      "broken": false,
+      "requestBytes": 18468
+    },
+    {
+      "label": "Campus hub",
+      "href": "/campus",
+      "pageStart": 1792773082772,
+      "ttfb": 11.331559000000198,
+      "total": 125.13323000000037,
+      "bytes": 90420,
+      "status": 200,
+      "requests": 13,
+      "supabaseMs": 467,
+      "slowestMs": 44,
+      "slowest": {
+        "t0": 1792773082841,
+        "t1": 1792773082885,
+        "ms": 44,
+        "method": "GET",
+        "path": "/rest/v1/notices",
+        "query": "select=id,title,body,category,importance,pinned,expires_at,status,created_by,updated_by,published_at,created_at",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 1624
+      },
+      "broken": false,
+      "requestBytes": 7023
+    },
+    {
+      "label": "Noticeboard",
+      "href": "/campus/noticeboard",
+      "pageStart": 1792773083495,
+      "ttfb": 10.134953000000223,
+      "total": 112.69086799999968,
+      "bytes": 117751,
+      "status": 200,
+      "requests": 4,
+      "supabaseMs": 117,
+      "slowestMs": 32,
+      "slowest": {
+        "t0": 1792773083562,
+        "t1": 1792773083594,
+        "ms": 32,
+        "method": "GET",
+        "path": "/rest/v1/notices",
+        "query": "select=id,title,body,category,importance,pinned,expires_at,status,created_by,updated_by,published_at,created_at",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 10851
+      },
+      "broken": false,
+      "requestBytes": 13245
+    },
+    {
+      "label": "Explore",
+      "href": "/explore",
+      "pageStart": 1792773084528,
+      "ttfb": 13.141063000000031,
+      "total": 174.7389579999999,
+      "bytes": 119516,
+      "status": 200,
+      "requests": 13,
+      "supabaseMs": 565,
+      "slowestMs": 73,
+      "slowest": {
+        "t0": 1792773084605,
+        "t1": 1792773084678,
+        "ms": 73,
+        "method": "POST",
+        "path": "/rest/v1/rpc/trending_posts",
+        "query": "",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 2083
+      },
+      "broken": false,
+      "requestBytes": 11135
+    },
+    {
+      "label": "Communities",
+      "href": "/communities",
+      "pageStart": 1792773085431,
+      "ttfb": 9.63238199999978,
+      "total": 138.2928439999996,
+      "bytes": 73716,
+      "status": 200,
+      "requests": 7,
+      "supabaseMs": 194,
+      "slowestMs": 29,
+      "slowest": {
+        "t0": 1792773085467,
+        "t1": 1792773085496,
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 1972
+      },
+      "broken": false,
+      "requestBytes": 5728
+    },
+    {
+      "label": "Marketplace",
+      "href": "/market",
+      "pageStart": 1792773086419,
+      "ttfb": 11.983608999999888,
+      "total": 162.96536000000015,
+      "bytes": 128589,
+      "status": 200,
+      "requests": 10,
+      "supabaseMs": 365,
+      "slowestMs": 54,
+      "slowest": {
+        "t0": 1792773086489,
+        "t1": 1792773086543,
+        "ms": 54,
+        "method": "HEAD",
+        "path": "/rest/v1/marketplace_listings",
+        "query": "select=id",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 0
+      },
+      "broken": false,
+      "requestBytes": 19148
+    },
+    {
+      "label": "Notifications",
+      "href": "/notifications",
+      "pageStart": 1792773087153,
+      "ttfb": 9.700933999999506,
+      "total": 104.51805200000035,
+      "bytes": 101107,
+      "status": 200,
+      "requests": 4,
+      "supabaseMs": 112,
+      "slowestMs": 30,
+      "slowest": {
+        "t0": 1792773087188,
+        "t1": 1792773087218,
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 1972
+      },
+      "broken": false,
+      "requestBytes": 11656
+    },
+    {
+      "label": "Chat list",
+      "href": "/chat",
+      "pageStart": 1792773088218,
+      "ttfb": 10.23396799999955,
+      "total": 185.77528299999994,
+      "bytes": 61861,
+      "status": 200,
+      "requests": 7,
+      "supabaseMs": 215,
+      "slowestMs": 56,
+      "slowest": {
+        "t0": 1792773088319,
+        "t1": 1792773088375,
+        "ms": 56,
+        "method": "POST",
+        "path": "/rest/v1/rpc/conversation_inbox",
+        "query": "",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 4107
+      },
+      "broken": false,
+      "requestBytes": 11741
+    },
+    {
+      "label": "Chat thread",
+      "href": "/chat/3f028895-5a98-4813-ba86-3262adfa1dbc",
+      "pageStart": 1792773089472,
+      "ttfb": 10.704940999999963,
+      "total": 202.60965399999986,
+      "bytes": 106576,
+      "status": 200,
+      "requests": 9,
+      "supabaseMs": 262,
+      "slowestMs": 41,
+      "slowest": {
+        "t0": 1792773089567,
+        "t1": 1792773089608,
+        "ms": 41,
+        "method": "GET",
+        "path": "/rest/v1/messages",
+        "query": "select=id,conversation_id,sender_id,body,gif,status,edited_at,deleted_at,created_at",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 13066
+      },
+      "broken": false,
+      "requestBytes": 18529
+    },
+    {
+      "label": "Profile (own)",
+      "href": "/profile",
+      "pageStart": 1792773090489,
+      "ttfb": 9.987264999999752,
+      "total": 155.44270599999982,
+      "bytes": 197296,
+      "status": 200,
+      "requests": 11,
+      "supabaseMs": 385,
+      "slowestMs": 74,
+      "slowest": {
+        "t0": 1792773090557,
+        "t1": 1792773090631,
+        "ms": 74,
+        "method": "HEAD",
+        "path": "/rest/v1/comments",
+        "query": "select=id",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 0
+      },
+      "broken": false,
+      "requestBytes": 15982
+    },
+    {
+      "label": "Settings",
+      "href": "/settings",
+      "pageStart": 1792773091226,
+      "ttfb": 10.476364000000103,
+      "total": 105.67287600000054,
+      "bytes": 52786,
+      "status": 200,
+      "requests": 4,
+      "supabaseMs": 110,
+      "slowestMs": 28,
+      "slowest": {
+        "t0": 1792773091268,
+        "t1": 1792773091296,
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 1972
+      },
+      "broken": false,
+      "requestBytes": 2396
+    },
+    {
+      "label": "Public profile",
+      "href": "/user/aarav_p",
+      "pageStart": 1792773092136,
+      "ttfb": 10.388479000001098,
+      "total": 152.46106700000018,
+      "bytes": 197540,
+      "status": 200,
+      "requests": 13,
+      "supabaseMs": 440,
+      "slowestMs": 73,
+      "slowest": {
+        "t0": 1792773092201,
+        "t1": 1792773092274,
+        "ms": 73,
+        "method": "HEAD",
+        "path": "/rest/v1/comments",
+        "query": "select=id",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 0
+      },
+      "broken": false,
+      "requestBytes": 16323
+    },
+    {
+      "label": "Post detail",
+      "href": "/post/62ab49c1-0bc9-4687-86dd-df3e9fc747d6",
+      "pageStart": 1792773093312,
+      "ttfb": 10.161898000000292,
+      "total": 194.14014700000007,
+      "bytes": 83342,
+      "status": 200,
+      "requests": 9,
+      "supabaseMs": 253,
+      "slowestMs": 31,
+      "slowest": {
+        "t0": 1792773093409,
+        "t1": 1792773093440,
+        "ms": 31,
+        "method": "GET",
+        "path": "/rest/v1/reactions",
+        "query": "select=target_id",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 54
+      },
+      "broken": false,
+      "requestBytes": 5410
+    }
+  ],
+  "waterfalls": {
+    "/home": [
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 28,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 36,
+        "method": "GET",
+        "path": "/rest/v1/events",
+        "status": 200,
+        "bytes": 584
+      },
+      {
+        "ms": 35,
+        "method": "GET",
+        "path": "/rest/v1/notices",
+        "status": 200,
+        "bytes": 517
+      },
+      {
+        "ms": 45,
+        "method": "POST",
+        "path": "/rest/v1/rpc/campus_feed",
+        "status": 200,
+        "bytes": 9590
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 3948
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 904
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/reactions",
+        "status": 200,
+        "bytes": 531
+      }
+    ],
+    "/campus": [
+      {
+        "ms": 26,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 29,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 1173
+      },
+      {
+        "ms": 33,
+        "method": "HEAD",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 34,
+        "method": "HEAD",
+        "path": "/rest/v1/official_resources",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 34,
+        "method": "HEAD",
+        "path": "/rest/v1/notices",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 42,
+        "method": "GET",
+        "path": "/rest/v1/events",
+        "status": 200,
+        "bytes": 1832
+      },
+      {
+        "ms": 41,
+        "method": "HEAD",
+        "path": "/rest/v1/events",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 41,
+        "method": "HEAD",
+        "path": "/rest/v1/opportunities",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 41,
+        "method": "HEAD",
+        "path": "/rest/v1/projects",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 44,
+        "method": "GET",
+        "path": "/rest/v1/notices",
+        "status": 200,
+        "bytes": 1624
+      },
+      {
+        "ms": 42,
+        "method": "HEAD",
+        "path": "/rest/v1/study_partner_posts",
+        "status": 200,
+        "bytes": 0
+      }
+    ],
+    "/campus/noticeboard": [
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 29,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 32,
+        "method": "GET",
+        "path": "/rest/v1/notices",
+        "status": 200,
+        "bytes": 10851
+      }
+    ],
+    "/explore": [
+      {
+        "ms": 26,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/lost_found",
+        "status": 200,
+        "bytes": 629
+      },
+      {
+        "ms": 38,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 40,
+        "method": "GET",
+        "path": "/rest/v1/official_resources",
+        "status": 200,
+        "bytes": 924
+      },
+      {
+        "ms": 41,
+        "method": "GET",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 898
+      },
+      {
+        "ms": 41,
+        "method": "GET",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 385
+      },
+      {
+        "ms": 40,
+        "method": "GET",
+        "path": "/rest/v1/projects",
+        "status": 200,
+        "bytes": 661
+      },
+      {
+        "ms": 40,
+        "method": "GET",
+        "path": "/rest/v1/opportunities",
+        "status": 200,
+        "bytes": 789
+      },
+      {
+        "ms": 55,
+        "method": "GET",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 1705
+      },
+      {
+        "ms": 73,
+        "method": "POST",
+        "path": "/rest/v1/rpc/trending_posts",
+        "status": 200,
+        "bytes": 2083
+      },
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 454
+      },
+      {
+        "ms": 31,
+        "method": "GET",
+        "path": "/rest/v1/reactions",
+        "status": 200,
+        "bytes": 213
+      }
+    ],
+    "/communities": [
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 28,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 3334
+      },
+      {
+        "ms": 27,
+        "method": "HEAD",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 27,
+        "method": "HEAD",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 27,
+        "method": "HEAD",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 0
+      }
+    ],
+    "/market": [
+      {
+        "ms": 26,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 34,
+        "method": "HEAD",
+        "path": "/rest/v1/gigs",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 42,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 43,
+        "method": "GET",
+        "path": "/rest/v1/marketplace_categories",
+        "status": 200,
+        "bytes": 2397
+      },
+      {
+        "ms": 48,
+        "method": "HEAD",
+        "path": "/rest/v1/marketplace_listings",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 52,
+        "method": "HEAD",
+        "path": "/rest/v1/marketplace_listings",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 53,
+        "method": "GET",
+        "path": "/rest/v1/marketplace_listings",
+        "status": 200,
+        "bytes": 13796
+      },
+      {
+        "ms": 54,
+        "method": "HEAD",
+        "path": "/rest/v1/marketplace_listings",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 561
+      }
+    ],
+    "/notifications": [
+      {
+        "ms": 26,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 28,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 9262
+      }
+    ],
+    "/chat": [
+      {
+        "ms": 26,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 28,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/conversation_members",
+        "status": 200,
+        "bytes": 1317
+      },
+      {
+        "ms": 33,
+        "method": "GET",
+        "path": "/rest/v1/conversation_members",
+        "status": 200,
+        "bytes": 3133
+      },
+      {
+        "ms": 56,
+        "method": "POST",
+        "path": "/rest/v1/rpc/conversation_inbox",
+        "status": 200,
+        "bytes": 4107
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 790
+      }
+    ],
+    "/chat/3f028895-5a98-4813-ba86-3262adfa1dbc": [
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 27,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/conversations",
+        "status": 200,
+        "bytes": 268
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/message_reads",
+        "status": 200,
+        "bytes": 745
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/conversation_members",
+        "status": 200,
+        "bytes": 1255
+      },
+      {
+        "ms": 41,
+        "method": "GET",
+        "path": "/rest/v1/messages",
+        "status": 200,
+        "bytes": 13066
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 675
+      },
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/rest/v1/communities",
+        "status": 200,
+        "bytes": 126
+      }
+    ],
+    "/profile": [
+      {
+        "ms": 26,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 31,
+        "method": "GET",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 8565
+      },
+      {
+        "ms": 34,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 33,
+        "method": "HEAD",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 341
+      },
+      {
+        "ms": 33,
+        "method": "GET",
+        "path": "/rest/v1/reactions",
+        "status": 200,
+        "bytes": 1061
+      },
+      {
+        "ms": 33,
+        "method": "GET",
+        "path": "/rest/v1/poll_options",
+        "status": 200,
+        "bytes": 2996
+      },
+      {
+        "ms": 34,
+        "method": "GET",
+        "path": "/rest/v1/poll_votes",
+        "status": 200,
+        "bytes": 511
+      },
+      {
+        "ms": 34,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 114
+      },
+      {
+        "ms": 74,
+        "method": "HEAD",
+        "path": "/rest/v1/comments",
+        "status": 200,
+        "bytes": 0
+      }
+    ],
+    "/settings": [
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 27,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/platform_settings",
+        "status": 200,
+        "bytes": 2
+      }
+    ],
+    "/user/aarav_p": [
+      {
+        "ms": 26,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 339
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 30,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 31,
+        "method": "HEAD",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 32,
+        "method": "GET",
+        "path": "/rest/v1/blocks",
+        "status": 200,
+        "bytes": 2
+      },
+      {
+        "ms": 36,
+        "method": "GET",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 8565
+      },
+      {
+        "ms": 32,
+        "method": "GET",
+        "path": "/rest/v1/poll_options",
+        "status": 200,
+        "bytes": 2996
+      },
+      {
+        "ms": 32,
+        "method": "GET",
+        "path": "/rest/v1/poll_votes",
+        "status": 200,
+        "bytes": 511
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 114
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 341
+      },
+      {
+        "ms": 33,
+        "method": "GET",
+        "path": "/rest/v1/reactions",
+        "status": 200,
+        "bytes": 1061
+      },
+      {
+        "ms": 73,
+        "method": "HEAD",
+        "path": "/rest/v1/comments",
+        "status": 200,
+        "bytes": 0
+      }
+    ],
+    "/post/62ab49c1-0bc9-4687-86dd-df3e9fc747d6": [
+      {
+        "ms": 27,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/posts",
+        "status": 200,
+        "bytes": 390
+      },
+      {
+        "ms": 28,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 114
+      },
+      {
+        "ms": 31,
+        "method": "GET",
+        "path": "/rest/v1/reactions",
+        "status": 200,
+        "bytes": 54
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/comments",
+        "status": 200,
+        "bytes": 1781
+      },
+      {
+        "ms": 28,
+        "method": "GET",
+        "path": "/rest/v1/public_profiles",
+        "status": 200,
+        "bytes": 675
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/reactions",
+        "status": 200,
+        "bytes": 2
+      }
+    ]
+  }
+}
