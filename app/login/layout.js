@@ -1,4 +1,5 @@
 import localFont from 'next/font/local';
+import '@/app/styles/login.css';
 
 /**
  * The display face, scoped to the sign-in route group.

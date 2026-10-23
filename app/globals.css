@@ -1,18 +1,16 @@
+/* The shared shell stylesheet. Route-specific sheets are imported by the
+   layout that owns them (home.css, timetable.css, login.css, sections.css,
+   calendar.css), so they are downloaded only on the routes that use them. */
 @import 'tailwindcss';
 @import './styles/surfaces.css';
 @import './styles/controls.css';
 @import './styles/feedback.css';
 @import './styles/interactive.css';
 @import './styles/navigation.css';
-@import './styles/calendar.css';
 @import './styles/command.css';
 @import './styles/atmosphere.css';
 @import './styles/islands.css';
-@import './styles/home.css';
 @import './styles/night.css';
-@import './styles/login.css';
-@import './styles/sections.css';
-@import './styles/timetable.css';
 
 /* ==========================================================================
    Campus+ semantic color system

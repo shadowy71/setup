@@ -11,8 +11,8 @@ import { ROUTES } from '@/lib/constants';
  * right".
  *
  *   1. Clubs and Gigs must stay first-class on Home: real routes from the
- *      ROUTES catalogue, prominent tiles between the greeting and the
- *      composer, and no invented metrics to make them look busy.
+ *      ROUTES catalogue, compact tiles between the composer and the feed, and
+ *      no invented metrics to make them look busy.
  *   2. The Create dropdown must stay OUT of the sidebar's stacking/clipping
  *      trap: portalled to the body, viewport-clamped, scrollable, and
  *      keyboard-operable — an anchored menu inside `.side-panel` paints
@@ -46,13 +46,21 @@ describe('home feature tiles (Clubs & Gigs)', () => {
     expect(tiles).not.toContain('₹');
   });
 
-  it('sits between the greeting and the composer/feed', () => {
+  it('sits after the composer and before the feed', () => {
+    // The 2026 hierarchy is greeting → search → composer → doors → feed: a
+    // student who came to post must not scroll past navigation to do it.
     const greeting = page.indexOf('<HomePulse');
-    const doors = page.indexOf('<HomeFeatureTiles');
     const composer = page.indexOf('home-composer');
+    const doors = page.indexOf('<HomeFeatureTiles');
+    const feed = page.indexOf('home-stream');
     expect(greeting).toBeGreaterThan(-1);
-    expect(doors).toBeGreaterThan(greeting);
-    expect(composer).toBeGreaterThan(doors);
+    expect(composer).toBeGreaterThan(greeting);
+    expect(doors).toBeGreaterThan(composer);
+    expect(feed).toBeGreaterThan(doors);
+    // The rail comes after the whole main column in the DOM, so on a phone the
+    // feed is reachable before the contextual rail.
+    const rail = page.indexOf('<HomeRail');
+    expect(rail).toBeGreaterThan(feed);
   });
 
   it('replaces — not duplicates — the Clubs and Gigs discovery chips', () => {
@@ -69,7 +77,12 @@ describe('home feature tiles (Clubs & Gigs)', () => {
   it('is responsive, focus-visible and reduced-motion safe', () => {
     const css = read('app/styles/home.css');
     expect(css).toMatch(/\.home-features__grid\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
-    expect(css).toMatch(/@media \(min-width: 640px\) \{[^}]*\.home-features__grid \{[^}]*repeat\(2, minmax\(0, 1fr\)\)/s);
+    // Two columns from the smallest common phone width; one column only on a
+    // 320px-wide screen.
+    expect(css).toMatch(/@media \(min-width: 360px\) \{[^}]*\.home-features__grid \{[^}]*repeat\(2, minmax\(0, 1fr\)\)/s);
+    // The phone shows the one-line version of each tile's copy.
+    expect(css).toMatch(/@media \(max-width: 767px\) \{[\s\S]*?\.feature-tile__copy--long \{\s*display: none/);
+    expect(css).toMatch(/\.feature-tile__copy--short \{\s*display: none/);
     expect(css).toMatch(/\.feature-tile:focus-visible\s*\{[^}]*outline: 2px solid var\(--cp-focus\)/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.feature-tile:hover/);
     // Decorative layers never take the click.

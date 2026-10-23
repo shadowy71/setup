@@ -1,4 +1,4 @@
-import { TIMETABLE_PERIODS } from '@/lib/timetable';
+import { TIMETABLE_PERIOD_LABELS } from '@/lib/timetable';
 import { Notice } from '@/components/ui';
 import { SourceLines, VerifyBadge } from '@/components/timetable/EventText';
 
@@ -30,9 +30,9 @@ export function WeekTable({ days, division }) {
         <thead>
           <tr>
             <th scope="col">Day</th>
-            {TIMETABLE_PERIODS.map((period) => (
+            {TIMETABLE_PERIOD_LABELS.map(({ period, label }) => (
               <th key={period} scope="col">
-                {period}
+                {label}
               </th>
             ))}
           </tr>
@@ -88,7 +88,7 @@ export function FlaggedNotice({ flagged }) {
       <ul className="mt-1.5 list-inside list-disc">
         {flagged.map((event) => (
           <li key={`${event.day}-${event.start}`}>
-            {event.day} {event.time.label}: {event.lines.join(' | ')}
+            {event.day} {event.time.label12}: {event.lines.join(' | ')}
           </li>
         ))}
       </ul>

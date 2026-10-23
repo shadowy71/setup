@@ -182,7 +182,10 @@ describe('division-aware shortcut', () => {
 
   it('is wired through layout, sidebar, mobile menu and the palette', () => {
     const layout = read('app/(app)/layout.js');
-    expect(layout).toContain('division: user.profile?.division');
+    // The shell's division now comes from the one identity adapter; the palette
+    // built on the server keeps reading the session directly.
+    expect(layout).toContain('toShellUser(user)');
+    expect(read('lib/identity/shell-user.js')).toContain('division: text(profile.division)');
     expect(layout).toContain('getTimetableHref(user.profile?.division)');
     expect(read('components/layout/Sidebar.js')).toContain('getTimetableHref(user?.division)');
     expect(read('components/layout/MobileMenu.js')).toContain('getTimetableHref(user?.division)');

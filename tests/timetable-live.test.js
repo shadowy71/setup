@@ -427,15 +427,16 @@ describe('rendered day view (server pass, fixed instants)', () => {
     const html = renderLive({ day: 'Friday', iso: '2026-10-23T04:35:00Z' });
 
     expect(html).toContain('Friday, 23 Oct');
-    expect(html).toMatch(/10:05<span class="tt-clock__seconds">:00<\/span>/);
+    // The clock is 12-hour with an explicit meridiem (see the tests below).
+    expect(html).toMatch(/10:05<span class="tt-clock__seconds">:00<\/span><span class="tt-clock__meridiem">AM<\/span>/);
     expect(html).toContain('IST · Asia/Kolkata');
     expect(html).toContain('aria-pressed="true" aria-label="Friday, today">Fri');
 
     // The whole two-period practical is the ongoing session, not a fragment.
     expect(html.match(/tt-badge--now/g)).toHaveLength(1);
     expect(html.match(/tt-badge--next/g)).toHaveLength(1);
-    expect(html).toContain('Now: WDL · 09:00–11:00.');
-    expect(html).toContain('Next: EPH at 11:10.');
+    expect(html).toContain('Now: WDL · 9:00–11:00 AM.');
+    expect(html).toContain('Next: EPH at 11:10 AM.');
     // The rows carry the state the scroll logic targets, on the right rows.
     const nowRow = html.match(/<li[^>]*data-state="now"[^>]*>.*?<\/li>/s)?.[0] || '';
     const nextRow = html.match(/<li[^>]*data-state="next"[^>]*>.*?<\/li>/s)?.[0] || '';
@@ -461,7 +462,7 @@ describe('rendered day view (server pass, fixed instants)', () => {
   it('keeps a manually chosen day without claiming it is live', () => {
     const html = renderLive({ day: 'Monday', pinned: true, iso: '2026-10-23T04:35:00Z' });
 
-    expect(html).toContain('Not today — Monday’s first class is WDL-1/ENG-2/WDL-3 at 09:00.');
+    expect(html).toContain('Not today — Monday’s first class is WDL-1/ENG-2/WDL-3 at 9:00 AM.');
     expect(html).not.toContain('tt-badge--now');
     expect(html).not.toContain('tt-badge--next');
     expect(html).toContain('aria-pressed="true" aria-label="Monday">Mon');
@@ -472,8 +473,8 @@ describe('rendered day view (server pass, fixed instants)', () => {
     // Friday 12:50 IST — Division O's Friday lunch (12:10–13:10).
     const html = renderLive({ day: 'Friday', iso: '2026-10-23T07:20:00Z' });
 
-    expect(html).toContain('Lunch break until 13:10.');
-    expect(html).toContain('Next: LAUC at 13:10.');
+    expect(html).toContain('Lunch break until 1:10 PM.');
+    expect(html).toContain('Next: LAUC at 1:10 PM.');
     expect(html.match(/tt-badge--now/g)).toBeNull();
     expect(html.match(/tt-badge--next/g)).toHaveLength(1);
   });
@@ -483,7 +484,7 @@ describe('rendered day view (server pass, fixed instants)', () => {
     const html = renderLive({ day: 'Friday', iso: '2026-10-23T05:30:00Z' });
 
     expect(html).not.toContain('tt-badge--now');
-    expect(html).toContain('Next class: EPH at 11:10.');
+    expect(html).toContain('Next class: EPH at 11:10 AM.');
   });
 
   it('says there are no more classes once the day is over', () => {

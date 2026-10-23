@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { MOBILE_NAV } from '@/lib/constants';
 import { Icon } from '@/components/ui/icons';
 import { GlassSurface } from '@/components/ui';
+import { isActivePath } from '@/lib/navigation/active';
 
 /**
  * Mobile navigation: Home · Explore · Market · Chat · Profile.
@@ -19,7 +20,7 @@ import { GlassSurface } from '@/components/ui';
  * the top edge — so the current section survives colour-vision differences and
  * greyscale. The marker is a shape, not only a hue.
  */
-export function BottomNav({ unreadNotifications = 0 }) {
+export function BottomNav() {
   const pathname = usePathname();
 
   return (
@@ -34,7 +35,9 @@ export function BottomNav({ unreadNotifications = 0 }) {
             breathing space, so the dock's rounded clip never eats it. */}
         <div className="flex w-full items-stretch px-1.5 py-1.5">
           {MOBILE_NAV.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            // Same rule as the desktop rail: the tab is current on its own
+            // path and any child of it (`/chat/123` → Chat).
+            const active = isActivePath(pathname, item.href);
             return (
               <Link
                 key={item.href}
@@ -42,10 +45,10 @@ export function BottomNav({ unreadNotifications = 0 }) {
                 aria-current={active ? 'page' : undefined}
                 className="tab-item rounded-2xl"
               >
-                <span className="relative">
-                  <Icon name={item.icon} size={20} className="tab-icon" />
-                  {item.icon === 'bell' && unreadNotifications > 0 ? <span className="unread-dot absolute -right-1.5 -top-1" /> : null}
-                </span>
+                {/* The dock shows exactly the five destinations and no badges:
+                    the header bell is the notification entry point, and a badge
+                    here would change the dock's dimensions. */}
+                <Icon name={item.icon} size={20} className="tab-icon" />
                 {item.label}
               </Link>
             );
