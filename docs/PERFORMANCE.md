@@ -9,6 +9,11 @@ real production build of the app.
 
 Raw evidence: `perf-results/before-*.json` and `perf-results/after-*.json`.
 
+> A later pass (2026-10-23) audited the client payload as well and is recorded in
+> [`docs/performance/2026-10-23-audit.md`](performance/2026-10-23-audit.md), including
+> what could not be measured (no browser, no live deployment URL) and the ranked
+> findings that were deliberately left for a future pass.
+
 ---
 
 ## 1. Headline numbers

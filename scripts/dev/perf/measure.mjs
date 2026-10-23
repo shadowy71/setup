@@ -110,6 +110,10 @@ async function timePage(href) {
 const results = [];
 for (const [label, href] of pages) {
   await timePage(href); // warm-up (JIT, connection pool)
+  // The warm-up render issues its own upstream reads. Discard them before the
+  // measured window opens, otherwise the first sample inherits the warm-up's
+  // trace entries and the reported request count is inflated.
+  cursor = await traceTotal();
   const samples = [];
   const traces = [];
   for (let run = 0; run < runs; run += 1) {

@@ -79,8 +79,21 @@ export function BrandMark({ size = 'md', className = '' }) {
         data-plate={LOGO_PLATE ? 'true' : undefined}
         aria-hidden="true"
       >
+        {/* Decorative mark, never the LCP element. `loading="lazy"` stops
+            React from emitting a document-wide `<link rel=preload as=image>`
+            for it on every route: the asset is a large JPEG, and preloading it
+            at high priority competed with the stylesheet and the text on slow
+            connections. Explicit width/height keep the box reserved. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- a static brand asset, not content */}
-        <img src={LOGO_SRC} alt="" width={px} height={px} decoding="async" />
+        <img
+          src={LOGO_SRC}
+          alt=""
+          width={px}
+          height={px}
+          loading="lazy"
+          fetchPriority="low"
+          decoding="async"
+        />
       </span>
     );
   }

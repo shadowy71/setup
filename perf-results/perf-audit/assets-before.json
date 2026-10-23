@@ -1,0 +1,488 @@
+{
+  "label": "baseline",
+  "base": "http://127.0.0.1:3100",
+  "user": "student",
+  "measuredAt": "2026-10-23T16:23:17.774Z",
+  "routes": [
+    {
+      "label": "Login",
+      "href": "/login",
+      "status": 200,
+      "htmlBytes": 20845,
+      "ttfbMs": 19.352619000000004,
+      "jsCount": 10,
+      "jsRaw": 514577,
+      "jsGzip": 157311,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 749682,
+      "totalGzip": 214827,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        },
+        {
+          "url": "/_next/static/chunks/36hei7oa9r0rt.js",
+          "raw": 160166,
+          "gzip": 43785
+        }
+      ]
+    },
+    {
+      "label": "Legal",
+      "href": "/legal",
+      "status": 200,
+      "htmlBytes": 114020,
+      "ttfbMs": 12.959294999999997,
+      "jsCount": 9,
+      "jsRaw": 509741,
+      "jsGzip": 155079,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 838021,
+      "totalGzip": 305770,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        },
+        {
+          "url": "/_next/static/chunks/36hei7oa9r0rt.js",
+          "raw": 160166,
+          "gzip": 43785
+        }
+      ]
+    },
+    {
+      "label": "Timetable",
+      "href": "/timetable",
+      "status": 200,
+      "htmlBytes": 29989,
+      "ttfbMs": 5.830437000000018,
+      "jsCount": 10,
+      "jsRaw": 518609,
+      "jsGzip": 158682,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 762858,
+      "totalGzip": 225342,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        },
+        {
+          "url": "/_next/static/chunks/36hei7oa9r0rt.js",
+          "raw": 160166,
+          "gzip": 43785
+        }
+      ]
+    },
+    {
+      "label": "Home",
+      "href": "/home",
+      "status": 200,
+      "htmlBytes": 198808,
+      "ttfbMs": 271.307919,
+      "jsCount": 13,
+      "jsRaw": 846699,
+      "jsGzip": 248901,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1259767,
+      "totalGzip": 484380,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Campus hub",
+      "href": "/campus",
+      "status": 200,
+      "htmlBytes": 90661,
+      "ttfbMs": 155.543522,
+      "jsCount": 12,
+      "jsRaw": 810435,
+      "jsGzip": 235785,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1115356,
+      "totalGzip": 363117,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Noticeboard",
+      "href": "/campus/noticeboard",
+      "status": 200,
+      "htmlBytes": 117979,
+      "ttfbMs": 114.83547099999998,
+      "jsCount": 12,
+      "jsRaw": 810435,
+      "jsGzip": 235785,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1142674,
+      "totalGzip": 390435,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Explore",
+      "href": "/explore",
+      "status": 200,
+      "htmlBytes": 119757,
+      "ttfbMs": 171.86678799999993,
+      "jsCount": 13,
+      "jsRaw": 843162,
+      "jsGzip": 247677,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1177179,
+      "totalGzip": 404105,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Communities",
+      "href": "/communities",
+      "status": 200,
+      "htmlBytes": 73944,
+      "ttfbMs": 138.503192,
+      "jsCount": 12,
+      "jsRaw": 810435,
+      "jsGzip": 235785,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1098639,
+      "totalGzip": 346400,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Marketplace",
+      "href": "/market",
+      "status": 200,
+      "htmlBytes": 128830,
+      "ttfbMs": 173.5589309999998,
+      "jsCount": 12,
+      "jsRaw": 810435,
+      "jsGzip": 235785,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1153525,
+      "totalGzip": 401286,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Gigs",
+      "href": "/gigs",
+      "status": 200,
+      "htmlBytes": 120181,
+      "ttfbMs": 165.961231,
+      "jsCount": 11,
+      "jsRaw": 809990,
+      "jsGzip": 235466,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1144431,
+      "totalGzip": 392318,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Clubs",
+      "href": "/clubs",
+      "status": 200,
+      "htmlBytes": 67408,
+      "ttfbMs": 109.31268499999987,
+      "jsCount": 11,
+      "jsRaw": 809990,
+      "jsGzip": 235466,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1091658,
+      "totalGzip": 339545,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Notifications",
+      "href": "/notifications",
+      "status": 200,
+      "htmlBytes": 101349,
+      "ttfbMs": 114.81025199999999,
+      "jsCount": 12,
+      "jsRaw": 814455,
+      "jsGzip": 237264,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1130064,
+      "totalGzip": 375284,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Chat list",
+      "href": "/chat",
+      "status": 200,
+      "htmlBytes": 62075,
+      "ttfbMs": 194.86975399999983,
+      "jsCount": 12,
+      "jsRaw": 813405,
+      "jsGzip": 237072,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1089740,
+      "totalGzip": 335818,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Profile (own)",
+      "href": "/profile",
+      "status": 200,
+      "htmlBytes": 197528,
+      "ttfbMs": 159.96412899999996,
+      "jsCount": 12,
+      "jsRaw": 838511,
+      "jsGzip": 245565,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1250299,
+      "totalGzip": 479764,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    },
+    {
+      "label": "Settings",
+      "href": "/settings",
+      "status": 200,
+      "htmlBytes": 53014,
+      "ttfbMs": 102.59053399999993,
+      "jsCount": 12,
+      "jsRaw": 839208,
+      "jsGzip": 245698,
+      "cssCount": 2,
+      "cssRaw": 214260,
+      "cssGzip": 36671,
+      "totalRaw": 1106482,
+      "totalGzip": 335383,
+      "largest": [
+        {
+          "url": "/_next/static/chunks/3gtwt0vb0tbnj.js",
+          "raw": 259446,
+          "gzip": 67628
+        },
+        {
+          "url": "/_next/static/chunks/3g4px251sg85e.js",
+          "raw": 228922,
+          "gzip": 71417
+        },
+        {
+          "url": "/_next/static/chunks/3v1vh-3eccqza.css",
+          "raw": 205919,
+          "gzip": 34449
+        }
+      ]
+    }
+  ]
+}
