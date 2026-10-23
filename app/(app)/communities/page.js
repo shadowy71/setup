@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
-import { listCommunities } from '@/lib/data/campus';
+import { countCommunitiesByKind, listCommunities } from '@/lib/data/campus';
 import { ROUTES } from '@/lib/constants';
 import { Badge, Button, Card, EmptyState, LinkButton, Notice, PageHeader, SectionHeader, TiltCard } from '@/components/ui';
 import { ContentCard } from '@/components/content/ContentCard';
@@ -42,21 +42,13 @@ export default async function CommunitiesPage({ searchParams }) {
   const q = typeof params?.q === 'string' && params.q.trim().length >= 2 ? params.q.trim() : null;
   const kinds = TABS.find((item) => item.key === tab)?.kinds || null;
 
-  const { items, unavailable } = await listCommunities(supabase, { kind: kinds, q, limit: 30 });
+  // The list and the three summary figures are independent, and the figures
+  // come from one tallied read rather than three `head: true` count queries.
+  const [{ items, unavailable }, counts] = await Promise.all([
+    listCommunities(supabase, { kind: kinds, q, limit: 30 }),
+    countCommunitiesByKind(supabase),
+  ]);
   const canCreate = can(actor, 'create_communities');
-
-  const counts = await (async () => {
-    const [communities, studyGroups, clubs] = await Promise.all([
-      supabase.from('communities').select('id', { count: 'exact', head: true }).eq('kind', 'community').eq('status', 'published'),
-      supabase.from('communities').select('id', { count: 'exact', head: true }).eq('kind', 'study_group').eq('status', 'published'),
-      supabase.from('communities').select('id', { count: 'exact', head: true }).eq('kind', 'club').eq('status', 'published'),
-    ]);
-    return {
-      communities: communities.count ?? 0,
-      studyGroups: studyGroups.count ?? 0,
-      clubs: clubs.count ?? 0,
-    };
-  })();
 
   const featured =
     !q && items.length > 1
@@ -92,9 +84,9 @@ export default async function CommunitiesPage({ searchParams }) {
           ))}
         </nav>
         <p className="mt-2 text-2xs text-muted">
-          {counts.communities} communities · {counts.studyGroups} study groups ·{' '}
+          {counts.communities ?? 0} communities · {counts.studyGroups ?? 0} study groups ·{' '}
           <Link href={ROUTES.clubs} className="underline hover:text-ink">
-            {counts.clubs} clubs in the clubs section
+            {counts.clubs ?? 0} clubs in the clubs section
           </Link>
         </p>
         <form method="get" action={ROUTES.communities} className="mt-2 flex items-end gap-2">

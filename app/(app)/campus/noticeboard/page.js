@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
-import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
-import { listNotices } from '@/lib/data/campus';
+import { listPublishedNotices } from '@/lib/data/public-cache';
 import { ROUTES, PAGE_SIZE } from '@/lib/constants';
 import { PageHeader, EmptyState, Notice, LinkButton, Card } from '@/components/ui';
 import { ContentCard } from '@/components/content/ContentCard';
@@ -17,13 +16,15 @@ export const metadata = { title: 'Noticeboard' };
  */
 export default async function NoticeboardPage({ searchParams }) {
   const user = await requireUser();
-  const supabase = await getServerClient();
   const actor = toActor(user);
   const params = await searchParams;
   const offset = Math.max(0, Number.parseInt(params?.offset || '0', 10) || 0);
   const category = typeof params?.category === 'string' && params.category ? params.category : null;
 
-  const { items, unavailable } = await listNotices(supabase, { limit: PAGE_SIZE.default, offset, category });
+  // Published notices are identical for every student, so this read is served
+  // from the short public cache (see lib/data/public-cache.js) and revalidated
+  // the moment staff publish or edit one.
+  const { items, unavailable } = await listPublishedNotices({ limit: PAGE_SIZE.default, offset, category });
 
   return (
     <div className="flex flex-col gap-4">

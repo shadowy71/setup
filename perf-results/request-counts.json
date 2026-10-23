@@ -1,0 +1,273 @@
+[
+ {
+  "label": "Home",
+  "href": "/home",
+  "coldMs": 393,
+  "coldRequests": 10,
+  "coldPaths": [
+   "GET /auth/v1/.well-known/jwks.json",
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/events",
+   "GET /rest/v1/notices",
+   "POST /rest/v1/rpc/campus_feed",
+   "GET /rest/v1/posts",
+   "GET /rest/v1/public_profiles",
+   "GET /rest/v1/reactions"
+  ],
+  "warmMs": 280,
+  "warmRequests": 9
+ },
+ {
+  "label": "Campus hub",
+  "href": "/campus",
+  "coldMs": 169,
+  "coldRequests": 11,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/communities",
+   "HEAD /rest/v1/notices",
+   "HEAD /rest/v1/official_resources",
+   "HEAD /rest/v1/opportunities",
+   "GET /rest/v1/notices",
+   "GET /rest/v1/events",
+   "HEAD /rest/v1/study_partner_posts",
+   "HEAD /rest/v1/projects"
+  ],
+  "warmMs": 129,
+  "warmRequests": 9
+ },
+ {
+  "label": "Noticeboard",
+  "href": "/campus/noticeboard",
+  "coldMs": 128,
+  "coldRequests": 4,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/notices"
+  ],
+  "warmMs": 125,
+  "warmRequests": 3
+ },
+ {
+  "label": "Events",
+  "href": "/campus/events",
+  "coldMs": 182,
+  "coldRequests": 7,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/communities",
+   "GET /rest/v1/events",
+   "GET /rest/v1/events",
+   "GET /rest/v1/event_registrations"
+  ],
+  "warmMs": 179,
+  "warmRequests": 6
+ },
+ {
+  "label": "Clubs list",
+  "href": "/clubs",
+  "coldMs": 121,
+  "coldRequests": 6,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/communities",
+   "GET /rest/v1/communities",
+   "GET /rest/v1/community_members"
+  ],
+  "warmMs": 115,
+  "warmRequests": 6
+ },
+ {
+  "label": "Explore",
+  "href": "/explore",
+  "coldMs": 211,
+  "coldRequests": 13,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/communities",
+   "GET /rest/v1/lost_found",
+   "GET /rest/v1/official_resources",
+   "GET /rest/v1/opportunities",
+   "GET /rest/v1/projects",
+   "GET /rest/v1/communities",
+   "GET /rest/v1/posts",
+   "GET /rest/v1/public_profiles",
+   "GET /rest/v1/reactions",
+   "POST /rest/v1/rpc/trending_posts"
+  ],
+  "warmMs": 191,
+  "warmRequests": 13
+ },
+ {
+  "label": "Communities",
+  "href": "/communities",
+  "coldMs": 109,
+  "coldRequests": 5,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "GET /rest/v1/communities",
+   "GET /rest/v1/communities",
+   "HEAD /rest/v1/notifications"
+  ],
+  "warmMs": 111,
+  "warmRequests": 5
+ },
+ {
+  "label": "Marketplace",
+  "href": "/market",
+  "coldMs": 170,
+  "coldRequests": 10,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "GET /rest/v1/marketplace_categories",
+   "HEAD /rest/v1/notifications",
+   "HEAD /rest/v1/gigs",
+   "HEAD /rest/v1/marketplace_listings",
+   "HEAD /rest/v1/marketplace_listings",
+   "GET /rest/v1/marketplace_listings",
+   "HEAD /rest/v1/marketplace_listings",
+   "GET /rest/v1/public_profiles"
+  ],
+  "warmMs": 164,
+  "warmRequests": 10
+ },
+ {
+  "label": "Notifications",
+  "href": "/notifications",
+  "coldMs": 108,
+  "coldRequests": 4,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/notifications"
+  ],
+  "warmMs": 120,
+  "warmRequests": 4
+ },
+ {
+  "label": "Chat list",
+  "href": "/chat",
+  "coldMs": 221,
+  "coldRequests": 7,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/conversation_members",
+   "GET /rest/v1/conversation_members",
+   "POST /rest/v1/rpc/conversation_inbox",
+   "GET /rest/v1/public_profiles"
+  ],
+  "warmMs": 195,
+  "warmRequests": 7
+ },
+ {
+  "label": "Chat thread",
+  "href": "/chat/24c34dd9-86f3-4899-b342-7db0edaa5924",
+  "coldMs": 228,
+  "coldRequests": 9,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/conversations",
+   "GET /rest/v1/conversation_members",
+   "GET /rest/v1/message_reads",
+   "GET /rest/v1/messages",
+   "GET /rest/v1/public_profiles",
+   "GET /rest/v1/communities"
+  ],
+  "warmMs": 213,
+  "warmRequests": 9
+ },
+ {
+  "label": "Profile (own)",
+  "href": "/profile",
+  "coldMs": 172,
+  "coldRequests": 11,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "HEAD /rest/v1/posts",
+   "GET /rest/v1/posts",
+   "GET /rest/v1/reactions",
+   "GET /rest/v1/public_profiles",
+   "GET /rest/v1/posts",
+   "GET /rest/v1/poll_votes",
+   "GET /rest/v1/poll_options",
+   "HEAD /rest/v1/comments"
+  ],
+  "warmMs": 174,
+  "warmRequests": 11
+ },
+ {
+  "label": "Settings",
+  "href": "/settings",
+  "coldMs": 106,
+  "coldRequests": 4,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/platform_settings"
+  ],
+  "warmMs": 106,
+  "warmRequests": 4
+ },
+ {
+  "label": "Public profile",
+  "href": "/user/aarav_p",
+  "coldMs": 184,
+  "coldRequests": 13,
+  "coldPaths": [
+   "GET /rest/v1/public_profiles",
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/blocks",
+   "HEAD /rest/v1/posts",
+   "GET /rest/v1/posts",
+   "GET /rest/v1/poll_votes",
+   "GET /rest/v1/reactions",
+   "GET /rest/v1/posts",
+   "GET /rest/v1/poll_options",
+   "GET /rest/v1/public_profiles",
+   "HEAD /rest/v1/comments"
+  ],
+  "warmMs": 221,
+  "warmRequests": 13
+ },
+ {
+  "label": "Post detail",
+  "href": "/post/49c98eb2-f28f-43c1-b4ea-64a0e1c87156",
+  "coldMs": 153,
+  "coldRequests": 7,
+  "coldPaths": [
+   "GET /auth/v1/user",
+   "GET /rest/v1/profile_private",
+   "HEAD /rest/v1/notifications",
+   "GET /rest/v1/posts",
+   "GET /rest/v1/comments",
+   "GET /rest/v1/public_profiles",
+   "GET /rest/v1/reactions"
+  ],
+  "warmMs": 165,
+  "warmRequests": 7
+ }
+]

@@ -1,7 +1,8 @@
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
-import { listEvents, listEventSubmissions, listMyEventSubmissions, listMyRsvps } from '@/lib/data/campus';
+import { listEventSubmissions, listMyEventSubmissions, listMyRsvps } from '@/lib/data/campus';
+import { listPublishedEvents } from '@/lib/data/public-cache';
 import { EVENT_CATEGORIES, ROUTES, PAGE_SIZE } from '@/lib/constants';
 import { PageHeader, EmptyState, Notice, LinkButton, Card, Badge } from '@/components/ui';
 import { ContentCard } from '@/components/content/ContentCard';
@@ -90,38 +91,42 @@ export default async function EventsPage({ searchParams }) {
 
   const current = { view, month: params?.month || '', when: past ? 'past' : 'upcoming', club, category, source };
 
-  let items = [];
-  let unavailable = false;
-  if (view === 'calendar') {
-    const grid = monthGrid(year, month);
-    const result = await listEvents(supabase, {
-      limit: 200,
-      from: grid[0],
-      to: grid[grid.length - 1],
-      clubId: club || null,
-      category: category || null,
-      source: source || null,
-    });
-    items = result.items;
-    unavailable = result.unavailable;
-  } else {
-    const result = day
-      ? await listEvents(supabase, { limit: 60, from: day, to: day, clubId: club || null, category: category || null, source: source || null })
-      : await listEvents(supabase, {
-          limit: PAGE_SIZE.default,
-          offset,
-          upcoming: !past,
-          clubId: club || null,
-          category: category || null,
-          source: source || null,
-        });
-    items = result.items;
-    unavailable = result.unavailable;
-  }
+  // The published list is public and cached; the review queue and the viewer's
+  // own drafts do not depend on it, so all three start together. RSVP state is
+  // the only read that has to wait for the ids.
+  const eventsQuery =
+    view === 'calendar'
+      ? (() => {
+          const grid = monthGrid(year, month);
+          return listPublishedEvents({
+            limit: 200,
+            from: grid[0],
+            to: grid[grid.length - 1],
+            clubId: club || null,
+            category: category || null,
+            source: source || null,
+          });
+        })()
+      : day
+        ? listPublishedEvents({ limit: 60, from: day, to: day, clubId: club || null, category: category || null, source: source || null })
+        : listPublishedEvents({
+            limit: PAGE_SIZE.default,
+            offset,
+            upcoming: !past,
+            clubId: club || null,
+            category: category || null,
+            source: source || null,
+          });
+
+  const [result, submissions, mine] = await Promise.all([
+    eventsQuery,
+    canReview ? listEventSubmissions(supabase) : Promise.resolve({ items: [], unavailable: false }),
+    canSubmit && !canReview ? listMyEventSubmissions(supabase, user.profile.id) : Promise.resolve({ items: [], unavailable: false }),
+  ]);
+  const items = result.items;
+  const unavailable = result.unavailable;
 
   const rsvps = await listMyRsvps(supabase, items.map((event) => event.id), user.profile.id);
-  const submissions = canReview ? await listEventSubmissions(supabase) : { items: [], unavailable: false };
-  const mine = canSubmit && !canReview ? await listMyEventSubmissions(supabase, user.profile.id) : { items: [], unavailable: false };
 
   const agendaQuery = (overrides) => {
     const query = new URLSearchParams({ view: 'agenda', when: past ? 'past' : 'upcoming', club, category, source, day, ...overrides });
