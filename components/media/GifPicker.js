@@ -21,13 +21,20 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
   const [query, setQuery] = useState('');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadedOnce, setLoadedOnce] = useState(false);
   const [error, setError] = useState(null);
   const [attribution, setAttribution] = useState(null);
   const [unconfigured, setUnconfigured] = useState(false);
   const debounce = useRef(null);
   const containerRef = useRef(null);
+  // Responses can arrive out of order while someone types. Only the newest
+  // request may touch state; older results are dropped instead of flickering
+  // over the correct ones.
+  const requestSeq = useRef(0);
 
   const search = useCallback(async (term) => {
+    requestSeq.current += 1;
+    const seq = requestSeq.current;
     setLoading(true);
     setError(null);
     try {
@@ -35,6 +42,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
       if (term) params.set('q', term);
       const response = await fetch(`/api/giphy/search?${params.toString()}`);
       const payload = await response.json();
+      if (seq !== requestSeq.current) return;
       if (!response.ok) {
         if (payload?.code === 'configuration') {
           setUnconfigured(true);
@@ -46,9 +54,13 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
       setItems(payload.results || []);
       setAttribution(payload.attribution || null);
     } catch (thrown) {
+      if (seq !== requestSeq.current) return;
       setError(thrown.message || 'GIF search failed.');
     } finally {
-      setLoading(false);
+      if (seq === requestSeq.current) {
+        setLoading(false);
+        setLoadedOnce(true);
+      }
     }
   }, []);
 
@@ -61,13 +73,22 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
   }, [open, query, search]);
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) {
+      // Closing abandons any in-flight search: its result must not populate
+      // the picker when it is opened again.
+      requestSeq.current += 1;
+      return undefined;
+    }
     const onKey = (event) => {
       if (event.key === 'Escape') setOpen(false);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
+
+  // True from the moment the picker opens until its first result (or error)
+  // arrives, including the 320ms debounce — so the empty prompt never flashes.
+  const busy = loading || (open && !loadedOnce);
 
   return (
     <div ref={containerRef} className="flex flex-col gap-2">
@@ -120,7 +141,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
             </Notice>
           ) : null}
 
-          {loading ? (
+          {busy && items.length === 0 ? (
             <ul className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-hidden sm:grid-cols-3">
               {Array.from({ length: 6 }).map((_, index) => (
                 <li key={index}>
@@ -130,7 +151,15 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
             </ul>
           ) : null}
 
-          {!loading && !unconfigured && !error && items.length === 0 ? (
+          {/* A later search keeps the current results on screen instead of
+              replacing them with skeletons (which made the panel jump). */}
+          {busy && items.length > 0 ? (
+            <p className="mt-2 text-2xs text-muted" role="status">
+              Searching…
+            </p>
+          ) : null}
+
+          {!busy && !unconfigured && !error && items.length === 0 ? (
             <p className="py-5 text-center text-[0.8125rem] text-muted">
               {query.trim().length >= 2 ? 'No GIFs matched that search.' : 'Type to search GIFs.'}
             </p>
@@ -143,15 +172,30 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
                   <button
                     type="button"
                     onClick={() => {
-                      onPick({ provider: 'giphy', id: gif.id, url: gif.url, title: gif.title });
+                      // Dimensions travel with the reference: every surface that
+                      // renders it reserves the real aspect ratio up front, so a
+                      // GIF can never resize a post or message when it loads.
+                      const picked = {
+                        provider: 'giphy',
+                        id: gif.id,
+                        url: gif.url,
+                        preview: gif.preview || gif.url,
+                        title: gif.title,
+                      };
+                      if (Number(gif.width) > 0 && Number(gif.height) > 0) {
+                        picked.width = Number(gif.width);
+                        picked.height = Number(gif.height);
+                      }
+                      onPick(picked);
                       setOpen(false);
                     }}
                     className="w-full overflow-hidden rounded-[var(--radius-sm)] border border-line text-left transition-all hover:border-accent/50 active:scale-[0.98]"
                     aria-label={gif.title ? `Attach GIF: ${gif.title}` : 'Attach GIF'}
                   >
-                    {/* Validated GIPHY media URL (lib/giphy + next.config remotePatterns). */}
+                    {/* Validated GIPHY preview (lib/giphy); the full GIF is only
+                        fetched once it is actually attached. */}
                     <Image
-                      src={gif.previewUrl || gif.url}
+                      src={gif.preview || gif.url}
                       alt={gif.title || ''}
                       width={200}
                       height={96}
@@ -178,17 +222,62 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
   );
 }
 
-/** Renders a stored GIF ref. Only validated GIPHY URLs reach the database. */
+/**
+ * Renders a stored GIF ref. Only validated GIPHY URLs reach the database.
+ *
+ * A GIF is an external image whose real size is only known once it has
+ * downloaded, so it must never be allowed to dictate its own layout:
+ *
+ *  - New references carry the provider's width/height. Those become the
+ *    `width`/`height` attributes, so the browser reserves exactly the right
+ *    box before the first frame arrives, and `aspect-ratio` keeps it while
+ *    the CSS max-height/max-width caps scale it down. Zero layout shift.
+ *  - Older references predate that (no dimensions stored). They render in a
+ *    fixed 16:9 frame with `object-contain`: the card keeps its size no
+ *    matter what shape the GIF turns out to be.
+ */
 export function GifAttachment({ gif, className = '' }) {
   if (!gif?.url) return null;
+
+  const width = Math.round(Number(gif.width));
+  const height = Math.round(Number(gif.height));
+  // A stored 1×1 is a placeholder, not a picture: treat it as unknown rather
+  // than reserving a square for a landscape GIF.
+  const measured = Number.isFinite(width) && Number.isFinite(height) && width >= 16 && height >= 16;
+
+  if (!measured) {
+    return (
+      <span
+        className={cn(
+          'flex max-h-72 w-full max-w-[20rem] overflow-hidden rounded-[var(--radius-md)] border border-line bg-surface-2',
+          className,
+        )}
+        style={{ aspectRatio: '16 / 9' }}
+      >
+        <Image
+          src={gif.url}
+          alt={gif.title || 'GIF'}
+          width={320}
+          height={180}
+          unoptimized
+          className="h-full w-full object-contain"
+        />
+      </span>
+    );
+  }
+
   return (
     <Image
       src={gif.url}
       alt={gif.title || 'GIF'}
-      width={320}
-      height={240}
+      width={width}
+      height={height}
       unoptimized
-      className={cn('h-auto max-h-72 w-auto rounded-[var(--radius-md)] border border-line', className)}
+      style={{ aspectRatio: `${width} / ${height}` }}
+      className={cn(
+        'block h-auto max-h-72 w-auto max-w-full rounded-[var(--radius-md)] border border-line bg-surface-2',
+        className,
+      )}
     />
   );
 }

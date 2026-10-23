@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/icons';
 import { VerifyBadge } from '@/components/timetable/EventText';
 import { CAMPUS_TIME_ZONE, getCampusTime, resolveDaySelection, timetableDayFor } from '@/lib/timetable/clock';
 import { getDayStatus } from '@/lib/timetable/schedule';
+import { sessionScrollBehavior, shouldScrollToSession } from '@/lib/timetable/scroll';
 import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
 
 /**
@@ -68,12 +69,14 @@ function describeStatus(status) {
   }
 }
 
-function EventRow({ event, ongoing, next }) {
+function EventRow({ event, ongoing, next, itemRef }) {
   const subject = event.kind === 'special' ? event.lines.join(' ') : event.lines[0];
   const meta = event.kind === 'lunch' || event.kind === 'special' ? [] : event.lines.slice(1);
 
   return (
     <li
+      ref={itemRef}
+      data-state={ongoing ? 'now' : next ? 'next' : undefined}
       className={[
         'tt-item',
         `tt-item--${event.kind}`,
@@ -157,6 +160,9 @@ export default function TimetableLive({
   const [now, setNow] = useState(() => new Date(initialNow));
   const [selected, setSelected] = useState(initialDay ?? null);
   const pinnedRef = useRef(Boolean(initialPinned));
+  const ongoingRef = useRef(null);
+  const nextRef = useRef(null);
+  const didAutoScrollRef = useRef(false);
 
   // The one timer. Recreated only on mount; always cleared on unmount.
   useEffect(() => {
@@ -206,17 +212,53 @@ export default function TimetableLive({
     window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
+  // Choosing a day pins it. Choosing *today* is not a preference — it is
+  // following the calendar — so it keeps no `day` parameter and the page
+  // moves on by itself when the weekday changes.
   function chooseDay(name) {
-    pinnedRef.current = true;
+    const pin = name !== today;
+    pinnedRef.current = pin;
     setSelected(name);
-    syncUrl(name);
+    syncUrl(pin ? name : null);
   }
 
   function showToday() {
     pinnedRef.current = false;
     setSelected(today);
-    syncUrl(today);
+    syncUrl(null);
   }
+
+  // A URL that names today (or that was normalised on the server) should not
+  // keep claiming a pinned day. Clean it once, after hydration, without a
+  // navigation.
+  useEffect(() => {
+    if (pinnedRef.current) return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('day')) return;
+    url.searchParams.delete('day');
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  }, []);
+
+  // Bring the session that matters into view, once per page view. It runs
+  // after layout (two frames), never on the clock tick, and does nothing if
+  // the session is already fully on screen or the selected day is not today.
+  useEffect(() => {
+    if (didAutoScrollRef.current || !isToday) return undefined;
+    const target = ongoingRef.current || nextRef.current;
+    if (!target) return undefined;
+
+    let frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(() => {
+        didAutoScrollRef.current = true;
+        const rect = target.getBoundingClientRect();
+        if (!shouldScrollToSession(rect, window.innerHeight)) return;
+        const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+        target.scrollIntoView({ block: 'center', behavior: sessionScrollBehavior(reducedMotion) });
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isToday, status?.ongoing?.id, status?.next?.id]);
 
   // Another weekday is a preview, not a live claim: name its first academic
   // session in words instead of borrowing the NOW/NEXT badges.
@@ -322,6 +364,13 @@ export default function TimetableLive({
                 event={entry.event}
                 ongoing={status?.ongoing?.id === entry.event.id}
                 next={status?.next?.id === entry.event.id}
+                itemRef={
+                  status?.ongoing?.id === entry.event.id
+                    ? ongoingRef
+                    : status?.next?.id === entry.event.id
+                      ? nextRef
+                      : undefined
+                }
               />
             ) : (
               <FreeRow key={entry.key} range={entry.range} />

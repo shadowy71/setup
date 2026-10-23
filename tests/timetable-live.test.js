@@ -9,11 +9,13 @@ import { getDivisionTimetable } from '@/lib/timetable';
 import {
   formatMinutes,
   getCampusTime,
+  normalizeTimetableDay,
   parseMinutes,
   resolveDaySelection,
   timetableDayFor,
 } from '@/lib/timetable/clock';
 import { getDayStatus, isAcademicEvent } from '@/lib/timetable/schedule';
+import { isFullyVisible, sessionScrollBehavior, shouldScrollToSession } from '@/lib/timetable/scroll';
 import { NEUTRAL_ACCENT, subjectAccent, subjectRoot } from '@/lib/timetable/meta';
 
 /**
@@ -73,6 +75,22 @@ describe('campus clock (Asia/Kolkata)', () => {
     expect(timetableDayFor('Friday')).toBe('Friday');
     expect(timetableDayFor('Saturday')).toBeNull();
     expect(timetableDayFor('Sunday')).toBeNull();
+  });
+
+  it('accepts a shareable ?day= link in any casing', () => {
+    expect(normalizeTimetableDay('Monday')).toBe('Monday');
+    expect(normalizeTimetableDay('monday')).toBe('Monday');
+    expect(normalizeTimetableDay(' FRIDAY ')).toBe('Friday');
+    for (const value of ['', 'Saturday', 'sunday', 'Funday', null, undefined, ['Monday', 'Tuesday'], 3]) {
+      expect(normalizeTimetableDay(value)).toBeNull();
+    }
+  });
+
+  it('reads the day from the page through the same normaliser', () => {
+    const page = read('app/timetable/[division]/page.js');
+    expect(page).toContain('normalizeTimetableDay(query.day)');
+    // Naming today is not a preference; only a different weekday pins.
+    expect(page).toContain('const initialPinned = Boolean(requestedDay && requestedDay !== today);');
   });
 
   it('keeps a manual choice, and otherwise follows the real weekday', () => {
@@ -291,7 +309,9 @@ describe('live component contracts', () => {
     expect(source.match(/setInterval\(/g)).toHaveLength(1);
     expect(source.match(/clearInterval\(/g)).toHaveLength(1);
     expect(source).toMatch(/return \(\) => window\.clearInterval\(timer\)/);
-    expect(source.match(/useEffect\(/g)).toHaveLength(2);
+    // The timer, following the weekday, reserving the layout once, and the
+    // one-shot scroll to the current/next session.
+    expect(source.match(/useEffect\(/g)).toHaveLength(4);
   });
 
   it('derives today and the status from the campus clock, not the day index', () => {
@@ -313,7 +333,7 @@ describe('live component contracts', () => {
   it('updates the URL without a page reload and keeps the day when pinned', () => {
     expect(source).toContain('window.history.replaceState');
     expect(source).not.toContain('router.push');
-    expect(source).toContain('pinnedRef.current = true');
+    expect(source).toContain('pinnedRef.current = pin;');
   });
 
   it('exposes a TODAY marker and a way back to today', () => {
@@ -342,6 +362,46 @@ describe('live component contracts', () => {
     expect(css).toMatch(/prefers-reduced-motion: reduce[\s\S]*animation: none/);
     expect(css).toContain('font-variant-numeric: tabular-nums');
     expect(css).not.toMatch(/\.tt-item[^{]*\{[^}]*color:\s*var\(--tt-hue/);
+  });
+});
+
+describe('opening at the right place', () => {
+  it('only scrolls when the session is not fully on screen', () => {
+    expect(isFullyVisible({ top: 200, bottom: 420 }, 800)).toBe(true);
+    expect(shouldScrollToSession({ top: 200, bottom: 420 }, 800)).toBe(false);
+
+    // Below the fold, above it, or half cut off — all need the scroll.
+    expect(shouldScrollToSession({ top: 700, bottom: 980 }, 800)).toBe(true);
+    expect(shouldScrollToSession({ top: -200, bottom: -20 }, 800)).toBe(true);
+    expect(shouldScrollToSession({ top: 780, bottom: 900 }, 800)).toBe(true);
+    expect(shouldScrollToSession({ top: -40, bottom: 120 }, 800)).toBe(true);
+  });
+
+  it('does nothing without a real viewport', () => {
+    expect(shouldScrollToSession({ top: 100, bottom: 200 }, 0)).toBe(false);
+    expect(shouldScrollToSession(null, 800)).toBe(false);
+  });
+
+  it('respects reduced motion', () => {
+    expect(sessionScrollBehavior(true)).toBe('auto');
+    expect(sessionScrollBehavior(false)).toBe('smooth');
+  });
+
+  it('is wired into the live view once, for today, ongoing before next', () => {
+    const source = read('components/timetable/TimetableLive.js');
+
+    // One auto-scroll guard, one scrollIntoView, after two frames of layout.
+    expect(source.match(/didAutoScrollRef/g)).toHaveLength(3);
+    expect(source.match(/scrollIntoView\(/g)).toHaveLength(1);
+    expect(source.match(/requestAnimationFrame\(/g)).toHaveLength(2);
+    expect(source).toContain('ongoingRef.current || nextRef.current');
+    expect(source).toContain("prefers-reduced-motion: reduce");
+    // The status row is marked for tests and for styling, never by colour alone.
+    expect(source).toContain("data-state={ongoing ? 'now' : next ? 'next' : undefined}");
+    // Choosing today keeps following the calendar; choosing another day pins it.
+    expect(source).toContain('const pin = name !== today;');
+    expect(source).toContain('syncUrl(pin ? name : null);');
+    expect(source).toContain('syncUrl(null);');
   });
 });
 
@@ -376,6 +436,13 @@ describe('rendered day view (server pass, fixed instants)', () => {
     expect(html.match(/tt-badge--next/g)).toHaveLength(1);
     expect(html).toContain('Now: WDL · 09:00–11:00.');
     expect(html).toContain('Next: EPH at 11:10.');
+    // The rows carry the state the scroll logic targets, on the right rows.
+    const nowRow = html.match(/<li[^>]*data-state="now"[^>]*>.*?<\/li>/s)?.[0] || '';
+    const nextRow = html.match(/<li[^>]*data-state="next"[^>]*>.*?<\/li>/s)?.[0] || '';
+    expect(nowRow).toContain('WDL-1/LAUC-2/DEL-3');
+    expect(nowRow).toContain('tt-item--now');
+    expect(nextRow).toContain('EPH');
+    expect(nextRow).toContain('tt-item--next');
     expect(html).toContain('2 periods');
     expect(html).not.toContain('tt-jump');
   });
@@ -387,6 +454,7 @@ describe('rendered day view (server pass, fixed instants)', () => {
     expect(html).toContain('No classes this weekend');
     expect(html).not.toContain('tt-badge--now');
     expect(html).not.toContain('tt-badge--next');
+    expect(html).not.toContain('data-state="now"');
     expect(html).toContain('aria-pressed="false" aria-label="Monday">Mon');
   });
 
