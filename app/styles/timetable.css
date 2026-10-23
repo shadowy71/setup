@@ -189,10 +189,16 @@
 
 .tt-tabs {
   display: flex;
+  flex: 1 1 auto;
+  /* A flex item will not shrink below its content by default, which turned
+     the five weekday tabs into sideways page overflow on a 320px phone.
+     `min-width: 0` lets the strip scroll inside its own row instead. */
+  min-width: 0;
   gap: 0.4rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tt-tab,
@@ -318,6 +324,8 @@
 
 .tt-item {
   position: relative;
+  /* Room to breathe when a session is scrolled into view. */
+  scroll-margin-block: 1.25rem;
   display: grid;
   grid-template-columns: 4.75rem minmax(0, 1fr);
   gap: 0.75rem;

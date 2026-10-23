@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DIVISIONS, ROUTES } from '@/lib/constants';
-import { adjacentDivisions, getDivisionTimetable, TIMETABLE_DAYS } from '@/lib/timetable';
-import { getCampusTime, timetableDayFor } from '@/lib/timetable/clock';
+import { adjacentDivisions, getDivisionTimetable } from '@/lib/timetable';
+import { getCampusTime, normalizeTimetableDay, timetableDayFor } from '@/lib/timetable/clock';
 import { divisionTimetableHref } from '@/lib/timetable/meta';
 import TimetableLive from '@/components/timetable/TimetableLive';
 import { FlaggedNotice, WeekTable } from '@/components/timetable/TimetableViews';
@@ -48,11 +48,20 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
 
   const query = (await searchParams) || {};
   // An explicit ?day= is a deliberate (and shareable) choice; otherwise the
-  // page opens on the institute's real weekday — or the weekend state.
-  const requestedDay = TIMETABLE_DAYS.includes(query.day) ? query.day : null;
+  // page opens on the institute's real weekday — or the weekend state. A day
+  // that does not exist in the source is ignored here and stripped from the
+  // address bar after hydration, so a stale link cannot keep lying about
+  // which day is on screen.
+  const requestedDay = normalizeTimetableDay(query.day);
+
   const now = new Date();
   const campus = getCampusTime(now);
-  const initialDay = requestedDay ?? timetableDayFor(campus.weekday);
+  const today = timetableDayFor(campus.weekday);
+  const initialDay = requestedDay ?? today;
+  // Naming today in the URL is not a preference: the page keeps following
+  // the calendar (and can roll into the weekend) until a different day is
+  // chosen explicitly.
+  const initialPinned = Boolean(requestedDay && requestedDay !== today);
 
   // Only what the live view needs: the week grid keeps its slots server-side.
   const liveDays = timetable.days.map(({ day, events, freeRanges }) => ({ day, events, freeRanges }));
@@ -74,7 +83,7 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
         days={liveDays}
         subjects={timetable.subjects}
         initialDay={initialDay}
-        initialPinned={Boolean(requestedDay)}
+        initialPinned={initialPinned}
         initialNow={now.toISOString()}
       >
         {timetable.flagged.length ? (
