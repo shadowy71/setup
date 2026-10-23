@@ -238,7 +238,6 @@ Committed JSON results: `perf-results/ui-before-assets.json`,
 
 Opened from `arena/df5c6bc7-setup` → `main`:
 **`fix(ui): improve campus navigation, Home discovery and mobile performance`**
-
-URL: _added in the follow-up commit once GitHub returns the PR number._
+— https://github.com/sitemango/setup/pull/36
 
 `main` was never pushed to.
