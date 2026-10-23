@@ -7,11 +7,11 @@ import {
   getCommunityById,
   getCommunityMembership,
   listCommunityMembers,
-  listEvents,
   listJoinRequests,
   getCommunityChatConversation,
 } from '@/lib/data/campus';
 import { getCommunityPosts } from '@/lib/data/feed';
+import { listPublishedEvents } from '@/lib/data/public-cache';
 import { ROUTES, UUID_REGEX } from '@/lib/constants';
 import { PageHeader, Badge, Card, EmptyState, LinkButton, Notice, SectionHeader, StaffDot } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
@@ -64,7 +64,7 @@ export default async function ClubPage({ params }) {
   const [membership, members, events, chat, posts] = await Promise.all([
     getCommunityMembership(supabase, club.id, user.profile.id),
     listCommunityMembers(supabase, club.id, { limit: 60 }),
-    listEvents(supabase, { limit: 5, clubId: club.id, upcoming: true }),
+    listPublishedEvents({ limit: 5, clubId: club.id, upcoming: true }),
     getCommunityChatConversation(supabase, club.id),
     getCommunityPosts(supabase, club.id, { limit: 6, currentProfileId: user.profile.id }),
   ]);

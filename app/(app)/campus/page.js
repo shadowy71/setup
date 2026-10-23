@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
-import { listNotices, listEvents, listCommunities, getCampusSummary } from '@/lib/data/campus';
+import { listCommunities, getCampusSummary } from '@/lib/data/campus';
+import { listPublishedEvents, listPublishedNotices } from '@/lib/data/public-cache';
 import { ROUTES } from '@/lib/constants';
 import { PageHeader, Card, Notice, EmptyState } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
@@ -36,12 +37,25 @@ export default async function CampusPage() {
   const supabase = await getServerClient();
   const actor = toActor(user);
 
-  const [{ items: notices, unavailable: noticesUnavailable }, { items: events }, { items: clubs }, summary] = await Promise.all([
-    listNotices(supabase, { limit: 3 }),
-    listEvents(supabase, { limit: 3 }),
-    listCommunities(supabase, { kind: 'club', limit: 3 }),
-    getCampusSummary(supabase),
+  // Notices and events are public and cached; the club list asks PostgREST for
+  // its exact count on the same request, so the hub no longer issues separate
+  // count round trips for events and clubs.
+  const [
+    { items: notices, unavailable: noticesUnavailable },
+    { items: events, count: eventCount },
+    { items: clubs, count: clubCount },
+    summary,
+  ] = await Promise.all([
+    listPublishedNotices({ limit: 3 }),
+    listPublishedEvents({ limit: 3, withCount: true }),
+    listCommunities(supabase, { kind: 'club', limit: 3, withCount: true }),
+    getCampusSummary(supabase, { withEvents: false, withClubs: false }),
   ]);
+  const counts = {
+    ...summary,
+    events: eventCount ?? summary.events,
+    clubs: clubCount ?? summary.clubs,
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -66,9 +80,9 @@ export default async function CampusPage() {
 
       <Card className="p-3">
         <p className="text-2xs text-muted">
-          {summary.notices} published notices · {summary.events} upcoming events · {summary.clubs} clubs ·{' '}
-          {summary.resources} resources · {summary.opportunities} opportunities · {summary.projects} projects ·{' '}
-          {summary.study} open study requests
+          {counts.notices} published notices · {counts.events} upcoming events · {counts.clubs} clubs ·{' '}
+          {counts.resources} resources · {counts.opportunities} opportunities · {counts.projects} projects ·{' '}
+          {counts.study} open study requests
         </p>
       </Card>
 
