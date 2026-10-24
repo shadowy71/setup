@@ -241,3 +241,49 @@ Opened from `arena/df5c6bc7-setup` → `main`:
 — https://github.com/sitemango/setup/pull/36
 
 `main` was never pushed to.
+
+---
+
+## J. Follow-up (2026-10-24): the weekend opens on Monday
+
+**Request.** "On weekends it should show Monday timetable."
+
+**Before.** Saturday and Sunday had no day of their own, so
+`timetableDayFor()` returned `null`, `resolveDaySelection()` returned `null`,
+and the page rendered an empty panel: "No classes this weekend".
+
+**After.** The weekend opens on **Monday** — the next day the campus actually
+runs — as a labelled preview. Nothing was invented and nothing is claimed:
+
+| Rule | Behaviour |
+|---|---|
+| First paint | The **server** resolves the fallback (`defaultTimetableDay`) into `initialDay`, so the HTML already contains Monday's rows. No empty panel flashes before hydration. |
+| Liveness | `isToday` is `selected === today` and `today` is `null` at the weekend, so there is **no NOW/NEXT badge, no `data-state`, no status line and no "Today" pill** on the previewed Monday. |
+| Explanation | The day heading carries "It's the weekend — showing Monday's timetable." |
+| Choice | Picking any weekday still pins it (and still shows the weekend note); the "Today" jump button is not rendered, because there is no today to jump to. |
+| Rolling over | When the weekend ends, the effect re-resolves to the real weekday, so Monday becomes live at 00:00 without a reload. A pinned day still wins. |
+| Data | Untouched: the source timetable is still Monday–Friday, 24-hour, and the week grid is unchanged. |
+
+The old `.tt-weekend` CSS block and its markup were deleted rather than left
+dead, and the two weekend assertions in `tests/timetable-live.test.js` were
+rewritten to assert the new intended behaviour (Monday's rows present, the
+weekend note present, zero NOW/NEXT/status/Today markers) — not removed.
+
+**Verification.** `npm test` **33 files / 438 tests**, `npm run lint` clean,
+`npm run build` clean. Browser check on a production build whose clock was
+pinned to Saturday 24 Oct 2026, 10:05 IST:
+
+```
+clock      Saturday, 24 Oct
+heading    Monday
+note       It's the weekend — showing Monday's timetable.
+rows       WDL-1/ENG-2/WDL-3 · EPH-1/DEL-2/WDL-3 · Lunch · EPH
+selected   Monday (aria-pressed=true)
+badges     0 now, 0 next, 0 status, 0 today pills
+console    no errors
+```
+
+Choosing Wednesday then reloading kept `?day=Wednesday` and showed
+Wednesday's rows with the same weekend note. On a Friday-pinned build the
+weekday path is unchanged (`Now: WDL · 9:00–11:00 AM. Next: EPH at 11:10 AM.`,
+one NOW badge, one NEXT badge, a "Friday, today" tab).
