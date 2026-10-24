@@ -11,6 +11,7 @@ import { getTimetableHref } from '@/lib/timetable/meta';
 import { formatUnread } from '@/lib/notifications/format';
 import { handleOf } from '@/lib/identity/shell-user';
 import { resolveActiveHref } from '@/lib/navigation/active';
+import { MessageUnreadBadge } from '@/components/layout/MessageUnreadBadge';
 
 /**
  * Desktop navigation: a suspended sheet of frosted glass carrying the Campus+
@@ -31,7 +32,7 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
 
   const unread = formatUnread(unreadNotifications);
   const secondary = [
-    { href: ROUTES.chat, label: 'Messages', icon: 'chat', unread: formatUnread(0) },
+    { href: ROUTES.chat, label: 'Messages', icon: 'chat' },
     { href: ROUTES.notifications, label: 'Notifications', icon: 'bell', unread },
   ];
   const timetableHref = getTimetableHref(user?.division);
@@ -81,7 +82,8 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
           <Link key={item.href} href={item.href} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
             <Icon name={item.icon} size={18} className="nav-icon" />
             <span className="flex-1">{item.label}</span>
-            {item.unread.visible ? (
+            {item.href === ROUTES.chat ? <MessageUnreadBadge /> : null}
+            {item.unread?.visible ? (
               <span className="nav-count" aria-label={item.unread.aria}>
                 {item.unread.text}
               </span>

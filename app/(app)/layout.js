@@ -5,6 +5,7 @@ import { ROUTES } from '@/lib/constants';
 import { getTimetableHref } from '@/lib/timetable/meta';
 import { toShellUser } from '@/lib/identity/shell-user';
 import { AppShell } from '@/components/layout/AppShell';
+import { getUnreadMessageState } from '@/lib/data/messaging';
 
 // Every page in this group depends on the signed-in student, so nothing here is
 // cached: a page rendered for one student must never be served to another.
@@ -28,13 +29,18 @@ export default async function AppLayout({ children }) {
   // Unread badge: the count is the recipient's own rows, so RLS does the
   // filtering for us.
   let unread = 0;
+  let initialUnreadMessages = [];
   const supabase = await getServerClient();
   if (supabase) {
-    const { count } = await supabase
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .is('read_at', null);
-    unread = count || 0;
+    const [notificationResult, messageState] = await Promise.all([
+      supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .is('read_at', null),
+      getUnreadMessageState(supabase),
+    ]);
+    unread = notificationResult.count || 0;
+    initialUnreadMessages = messageState.rows;
   }
 
   const createItems = [
@@ -107,6 +113,8 @@ export default async function AppLayout({ children }) {
     <AppShell
       user={shellUser}
       unreadNotifications={unread}
+      messagingUserId={user.profile.id}
+      initialUnreadMessages={initialUnreadMessages}
       canModerate={canModerate}
       canAdmin={canAdmin}
       createItems={createItems}

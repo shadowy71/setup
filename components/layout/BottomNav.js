@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MOBILE_NAV } from '@/lib/constants';
+import { MOBILE_NAV, ROUTES } from '@/lib/constants';
 import { Icon } from '@/components/ui/icons';
 import { GlassSurface } from '@/components/ui';
 import { isActivePath } from '@/lib/navigation/active';
+import { MessageUnreadBadge } from '@/components/layout/MessageUnreadBadge';
 
 /**
  * Mobile navigation: Home · Explore · Market · Chat · Profile.
@@ -45,10 +46,12 @@ export function BottomNav() {
                 aria-current={active ? 'page' : undefined}
                 className="tab-item rounded-2xl"
               >
-                {/* The dock shows exactly the five destinations and no badges:
-                    the header bell is the notification entry point, and a badge
-                    here would change the dock's dimensions. */}
-                <Icon name={item.icon} size={20} className="tab-icon" />
+                {/* The five destinations and their dimensions stay unchanged.
+                    Only the existing Chat glyph carries the live unread count. */}
+                <span className="relative flex">
+                  <Icon name={item.icon} size={20} className="tab-icon" />
+                  {item.href === ROUTES.chat ? <MessageUnreadBadge variant="icon" /> : null}
+                </span>
                 {item.label}
               </Link>
             );

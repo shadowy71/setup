@@ -1,13 +1,10 @@
-import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
-import { listConversations, conversationTitle } from '@/lib/data/messaging';
-import { ROUTES } from '@/lib/constants';
-import { PageHeader, EmptyState, Badge, Notice } from '@/components/ui';
-import { Icon } from '@/components/ui/icons';
+import { listConversations } from '@/lib/data/messaging';
+import { PageHeader, Notice } from '@/components/ui';
 import { NewConversation } from '@/components/chat/NewConversation';
-import { truncate, relativeTime } from '@/lib/utils';
+import { ConversationList } from '@/components/chat/ConversationList';
 
 export const metadata = { title: 'Messages' };
 
@@ -39,52 +36,8 @@ export default async function ChatPage() {
         </Notice>
       ) : null}
 
-      {!unavailable && conversations.length === 0 ? (
-        <EmptyState
-          icon="chat"
-          title="No conversations yet"
-          description="Start one from any profile, or message a seller from the marketplace. Everyone uses the same inbox."
-        />
-      ) : null}
-
-      {conversations.length ? (
-        <ul className="card divide-y divide-line">
-          {conversations.map((conversation) => {
-            const title = conversationTitle(conversation, conversation.other, conversation.members);
-            const last = conversation.lastMessage;
-            const mine = last && last.sender_id === user.profile.id;
-            return (
-              <li key={conversation.id}>
-                <Link
-                  href={ROUTES.conversation(conversation.id)}
-                  className="flex items-start gap-3 p-3 hover:bg-canvas hover:no-underline"
-                >
-                  <span className="mt-0.5 shrink-0 text-muted">
-                    <Icon name={conversation.kind === 'direct' ? 'chat' : 'users'} size={16} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-[0.875rem] font-medium">{title}</span>
-                      {conversation.kind !== 'direct' ? <Badge>Community chat</Badge> : null}
-                      {conversation.is_muted ? <Badge>Muted</Badge> : null}
-                      {conversation.unread > 0 ? (
-                        <Badge tone="accent">{conversation.unreadSaturated ? '30+' : conversation.unread}</Badge>
-                      ) : null}
-                    </span>
-                    <span className="mt-0.5 block truncate text-[0.8125rem] text-muted">
-                      {last
-                        ? `${mine ? 'You: ' : ''}${truncate(last.body || 'GIF', 90)}`
-                        : 'No messages yet'}
-                    </span>
-                    <span className="mt-0.5 block text-2xs text-muted">
-                      {last ? relativeTime(last.created_at) : relativeTime(conversation.created_at)}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      {!unavailable ? (
+        <ConversationList initialConversations={conversations} currentUserId={user.profile.id} />
       ) : null}
     </div>
   );

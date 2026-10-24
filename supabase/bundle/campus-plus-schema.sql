@@ -30,7 +30,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (25 files):
+-- Contents (26 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -56,9 +56,10 @@
 --   23  20261005000023_023_random_chat_flag_retired.sql  (26 lines)
 --   24  20261005000024_024_study_partners_and_discovery.sql  (469 lines)
 --   25  20261005000025_025_gigs_and_clubs.sql  (290 lines)
+--   26  20261024000001_026_messaging_live_read_model.sql  (116 lines)
 
 -- ==========================================================================
--- FILE 01/25  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/26  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -179,7 +180,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/25  20261005000002_002_identity_roles.sql
+-- FILE 02/26  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -771,7 +772,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/25  20261005000003_003_blocks.sql
+-- FILE 03/26  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -918,7 +919,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/25  20261005000004_004_communities.sql
+-- FILE 04/26  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1325,7 +1326,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/25  20261005000005_005_social.sql
+-- FILE 05/26  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1948,7 +1949,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/25  20261005000006_006_moderation_core.sql
+-- FILE 06/26  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2423,7 +2424,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/25  20261005000007_007_messaging.sql
+-- FILE 07/26  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3012,7 +3013,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/25  20261005000008_008_marketplace.sql
+-- FILE 08/26  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3534,7 +3535,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/25  20261005000009_009_campus.sql
+-- FILE 09/26  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4568,7 +4569,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/25  20261005000010_010_random.sql
+-- FILE 10/26  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5220,7 +5221,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/25  20261005000011_011_platform.sql
+-- FILE 11/26  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -5960,7 +5961,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/25  20261005000012_012_auth_hooks.sql
+-- FILE 12/26  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6417,7 +6418,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/25  20261005000013_013_reference_data.sql
+-- FILE 13/26  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6691,7 +6692,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/25  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/26  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6904,7 +6905,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/25  20261005000015_015_column_privileges.sql
+-- FILE 15/26  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7132,7 +7133,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/25  20261005000016_016_staff_actions.sql
+-- FILE 16/26  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7839,7 +7840,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/25  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/26  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8037,7 +8038,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/25  20261005000018_018_function_grants.sql
+-- FILE 18/26  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8152,7 +8153,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/25  20261005000019_019_staff_visibility.sql
+-- FILE 19/26  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8228,7 +8229,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/25  20261005000020_020_chat_inbox.sql
+-- FILE 20/26  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8322,7 +8323,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/25  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/26  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8660,7 +8661,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/25  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/26  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8733,7 +8734,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/25  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/26  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8763,7 +8764,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/25  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/26  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9236,7 +9237,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/25  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/26  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9528,6 +9529,126 @@ grant update (state, skills, payment_type, deadline, contact_details)
 
 grant update (club_category)
   on public.communities to authenticated;
+
+-- ==========================================================================
+-- FILE 26/26  20261024000001_026_messaging_live_read_model.sql
+-- ==========================================================================
+
+-- =============================================================================
+-- Campus+ migration 026 — exact unread state for live messaging
+-- =============================================================================
+-- No new tables or client-writable columns. The navigation badge and reconnect
+-- path need the caller's per-conversation read position and exact unread count,
+-- including counts above the old 30-message presentation window. Both functions
+-- remain SECURITY INVOKER: conversation, membership, message, block and account
+-- visibility continue to be decided by the existing RLS policies.
+-- Existing index used by both reads: messages_conversation_idx
+-- (conversation_id, created_at DESC).
+-- =============================================================================
+
+create or replace function public.conversation_inbox(p_limit integer default 30)
+returns table (
+  id                      uuid,
+  kind                    public.conversation_kind,
+  title                   text,
+  community_id            uuid,
+  status                  public.content_status,
+  last_message_at         timestamptz,
+  created_at              timestamptz,
+  is_muted                boolean,
+  last_read_at            timestamptz,
+  unread                  integer,
+  last_message_id         uuid,
+  last_message_sender_id  uuid,
+  last_message_body       text,
+  last_message_gif        jsonb,
+  last_message_created_at timestamptz
+)
+language sql
+stable
+security invoker
+set search_path = public, pg_temp
+as $$
+  with mine as (
+    select m.conversation_id, m.is_muted, m.last_read_at
+    from public.conversation_members m
+    where m.user_id = public.current_profile_id()
+      and m.status = 'active'
+  )
+  select
+    c.id,
+    c.kind,
+    c.title,
+    c.community_id,
+    c.status,
+    c.last_message_at,
+    c.created_at,
+    mine.is_muted,
+    mine.last_read_at,
+    (
+      select count(*)::integer
+      from public.messages msg
+      where msg.conversation_id = c.id
+        and msg.sender_id <> public.current_profile_id()
+        and (mine.last_read_at is null or msg.created_at > mine.last_read_at)
+    ) as unread,
+    latest.id,
+    latest.sender_id,
+    latest.body,
+    latest.gif,
+    latest.created_at
+  from public.conversations c
+  join mine on mine.conversation_id = c.id
+  left join lateral (
+    select msg.id, msg.sender_id, msg.body, msg.gif, msg.created_at
+    from public.messages msg
+    where msg.conversation_id = c.id
+    order by msg.created_at desc
+    limit 1
+  ) latest on true
+  order by c.last_message_at desc
+  limit coalesce(p_limit, 30);
+$$;
+
+comment on function public.conversation_inbox(integer) is
+  'RLS-scoped inbox: newest message preview and exact unread count per visible conversation.';
+
+/** A small shell snapshot: no message bodies, member lists, or profile joins. */
+create or replace function public.messaging_unread_counts()
+returns table (
+  conversation_id uuid,
+  last_read_at    timestamptz,
+  unread_count    integer
+)
+language sql
+stable
+security invoker
+set search_path = public, pg_temp
+as $$
+  select
+    mine.conversation_id,
+    mine.last_read_at,
+    (
+      select count(*)::integer
+      from public.messages msg
+      where msg.conversation_id = mine.conversation_id
+        and msg.sender_id <> public.current_profile_id()
+        and (mine.last_read_at is null or msg.created_at > mine.last_read_at)
+    ) as unread_count
+  from public.conversation_members mine
+  join public.conversations c on c.id = mine.conversation_id
+  where mine.user_id = public.current_profile_id()
+    and mine.status = 'active'
+  order by mine.conversation_id;
+$$;
+
+comment on function public.messaging_unread_counts() is
+  'RLS-scoped exact unread counts and read positions for the signed-in member; used by the private navigation badge and reconnect sync.';
+
+revoke all on function public.conversation_inbox(integer) from public, anon;
+grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
+revoke all on function public.messaging_unread_counts() from public, anon;
+grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)

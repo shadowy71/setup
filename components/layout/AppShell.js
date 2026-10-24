@@ -4,6 +4,7 @@ import { ShellHeader } from '@/components/layout/ShellHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { CommandPaletteHost } from '@/components/search/CommandPalette';
 import { isStaffRoles } from '@/lib/identity/shell-user';
+import { MessagingProvider } from '@/components/layout/MessagingProvider';
 
 /**
  * The one application frame.
@@ -27,6 +28,8 @@ import { isStaffRoles } from '@/lib/identity/shell-user';
 export function AppShell({
   user = null,
   unreadNotifications = 0,
+  messagingUserId = null,
+  initialUnreadMessages = [],
   canModerate = false,
   canAdmin = false,
   createItems = [],
@@ -37,26 +40,18 @@ export function AppShell({
   const isStaff = Boolean(user?.staffLabel) || isStaffRoles(user?.roles);
 
   return (
-    <div className="min-h-dvh">
-      <NightSky />
-      <a href="#content" className="skip-link">
-        Skip to content
-      </a>
+    <MessagingProvider
+      key={messagingUserId || 'signed-out'}
+      userId={messagingUserId}
+      initialUnread={initialUnreadMessages}
+    >
+      <div className="min-h-dvh">
+        <NightSky />
+        <a href="#content" className="skip-link">
+          Skip to content
+        </a>
 
-      <Sidebar
-        user={user}
-        unreadNotifications={unreadNotifications}
-        isStaff={isStaff}
-        canModerate={canModerate}
-        canAdmin={canAdmin}
-        createItems={createItems}
-      />
-
-      {/* `.shell-root` lifts the chrome and the page above the fixed night
-          sky, which is a positioned layer and would otherwise paint over
-          static content. */}
-      <div className="shell-root lg:pl-[17rem]">
-        <ShellHeader
+        <Sidebar
           user={user}
           unreadNotifications={unreadNotifications}
           isStaff={isStaff}
@@ -65,16 +60,30 @@ export function AppShell({
           createItems={createItems}
         />
 
-        <main
-          id="content"
-          className="shell-content shell-main mx-auto w-full px-4 pb-28 pt-4 sm:px-6 lg:pb-16 lg:pt-5"
-        >
-          {children}
-        </main>
-      </div>
+        {/* `.shell-root` lifts the chrome and the page above the fixed night
+            sky, which is a positioned layer and would otherwise paint over
+            static content. */}
+        <div className="shell-root lg:pl-[17rem]">
+          <ShellHeader
+            user={user}
+            unreadNotifications={unreadNotifications}
+            isStaff={isStaff}
+            canModerate={canModerate}
+            canAdmin={canAdmin}
+            createItems={createItems}
+          />
 
-      <BottomNav />
-      <CommandPaletteHost actions={paletteActions} />
-    </div>
+          <main
+            id="content"
+            className="shell-content shell-main mx-auto w-full px-4 pb-28 pt-4 sm:px-6 lg:pb-16 lg:pt-5"
+          >
+            {children}
+          </main>
+        </div>
+
+        <BottomNav />
+        <CommandPaletteHost actions={paletteActions} />
+      </div>
+    </MessagingProvider>
   );
 }
