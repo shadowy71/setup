@@ -123,6 +123,7 @@ export default async function ConversationPage({ params, searchParams }) {
       ) : null}
 
       <ChatThread
+        key={conversation.id}
         conversationId={conversation.id}
         currentUserId={user.profile.id}
         initialMessages={messages}
