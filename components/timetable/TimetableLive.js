@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/icons';
 import { VerifyBadge } from '@/components/timetable/EventText';
-import { CAMPUS_TIME_ZONE, getCampusTime, resolveDaySelection, timetableDayFor } from '@/lib/timetable/clock';
+import { CAMPUS_TIME_ZONE, defaultTimetableDay, getCampusTime, resolveDaySelection, timetableDayFor } from '@/lib/timetable/clock';
 import { getDayStatus } from '@/lib/timetable/schedule';
 import { sessionScrollBehavior, shouldScrollToSession } from '@/lib/timetable/scroll';
 import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
@@ -158,7 +158,9 @@ export default function TimetableLive({
   children,
 }) {
   const [now, setNow] = useState(() => new Date(initialNow));
-  const [selected, setSelected] = useState(initialDay ?? null);
+  // Always a weekday: the page passes one, and a caller that passes nothing
+  // still gets the weekend preview rather than an empty page.
+  const [selected, setSelected] = useState(initialDay ?? defaultTimetableDay(null));
   const pinnedRef = useRef(Boolean(initialPinned));
   const ongoingRef = useRef(null);
   const nextRef = useRef(null);
@@ -174,7 +176,10 @@ export default function TimetableLive({
   const today = timetableDayFor(parts.weekday);
 
   // Follow the institute's weekday — across midnight and into/out of the
-  // weekend — unless the visitor has chosen a day themselves.
+  // weekend — unless the visitor has chosen a day themselves. Out of term hours
+  // on a Saturday or Sunday there is no weekday to follow, so the selection
+  // falls back to Monday (`resolveDaySelection` → `defaultTimetableDay`), which
+  // is a preview: `isToday` stays false because `today` is null.
   useEffect(() => {
     setSelected((previous) => resolveDaySelection({ selected: previous, pinned: pinnedRef.current, today }));
   }, [today]);
@@ -224,7 +229,7 @@ export default function TimetableLive({
 
   function showToday() {
     pinnedRef.current = false;
-    setSelected(today);
+    setSelected(defaultTimetableDay(today));
     syncUrl(null);
   }
 
@@ -261,10 +266,12 @@ export default function TimetableLive({
   }, [isToday, status?.ongoing?.id, status?.next?.id]);
 
   // Another weekday is a preview, not a live claim: name its first academic
-  // session in words instead of borrowing the NOW/NEXT badges.
+  // session in words instead of borrowing the NOW/NEXT badges. At the weekend
+  // the preview is the whole page, so the note says why Monday is on screen.
   let dayNote = null;
-  if (selected && !today) dayNote = `It’s the weekend — showing ${selected}.`;
-  else if (selected && selected !== today) {
+  if (!day) dayNote = null;
+  else if (!today) dayNote = `It’s the weekend — showing ${selected}’s timetable.`;
+  else if (selected !== today) {
     dayNote = status?.first
       ? `Not today — ${selected}’s first class is ${status.first.lines[0]} at ${status.first.time.fromLabel}.`
       : 'Not today.';
@@ -332,7 +339,7 @@ export default function TimetableLive({
       </div>
 
       <div className="tt-dayhead">
-        <h2 className="tt-dayhead__title">{selected || 'Weekend'}</h2>
+        <h2 className="tt-dayhead__title">{selected}</h2>
         {isToday ? <span className="tt-dayhead__today">Today</span> : null}
         {dayNote ? <p className="tt-dayhead__note">{dayNote}</p> : null}
       </div>
@@ -343,20 +350,7 @@ export default function TimetableLive({
         </p>
       ) : null}
 
-      {!selected ? (
-        <div className="tt-weekend">
-          <span className="tt-weekend__icon" aria-hidden="true">
-            <Icon name="calendar" size={18} />
-          </span>
-          <div>
-            <p className="tt-weekend__title">No classes this weekend</p>
-            <p className="tt-weekend__body">
-              The master timetable runs Monday to Friday. Pick a weekday above to see Division {division}’s schedule —
-              nothing scheduled today is hidden or invented.
-            </p>
-          </div>
-        </div>
-      ) : (
+      {day ? (
         <ol className="tt-day" aria-label={`${selected} timetable for Division ${division}`}>
           {entries.map((entry) =>
             entry.event ? (
@@ -378,7 +372,7 @@ export default function TimetableLive({
             ),
           )}
         </ol>
-      )}
+      ) : null}
 
       {selected && subjects.length ? (
         <ul className="tt-legend" aria-label="Subject colours">

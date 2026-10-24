@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DIVISIONS, ROUTES } from '@/lib/constants';
 import { adjacentDivisions, getDivisionTimetable } from '@/lib/timetable';
-import { getCampusTime, normalizeTimetableDay, timetableDayFor } from '@/lib/timetable/clock';
+import { defaultTimetableDay, getCampusTime, normalizeTimetableDay, timetableDayFor } from '@/lib/timetable/clock';
 import { divisionTimetableHref } from '@/lib/timetable/meta';
 import TimetableLive from '@/components/timetable/TimetableLive';
 import { FlaggedNotice, WeekTable } from '@/components/timetable/TimetableViews';
@@ -48,16 +48,18 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
 
   const query = (await searchParams) || {};
   // An explicit ?day= is a deliberate (and shareable) choice; otherwise the
-  // page opens on the institute's real weekday — or the weekend state. A day
-  // that does not exist in the source is ignored here and stripped from the
-  // address bar after hydration, so a stale link cannot keep lying about
-  // which day is on screen.
+  // page opens on the institute's real weekday — or, at the weekend, on
+  // Monday as a preview. The fallback happens here, on the server, so the
+  // first paint already shows the timetable instead of flashing an empty
+  // weekend and swapping after hydration. A day that does not exist in the
+  // source is ignored here and stripped from the address bar after hydration,
+  // so a stale link cannot keep lying about which day is on screen.
   const requestedDay = normalizeTimetableDay(query.day);
 
   const now = new Date();
   const campus = getCampusTime(now);
   const today = timetableDayFor(campus.weekday);
-  const initialDay = requestedDay ?? today;
+  const initialDay = requestedDay ?? defaultTimetableDay(today);
   // Naming today in the URL is not a preference: the page keeps following
   // the calendar (and can roll into the weekend) until a different day is
   // chosen explicitly.

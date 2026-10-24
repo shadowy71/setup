@@ -7,6 +7,8 @@ import TimetableLive from '@/components/timetable/TimetableLive';
 
 import { getDivisionTimetable } from '@/lib/timetable';
 import {
+  WEEKEND_PREVIEW_DAY,
+  defaultTimetableDay,
   formatMinutes,
   getCampusTime,
   normalizeTimetableDay,
@@ -96,8 +98,32 @@ describe('campus clock (Asia/Kolkata)', () => {
   it('keeps a manual choice, and otherwise follows the real weekday', () => {
     expect(resolveDaySelection({ selected: 'Monday', pinned: true, today: 'Tuesday' })).toBe('Monday');
     expect(resolveDaySelection({ selected: 'Monday', pinned: false, today: 'Tuesday' })).toBe('Tuesday');
-    expect(resolveDaySelection({ selected: 'Friday', pinned: false, today: null })).toBeNull();
     expect(resolveDaySelection({ selected: null, pinned: true, today: 'Monday' })).toBeNull();
+  });
+
+  it('opens on Monday at the weekend, because that is the next timetable there is', () => {
+    // `today` is null on Saturday and Sunday: there is no weekday to follow.
+    expect(WEEKEND_PREVIEW_DAY).toBe('Monday');
+    expect(defaultTimetableDay('Friday')).toBe('Friday');
+    expect(defaultTimetableDay(null)).toBe('Monday');
+    expect(defaultTimetableDay(undefined)).toBe('Monday');
+    expect(defaultTimetableDay('Saturday')).toBe('Monday');
+
+    expect(resolveDaySelection({ selected: null, pinned: false, today: null })).toBe('Monday');
+    // Rolling over midnight from Friday: the open page shows Monday, untouched.
+    expect(resolveDaySelection({ selected: 'Friday', pinned: false, today: null })).toBe('Monday');
+    // An explicit weekend choice still wins over the fallback.
+    expect(resolveDaySelection({ selected: 'Wednesday', pinned: true, today: null })).toBe('Wednesday');
+    // And the fallback is a weekday, so no Saturday is ever invented.
+    for (const weekday of ['Saturday', 'Sunday', '', null, undefined]) {
+      expect(resolveDaySelection({ selected: 'Monday', pinned: false, today: weekday })).toBe('Monday');
+      expect(timetableDayFor(resolveDaySelection({ selected: null, pinned: false, today: weekday }))).not.toBeNull();
+    }
+  });
+
+  it('resolves the weekend on the server too, so the first paint is not empty', () => {
+    const page = read('app/timetable/[division]/page.js');
+    expect(page).toContain('const initialDay = requestedDay ?? defaultTimetableDay(today);');
   });
 
   it('parses and formats the printed period boundaries', () => {
@@ -342,9 +368,18 @@ describe('live component contracts', () => {
     expect(source).toContain('showToday');
   });
 
-  it('treats the weekend as a state, not a schedule', () => {
-    expect(source).toContain('No classes this weekend');
-    expect(source).toContain('!selected ?');
+  it('labels a weekend as a preview of Monday, never as a live day', () => {
+    // The note explains why a Monday is on screen on a Saturday…
+    expect(source).toContain('It’s the weekend — showing ${selected}’s timetable.');
+    // …`isToday` is `selected === today` and `today` is null, so the weekend
+    // borrows no NOW/NEXT badge and no status line.
+    expect(source).toContain('const isToday = Boolean(selected && selected === today);');
+    expect(source).toContain('{isToday && status ? (');
+    // The old empty weekend panel is gone: the page always has a timetable.
+    expect(source).not.toContain('No classes this weekend');
+    expect(source).not.toContain('tt-weekend');
+    // Even a caller that passes no day gets the preview, not a null selection.
+    expect(source).toContain('useState(initialDay ?? defaultTimetableDay(null))');
   });
 
   it('uses a single, backed glass surface and no theme switch', () => {
@@ -448,15 +483,31 @@ describe('rendered day view (server pass, fixed instants)', () => {
     expect(html).not.toContain('tt-jump');
   });
 
-  it('renders the weekend state instead of inventing a Saturday', () => {
-    const html = renderLive({ day: null, iso: '2026-10-23T18:35:00Z' });
+  it('shows Monday at the weekend, as a preview that claims nothing', () => {
+    // Saturday 00:05 IST — the server resolves `defaultTimetableDay(null)` to
+    // Monday before it renders, so this is the weekend's real first paint.
+    const html = renderLive({ day: defaultTimetableDay(timetableDayFor('Saturday')), iso: '2026-10-23T18:35:00Z' });
 
     expect(html).toContain('Saturday, 24 Oct');
-    expect(html).toContain('No classes this weekend');
+    expect(html).toContain('aria-pressed="true" aria-label="Monday">Mon');
+
+    // Monday's printed rows are on screen, and they are Monday's rows.
+    expect(html).toContain('WDL-1/ENG-2/WDL-3');
+    expect(html).toContain('EPH-1/DEL-2/WDL-3');
+    expect(html).toContain('timetable for Division O');
+
+    // The weekend is still stated, and it is a preview rather than a claim.
+    expect(html).toContain('It’s the weekend — showing Monday’s timetable.');
     expect(html).not.toContain('tt-badge--now');
     expect(html).not.toContain('tt-badge--next');
     expect(html).not.toContain('data-state="now"');
-    expect(html).toContain('aria-pressed="false" aria-label="Monday">Mon');
+    expect(html).not.toContain('data-state="next"');
+    expect(html).not.toContain('tt-status');
+    expect(html).not.toContain('tt-jump');
+    // No "Today" pill on Monday: today is Saturday, and it has no timetable.
+    expect(html).not.toContain('tt-tab__today');
+    expect(html).not.toContain('tt-dayhead__today');
+    expect(html).not.toContain('No classes this weekend');
   });
 
   it('keeps a manually chosen day without claiming it is live', () => {
