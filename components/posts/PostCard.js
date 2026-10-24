@@ -148,7 +148,7 @@ export function PostCard({
           stream ? 'stream-card__footer' : null,
         )}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <ReactionBar
             targetType="post"
             targetId={post.id}
@@ -165,7 +165,7 @@ export function PostCard({
           </Link>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="text-2xs text-muted-soft lg:hidden">{relativeTime(post.created_at)}</span>
           <PostActions postId={post.id} status={post.status} canManage={isOwner} />
         </div>

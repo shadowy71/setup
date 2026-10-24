@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { Icon } from '@/components/ui/icons';
-import { HomeZone } from '@/components/home/HomePulse';
 
 /**
  * The two doors — Clubs and Gigs as first-class destinations on Home.
@@ -10,15 +9,22 @@ import { HomeZone } from '@/components/home/HomePulse';
  * numbers, no earnings and no invented activity, because the honest claim is
  * simply that these places exist and are worth a tap. Each whole card is one
  * link to the real destination (`ROUTES.clubs`, `ROUTES.gigs` — the same
- * values the sidebar and the discovery deck use).
+ * values the sidebar and the discovery row use).
  *
- * Material: tier-3 featured glass (`.glass-featured`, surfaces.css) — the
- * same sheet the composer is made of — with the tile's own light layered in
+ * Placement: directly under the composer. The greeting, the search door and
+ * publishing come first; these are the next step, not a gate in front of it.
+ *
+ * Density: one line of heading, two short cards. On a phone the cards keep the
+ * one-line pitch and drop the long description, so the feed still starts within
+ * about a screen and a half of the top.
+ *
+ * Material: tier-3 featured glass (`.glass-featured`, surfaces.css) — the same
+ * sheet the composer is made of — with the tile's own light layered in
  * home.css: Clubs is lit teal from its leading corner, Gigs carries the
  * restrained sand counter-glow. The material refinements (hover lift on
- * pointer devices, pressed response, focus ring, responsive stacking and
- * the reduced-motion path) all live in `.feature-tile` in home.css; this
- * component is composition only.
+ * pointer devices, pressed response, focus ring, responsive stacking and the
+ * reduced-motion path) all live in `.feature-tile` in home.css; this component
+ * is composition only.
  */
 
 const TILES = [
@@ -27,6 +33,7 @@ const TILES = [
     name: 'Clubs',
     title: 'Find your people.',
     copy: 'Discover technical, cultural, sports, arts, entrepreneurship and social clubs around campus.',
+    short: 'Technical, cultural, sports, arts and social clubs.',
     cta: 'Explore clubs',
     icon: 'star',
     tone: 'clubs',
@@ -36,6 +43,7 @@ const TILES = [
     name: 'Gigs',
     title: 'Put your skills to work.',
     copy: 'Explore paid and unpaid student gigs, find opportunities and discover work offered by other students.',
+    short: 'Paid and unpaid work offered by other students.',
     cta: 'Explore gigs',
     icon: 'briefcase',
     tone: 'gigs',
@@ -45,12 +53,12 @@ const TILES = [
 export function HomeFeatureTiles() {
   return (
     <section className="home-features" aria-labelledby="home-features-title">
-      <HomeZone
-        id="home-features-title"
-        eyebrow="Discover"
-        title="Two ways into campus life"
-        note="The clubs you could join and the work you could pick up — one tap away."
-      />
+      <div className="home-features__head">
+        <h2 id="home-features-title" className="home-features__title">
+          Two ways into campus life
+        </h2>
+        <p className="home-features__note">Clubs to join, work to pick up.</p>
+      </div>
       <div className="home-features__grid">
         {TILES.map((tile) => (
           <Link
@@ -61,12 +69,17 @@ export function HomeFeatureTiles() {
           >
             <span className="feature-tile__glow" aria-hidden="true" />
             <span className="feature-tile__icon" aria-hidden="true">
-              <Icon name={tile.icon} size={22} />
+              <Icon name={tile.icon} size={20} />
             </span>
             <span className="feature-tile__body">
               <span className="feature-tile__eyebrow">{tile.name}</span>
               <span className="feature-tile__title">{tile.title}</span>
-              <span className="feature-tile__copy">{tile.copy}</span>
+              {/* Two lengths of the same claim: the full sentence on wide
+                  screens, the one-liner where the card is narrow. Only one is
+                  rendered at a time (home.css), so a screen reader never hears
+                  the copy twice. */}
+              <span className="feature-tile__copy feature-tile__copy--long">{tile.copy}</span>
+              <span className="feature-tile__copy feature-tile__copy--short">{tile.short}</span>
               <span className="feature-tile__cta">
                 {tile.cta}
                 <Icon name="arrowUpRight" size={14} className="feature-tile__arrow" aria-hidden="true" />

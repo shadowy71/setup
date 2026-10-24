@@ -16,6 +16,8 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { parseArgs } from 'node:util';
 import { launchBrowser } from './browser.mjs';
+import { existsSync as fileExists } from 'node:fs';
+import { readFileSync as readJson } from 'node:fs';
 
 const require = createRequire(import.meta.url);
 const { values } = parseArgs({ options: { url: { type: 'string' } }, allowPositionals: true });
@@ -28,6 +30,28 @@ const check = (label, ok, detail = '') => {
   results.push({ label, ok, detail });
   console.log(`  ${ok ? '\u001b[32mok\u001b[39m  ' : '\u001b[31mFAIL\u001b[39m'} ${label}${detail ? ` — ${detail}` : ''}`);
 };
+
+/**
+ * Optional authenticated session.
+ *
+ * The perf harness (`npm run perf:serve`) leaves its fixture accounts in
+ * `node_modules/.cache/perf/harness.json`; when that file exists this check
+ * signs in as the seeded student so it audits the real shell (rail, dock,
+ * header, composer) instead of the sign-in page. Without it the run still works
+ * against whatever `--url` renders.
+ */
+let session = null;
+const harnessFile = 'node_modules/.cache/perf/harness.json';
+if (fileExists(harnessFile)) {
+  const harness = JSON.parse(readJson(harnessFile, 'utf8'));
+  const { createSessionCookie } = await import('./perf/session.mjs');
+  try {
+    session = await createSessionCookie(harness.stubUrl, harness.student.email);
+    console.log(`  session: ${harness.student.email}`);
+  } catch (error) {
+    console.log(`  session: unavailable (${error.message})`);
+  }
+}
 
 const browser = await launchBrowser();
 
@@ -44,8 +68,20 @@ for (const viewport of [
   await context.addCookies([
     { name: 'campus_intro', value: '1', url: ORIGIN },
   ]);
+  if (session) {
+    for (const cookie of session.cookies) {
+      await context.addCookies([{ name: cookie.name, value: cookie.value, url: ORIGIN, sameSite: 'Lax' }]);
+    }
+  }
   const page = await context.newPage();
   await page.goto(TARGET, { waitUntil: 'networkidle', timeout: 90_000 });
+  // The cinematic intro is a first-visit overlay; dismiss it the way a student
+  // would so the audit sees the page underneath.
+  const skip = page.getByRole('button', { name: 'Skip intro' });
+  if (await skip.count()) {
+    await skip.first().click().catch(() => {});
+    await page.waitForTimeout(400);
+  }
   await page.waitForTimeout(1800);
 
   await page.addScriptTag({ content: AXE });
@@ -98,8 +134,18 @@ for (const viewport of [
 /* Interaction: pointer depth, entry light, keyboard reachability. */
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'dark' });
 await context.addCookies([{ name: 'campus_intro', value: '1', url: ORIGIN }]);
+if (session) {
+  for (const cookie of session.cookies) {
+    await context.addCookies([{ name: cookie.name, value: cookie.value, url: ORIGIN, sameSite: 'Lax' }]);
+  }
+}
 const page = await context.newPage();
 await page.goto(TARGET, { waitUntil: 'networkidle', timeout: 90_000 });
+const interactionSkip = page.getByRole('button', { name: 'Skip intro' });
+if (await interactionSkip.count()) {
+  await interactionSkip.first().click().catch(() => {});
+  await page.waitForTimeout(400);
+}
 await page.waitForTimeout(1500);
 
 const depth = await page.evaluate(async () => {

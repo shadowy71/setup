@@ -8,6 +8,9 @@ import { Icon } from '@/components/ui/icons';
 import { BrandLockup, CollegeCrest } from '@/components/brand/Brand';
 import { CreateMenu } from '@/components/layout/CreateMenu';
 import { getTimetableHref } from '@/lib/timetable/meta';
+import { formatUnread } from '@/lib/notifications/format';
+import { handleOf } from '@/lib/identity/shell-user';
+import { resolveActiveHref } from '@/lib/navigation/active';
 
 /**
  * Desktop navigation: a suspended sheet of frosted glass carrying the Campus+
@@ -25,12 +28,25 @@ import { getTimetableHref } from '@/lib/timetable/meta';
  */
 export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false, canModerate = false, canAdmin = false, createItems = [] }) {
   const pathname = usePathname();
-  const active = (href) => pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
 
+  const unread = formatUnread(unreadNotifications);
   const secondary = [
-    { href: ROUTES.chat, label: 'Messages', icon: 'chat', count: 0 },
-    { href: ROUTES.notifications, label: 'Notifications', icon: 'bell', count: unreadNotifications },
+    { href: ROUTES.chat, label: 'Messages', icon: 'chat', unread: formatUnread(0) },
+    { href: ROUTES.notifications, label: 'Notifications', icon: 'bell', unread },
   ];
+  const timetableHref = getTimetableHref(user?.division);
+
+  // One pass over every destination decides which single row is current. A
+  // nested route (`/gigs/abc`, `/clubs/abc`) lights its own section and nothing
+  // else; if two rows ever matched, the more specific one wins.
+  const current = resolveActiveHref(pathname, [
+    ...PRIMARY_NAV.map((item) => item.href),
+    timetableHref,
+    ...secondary.map((item) => item.href),
+    ...(canModerate ? [ROUTES.moderator] : []),
+    ...(canAdmin ? [ROUTES.admin] : []),
+  ]);
+  const active = (href) => current === href;
 
   return (
     <aside className="side-panel glass-floating fixed inset-y-3 left-3 z-30 hidden w-[15.5rem] flex-col overflow-y-auto rounded-[var(--radius-glass)] px-3 pb-4 pt-4 lg:flex">
@@ -51,11 +67,7 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
         ))}
         {/* Public pages, personalised landing: a saved division opens its
             own timetable; without one, the selector. Never inferred. */}
-        <Link
-          href={getTimetableHref(user?.division)}
-          aria-current={pathname.startsWith('/timetable') ? 'page' : undefined}
-          className="nav-item"
-        >
+        <Link href={timetableHref} aria-current={active(timetableHref) ? 'page' : undefined} className="nav-item">
           <Icon name="calendar" size={18} className="nav-icon" />
           Timetable
         </Link>
@@ -69,7 +81,11 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
           <Link key={item.href} href={item.href} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
             <Icon name={item.icon} size={18} className="nav-icon" />
             <span className="flex-1">{item.label}</span>
-            {item.count > 0 ? <span className="nav-count">{item.count > 99 ? '99+' : item.count}</span> : null}
+            {item.unread.visible ? (
+              <span className="nav-count" aria-label={item.unread.aria}>
+                {item.unread.text}
+              </span>
+            ) : null}
           </Link>
         ))}
 
@@ -93,13 +109,13 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
       <div className="mt-auto pt-4">
         {user ? (
           <Link href={ROUTES.profile} className="side-panel__account flex items-center gap-2.5 rounded-[var(--radius-md)] border border-glass-border bg-surface p-2 shadow-[var(--shadow-inset-top)] transition-colors hover:border-line-strong hover:no-underline">
-            <IdentityMark name={user.displayName || user.username} size={32} tone="accent" square={false} />
+            <IdentityMark name={user.displayName} size={32} tone="accent" square={false} />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1.5 truncate text-[0.8125rem] font-semibold">
-                {user.displayName || `@${user.username}`}
+                <span className="truncate">{user.displayName}</span>
                 {isStaff ? <StaffDot label={user.staffLabel || 'Staff member'} /> : null}
               </span>
-              <span className="block truncate text-2xs text-muted">@{user.username}</span>
+              <span className="block truncate text-2xs text-muted">{handleOf(user)}</span>
             </span>
             <Icon name="chevronRight" size={14} className="text-muted-soft" />
           </Link>

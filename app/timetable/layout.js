@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import '@/app/styles/timetable.css';
 import { BrandLockup } from '@/components/brand/Brand';
 import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
 import { ROUTES } from '@/lib/constants';

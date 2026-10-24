@@ -1,30 +1,60 @@
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
-import { can, toActor } from '@/lib/permissions/authorization';
 import { ROUTES } from '@/lib/constants';
-import { PageHeader, Card, EmptyState, LinkButton, SectionHeader } from '@/components/ui';
+import { PageHeader, EmptyState, SectionHeader } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { SearchResults } from '@/components/search/SearchResults';
-import { PostCard } from '@/components/posts/PostCard';
-import { hydratePosts } from '@/lib/data/feed';
 import { compactNumber } from '@/lib/utils';
 
 export const metadata = { title: 'Explore' };
 
 /**
- * Explore (spec §16, §17).
+ * Explore (spec §16, §17) — the discovery hub.
  *
- * One page, two modes:
- *   ?q=…   → unified search results (server-side `global_search()`)
- *   no q   → campus discovery: trending, communities, clubs, resources,
- *            opportunities, projects, lost & found, discussions
+ * Two clearly separated modes, chosen by the address:
  *
- * Only modules whose feature flag is on are rendered, and every section uses
- * the real tables — an empty database shows "nothing yet", never filler.
+ *   ?q=…       SEARCH. One search engine (`global_search()`), one set of scope
+ *              tabs, results from the server. The scope is part of the URL, so
+ *              `/explore?q=robotics&scope=projects` can be bookmarked.
+ *
+ *   no q       BROWSE. A compact directory of the modules that already have
+ *              their own pages, plus the deterministic trending list. It does
+ *              not re-implement those boards here — a second copy would drift
+ *              from the page it imitates.
+ *
+ * Every destination is a canonical `ROUTES` entry, and every count or row comes
+ * from the real tables. An empty database shows "nothing yet", never filler.
  */
+/**
+ * The directory: each entry is a canonical route that already owns its board.
+ * Nothing here filters a partial set, so nothing here can disagree with the
+ * page it links to.
+ */
+const DESTINATIONS = [
+  { href: ROUTES.communities, label: 'Communities', icon: 'users', description: 'Subject groups, batch groups and clubs — with their own discussions.' },
+  { href: ROUTES.clubs, label: 'Clubs', icon: 'star', description: 'Technical, cultural, sports, arts and social clubs on campus.' },
+  { href: '/explore/projects', label: 'Projects', icon: 'sparkle', description: 'What students are building, and who is building it.' },
+  { href: '/explore/opportunities', label: 'Opportunities', icon: 'briefcase', description: 'Internships, competitions and calls for applications.' },
+  { href: '/explore/resources', label: 'Resources', icon: 'book', description: 'Notes, papers and study material shared by students.' },
+  { href: ROUTES.campus, label: 'Campus', icon: 'building', description: 'Noticeboard, events, lost and found, teams and study partners.' },
+  { href: ROUTES.market, label: 'Market', icon: 'tag', description: 'Listings and deals from students on campus.' },
+  { href: ROUTES.gigs, label: 'Gigs', icon: 'briefcase', description: 'Paid and unpaid work offered by other students.' },
+];
+
+/** Scope shortcuts are search links — they set `?q=`'s scope, not a filter. */
+const SCOPED_SEARCHES = [
+  { href: '/explore?scope=people', label: 'People' },
+  { href: '/explore?scope=discussions', label: 'Discussions' },
+  { href: '/explore?scope=events', label: 'Events' },
+  { href: '/explore?scope=marketplace', label: 'Marketplace' },
+  { href: '/explore?scope=study', label: 'Study requests' },
+];
+
 export default async function ExplorePage({ searchParams }) {
-  const user = await requireUser();
+  // Auth gate only: browse mode reads nothing private and shows nothing that
+  // depends on who is asking.
+  await requireUser();
   const params = await searchParams;
   const query = typeof params?.q === 'string' ? params.q.slice(0, 80) : '';
   const scope = typeof params?.scope === 'string' ? params.scope : 'all';
@@ -39,46 +69,41 @@ export default async function ExplorePage({ searchParams }) {
   }
 
   const supabase = await getServerClient();
-  const actor = toActor(user);
 
-  // Trending and discussion hydration are independent of the module queries, so
-  // they join the same fan-out instead of waiting for it (they used to run
-  // strictly after the whole batch, adding two serial round trips).
-  const discussionQuery = supabase
-    .from('posts')
-    .select('id, author_id, kind, title, body, gif, community_id, visibility, status, is_official, comment_count, reaction_count, created_at')
-    .eq('kind', 'discussion')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-    .limit(4);
-
-  const [
-    { data: communities },
-    { data: clubs },
-    { data: resources },
-    { data: opportunities },
-    { data: projects },
-    { data: lostFound },
-    { data: trending },
-    hydratedDiscussions,
-  ] = await Promise.all([
-    supabase.from('communities').select('id, name, slug, description, member_count, kind, is_official').eq('status', 'published').eq('kind', 'community').order('member_count', { ascending: false }).limit(5),
-    supabase.from('communities').select('id, name, slug, description, member_count, is_official').eq('status', 'published').eq('kind', 'club').order('member_count', { ascending: false }).limit(5),
-    supabase.from('official_resources').select('id, title, subject, semester, type, is_official, url').eq('status', 'published').order('created_at', { ascending: false }).limit(5),
-    supabase.from('opportunities').select('id, title, organization, deadline, source, mode').eq('status', 'published').order('created_at', { ascending: false }).limit(5),
-    supabase.from('projects').select('id, title, technologies, reaction_count').eq('status', 'published').order('created_at', { ascending: false }).limit(5),
-    supabase.from('lost_found').select('id, title, kind, location, occurred_on').eq('status', 'published').order('created_at', { ascending: false }).limit(5),
-    supabase.rpc('trending_posts', { p_limit: 5, p_hours: 72 }),
-    (async () => {
-      const { data: discussions } = await discussionQuery;
-      return hydratePosts(supabase, discussions || [], { currentProfileId: user.profile.id });
-    })(),
-  ]);
+  // Browse mode is a directory, not six miniature boards: each module keeps its
+  // own page (and its own pagination). The only content read left here is the
+  // deterministic trending list, which exists nowhere else.
+  const { data: trending } = await supabase.rpc('trending_posts', { p_limit: 5, p_hours: 72 });
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Explore" description="Search, trending, and the modules you might not have opened yet." />
       <SearchResults initialQuery="" initialScope="all" />
+
+      <section aria-label="Browse campus" className="flex flex-col gap-3">
+        <SectionHeader
+          title="Browse"
+          description="Every module has its own page. These are the doors, not a second copy of the boards."
+        />
+        <div className="grid gap-2 sm:grid-cols-2">
+          {DESTINATIONS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="card group flex items-start gap-3 p-3.5 hover:no-underline"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-line bg-surface-2 text-muted transition-colors group-hover:text-ink">
+                <Icon name={item.icon} size={16} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[0.875rem] font-semibold text-ink">{item.label}</span>
+                <span className="mt-0.5 block text-2xs leading-relaxed text-muted">{item.description}</span>
+              </span>
+              <Icon name="chevronRight" size={14} className="ml-auto mt-1 shrink-0 text-muted-soft" />
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <section aria-label="Trending" className="flex flex-col gap-3">
         <SectionHeader
@@ -112,136 +137,16 @@ export default async function ExplorePage({ searchParams }) {
         )}
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ModuleCard
-          title="Communities"
-          href={ROUTES.communities}
-          icon="users"
-          count={communities?.length ? `${communities.length} to browse` : null}
-          items={communities?.map((item) => ({ id: item.id, label: item.name, href: ROUTES.community(item.slug), meta: `${compactNumber(item.member_count)} members` }))}
-          empty="No communities yet."
-        />
-        <ModuleCard
-          title="Clubs"
-          href={ROUTES.clubs}
-          icon="building"
-          items={clubs?.map((item) => ({ id: item.id, label: item.name, href: ROUTES.club(item.id), meta: `${compactNumber(item.member_count)} members` }))}
-          empty="No clubs listed yet."
-        />
-        <ModuleCard
-          title="Resources"
-          href="/explore/resources"
-          icon="book"
-          items={resources?.map((item) => ({ id: item.id, label: item.title, href: ROUTES.resource(item.id), meta: item.subject || item.type }))}
-          empty="No resources shared yet."
-        />
-        <ModuleCard
-          title="Opportunities"
-          href="/explore/opportunities"
-          icon="briefcase"
-          items={opportunities?.map((item) => ({ id: item.id, label: item.title, href: ROUTES.opportunity(item.id), meta: item.organization }))}
-          empty="No opportunities posted yet."
-        />
-        <ModuleCard
-          title="Projects"
-          href="/explore/projects"
-          icon="sparkle"
-          items={projects?.map((item) => ({ id: item.id, label: item.title, href: ROUTES.project(item.id), meta: item.technologies }))}
-          empty="No projects in the showcase yet."
-        />
-        <ModuleCard
-          title="Lost & found"
-          href="/campus/lost-found"
-          icon="search"
-          items={lostFound?.map((item) => ({ id: item.id, label: item.title, href: `/campus/lost-found/${item.id}`, meta: `${item.kind === 'lost' ? 'Lost' : 'Found'} · ${item.location || 'location not given'}` }))}
-          empty="Nothing lost or found right now."
-        />
-      </div>
-
-      <section aria-label="Discussions" className="flex flex-col gap-3">
-        <SectionHeader
-          title="Discussions"
-          description="Questions and answers, in text."
-          action={<LinkButton href="/explore?scope=discussions" size="sm" variant="ghost">Search discussions</LinkButton>}
-        />
-        {hydratedDiscussions.length ? (
-          hydratedDiscussions.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              currentUserId={user.profile.id}
-              canModerate={can(actor, 'remove_posts')}
-              reactions={{ count: post.reaction_count || 0, mine: Boolean(post.reacted_by_me) }}
-              poll={post.poll}
-            />
-          ))
-        ) : (
-          <EmptyState icon="comment" title="No discussions yet" description="Start one from the Home composer." />
-        )}
-      </section>
-
-      <section aria-label="Study groups, study partners and team finder">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card className="p-4">
-            <h2 className="text-sm font-semibold">Study groups</h2>
-            <p className="mt-1 text-[0.8125rem] text-muted">
-              Subject-based groups live in Communities and reuse the same chat and discussion tools.
-            </p>
-            <Link href="/communities?kind=study_group" className="mt-3 inline-flex items-center gap-1 text-2xs text-ink underline">
-              Browse study groups <Icon name="chevronRight" size={13} />
+      <section aria-label="Search a specific scope" className="card flex flex-wrap items-center gap-2 p-3.5">
+        <p className="text-[0.8125rem] text-muted">Looking for one kind of thing?</p>
+        <div className="flex flex-wrap gap-1.5">
+          {SCOPED_SEARCHES.map((item) => (
+            <Link key={item.href} href={item.href} className="chip" data-active="false">
+              {item.label}
             </Link>
-          </Card>
-          <Card className="p-4">
-            <h2 className="text-sm font-semibold">Study partner finder</h2>
-            <p className="mt-1 text-[0.8125rem] text-muted">
-              Preparing for an exam or working through a subject? Find peers with matching rough availability.
-            </p>
-            <Link href={ROUTES.study} className="mt-3 inline-flex items-center gap-1 text-2xs text-ink underline">
-              Find a study partner <Icon name="chevronRight" size={13} />
-            </Link>
-          </Card>
-          <Card className="p-4">
-            <h2 className="text-sm font-semibold">Team finder</h2>
-            <p className="mt-1 text-[0.8125rem] text-muted">
-              Looking for teammates for a project or hackathon? Post what you need and students can message you directly.
-            </p>
-            <Link href="/campus/teams" className="mt-3 inline-flex items-center gap-1 text-2xs text-ink underline">
-              Open the board <Icon name="chevronRight" size={13} />
-            </Link>
-          </Card>
+          ))}
         </div>
       </section>
     </div>
-  );
-}
-
-function ModuleCard({ title, href, icon, items, empty, count = null }) {
-  return (
-    <Card className="flex flex-col p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <Icon name={icon} size={16} className="text-muted" />
-          {title}
-        </h2>
-        <Link href={href} className="text-2xs text-muted hover:text-ink">
-          Open
-        </Link>
-      </div>
-      {count ? <p className="mt-1 text-2xs text-muted">{count}</p> : null}
-      {items?.length ? (
-        <ul className="mt-3 flex flex-col gap-2">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link href={item.href} className="flex items-baseline justify-between gap-3 hover:no-underline">
-                <span className="truncate text-[0.8125rem]">{item.label}</span>
-                {item.meta ? <span className="shrink-0 text-2xs text-muted">{String(item.meta).slice(0, 32)}</span> : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-3 text-[0.8125rem] text-muted">{empty}</p>
-      )}
-    </Card>
   );
 }

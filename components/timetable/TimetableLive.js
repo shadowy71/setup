@@ -40,26 +40,26 @@ function subjectLabel(event) {
 
 function nextSentence(status) {
   if (!status?.next) return ' No more classes today.';
-  return ` Next: ${subjectLabel(status.next)} at ${status.next.time.from}.`;
+  return ` Next: ${subjectLabel(status.next)} at ${status.next.time.fromLabel}.`;
 }
 
 /** One calm sentence that mirrors the NOW/NEXT badges in words. */
 function describeStatus(status) {
   if (!status) return '';
   if (status.ongoing) {
-    return `Now: ${subjectLabel(status.ongoing)} · ${status.ongoing.time.from}–${status.ongoing.time.to}.${nextSentence(status)}`;
+    return `Now: ${subjectLabel(status.ongoing)} · ${status.ongoing.time.label12}.${nextSentence(status)}`;
   }
   switch (status.phase) {
     case 'lunch':
-      return `Lunch break until ${status.current.time.to}.${nextSentence(status)}`;
+      return `Lunch break until ${status.current.time.toLabel}.${nextSentence(status)}`;
     case 'special':
-      return `${status.current.lines.join(' ')} until ${status.current.time.to}.${nextSentence(status)}`;
+      return `${status.current.lines.join(' ')} until ${status.current.time.toLabel}.${nextSentence(status)}`;
     case 'free':
-      return `Free period until ${status.currentFree.to}.${nextSentence(status)}`;
+      return `Free period until ${status.currentFree.toLabel}.${nextSentence(status)}`;
     case 'before':
-      return `First class at ${status.first.time.from}.`;
+      return `First class at ${status.first.time.fromLabel}.`;
     case 'gap':
-      return status.next ? `Next class: ${subjectLabel(status.next)} at ${status.next.time.from}.` : 'No more classes today.';
+      return status.next ? `Next class: ${subjectLabel(status.next)} at ${status.next.time.fromLabel}.` : 'No more classes today.';
     case 'after':
       return 'No more classes today.';
     case 'empty':
@@ -93,8 +93,8 @@ function EventRow({ event, ongoing, next, itemRef }) {
       }
     >
       <div className="tt-item__time">
-        <span className="tt-item__from">{event.time.from}</span>
-        <span className="tt-item__to">{event.time.to}</span>
+        <span className="tt-item__from">{event.time.fromLabel}</span>
+        <span className="tt-item__to">{event.time.toLabel}</span>
         {event.span > 1 ? <span className="tt-item__span">{event.span} periods</span> : null}
       </div>
 
@@ -129,8 +129,8 @@ function FreeRow({ range }) {
   return (
     <li className="tt-item tt-item--free">
       <div className="tt-item__time">
-        <span className="tt-item__from">{range.from}</span>
-        <span className="tt-item__to">{range.to}</span>
+        <span className="tt-item__from">{range.fromLabel}</span>
+        <span className="tt-item__to">{range.toLabel}</span>
         {range.endIndex > range.startIndex ? (
           <span className="tt-item__span">{range.endIndex - range.startIndex + 1} periods</span>
         ) : null}
@@ -266,7 +266,7 @@ export default function TimetableLive({
   if (selected && !today) dayNote = `It’s the weekend — showing ${selected}.`;
   else if (selected && selected !== today) {
     dayNote = status?.first
-      ? `Not today — ${selected}’s first class is ${status.first.lines[0]} at ${status.first.time.from}.`
+      ? `Not today — ${selected}’s first class is ${status.first.lines[0]} at ${status.first.time.fromLabel}.`
       : 'Not today.';
   }
 
@@ -287,8 +287,9 @@ export default function TimetableLive({
         <div className="tt-clock">
           <span className="tt-clock__time">
             <time dateTime={parts.iso}>
-              {parts.timeLabel}
+              {parts.hourMinute12}
               <span className="tt-clock__seconds">:{parts.secondLabel}</span>
+              <span className="tt-clock__meridiem">{parts.meridiem}</span>
             </time>
           </span>
           <span className="tt-clock__date">{parts.dateLabel}</span>

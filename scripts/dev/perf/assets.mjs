@@ -120,7 +120,16 @@ function extractAssets(html) {
     .filter(([, attributes]) => /src="([^"]+)"/.test(attributes) && !/nomodule/i.test(attributes))
     .map(([, attributes]) => attributes.match(/src="([^"]+)"/)[1]);
   const preloads = [...html.matchAll(/<link[^>]+rel="modulepreload"[^>]+href="([^"]+)"/g)].map((match) => match[1]);
-  const styles = [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map((match) => match[1]);
+  // Two shapes count as a stylesheet: the normal `<link rel="stylesheet">`, and
+  // the `<link rel="preload" as="style">` Next emits when a route-segment layout
+  // streams its CSS after the shell. Both are downloaded by the browser for the
+  // first paint, so both belong in the total. Attributes are checked
+  // individually because their order is not stable.
+  const styles = [...html.matchAll(/<link\b[^>]*>/g)]
+    .map((match) => match[0])
+    .filter((tag) => /rel="stylesheet"/.test(tag) || (/rel="preload"/.test(tag) && /as="style"/.test(tag)))
+    .map((tag) => tag.match(/href="([^"]+)"/)?.[1])
+    .filter(Boolean);
   const unique = (list) => [...new Set(list)].filter((url) => url.startsWith('/_next/'));
   return { js: unique([...scripts, ...preloads]), css: unique(styles) };
 }

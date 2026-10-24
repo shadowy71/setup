@@ -139,6 +139,17 @@
 .tt-clock__seconds {
   font-size: 0.8125rem;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--cp-text-secondary);
+}
+
+/* The meridiem is part of the reading, not decoration: it sits at the same
+   weight as the hour so "5:10" can never be read as the morning. */
+.tt-clock__meridiem {
+  margin-left: 0.28em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   color: var(--cp-text-secondary);
 }
 

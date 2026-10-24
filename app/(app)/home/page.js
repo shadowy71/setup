@@ -8,7 +8,7 @@ import { EmptyState, Notice } from '@/components/ui';
 import { PostComposer } from '@/components/posts/PostComposer';
 import { DepthField } from '@/components/atmosphere/DepthField';
 import { IslandMotion } from '@/components/home/IslandMotion';
-import { HomePulse, HomeZone, HomeCoda } from '@/components/home/HomePulse';
+import { HomePulse, HomeZone, HomeCoda, HomeAreas } from '@/components/home/HomePulse';
 import { StreamItem, StreamSlot } from '@/components/home/StreamItem';
 import { HomeRail } from '@/components/home/HomeRail';
 import { HomeFeatureTiles } from '@/components/home/HomeFeatureTiles';
@@ -33,9 +33,13 @@ const QUICK_LINKS = [
  *
  *   1. the threshold (HomePulse): who you are, the two ways in, and a column of
  *      real counts, set over the depth field rather than inside a card;
- *   2. the works: the composer and the stream on the left, the rail of small
- *      destinations on the right — every entry an island of its own weight;
+ *   2. the works: the composer first, then the two doors (Clubs, Gigs), then the
+ *      stream on the left with the rail of small destinations on the right —
+ *      every entry an island of its own weight;
  *   3. the exit: one rule and one line of plain speaking.
+ *
+ * The order is deliberate: greeting → search → composer, so posting is one
+ * screen away rather than one screen of decoration away.
  *
  * All data is real and all reads keep their existing RLS/permission behaviour:
  * the unified `campus_feed()`, the next few official events, the pinned
@@ -103,10 +107,6 @@ export default async function HomePage() {
 
       <HomePulse user={user} stats={stats} />
 
-      {/* The two doors: Clubs and Gigs, promoted out of the discovery-chip
-          deck into feature tiles a student cannot scroll past unseen. */}
-      <HomeFeatureTiles />
-
       <IslandMotion>
         <div className="home-body">
           <div className="home-body__main">
@@ -124,6 +124,10 @@ export default async function HomePage() {
                 </Notice>
               )}
             </div>
+
+            {/* The two doors: Clubs and Gigs, compact rows directly under the
+                composer so a student meets them on the way to the feed. */}
+            <HomeFeatureTiles />
 
             {unavailable ? (
               <Notice tone="warning" icon="flag">
@@ -150,8 +154,16 @@ export default async function HomePage() {
                 <EmptyState
                   icon="sparkle"
                   title="Nothing on the feed yet"
-                  description="When students post, discuss or share official updates, they appear here. Be the first."
-                  action={canPost ? null : undefined}
+                  description={
+                    canPost
+                      ? 'The feed is genuinely empty right now. The composer above is the fastest way to start it — a question counts.'
+                      : 'The feed is genuinely empty right now. Official notices and events from campus are still worth a look.'
+                  }
+                  action={
+                    <Link href="/campus/events" className="text-xs font-semibold text-accent-ink hover:underline">
+                      See what&apos;s on this week →
+                    </Link>
+                  }
                 />
               ) : null}
 
@@ -181,6 +193,8 @@ export default async function HomePage() {
                 </Link>
               ) : null}
             </section>
+
+            <HomeAreas />
           </div>
 
           <HomeRail

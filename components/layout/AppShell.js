@@ -3,6 +3,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { ShellHeader } from '@/components/layout/ShellHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { CommandPaletteHost } from '@/components/search/CommandPalette';
+import { isStaffRoles } from '@/lib/identity/shell-user';
 
 /**
  * The one application frame.
@@ -16,8 +17,12 @@ import { CommandPaletteHost } from '@/components/search/CommandPalette';
  * The content column is deliberately narrow for reading; pages that need a
  * contextual rail opt in with `.page-grid` and the shell widens itself.
  *
- * `user` is the shape returned by lib/auth/session.js; pass `null` for public
- * screens such as /login.
+ * `user` is the shell identity produced by `toShellUser()` — five fields, not a
+ * session. Pass `null` for public screens such as /login.
+ *
+ * `unreadNotifications` is measured once per request in the layout and handed
+ * to every surface that shows it (header, sidebar, menu). No surface queries
+ * the count itself, so the three numbers can never disagree.
  */
 export function AppShell({
   user = null,
@@ -28,7 +33,8 @@ export function AppShell({
   paletteActions = [],
   children,
 }) {
-  const isStaff = Boolean(user?.roles?.some((role) => ['moderator', 'admin', 'super_admin'].includes(role)));
+  // Staff-ness is derived by the identity adapter, not re-guessed here.
+  const isStaff = Boolean(user?.staffLabel) || isStaffRoles(user?.roles);
 
   return (
     <div className="min-h-dvh">
@@ -67,7 +73,7 @@ export function AppShell({
         </main>
       </div>
 
-      <BottomNav unreadNotifications={unreadNotifications} />
+      <BottomNav />
       <CommandPaletteHost actions={paletteActions} />
     </div>
   );

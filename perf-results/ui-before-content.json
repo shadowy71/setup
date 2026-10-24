@@ -1,0 +1,222 @@
+{
+ "label": "before-content",
+ "base": "http://127.0.0.1:3100",
+ "measuredAt": "2026-10-23T17:25:27.541Z",
+ "runs": 1,
+ "profiles": [
+  {
+   "key": "fast",
+   "throttle": false,
+   "cpu": 1,
+   "label": "Unthrottled"
+  }
+ ],
+ "viewports": [
+  {
+   "key": "small",
+   "label": "Small phone",
+   "width": 320,
+   "height": 700,
+   "dpr": 2,
+   "mobile": true
+  },
+  {
+   "key": "standard",
+   "label": "Standard phone",
+   "width": 375,
+   "height": 812,
+   "dpr": 3,
+   "mobile": true
+  },
+  {
+   "key": "phone",
+   "label": "Modern phone",
+   "width": 390,
+   "height": 844,
+   "dpr": 3,
+   "mobile": true
+  },
+  {
+   "key": "large",
+   "label": "Large phone",
+   "width": 430,
+   "height": 932,
+   "dpr": 3,
+   "mobile": true
+  }
+ ],
+ "results": [
+  {
+   "route": "Home",
+   "routeKey": "home",
+   "href": "/home",
+   "viewport": "small",
+   "width": 320,
+   "height": 700,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 232,
+   "lcp": 280,
+   "cls": 0,
+   "domContentLoaded": 325,
+   "loadEvent": 326,
+   "jsTransfer": 315721,
+   "cssTransfer": 37904,
+   "documentTransfer": 30423,
+   "fontTransfer": 192168,
+   "totalTransfer": 686503,
+   "requestCount": 34,
+   "longTaskCount": 2,
+   "totalTaskTime": 2455,
+   "horizontalOverflow": 0,
+   "introShown": true,
+   "docHeight": 8667,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": {
+    "top": 1437,
+    "viewportsDown": 2.05
+   },
+   "firstFeedCard": {
+    "top": 1960,
+    "viewportsDown": 2.8
+   },
+   "stylesheets": [
+    "1j2ddhrgz0hbn.css",
+    "3-mjo4le6rrym.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [],
+   "lcpSpread": null
+  },
+  {
+   "route": "Home",
+   "routeKey": "home",
+   "href": "/home",
+   "viewport": "standard",
+   "width": 375,
+   "height": 812,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 112,
+   "lcp": 260,
+   "cls": 0,
+   "domContentLoaded": 305,
+   "loadEvent": 306,
+   "jsTransfer": 315721,
+   "cssTransfer": 37904,
+   "documentTransfer": 30423,
+   "fontTransfer": 192168,
+   "totalTransfer": 698541,
+   "requestCount": 38,
+   "longTaskCount": 2,
+   "totalTaskTime": 1699,
+   "horizontalOverflow": 0,
+   "introShown": true,
+   "docHeight": 7763,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": {
+    "top": 1310,
+    "viewportsDown": 1.61
+   },
+   "firstFeedCard": {
+    "top": 1804,
+    "viewportsDown": 2.22
+   },
+   "stylesheets": [
+    "1j2ddhrgz0hbn.css",
+    "3-mjo4le6rrym.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [],
+   "lcpSpread": null
+  },
+  {
+   "route": "Home",
+   "routeKey": "home",
+   "href": "/home",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 112,
+   "lcp": 260,
+   "cls": 0,
+   "domContentLoaded": 323,
+   "loadEvent": 323,
+   "jsTransfer": 315721,
+   "cssTransfer": 37904,
+   "documentTransfer": 30423,
+   "fontTransfer": 192168,
+   "totalTransfer": 706359,
+   "requestCount": 36,
+   "longTaskCount": 2,
+   "totalTaskTime": 1418,
+   "horizontalOverflow": 0,
+   "introShown": true,
+   "docHeight": 7671,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": {
+    "top": 1291,
+    "viewportsDown": 1.53
+   },
+   "firstFeedCard": {
+    "top": 1785,
+    "viewportsDown": 2.11
+   },
+   "stylesheets": [
+    "1j2ddhrgz0hbn.css",
+    "3-mjo4le6rrym.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [],
+   "lcpSpread": null
+  },
+  {
+   "route": "Home",
+   "routeKey": "home",
+   "href": "/home",
+   "viewport": "large",
+   "width": 430,
+   "height": 932,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 80,
+   "lcp": 232,
+   "cls": 0,
+   "domContentLoaded": 293,
+   "loadEvent": 294,
+   "jsTransfer": 315721,
+   "cssTransfer": 37904,
+   "documentTransfer": 30423,
+   "fontTransfer": 192168,
+   "totalTransfer": 691942,
+   "requestCount": 43,
+   "longTaskCount": 1,
+   "totalTaskTime": 1985,
+   "horizontalOverflow": 0,
+   "introShown": true,
+   "docHeight": 7423,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": {
+    "top": 1311,
+    "viewportsDown": 1.41
+   },
+   "firstFeedCard": {
+    "top": 1806,
+    "viewportsDown": 1.94
+   },
+   "stylesheets": [
+    "1j2ddhrgz0hbn.css",
+    "3-mjo4le6rrym.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [],
+   "lcpSpread": null
+  }
+ ]
+}

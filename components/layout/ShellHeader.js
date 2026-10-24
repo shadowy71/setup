@@ -23,20 +23,23 @@ import { AccountMenu } from '@/components/layout/AccountMenu';
 import { MobileMenu } from '@/components/layout/MobileMenu';
 import { ShellSearch } from '@/components/layout/ShellSearch';
 import { CommandPaletteTrigger } from '@/components/search/CommandPalette';
+import { formatUnread } from '@/lib/notifications/format';
 
+/**
+ * The bell is the mobile entry point to notifications (the dock keeps its five
+ * destinations) and the desktop one. Badge rules live in `formatUnread` so the
+ * header, the sidebar and the mobile menu cannot drift apart.
+ */
 function NotificationBell({ unreadNotifications = 0 }) {
+  const unread = formatUnread(unreadNotifications);
   return (
-    <Link
-      href={ROUTES.notifications}
-      aria-label={unreadNotifications > 0 ? `Notifications, ${unreadNotifications} unread` : 'Notifications'}
-      className="icon-btn icon-btn--glass relative"
-    >
-      <Icon name="bell" size={19} />
-      {unreadNotifications > 0 ? (
-        <span className="notification-badge">
-          {unreadNotifications > 99 ? '99+' : unreadNotifications}
-        </span>
-      ) : null}
+    <Link href={ROUTES.notifications} aria-label={unread.label} className="icon-btn icon-btn--glass relative">
+      {/* The badge anchors to the glyph, not to the 44px hit area — otherwise it
+          paints over the bell on narrow headers. */}
+      <span className="relative flex">
+        <Icon name="bell" size={19} />
+        {unread.visible ? <span className="notification-badge">{unread.text}</span> : null}
+      </span>
     </Link>
   );
 }
@@ -50,6 +53,7 @@ export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = fa
         <div className="flex h-14 items-center gap-1.5 px-2 lg:hidden">
           <MobileMenu
             user={user}
+            unreadNotifications={unreadNotifications}
             isStaff={isStaff}
             canModerate={canModerate}
             canAdmin={canAdmin}

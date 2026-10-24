@@ -11,21 +11,64 @@ import { Icon } from '@/components/ui/icons';
  * Unified search.
  *
  * Calls the same `global_search` PostgreSQL function the rest of the product
- * uses — Postgres-native, RLS-scoped, block-aware. Debounced so typing does not
- * hammer the database, and paginated with a "Load more" row instead of pulling
- * everything at once.
+ * uses — Postgres-native, RLS-scoped, block-aware. Nothing is filtered in the
+ * browser and there is no second search engine.
  *
- * Search is deliberately one of the signature surfaces: a large glass-edged
- * field, scope chips, grouped results and honest empty states.
+ * URL state
+ * ---------
+ * The query and scope live in the address (`/explore?q=robotics&scope=projects`)
+ * so a result page can be bookmarked, shared and restored by Back/Forward. The
+ * URL is written with `history.replaceState` — a keystroke must not push a
+ * history entry, and it must not re-render the server page either; the address
+ * mirrors the search, it does not drive it.
+ *
+ * Pagination
+ * ----------
+ * The API reports `hasMore`, computed from a page-size + 1 probe row. The client
+ * asks for the next offset, merges rows without duplicating an id, and resets
+ * everything when the query or scope changes. A slow response for an old query
+ * can never overwrite a newer one (monotonic request id).
  */
+
+const PAGE_SIZE = 20;
+
+/** Write q/scope into the address bar without adding a history entry. */
+function syncAddress(term, scope) {
+  if (typeof window === 'undefined') return;
+  const params = new URLSearchParams(window.location.search);
+  if (term) params.set('q', term);
+  else params.delete('q');
+  if (scope && scope !== 'all') params.set('scope', scope);
+  else params.delete('scope');
+  const query = params.toString();
+  const next = `${window.location.pathname}${query ? `?${query}` : ''}`;
+  if (next !== `${window.location.pathname}${window.location.search}`) {
+    window.history.replaceState(window.history.state, '', next);
+  }
+}
+
+/** Read q/scope from the address bar (used by Back/Forward and remounts). */
+function readAddress() {
+  if (typeof window === 'undefined') return { q: '', scope: 'all' };
+  const params = new URLSearchParams(window.location.search);
+  return {
+    q: (params.get('q') || '').slice(0, 80),
+    scope: params.get('scope') || 'all',
+  };
+}
+
 export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
   const [query, setQuery] = useState(initialQuery);
   const [scope, setScope] = useState(initialScope);
   const [groups, setGroups] = useState([]);
-  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  // Which (term, scope) the rows in `groups` belong to. Results are shown only
+  // when that matches the box, so clearing or retyping hides stale rows by
+  // derivation — no render-phase side effects, no effect that resets state.
+  const [resultsFor, setResultsFor] = useState({ term: initialQuery.trim(), scope: initialScope });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [offset, setOffset] = useState(0);
+  const offset = useRef(0);
   const debounce = useRef(null);
   const requestId = useRef(0);
 
@@ -33,16 +76,26 @@ export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
     const id = ++requestId.current;
     setLoading(true);
     setError(null);
+    setResultsFor({ term, scope: activeScope });
     try {
-      const params = new URLSearchParams({ q: term, scope: activeScope, offset: String(nextOffset), limit: '20' });
+      const params = new URLSearchParams({
+        q: term,
+        scope: activeScope,
+        offset: String(nextOffset),
+        limit: String(PAGE_SIZE),
+      });
       const response = await fetch(`/api/search?${params.toString()}`);
       const payload = await response.json();
-      if (id !== requestId.current) return;
+      if (id !== requestId.current) return; // a newer search owns the panel
       if (!response.ok) throw new Error(payload?.error || 'Search is unavailable right now.');
-      setTotal(payload.total || 0);
+      offset.current = nextOffset;
+      setHasMore(Boolean(payload.hasMore));
       setGroups((current) => (nextOffset === 0 ? payload.groups || [] : mergeGroups(current, payload.groups || [])));
     } catch (thrown) {
-      if (id === requestId.current) setError(thrown.message);
+      if (id === requestId.current) {
+        setError(thrown.message);
+        setHasMore(false);
+      }
     } finally {
       if (id === requestId.current) setLoading(false);
     }
@@ -51,37 +104,71 @@ export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
   const trimmed = query.trim();
   const tooShort = trimmed.length < 2;
 
+  // Debounced search. Every new term starts at offset 0 and replaces the list;
+  // the URL follows once the term is settled.
   useEffect(() => {
     if (tooShort) return undefined;
     clearTimeout(debounce.current);
     debounce.current = setTimeout(() => {
-      setOffset(0);
+      offset.current = 0;
+      setHasMore(false);
       run(trimmed, scope, 0);
+      syncAddress(trimmed, scope);
     }, 320);
     return () => clearTimeout(debounce.current);
   }, [trimmed, tooShort, scope, run]);
 
-  // Clearing previous results is derived from the current input, so it happens
-  // during render instead of in an effect (React's "you might not need an effect").
-  const [lastQuery, setLastQuery] = useState(initialQuery);
-  if (lastQuery !== query) {
-    setLastQuery(query);
-    if (tooShort) {
-      setGroups([]);
-      setTotal(0);
-      setError(null);
-    }
-  }
+  // Back/Forward (and an address edited by hand) restores the search in place.
+  useEffect(() => {
+    const onPop = () => {
+      const next = readAddress();
+      setQuery(next.q);
+      setScope(next.scope);
+      if (next.q.trim().length < 2) {
+        setGroups([]);
+        setHasMore(false);
+        setError(null);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
-  const hasResults = groups.some((group) => group.items?.length);
+  // A row set is only shown when it belongs to the term and scope in the box.
+  const fresh = !tooShort && resultsFor.term === trimmed && resultsFor.scope === scope;
+  const visibleGroups = fresh ? groups : [];
+  const hasResults = visibleGroups.some((group) => group.items?.length);
+  const shown = visibleGroups.reduce((count, group) => count + (group.items?.length || 0), 0);
+  const canLoadMore = fresh && hasMore;
+
+  // Clearing the box clears the address immediately (an event handler, not a
+  // render), while the rows disappear by derivation above.
+  const onChange = (value) => {
+    setQuery(value);
+    if (value.trim().length < 2) {
+      requestId.current += 1; // a pending search for the old term must not land
+      syncAddress('', scope);
+    }
+  };
+
+  const loadMore = () => {
+    const next = offset.current + PAGE_SIZE;
+    setLoading(true);
+    run(trimmed, scope, next);
+  };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="relative">
         <SearchField
           value={query}
-          onChange={setQuery}
-          onSubmit={(term) => run(term, scope, 0)}
+          onChange={onChange}
+          onSubmit={(term) => {
+            clearTimeout(debounce.current);
+            offset.current = 0;
+            run(term.trim(), scope, 0);
+            syncAddress(term.trim(), scope);
+          }}
           hint="Search people, posts, communities, events, listings…"
           autoFocus
         />
@@ -103,6 +190,18 @@ export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
         ))}
       </div>
 
+      {/* One live region for the whole surface: a screen reader hears the count
+          change instead of discovering a silently rebuilt list. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {loading
+          ? 'Searching'
+          : tooShort
+            ? ''
+            : hasResults
+              ? `${shown} result${shown === 1 ? '' : 's'} shown${canLoadMore ? ', more available' : ''}`
+              : 'No results'}
+      </p>
+
       {loading && !hasResults ? (
         <div className="flex flex-col gap-3">
           <WordLoader words={['people', 'posts', 'communities', 'listings', 'results']} />
@@ -112,7 +211,7 @@ export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
 
       {error ? (
         <Notice tone="danger" icon="flag">
-          {error}
+          {error} Try again in a moment.
         </Notice>
       ) : null}
 
@@ -128,7 +227,7 @@ export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
         />
       ) : null}
 
-      {groups.map((group) =>
+      {visibleGroups.map((group) =>
         group.items?.length ? (
           <section key={group.scope} aria-label={group.label} className="card overflow-hidden">
             <header className="flex items-center justify-between gap-2 border-b border-line bg-surface-2 px-4 py-2.5">
@@ -164,30 +263,39 @@ export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
         ) : null,
       )}
 
-      {total > 20 && hasResults ? (
-        <Button
-          variant="secondary"
-          size="sm"
-          className="self-center"
-          loading={loading}
-          onClick={() => {
-            const next = offset + 20;
-            setOffset(next);
-            run(query.trim(), scope, next);
-          }}
-        >
-          {loading ? 'Loading…' : `Load more (${Math.max(total - offset - 20, 0)} remaining)`}
+      {canLoadMore && hasResults ? (
+        <Button variant="secondary" size="sm" className="self-center" loading={loading} onClick={loadMore}>
+          {loading ? 'Loading…' : 'Load more'}
         </Button>
+      ) : null}
+
+      {fresh && !hasMore && hasResults && !loading ? (
+        <p className="self-center text-2xs text-muted-soft">That is everything that matched.</p>
       ) : null}
     </div>
   );
 }
 
+/**
+ * Merge a continuation page into the groups already on screen.
+ *
+ * Ids are deduplicated per scope: if a row moves between pages (new content
+ * arriving mid-session), it is shown once rather than twice.
+ */
 function mergeGroups(current, incoming) {
   const byScope = new Map(current.map((group) => [group.scope, { ...group, items: [...(group.items || [])] }]));
   for (const group of incoming) {
-    if (!byScope.has(group.scope)) byScope.set(group.scope, { ...group, items: [...(group.items || [])] });
-    else byScope.get(group.scope).items.push(...(group.items || []));
+    if (!byScope.has(group.scope)) {
+      byScope.set(group.scope, { ...group, items: [...(group.items || [])] });
+      continue;
+    }
+    const target = byScope.get(group.scope);
+    const seen = new Set(target.items.map((item) => item.id));
+    for (const item of group.items || []) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      target.items.push(item);
+    }
   }
   return [...byScope.values()];
 }

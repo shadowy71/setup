@@ -13,10 +13,12 @@ import { SearchEntry } from '@/components/search/SearchEntry';
  *   - who you are and where you are (a small live marker, the greeting, one
  *     line of context),
  *   - the two ways in (Explore, and the search door),
- *   - the discovery deck: the campus areas this application actually has,
- *     each one a real route, never a chip that pretends to filter,
  *   - a thin column of counts, each one a real length of something this page
  *     already loaded — never a fabricated metric.
+ *
+ * The band is followed immediately by the composer: a student who came to post
+ * should not have to pass a deck of shortcuts first. The shortcuts themselves
+ * still exist, one screen further down (`HomeAreas`, after the feed).
  *
  * The name is lit from the leading edge and settles into sand by the trailing
  * edge; that gradient is the one place on the page where the brand's three
@@ -24,10 +26,14 @@ import { SearchEntry } from '@/components/search/SearchEntry';
  * text clipping, so the headline can never disappear.
  */
 
-/** The campus areas that exist as routes. No counts, no invented activity.
- * Clubs and Gigs are deliberately absent: they are the two feature tiles
- * directly below this band (`HomeFeatureTiles`), and a destination does not
- * need to be announced twice on the same screen. */
+/**
+ * The campus areas that exist as routes, offered *after* the feed as the page's
+ * "keep going" row. No counts, no invented activity.
+ *
+ * Clubs and Gigs are deliberately absent: they are the two feature tiles above
+ * the feed (`HomeFeatureTiles`), and a destination does not need to be
+ * announced twice on the same screen.
+ */
 const DISCOVERY = [
   { href: ROUTES.explore, label: 'Explore', icon: 'search' },
   { href: '/campus/events', label: 'Events', icon: 'calendar' },
@@ -99,18 +105,11 @@ export function HomePulse({ user, stats = [] }) {
               Explore campus
             </LinkButton>
             <div className="home-pulse__search">
-              <SearchEntry hint="Search people, posts, events…" />
+              {/* Short enough to survive sharing a row with the Explore button on a
+                phone; Explore's own field carries the long form. */}
+            <SearchEntry hint="Search…" />
             </div>
           </div>
-
-          <nav className="home-discover" aria-label="Campus areas">
-            {DISCOVERY.map((item) => (
-              <Link key={item.href} href={item.href} className="discover-chip">
-                <Icon name={item.icon} size={13} />
-                {item.label}
-              </Link>
-            ))}
-          </nav>
         </div>
 
         {stats.length ? (
@@ -127,6 +126,25 @@ export function HomePulse({ user, stats = [] }) {
 
       <span className="home-pulse__horizon" aria-hidden="true" />
     </section>
+  );
+}
+
+/**
+ * The page's "keep going" row: the campus areas that are not already in the
+ * primary rail. It sits after the feed so the first screen stays short, and it
+ * is a plain list of real destinations — nothing here filters or counts.
+ */
+export function HomeAreas() {
+  return (
+    <nav className="home-discover" aria-label="More campus areas">
+      <span className="home-discover__label">Keep exploring</span>
+      {DISCOVERY.map((item) => (
+        <Link key={item.href} href={item.href} className="discover-chip">
+          <Icon name={item.icon} size={13} />
+          {item.label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 

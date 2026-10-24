@@ -319,7 +319,12 @@ describe('the two boards are not the marketplace', () => {
     const css = read('app/styles/sections.css');
     expect(css).toContain('.gig-card');
     expect(css).toContain('.club-monogram');
-    expect(read('app/globals.css')).toContain("@import './styles/sections.css'");
+    // `sections.css` is route CSS now: it ships with the two trees whose cards
+    // it styles, not with every page in the app.
+    for (const layout of ['app/(app)/clubs/layout.js', 'app/(app)/gigs/layout.js']) {
+      expect(read(layout)).toContain("@/app/styles/sections.css");
+    }
+    expect(read('app/globals.css')).not.toContain('styles/sections.css');
     // Colours come from the existing role tokens.
     expect(css).toContain('var(--c-accent)');
   });

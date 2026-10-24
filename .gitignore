@@ -10,6 +10,10 @@ build/
 dist/
 next-env.d.ts
 
+# Performance screenshots — regenerated with
+# `node scripts/dev/perf/mobile.mjs --screenshots`; only the JSON results are tracked.
+perf-results/screens/
+
 # Environment — NEVER commit real values
 .env
 .env.local

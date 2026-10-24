@@ -3,6 +3,7 @@ import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
 import { ROUTES } from '@/lib/constants';
 import { getTimetableHref } from '@/lib/timetable/meta';
+import { toShellUser } from '@/lib/identity/shell-user';
 import { AppShell } from '@/components/layout/AppShell';
 
 // Every page in this group depends on the signed-in student, so nothing here is
@@ -85,13 +86,12 @@ export default async function AppLayout({ children }) {
     { section: 'Navigation', label: 'Resources', href: '/explore/resources', icon: 'book' },
     { section: 'Navigation', label: 'Projects', href: '/explore/projects', icon: 'sparkle' },
     { section: 'Navigation', label: 'Opportunities', href: '/explore/opportunities', icon: 'briefcase' },
-    { section: 'Navigation', label: 'Marketplace', href: '/market', icon: 'tag' },
+    { section: 'Navigation', label: 'Market', href: '/market', icon: 'tag' },
     { section: 'Navigation', label: 'Profile', href: '/profile', icon: 'user' },
     { section: 'Navigation', label: 'Settings', href: '/settings', icon: 'settings' },
     ...(canModerate ? [{ section: 'Navigation', label: 'Moderation', href: '/moderator', icon: 'shield' }] : []),
     ...(canAdmin ? [{ section: 'Navigation', label: 'Admin', href: '/admin', icon: 'eye' }] : []),
     ...createItems.map((item) => ({ ...item, section: 'Create' })),
-    { section: 'Actions', label: 'Search Campus+', href: '/explore', icon: 'search', keywords: 'find query' },
     { section: 'Actions', label: 'Search discussions', href: '/explore?scope=discussions', icon: 'comment', keywords: 'questions answers' },
     { section: 'Actions', label: 'Calendar view', href: '/campus/events?view=calendar', icon: 'calendar', keywords: 'month agenda' },
     { section: 'Actions', label: 'Lost & found', href: '/campus/lost-found', icon: 'search', keywords: 'lost found items' },
@@ -99,15 +99,13 @@ export default async function AppLayout({ children }) {
     { section: 'Actions', label: 'Community rules', href: '/rules', icon: 'shield', keywords: 'guidelines policy' },
   ];
 
+  // The shell gets the adapter's five fields — never the session, the auth id,
+  // the email or the resolved permission set.
+  const shellUser = toShellUser(user);
+
   return (
     <AppShell
-      user={{
-        username: user.profile?.username,
-        displayName: user.profile?.display_name,
-        division: user.profile?.division,
-        roles: user.roles,
-        staffLabel: user.roles?.includes('admin') ? 'Administrator' : undefined,
-      }}
+      user={shellUser}
       unreadNotifications={unread}
       canModerate={canModerate}
       canAdmin={canAdmin}

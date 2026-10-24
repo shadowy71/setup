@@ -30,7 +30,8 @@
     "perf:smoke": "node scripts/dev/perf/smoke.mjs",
     "verify": "npm run lint && npm run verify:db && npm run audit:db && npm run test",
     "verify:security": "node scripts/verify-security.mjs",
-    "test:contrast": "node scripts/dev/contrast/audit.mjs"
+    "test:contrast": "node scripts/dev/contrast/audit.mjs",
+    "brand:icons": "node scripts/dev/brand-icons.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
