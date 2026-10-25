@@ -1,5 +1,6 @@
 import './globals.css';
 import { LandingIntro } from '@/components/layout/GalacticIntro';
+import { Analytics } from '@vercel/analytics/next';
 
 import localFont from 'next/font/local';
 import { PLATFORM } from '@/lib/constants';
@@ -80,6 +81,7 @@ export default function RootLayout({ children }) {
     <html lang="en" data-theme="dark">
       <body className={`${microFont.variable} min-h-dvh bg-canvas text-ink antialiased`}>
         <LandingIntro>{children}</LandingIntro>
+        <Analytics />
       </body>
     </html>
   );
