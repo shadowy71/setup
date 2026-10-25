@@ -57,6 +57,9 @@ export function UnreadNotificationsProvider({ cacheKey, initialCount = 0, childr
   }, [cacheKey]);
 
   useEffect(() => {
+    // Initial unread count is fetched on mount; this is an external sync, not
+    // derived state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh(true);
     const refreshIfStale = () => {
       if (document.visibilityState === 'visible' && Date.now() - lastAttemptRef.current >= REFRESH_COOLDOWN_MS) {
@@ -74,6 +77,8 @@ export function UnreadNotificationsProvider({ cacheKey, initialCount = 0, childr
   // Route changes can follow actions that changed unread state. The cooldown
   // prevents this lightweight counter from becoming one query per navigation.
   useEffect(() => {
+    // Route changes can change unread state; refresh the external counter once.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh(false);
   }, [pathname, refresh]);
 

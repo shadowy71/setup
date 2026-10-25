@@ -56,6 +56,45 @@ const checks = [
     required: false,
     validate: (v) => (['g', 'pg', 'pg-13', 'r'].includes(v.toLowerCase()) ? true : 'one of g | pg | pg-13 | r'),
   },
+  // Encrypted Drive backups are optional at boot: without them the app runs
+  // normally and the admin Backups tab reports the missing configuration.
+  {
+    key: 'GOOGLE_DRIVE_CLIENT_ID',
+    required: false,
+    hint: 'Existing Drive-only Google OAuth client (Google Cloud Console → Credentials).',
+  },
+  {
+    key: 'GOOGLE_DRIVE_CLIENT_SECRET',
+    required: false,
+    hint: 'Server-only secret for the Drive OAuth client; never NEXT_PUBLIC_*.',
+  },
+  {
+    key: 'BACKUP_ENCRYPTION_KEYS',
+    required: false,
+    hint: 'primary:<base64 32-byte key> (comma-separated key ids for rotation).',
+    validate: (v) => {
+      const parts = v.split(',').map((part) => part.trim()).filter(Boolean);
+      for (const part of parts) {
+        const encoded = part.includes(':') ? part.slice(part.indexOf(':') + 1) : part;
+        let decoded;
+        try { decoded = Buffer.from(encoded.replace(/-/g, '+').replace(/_/g, '/'), 'base64'); } catch { return 'not valid base64'; }
+        if (decoded.length !== 32) return `each key must decode to 32 bytes (got ${decoded.length})`;
+      }
+      return true;
+    },
+  },
+  {
+    key: 'BACKUP_DATABASE_URL',
+    required: false,
+    hint: 'Direct Postgres connection, required only for consistent full snapshots.',
+    validate: (v) => (/^postgres(ql)?:\/\//.test(v) ? true : 'must be a postgresql:// connection string'),
+  },
+  {
+    key: 'BACKUP_CRON_SECRET',
+    required: false,
+    hint: 'Bearer token protecting /api/backup/worker and /api/backup/snapshot.',
+    validate: (v) => (v.length >= 24 ? true : 'use at least 24 random characters'),
+  },
 ];
 
 for (const check of checks) {
@@ -84,6 +123,19 @@ for (const key of Object.keys(env)) {
   if (looksLikeSecretKey(value(env, key))) {
     bad(`${key} contains a service-role/secret key; NEXT_PUBLIC_* values are bundled for the browser`);
     failures += 1;
+  }
+}
+
+// Backup secrets must never be duplicated into a browser-exposed variable.
+for (const secretName of ['GOOGLE_DRIVE_CLIENT_SECRET', 'BACKUP_ENCRYPTION_KEYS', 'BACKUP_CRON_SECRET']) {
+  const secret = value(env, secretName);
+  if (!secret) continue;
+  for (const [key, raw] of Object.entries(env)) {
+    if (!key.startsWith('NEXT_PUBLIC_')) continue;
+    if (typeof raw === 'string' && raw.includes(secret)) {
+      bad(`${key} contains the value of ${secretName}; NEXT_PUBLIC_* values are bundled for the browser`);
+      failures += 1;
+    }
   }
 }
 

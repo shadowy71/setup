@@ -148,6 +148,9 @@ export function HomeFeedClient({
   useEffect(() => {
     const cached = readHomeFeedCache(userId);
     if (cached?.payload) {
+      // Synchronous cache hydration is intentional: it must happen before the
+      // first paint of this already-mounted client, not after another render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSnapshot(cached.payload);
       setLoading(false);
     } else {

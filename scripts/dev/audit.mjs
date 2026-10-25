@@ -856,6 +856,72 @@ async function auditJsColumnReferences(client) {
 }
 
 // ---------------------------------------------------------------------------
+// 7c. Encrypted Drive backup invariants (migration 027)
+// ---------------------------------------------------------------------------
+async function auditBackup(client, byTable) {
+  const tracked = Number((await client.query('select count(*)::int as n from public.backup_tracked_tables')).rows[0].n);
+  const appTables = Number((await client.query(`
+    select count(*)::int as n from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and c.relname not like 'backup%'
+      and c.relname not like '\\_\\_test%'
+  `)).rows[0].n);
+  if (tracked >= appTables && appTables > 0) pass('Backup', 'Every application table is in the snapshot catalogue', `${tracked} tracked / ${appTables} application tables`);
+  else fail('Backup', 'Every application table is in the snapshot catalogue', `${tracked} tracked / ${appTables} application tables`, 'Run backup_sync_triggers().');
+
+  const missingTriggers = (await client.query(`
+    select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname='public' and c.relkind='r' and c.relname not like 'backup%'
+      and c.relname not like '\\_\\_test%'
+      and not exists (select 1 from pg_trigger t where t.tgrelid=c.oid and t.tgname='backup_capture' and not t.tgisinternal)
+  `)).rows.map((row) => row.relname);
+  if (missingTriggers.length) fail('Backup', 'Transactional capture trigger on every table', missingTriggers.join(', '), 'Re-run backup_sync_triggers().');
+  else pass('Backup', 'Transactional capture trigger on every application table', `${appTables} triggers`);
+
+  const recursion = (await client.query(`
+    select c.relname from pg_trigger t join pg_class c on c.oid=t.tgrelid
+    join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and t.tgname='backup_capture' and c.relname like 'backup%'
+  `)).rows.map((row) => row.relname);
+  if (recursion.length) fail('Backup', 'No capture trigger on backup tables', recursion.join(', '), 'Drop the trigger; it would recurse.');
+  else pass('Backup', 'Backup bookkeeping tables are excluded from capture', 'no recursion path');
+
+  const secretGrants = (await client.query(`
+    select table_name || ':' || grantee || ':' || string_agg(privilege_type, ',') as leak
+    from information_schema.role_table_grants
+    where table_schema = 'backup_private' and grantee in ('anon', 'authenticated', 'PUBLIC')
+    group by table_name, grantee
+  `)).rows.map((row) => row.leak);
+  if (secretGrants.length) fail('Backup', 'OAuth credential schema has no API-role grants', secretGrants.join('; '), 'REVOKE ALL on backup_private tables.');
+  else pass('Backup', 'OAuth credential schema has no API-role grants', 'encrypted refresh verifiers/credentials isolated');
+
+  const payloadReadable = (await client.query(
+    `select has_column_privilege('authenticated', 'public.backup_change_log', 'row_data', 'SELECT') as ok`,
+  )).rows[0].ok;
+  if (payloadReadable) fail('Backup', 'Outbox row images are not readable by students', 'backup_change_log.row_data is SELECT-able', 'Revoke the column privilege.');
+  else pass('Backup', 'Outbox row images are not readable by students', 'worker-only service role');
+
+  const publicPolicies = (byTable.get('backup_change_log') || []).filter((policy) => policy.roles.includes('anon'));
+  if (publicPolicies.length) fail('Backup', 'No anonymous policy on the outbox', publicPolicies.map((p) => p.policyname).join(', '), 'Remove the anon policy.');
+  else pass('Backup', 'No anonymous policy on the outbox', 'RLS + column privileges');
+
+  const adminOnly = (await client.query(`
+    select role_key from public.role_permissions where permission_key = 'manage_backups' order by 1
+  `)).rows.map((row) => row.role_key);
+  if (adminOnly.length === 1 && adminOnly[0] === 'super_admin') pass('Backup', 'manage_backups is Super Admin only', adminOnly.join(', '));
+  else fail('Backup', 'manage_backups is Super Admin only', adminOnly.join(', ') || '(none)', 'Keep backup tooling out of the default Admin role.');
+
+  // The outbox must be a database transaction, not a fire-and-forget webhook.
+  const migration = await readFile(path.join(migrationsDir, '20261025000001_027_backup_change_capture.sql'), 'utf8');
+  // A comment may mention pg_net/webhooks to explain why they are NOT used;
+  // only an actual HTTP call from the capture path is a failure.
+  if (/net\.http_post\s*\(|pg_net\.\w+\s*\(|http_post\s*\(|supabase_functions\.http_request\s*\(/i.test(migration)) {
+    fail('Backup', 'Capture path contains no HTTP/webhook call', 'migration 027 references an HTTP extension', 'Use the transactional outbox only.');
+  } else {
+    pass('Backup', 'Capture path contains no HTTP/webhook call', 'AFTER ROW trigger inserts into backup_change_log');
+  }
+}
+
+// ---------------------------------------------------------------------------
 // 8. Privacy spot checks against the live schema
 // ---------------------------------------------------------------------------
 async function auditPrivacy(client) {
@@ -1034,7 +1100,7 @@ async function main() {
     pass('Migrations', 'Fresh database from zero', `${files.length} migrations applied to an empty PostgreSQL 15 database`);
 
     banner('Auditing schema…');
-    await auditRls(client);
+    const { byTable } = await auditRls(client);
     await auditGrants(client);
     await auditSecurityDefiner(client);
     await auditDataModel(client);
@@ -1043,6 +1109,7 @@ async function main() {
     await auditContract(client, constants);
     await auditJsColumnReferences(client);
     await auditPrivacy(client);
+    await auditBackup(client, byTable);
   } finally {
     await shutdown(pg, client);
   }

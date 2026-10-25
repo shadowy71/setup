@@ -29,6 +29,9 @@ import {
 import { ModerationActions, ResolveReportForm } from '@/components/moderation/ModerationPanels';
 import { formatDateTime, relativeTime } from '@/lib/utils';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
+import { getBackupStatus, getBackupConfiguration } from '@/lib/data/backup';
+import { BackupActionButtons, RetryBackupButton } from '@/components/admin/BackupPanels';
+import { DISASTER_RECOVERY_NOTICE, PRODUCTION_DRIVE_REDIRECT_URI } from '@/lib/backup/constants.js';
 
 export const metadata = { title: 'Administration' };
 
@@ -55,6 +58,7 @@ const TABS = [
   { key: 'flags', label: 'Feature flags', permission: 'manage_feature_flags' },
   { key: 'audit', label: 'Audit logs', permission: 'view_audit_logs' },
   { key: 'counts', label: 'Operational counts', permission: 'view_admin_overview' },
+  { key: 'backups', label: 'Backups', permission: 'manage_backups' },
 ];
 
 const CONTENT_TABLES = [
@@ -88,6 +92,10 @@ const COUNT_LABELS = {
 
 function isTabAllowed(actor, tab) {
   if (!tab) return false;
+  // Backups expose operational health and Drive connection state: only the
+  // explicit manage_backups permission (Super Admin by default) opens it.
+  // `moderate_all` must not implicitly grant access to backup tooling.
+  if (tab.permission === 'manage_backups') return can(actor, 'manage_backups');
   if (can(actor, 'moderate_all') && tab.permission !== 'view_admin_overview') return true;
   return can(actor, tab.permission);
 }
@@ -139,6 +147,8 @@ export default async function AdminPage({ searchParams }) {
   const flags = activeTab === 'flags' ? await listFeatureFlags(supabase) : [];
   const audit = activeTab === 'audit' ? await listAuditLogs(supabase, { limit: 40, offset }) : [];
   const counts = activeTab === 'counts' ? await getOperationalCounts(supabase) : null;
+  const backups = activeTab === 'backups' ? await getBackupStatus(supabase) : null;
+  const backupConfig = activeTab === 'backups' ? getBackupConfiguration() : [];
 
   const settingsByGroup = new Map();
   for (const setting of settings) {
@@ -623,6 +633,139 @@ export default async function AdminPage({ searchParams }) {
               <Link className="underline" href={`${ROUTES.admin}?tab=audit&offset=${offset + 40}`}>Older</Link>
             ) : <span />}
           </nav>
+        </section>
+      ) : null}
+
+      {/* -------------------------------------------------------------- backups */}
+      {activeTab === 'backups' && backups ? (
+        <section aria-label="Encrypted Drive backups" className="flex flex-col gap-3">
+          {params?.backup_notice === 'connected' ? (
+            <Notice tone="success" icon="checkCircle">Google Drive connected. The private folder is ready for encrypted exports.</Notice>
+          ) : null}
+          {params?.backup_error ? (
+            <Notice tone="danger" icon="flag">
+              Drive connection failed ({String(params.backup_error).slice(0, 40)}). Check the registered callback URL and server logs.
+            </Notice>
+          ) : null}
+          {backups.unavailable ? (
+            <Notice tone="warning" icon="flag">Backup status could not be loaded. Apply migration 027 and check the server configuration.</Notice>
+          ) : null}
+
+          <Notice tone="neutral" icon="lock">
+            Supabase Postgres is the only primary database. Drive is written by a background worker, never during a student request, and is never read per record as a fallback.
+          </Notice>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Card className="p-3">
+              <p className="t-label">Connection</p>
+              <p className="mt-1 text-[0.875rem] font-medium">{backups.connection?.status || 'not connected'}</p>
+              <p className="text-2xs text-muted">{backups.connection?.account_label || 'No Drive account'}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="t-label">Last successful export</p>
+              <p className="mt-1 text-[0.875rem] font-medium">
+                {backups.checkpoint?.last_success_at ? formatDateTime(backups.checkpoint.last_success_at) : 'Never'}
+              </p>
+              <p className="text-2xs text-muted">Verified change #{backups.checkpoint?.last_change_id ?? 0}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="t-label">Queue depth</p>
+              <p className="t-section t-numeric mt-1">{backups.queue_depth ?? 0}</p>
+              <p className="text-2xs text-muted">
+                {backups.oldest_pending_at ? `oldest ${relativeTime(backups.oldest_pending_at)}` : 'nothing pending'}
+              </p>
+            </Card>
+            <Card className="p-3">
+              <p className="t-label">Errors / jobs</p>
+              <p className="t-section t-numeric mt-1">{backups.failed_batches ?? 0}</p>
+              <p className="text-2xs text-muted">{backups.pending_jobs ?? 0} queued job(s)</p>
+            </Card>
+          </div>
+
+          <Card className="flex flex-col gap-3 p-4">
+            <h2 className="t-card">Authorized actions</h2>
+            <p className="text-2xs text-muted">
+              Actions only enqueue durable work. The cron worker performs the encrypted upload and verifies the Drive object before advancing the checkpoint.
+            </p>
+            <BackupActionButtons connected={backups.connection?.status === 'active'} />
+            <p className="font-mono text-2xs text-muted">Callback: {PRODUCTION_DRIVE_REDIRECT_URI}</p>
+          </Card>
+
+          <Card className="flex flex-col gap-2 p-4">
+            <h2 className="t-card">Errors and authorized retries</h2>
+            {backups.errors.length === 0 ? (
+              <p className="text-2xs text-muted">No failed batches.</p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {backups.errors.map((entry) => (
+                  <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2">
+                    <span className="min-w-0 text-2xs text-muted">
+                      <span className="font-mono">{entry.range_key}</span> · attempt {entry.attempt_count} · {formatDateTime(entry.updated_at)}
+                      <br />{entry.last_error || 'unknown error'}
+                    </span>
+                    <RetryBackupButton batchId={entry.id} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="flex flex-col gap-2 p-4">
+            <h2 className="t-card">Backup history</h2>
+            {backups.history.length === 0 ? (
+              <p className="text-2xs text-muted">No verified exports yet.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {backups.history.map((entry) => (
+                  <li key={entry.id} className="flex flex-wrap items-center gap-2 border-t border-line pt-1.5 text-2xs">
+                    <Badge tone={entry.verified_at ? 'success' : 'warning'}>{entry.verified_at ? 'verified' : 'failed'}</Badge>
+                    <span className="font-mono">{entry.range_key}</span>
+                    <span className="text-muted">
+                      {entry.verified_at ? formatDateTime(entry.verified_at) : formatDateTime(entry.updated_at || entry.created_at)}
+                      {entry.byte_size ? ` · ${Math.round(entry.byte_size / 1024)} KB encrypted` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="flex flex-col gap-2 p-4">
+            <h2 className="t-card">Full snapshots</h2>
+            {backups.snapshots.length === 0 ? (
+              <p className="text-2xs text-muted">No full snapshot has been verified yet. Incremental exports alone are not a complete restore base.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {backups.snapshots.map((entry) => (
+                  <li key={entry.id} className="flex flex-wrap items-center gap-2 border-t border-line pt-1.5 text-2xs">
+                    <Badge tone={entry.status === 'verified' ? 'success' : 'warning'}>{entry.status}</Badge>
+                    <span className="font-mono">watermark #{entry.watermark}</span>
+                    <span className="text-muted">
+                      {entry.verified_at ? formatDateTime(entry.verified_at) : formatDateTime(entry.created_at)}
+                      {entry.byte_size ? ` · ${Math.round(entry.byte_size / 1024)} KB encrypted` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          <Card className="flex flex-col gap-2 p-4">
+            <h2 className="t-card">Server configuration (presence only)</h2>
+            <ul className="flex flex-col gap-1">
+              {backupConfig.map((item) => (
+                <li key={item.key} className="flex flex-wrap items-center gap-2 text-2xs">
+                  <Badge tone={item.configured ? 'success' : 'warning'}>{item.configured ? 'set' : 'missing'}</Badge>
+                  <span className="font-mono">{item.key}</span>
+                  <span className="text-muted">{item.note}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          <Notice tone="warning" icon="flag">
+            {DISASTER_RECOVERY_NOTICE}
+          </Notice>
         </section>
       ) : null}
 

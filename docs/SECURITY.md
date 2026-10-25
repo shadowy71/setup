@@ -19,6 +19,8 @@ and after every deployment.
 | Abuse (spam, flooding) | scripted posting/DMs | database-side rate limiting via `consume_rate_limit()` with named buckets |
 | Cross-site scripting | stored HTML/JS in posts, bios, messages | React text rendering only, `no dangerouslySetInnerHTML` (lint + test), external URLs restricted to `http(s)` |
 | Privilege escalation | a student granting themselves a role | `user_roles`/`roles`/`role_permissions` UPDATE revoked from client roles; `grant_role`/`revoke_role` are `SECURITY DEFINER` with `assign_roles` checks and audit |
+| Encrypted backups / OAuth refresh tokens | reading private row images or stealing a Drive refresh token from the browser | outbox row images are service-role only; credentials are AES-256-GCM encrypted in `backup_private` (no API-role grants); worker RPCs are `service_role` only; admin RPCs re-check `manage_backups` |
+| Primary database availability | a Drive outage slowing or breaking student writes | Drive is called only by the cron worker/CLI; the trigger inserts one outbox row in the SAME transaction and makes no HTTP call |
 
 ---
 
@@ -51,8 +53,9 @@ and after every deployment.
 
 ## 3. Authorization
 
-* Four roles (Student, Moderator, Admin, Super Admin) and 53 permissions are
-  **database rows**, never hardcoded email lists.
+* Four roles (Student, Moderator, Admin, Super Admin) and 56 permissions are
+  **database rows**, never hardcoded email lists. `manage_backups` is granted to
+  `super_admin` only: `moderate_all` does not open the Backups tab.
 * Two enforcement points, always both:
   1. `can(actor, permission)` in the server action/page — the *offer*;
   2. RLS policies, `has_permission()` inside `SECURITY DEFINER` functions, and
@@ -129,12 +132,52 @@ Sign-in itself has no bucket — see §2 for why Google OAuth does not need one.
 | `GIPHY_API_KEY` | server only | used by `/api/giphy/search` |
 | `GIPHY_CONTENT_RATING` | server only | `g` / `pg` / `pg-13` / `r`, default `pg-13` |
 | `CAMPUS_ALLOWED_EMAIL_DOMAINS` | server only | deployment default for the domain gate |
+| `GOOGLE_DRIVE_CLIENT_ID` / `GOOGLE_DRIVE_CLIENT_SECRET` | server only | existing Drive-only OAuth client; separate from the Supabase Google provider used for student sign-in |
+| `BACKUP_ENCRYPTION_KEYS` / `BACKUP_ENCRYPTION_KEY_ID` | server only | 32-byte AES-GCM key ring; losing it makes backups unrecoverable |
+| `BACKUP_DATABASE_URL` / `BACKUP_RESTORE_DATABASE_URL` | server only | direct Postgres connection for snapshots / disposable restore target |
+| `BACKUP_CRON_SECRET` (or `CRON_SECRET`) | server only | bearer token protecting the worker and snapshot cron routes |
 
 `.env.local` is git-ignored; `.env.example` contains placeholders only
 (`YOUR_…`). `npm run check:env` fails if a secret-looking value appears in a
 `NEXT_PUBLIC_*` variable or if `.env.local` is tracked by git.
 
 ## 8. Response headers
+
+### 7a. Encrypted Drive backup isolation
+
+Migration 027 adds a transactional outbox, worker state and an admin-only Drive
+connection. The rules are:
+
+* **No Drive call in a student request.** The `AFTER ROW` trigger inserts one
+  `backup_change_log` row in the application's own transaction and makes no HTTP
+  call (`pg_net`/webhooks are forbidden). Only `/api/backup/worker`,
+  `/api/backup/snapshot`, the OAuth routes and `scripts/backup/*` import the
+  Drive client or service-role runtime. `tests/backup-request-path.test.js`
+  enforces that import boundary.
+* **Outbox row images are worker-only.** `authenticated` can select only
+  `id, schema_name, table_name, operation, transaction_ref, occurred_at,
+  created_at` from `backup_change_log`; `row_pk` and `row_data` (full row images,
+  including private messages) are service-role only. Every public `backup_*`
+  table has RLS enabled with an explicit `manage_backups` SELECT policy.
+* **Refresh tokens never leave the server.** PKCE state is stored as a SHA-256
+  hash and the verifier/credential are AES-256-GCM encrypted in
+  `backup_private`, a schema with no `anon`/`authenticated` grants. The admin UI
+  shows configuration **presence only**, never a value. `backup_status()`
+  returns aggregates, never credentials.
+* **Private folder only.** The OAuth callback creates a folder with no
+  `permissions.create` call and refuses it if Drive reports `shared = true` or
+  any `anyone` permission. Scope is `drive.file`, not full Drive access.
+* **Separate OAuth client.** The exact production callback
+  `https://pccoe.in/api/backup/drive/callback` belongs to the existing Drive-only
+  Google Cloud client. Student Supabase Auth configuration and
+  `/auth/callback` are untouched.
+* **Verification before checkpoint.** A worker batch advances the durable
+  checkpoint only after re-downloading the uploaded object and matching its
+  SHA-256. Failures retain events with exponential backoff. Retention cannot
+  prune above the verified checkpoint or the oldest retained verified snapshot.
+* **Limited recovery scope.** Snapshots contain schema `public` only. Auth,
+  Storage, Realtime, secrets, roles/grants and cron configuration are not
+  restored; see `docs/BACKUPS.md`.
 
 `next.config.mjs` sets `X-Content-Type-Options: nosniff`,
 `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY` and
@@ -146,7 +189,9 @@ Sign-in itself has no bucket — see §2 for why Google OAuth does not need one.
 npm run lint                 # no dead code, no raw HTML, no console.log
 npm test                     # architecture guards + validation + authorization
 npm run verify:db            # migrations apply, database suites pass
-npm run audit:db             # RLS/policy/grant audit (54 assertions)
+npm run audit:db             # RLS/policy/grant/backup audit
+npm run db:bundle -- --check # committed SQL bundle matches migrations
+npm run backup:verify-restore # offline snapshot + incremental restore test
 npm run build                # every route compiles
 npm run check:env            # no secret in a NEXT_PUBLIC_* variable
 npm run verify:security      # live probe: anonymous access denied everywhere
@@ -164,7 +209,15 @@ Manual checks the operator performs once per environment:
 - [ ] Random sessions are invisible to a third student, and staff access to
       identities is recorded.
 - [ ] The browser bundle contains no secret (search the built output for
-      `SUPABASE_SECRET_KEY`, `service_role`, `GIPHY_API_KEY`).
+      `SUPABASE_SECRET_KEY`, `service_role`, `GIPHY_API_KEY`,
+      `GOOGLE_DRIVE_CLIENT_SECRET`, `BACKUP_ENCRYPTION_KEYS`).
+- [ ] Anonymous probes cannot read `backup_change_log` or call
+      `backup_claim_batch` / `backup_private_get_credentials` / `backup_status`
+      (`npm run verify:security`).
+- [ ] Admin → Backups is visible only to `super_admin`; a student sees neither
+      the tab nor any outbox row image.
+- [ ] A verified Drive upload and a real restore test both succeeded before
+      anyone claims production backup success (see `docs/BACKUPS.md` §9).
 
 ## 10. Reporting and handling
 

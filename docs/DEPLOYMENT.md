@@ -39,6 +39,11 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_PLATFORM_NAME` | optional | display name, default `Campus+` |
 | `NEXT_PUBLIC_COLLEGE_NAME` | optional | display name, default `PCCOE` |
 | `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL` | recommended | public mailbox shown on `/legal` for rights-holder enquiries; until set, the page states that no dedicated address has been published (the app never invents one) |
+| `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET` | backups only | existing **Drive-only** Google OAuth client (separate from the student sign-in client); see `docs/BACKUPS.md` §4 |
+| `BACKUP_ENCRYPTION_KEYS`, `BACKUP_ENCRYPTION_KEY_ID` | backups only | 32-byte base64 AES key ring and the id used for new objects |
+| `BACKUP_DATABASE_URL`, `BACKUP_RESTORE_DATABASE_URL` | backups only | direct Postgres connection for consistent snapshots; separate disposable restore target |
+| `BACKUP_CRON_SECRET` | backups only | bearer token for `/api/backup/worker` and `/api/backup/snapshot` |
+| `BACKUP_DRIVE_REDIRECT_URI`, `BACKUP_PUBLIC_ORIGIN` | development only | local callback override; production is pinned to `https://pccoe.in/api/backup/drive/callback` |
 
 `npm run check:env` verifies all of this, refuses placeholders, and fails if a
 secret has been placed in a `NEXT_PUBLIC_*` variable. Campus+ boots without
@@ -47,11 +52,14 @@ fabricates credentials.
 
 ## 3. Migrations
 
-The schema lives in `supabase/migrations/` (19 ordered files: extensions and
+The schema lives in `supabase/migrations/` (27 ordered files: extensions and
 enums, identity/roles, blocks, communities, social, moderation core, messaging,
 marketplace, campus, Random, platform, auth hooks, reference data, realtime and
 grants, column privileges, staff actions, marketplace hardening, function grants,
-staff visibility).
+staff visibility, chat inbox, messaging live read model, and — at 027 — the
+transactional backup outbox and Drive worker state). Run
+`public.backup_sync_triggers()` (or re-run migration 027) after adding new
+public application tables so every table stays covered by change capture.
 
 **Option A — Supabase CLI (recommended)**
 
@@ -63,7 +71,7 @@ supabase db push
 **Option B — SQL editor (one script)**
 
 The whole schema is committed as a single script at
-**`supabase/bundle/campus-plus-schema.sql`** (~349 KB, 19 migrations). Open it on
+**`supabase/bundle/campus-plus-schema.sql`** (~461 KB, 27 migrations). Open it on
 GitHub (Raw → copy all), then Supabase → **SQL Editor → New query**, paste, Run.
 No CLI, no database password, no local tooling — this is the Dashboard-only path.
 
@@ -91,7 +99,7 @@ you prefer to watch each step.
 Reference data included in the migrations, ready to use:
 
 * the `pccoe` college row with the `pccoepune.org` domain,
-* 4 roles and 53 permissions with their default role→permission mapping,
+* 4 roles and 56 permissions (including `manage_backups`) with their default role→permission mapping,
 * marketplace categories, notice categories, branches, years, divisions,
 * ~30 feature flags and ~16 platform settings,
 * the notification/summary helper functions, realtime policies and audits.
@@ -99,7 +107,7 @@ Reference data included in the migrations, ready to use:
 After migrating, confirm the schema is intact:
 
 ```bash
-npm run verify:db     # throwaway Postgres: applies every migration + 8 suites
+npm run verify:db     # throwaway Postgres: applies 27 migrations + 13 suites
 npm run audit:db      # 54 static assertions: RLS, policies, grants, columns
 ```
 
@@ -125,6 +133,13 @@ Supabase dashboard → **Authentication**:
    reach the provider at all.
 
 No SMTP configuration is needed: Campus+ never sends email.
+
+**Administration backups use a separate OAuth flow.** Student sign-in above is
+untouched. The existing **Drive-only** Google OAuth client gets one additional
+Authorized redirect URI — exactly
+`https://pccoe.in/api/backup/drive/callback` — with the `drive.file` scope. Its
+ID/secret go into `GOOGLE_DRIVE_CLIENT_ID` / `GOOGLE_DRIVE_CLIENT_SECRET`, never
+into the Supabase Auth provider. See `docs/BACKUPS.md` §4.
 
 Domain enforcement is server-side and lives in the database
 (`colleges.email_domains`, `platform_settings.allowed_email_domains`,
@@ -157,7 +172,12 @@ address before the session is used. Adding a second domain is a row update — s
    npm run start
    ```
 
-Campus+ needs no cron jobs, no background workers and no extra services.
+The student application still needs no background service. The **backup
+subsystem does**: `vercel.json` schedules `/api/backup/worker` (incremental
+outbox drain) and `/api/backup/snapshot` (daily full snapshot), both protected
+by `BACKUP_CRON_SECRET`. Alternatively run `npm run backup:worker -- --loop` and
+`npm run backup:snapshot` from a trusted scheduler. Nothing on a student request
+path calls Google Drive. See `docs/BACKUPS.md` §5.
 
 ## 7. First Super Admin
 
@@ -238,10 +258,12 @@ information, settings and flags — is editable inside the application.
 ## 9. Verification before handing over
 
 ```bash
-npm run check:env        # configuration complete, no secret in NEXT_PUBLIC_*
-npm run verify           # lint + migrations + audit + tests
-npm run verify:security  # live probe with the public key
-npm run build            # production build covers every route
+npm run check:env             # configuration complete, no secret in NEXT_PUBLIC_*
+npm run verify                # lint + migrations + audit + tests
+npm run db:bundle -- --check  # committed SQL bundle matches the migrations
+npm run backup:verify-restore # offline snapshot + incremental restore test
+npm run verify:security       # live probe with the public key
+npm run build                 # production build covers every route
 ```
 
 Then walk through the operator checklist (§9 of `docs/SECURITY.md`) and confirm
@@ -261,8 +283,11 @@ sample or invented content.
 * **Suspensions and bans**: Admin → Users → *Change account status*, with a reason
   that is recorded in the audit log and shown to the student on
   `/account-status`.
-* **Backups**: use Supabase's scheduled backups; Campus+ keeps no second copy of
-  anything and stores no user files.
+* **Backups**: Supabase's platform backups remain the primary recovery tool. A
+  separate encrypted Drive copy of schema `public` is written asynchronously by
+  the backup worker; see **Admin → Backups** and `docs/BACKUPS.md`. It is not
+  complete disaster recovery: Auth, Storage, secrets, roles and cron config are
+  not included and must be reprovisioned.
 * **Retention**: `purge_random_data(retention_days)` clears expired Random
   sessions. Run it from the SQL editor (or a scheduled query) if you want the
   data minimised on a timetable.
