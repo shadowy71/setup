@@ -304,6 +304,130 @@ async function auditSecurityDefiner(client) {
 }
 
 // ---------------------------------------------------------------------------
+// 4b. Realtime channel authorization
+// ---------------------------------------------------------------------------
+/**
+ * `realtime.messages` policies are the gate for every private channel, and they are
+ * evaluated as the *subscribing* role. If such a policy calls a function that role
+ * cannot execute, the subscription does not get denied — it gets an error
+ * (`42501 permission denied for function …`), the client retries, and the log fills
+ * up at the reconnect cadence. That is not hypothetical here: the retired Random
+ * Chat's `random` branch called a helper whose EXECUTE grant `authenticated` does not
+ * hold on the live project, and it produced roughly one error line every 15 seconds
+ * (migration 030).
+ *
+ * So the invariant worth auditing is not "this particular grant exists" but "no policy
+ * depends on a grant nobody owns", plus the security half of the same fix: the
+ * function that answers "is *this other student* in *that session*" must not be
+ * client-callable at all.
+ */
+async function auditRealtimeChannelPolicies(client) {
+  const hasMessages = (
+    await client.query(`select to_regclass('realtime.messages') as t`)
+  ).rows[0].t;
+  if (!hasMessages) {
+    warn('Realtime', 'Realtime channel policies audited',
+      'realtime.messages is absent (plain Postgres without the Supabase extension).',
+      'Nothing to audit; on Supabase this section covers the private-channel gate.');
+    return;
+  }
+
+  // 1. Every function a channel policy calls has to be executable by the role the
+  //    policy is written for. Only `public` functions are considered: Realtime's own
+  //    helpers belong to the platform and are not this repository's grants to keep.
+  const unreachable = (
+    await client.query(`
+      select distinct pol.polname as policy, r.rolname as grantee, p.oid::regprocedure as fn
+      from pg_policy pol
+      join pg_class c on c.oid = pol.polrelid
+      join pg_namespace n on n.oid = c.relnamespace
+      cross join lateral unnest(pol.polroles) as g (roleid)
+      join pg_roles r on r.oid = g.roleid
+      join pg_depend d
+        on d.classid = 'pg_policy'::regclass and d.objid = pol.oid
+       and d.refclassid = 'pg_proc'::regclass
+      join pg_proc p on p.oid = d.refobjid
+      join pg_namespace pf on pf.oid = p.pronamespace and pf.nspname = 'public'
+      where n.nspname = 'realtime' and c.relname = 'messages'
+        and r.rolname in ('authenticated', 'anon')
+        and not has_function_privilege(r.oid, p.oid, 'execute')
+      order by 1, 2, 3
+    `)
+  ).rows;
+  if (unreachable.length) {
+    fail('Realtime', 'Channel policies call only functions the subscribing role can execute',
+      `${unreachable.length} unreachable: ${unreachable.map((u) => `${u.policy} as ${u.grantee} → ${u.fn}`).join('; ')}`,
+      'Either grant EXECUTE to the subscribing role, or replace the call with a predicate that role can execute (migration 030 does the latter).');
+  } else {
+    pass('Realtime', 'Channel policies call only functions the subscribing role can execute',
+      'every public function referenced by a realtime.messages policy is executable by authenticated');
+  }
+
+  // 2. The retired Random topic must be authorized by the current-user-only predicate.
+  const texts = (
+    await client.query(`
+      select policyname, coalesce(qual, '') || ' ' || coalesce(with_check, '') as expr
+      from pg_policies
+      where schemaname = 'realtime' and tablename = 'messages'
+    `)
+  ).rows;
+  const oracleInPolicy = texts
+    .filter((t) => t.expr.includes('can_access_random_session('))
+    .map((t) => t.policyname);
+  if (oracleInPolicy.length) {
+    fail('Realtime', 'Random channel access uses a current-user-only predicate',
+      `${oracleInPolicy.join(', ')} still calls can_access_random_session, whose optional p_user argument answers "is this other profile in that private session"`,
+      'Use public.can_access_own_random_session(uuid) in the policy (migration 030).');
+  } else {
+    const safe = texts.filter((t) => t.expr.includes('can_access_own_random_session(')).map((t) => t.policyname);
+    if (safe.length) {
+      pass('Realtime', 'Random channel access uses a current-user-only predicate',
+        `${safe.join(', ')} → can_access_own_random_session(uuid)`);
+    } else {
+      warn('Realtime', 'Random channel access uses a current-user-only predicate',
+        'no realtime.messages policy references the random predicate at all',
+        'Expected only if the random branch was removed deliberately.');
+    }
+  }
+
+  // 3. Grants, asserted rather than assumed: migration 018's blanket loop is not
+  //    enough, because PostgREST exposes every executable public function as an RPC.
+  const grants = (
+    await client.query(`
+      select proacl::text as acl,
+             has_function_privilege('authenticated', p.oid, 'execute') as auth_can,
+             has_function_privilege('anon', p.oid, 'execute') as anon_can,
+             has_function_privilege('service_role', p.oid, 'execute') as svc_can,
+             p.oid::regprocedure as fn
+      from pg_proc p
+      where p.oid in (
+        'public.can_access_random_session(uuid, uuid)'::regprocedure,
+        'public.can_access_own_random_session(uuid)'::regprocedure
+      )
+    `)
+  ).rows;
+  const byName = Object.fromEntries(grants.map((g) => [g.fn.replace(/^public\./, ''), g]));
+  const oracle = byName['can_access_random_session(uuid,uuid)'];
+  const narrow = byName['can_access_own_random_session(uuid)'];
+  if (oracle && (oracle.auth_can || oracle.anon_can)) {
+    fail('Realtime', 'The session-membership oracle is not client-callable',
+      `authenticated=${oracle.auth_can}, anon=${oracle.anon_can} (acl ${oracle.acl})`,
+      'revoke all on function public.can_access_random_session(uuid, uuid) from public, anon, authenticated;');
+  } else if (oracle) {
+    pass('Realtime', 'The session-membership oracle is not client-callable',
+      `service_role only (${oracle.svc_can ? 'granted' : 'MISSING — the retained Random RPCs need it'})`);
+  }
+  if (narrow && !narrow.auth_can) {
+    fail('Realtime', 'The channel predicate is granted explicitly',
+      'authenticated cannot execute can_access_own_random_session(uuid), so the random channel branch fails',
+      'grant execute on function public.can_access_own_random_session(uuid) to authenticated, service_role;');
+  } else if (narrow) {
+    pass('Realtime', 'The channel predicate is granted explicitly',
+      `authenticated yes, anon ${narrow.anon_can ? 'yes — unexpected' : 'no'}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // 5. Data model integrity
 // ---------------------------------------------------------------------------
 async function auditDataModel(client) {
@@ -1161,6 +1285,7 @@ async function main() {
     const { byTable } = await auditRls(client);
     await auditGrants(client);
     await auditSecurityDefiner(client);
+    await auditRealtimeChannelPolicies(client);
     await auditDataModel(client);
     await auditColumnPrivileges(client);
     const constants = await loadConstants();
