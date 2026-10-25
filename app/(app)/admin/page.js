@@ -682,13 +682,85 @@ export default async function AdminPage({ searchParams }) {
             </Card>
           </div>
 
+          {backups.admin?.unavailable ? (
+            <Notice tone="warning" icon="flag">
+              Live job state is unavailable. Apply migration 028 to enable admin-triggered processing, job states and run history.
+            </Notice>
+          ) : null}
+
+          <Card className="flex flex-col gap-3 p-4">
+            <h2 className="t-card">Queue states</h2>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {[
+                ['Queued', backups.admin?.jobs?.queued ?? 0, 'neutral', 'waiting for a run'],
+                ['Processing', backups.admin?.jobs?.processing ?? 0, 'accent', 'lease held by a run'],
+                ['Verified', backups.admin?.jobs?.verified ?? 0, 'success', 'jobs closed by a run'],
+                ['Failed', backups.admin?.jobs?.failed ?? 0, 'danger', 'see errors below'],
+              ].map(([label, count, tone, caption]) => (
+                <div key={label} className="rounded-[var(--radius-md)] border border-line p-2">
+                  <p className="t-label">{label}</p>
+                  <p className="t-section t-numeric mt-1">{count}</p>
+                  <Badge tone={tone}>{label.toLowerCase()}</Badge>
+                  <p className="mt-1 text-2xs text-muted">{caption}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-2xs text-muted">
+              A closed job either uploaded a verified object or found nothing
+              left to export; the run results below show what actually reached
+              Drive. {backups.admin?.batches?.uploading ?? 0} batch(es) uploading ·{' '}
+              {backups.admin?.batches?.retry_waiting ?? 0} waiting for automatic retry ·{' '}
+              {backups.admin?.jobs_by_kind?.incremental?.queued ?? 0} incremental job(s) and{' '}
+              {backups.admin?.jobs_by_kind?.snapshot?.queued ?? 0} snapshot job(s) queued.
+            </p>
+            {backups.admin?.active ? (
+              <Notice tone="warning" icon="clock">A backup run is currently processing. Buttons are disabled until it finishes or its lease expires.</Notice>
+            ) : null}
+            {backups.admin?.batches?.next_retry_at ? (
+              <p className="text-2xs text-muted">Next automatic retry: {formatDateTime(backups.admin.batches.next_retry_at)}.</p>
+            ) : null}
+          </Card>
+
           <Card className="flex flex-col gap-3 p-4">
             <h2 className="t-card">Authorized actions</h2>
             <p className="text-2xs text-muted">
-              Actions only enqueue durable work. The cron worker performs the encrypted upload and verifies the Drive object before advancing the checkpoint.
+              These buttons PROCESS eligible queued work now, in bounded batches, on the server. They do not enqueue another job. Each object is encrypted, uploaded to the restricted Drive folder and re-downloaded for SHA-256 verification before anything is marked successful. A failed batch keeps its backoff and leaves untouched jobs queued.
             </p>
-            <BackupActionButtons connected={backups.connection?.status === 'active'} />
+            <BackupActionButtons connected={backups.connection?.status === 'active'} admin={backups.admin} />
             <p className="font-mono text-2xs text-muted">Callback: {PRODUCTION_DRIVE_REDIRECT_URI}</p>
+          </Card>
+
+          <Card className="flex flex-col gap-2 p-4">
+            <h2 className="t-card">Recent runs and jobs</h2>
+            {(backups.admin?.last_runs?.length || 0) === 0 && (backups.admin?.recent_jobs?.length || 0) === 0 ? (
+              <p className="text-2xs text-muted">No runs recorded yet.</p>
+            ) : (
+              <ul className="flex flex-col gap-1.5">
+                {(backups.admin?.last_runs || []).slice(0, 5).map((run) => (
+                  <li key={run.id || `${run.kind}-${run.created_at}`} className="flex flex-wrap items-center gap-2 border-t border-line pt-1.5 text-2xs">
+                    <Badge tone={run.status === 'verified' || run.status === 'drained' ? 'success' : run.status === 'failed' ? 'danger' : 'warning'}>{run.status}</Badge>
+                    <span className="font-mono">{run.kind}</span>
+                    <span className="text-muted">
+                      {formatDateTime(run.created_at)}
+                      {run.record?.verified ? ` · ${run.record.verified} verified` : ''}
+                      {run.record?.failed ? ` · ${run.record.failed} failed` : ''}
+                    </span>
+                    {run.record?.diagnostics?.length ? (
+                      <span className="w-full text-muted">[{run.record.diagnostics.map((entry) => entry.code).join(', ')}]</span>
+                    ) : null}
+                  </li>
+                ))}
+                {(backups.admin?.recent_jobs || []).slice(0, 8).map((job) => (
+                  <li key={job.id} className="flex flex-wrap items-center gap-2 border-t border-line pt-1.5 text-2xs">
+                    <Badge tone={job.status === 'done' ? 'success' : job.status === 'failed' ? 'danger' : job.status === 'running' ? 'accent' : 'warning'}>
+                      {job.status === 'done' ? 'verified' : job.status === 'running' ? 'processing' : job.status}
+                    </Badge>
+                    <span className="font-mono">{job.kind}</span>
+                    <span className="text-muted">{formatDateTime(job.created_at)}{job.last_error ? ` · ${String(job.last_error).slice(0, 120)}` : ''}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           <Card className="flex flex-col gap-2 p-4">

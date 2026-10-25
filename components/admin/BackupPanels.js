@@ -1,36 +1,64 @@
 'use client';
 
 /**
- * Admin-only backup controls. The action buttons call server actions that ONLY
- * enqueue durable work or revoke local connection state; the Connect link is a
- * native anchor to the OAuth start route. Nothing here uploads to Drive — the
- * worker picks queued jobs up on its next scheduled run.
+ * Admin-only backup controls.
+ *
+ * "Run incremental now" and "Run full snapshot now" call a permission-checked
+ * SERVER ACTION that drains eligible queued work in bounded batches. They do
+ * NOT enqueue another job, so repeated clicks cannot pile up duplicates. All
+ * Drive/OAuth/service-role material stays on the server; only a redacted run
+ * summary comes back to this component.
  */
 
-import { Button, Notice } from '@/components/ui';
+import { useState } from 'react';
+import { Badge, Button, Notice } from '@/components/ui';
 import { useFormAction } from '@/lib/forms';
 import {
   disconnectDriveBackup,
-  requestManualBackup,
+  processBackupNow,
   retryBackupBatch,
 } from '@/lib/actions/backup.js';
 
-export function BackupActionButtons({ connected }) {
-  const incremental = useFormAction(requestManualBackup);
-  const snapshot = useFormAction(requestManualBackup);
+const RESULT_TONE = {
+  verified: 'success',
+  drained: 'success',
+  idle: 'neutral',
+  busy: 'warning',
+  failed: 'danger',
+  not_configured: 'warning',
+};
+
+const RESULT_LABEL = {
+  verified: 'verified',
+  drained: 'drained',
+  idle: 'nothing to do',
+  busy: 'already processing',
+  failed: 'failed',
+  not_configured: 'not configured',
+};
+
+export function BackupActionButtons({ connected, admin = null }) {
+  const [runResult, setRunResult] = useState(null);
+  const [runningKind, setRunningKind] = useState(null);
+  const process = useFormAction(processBackupNow, { onSuccess: setRunResult });
   const disconnect = useFormAction(disconnectDriveBackup);
 
-  const enqueue = (kind, run) => {
+  const activeKinds = new Set(
+    (admin?.leases || []).filter((lease) => lease.active).map((lease) => lease.kind),
+  );
+  const busyElsewhere = Boolean(admin?.active) && !process.pending;
+  const disabled = !connected || process.pending || disconnect.pending || busyElsewhere;
+
+  const run = (kind) => {
+    setRunResult(null);
+    setRunningKind(kind);
     const formData = new FormData();
     formData.set('kind', kind);
-    run(formData);
+    process.run(formData);
   };
 
-  const errors = [incremental.error, snapshot.error, disconnect.error].filter(Boolean);
-  const notices = [];
-  if (incremental.success) notices.push('Incremental export queued.');
-  if (snapshot.success) notices.push('Full snapshot queued.');
-  if (disconnect.success) notices.push('Drive disconnected.');
+  const errors = [process.error, disconnect.error].filter(Boolean);
+  const resultTone = runResult ? (RESULT_TONE[runResult.status] || 'neutral') : null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -45,20 +73,64 @@ export function BackupActionButtons({ connected }) {
         <Button as="a" href="/api/backup/drive/connect" size="sm" variant="secondary">
           {connected ? 'Reconnect Google Drive' : 'Connect Google Drive'}
         </Button>
-        <Button type="button" size="sm" disabled={!connected || incremental.pending} onClick={() => enqueue('incremental', incremental.run)}>
-          {incremental.pending ? 'Queuing…' : 'Run incremental now'}
+        <Button type="button" size="sm" disabled={disabled} onClick={() => run('incremental')}>
+          {process.pending && runningKind === 'incremental' ? 'Processing…' : 'Run incremental now'}
         </Button>
-        <Button type="button" size="sm" variant="secondary" disabled={!connected || snapshot.pending} onClick={() => enqueue('snapshot', snapshot.run)}>
-          {snapshot.pending ? 'Queuing…' : 'Request full snapshot'}
+        <Button type="button" size="sm" variant="secondary" disabled={disabled} onClick={() => run('snapshot')}>
+          {process.pending && runningKind === 'snapshot' ? 'Processing…' : 'Run full snapshot now'}
         </Button>
         {connected ? (
-          <Button type="button" size="sm" variant="danger" disabled={disconnect.pending} onClick={() => disconnect.run(new FormData())}>
+          <Button type="button" size="sm" variant="danger" disabled={process.pending || disconnect.pending} onClick={() => disconnect.run(new FormData())}>
             {disconnect.pending ? 'Disconnecting…' : 'Disconnect'}
           </Button>
         ) : null}
       </div>
+
+      {!connected ? (
+        <Notice tone="warning" icon="flag">Connect Google Drive before running a backup.</Notice>
+      ) : null}
+      {busyElsewhere ? (
+        <Notice tone="warning" icon="clock">
+          A {[...activeKinds].join(' or ') || 'backup'} run is already in progress in another session. No new job was queued.
+        </Notice>
+      ) : null}
+
+      {runResult ? (
+        <div className="flex flex-col gap-1.5" aria-live="polite">
+          <Notice tone={resultTone} icon={runResult.status === 'verified' ? 'checkCircle' : 'flag'}>
+            <span className="font-medium">{RESULT_LABEL[runResult.status] || runResult.status}</span>
+            {' · '}{runResult.message}
+          </Notice>
+          {runResult.diagnostics?.length ? (
+            <ul className="flex flex-col gap-1 pl-1 text-2xs text-muted">
+              {runResult.diagnostics.map((entry, index) => (
+                <li key={`${entry.code}-${index}`}>[{entry.code}] {entry.message}</li>
+              ))}
+            </ul>
+          ) : null}
+          {runResult.objects?.length ? (
+            <ul className="flex flex-col gap-1 pl-1 text-2xs text-muted">
+              {runResult.objects.map((object) => (
+                <li key={object.fileId || object.sha256}>
+                  <Badge tone="success">verified</Badge>{' '}
+                  <span className="font-mono">{object.fileId}</span>
+                  {object.eventCount ? ` · ${object.eventCount} change(s)` : ''}
+                  {object.rowCount ? ` · ${object.rowCount} row(s)` : ''}
+                  {object.sha256 ? ` · sha256 ${String(object.sha256).slice(0, 16)}…` : ''}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {runResult.retryDelaySeconds ? (
+            <p className="text-2xs text-muted">
+              Automatic retry is available in about {runResult.retryDelaySeconds}s, or use an authorized retry below.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {errors.map((error) => <Notice key={error} tone="danger" icon="flag">{error}</Notice>)}
-      {notices.map((notice) => <Notice key={notice} tone="success" icon="checkCircle">{notice}</Notice>)}
+      {disconnect.success ? <Notice tone="success" icon="checkCircle">Drive disconnected.</Notice> : null}
     </div>
   );
 }
@@ -81,7 +153,7 @@ export function RetryBackupButton({ batchId }) {
         {retry.pending ? 'Retrying…' : 'Authorize retry'}
       </Button>
       {retry.error ? <Notice tone="danger">{retry.error}</Notice> : null}
-      {retry.success ? <Notice tone="success">Retry queued.</Notice> : null}
+      {retry.success ? <Notice tone="success">Retry authorized. Click Run incremental now to process it.</Notice> : null}
     </span>
   );
 }

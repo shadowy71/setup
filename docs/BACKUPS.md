@@ -127,7 +127,8 @@ All values are **server-only**. Copy them into `.env.local` and Vercel
 | `BACKUP_ENCRYPTION_KEY_ID` | new objects | key id to use, default `primary`; must exist in `BACKUP_ENCRYPTION_KEYS` |
 | `BACKUP_DATABASE_URL` | full snapshots, restore | direct/session Postgres connection string with `sslmode=require` |
 | `BACKUP_RESTORE_DATABASE_URL` | restore scripts (optional) | separate disposable database; never the primary |
-| `BACKUP_CRON_SECRET` | cron endpoints | ≥24 random characters; `CRON_SECRET` also works (Vercel sends it) |
+| `CRON_SECRET` | cron endpoints | **This exact name**: ≥24 random characters. Vercel Cron sends only `CRON_SECRET` as `Authorization: Bearer <value>` |
+| `BACKUP_CRON_SECRET` | cron endpoints (legacy) | optional alias, also accepted; set it to the **same** value as `CRON_SECRET` or remove it |
 | `BACKUP_DRIVE_REDIRECT_URI` | development only | e.g. `http://localhost:3000/api/backup/drive/callback`; **must not be set to anything else in production** |
 | `BACKUP_PUBLIC_ORIGIN` | development only | origin used to build the development callback |
 
@@ -172,10 +173,24 @@ length and refuses to let a backup secret appear in a `NEXT_PUBLIC_*` variable.
 
 ## 5. Supabase / Vercel configuration
 
-1. Apply migrations (`supabase db push`) or paste the regenerated bundle
-   `supabase/bundle/campus-plus-schema.sql` into the SQL Editor. Migration 027
-   adds the outbox, worker state, `backup_private`, the `manage_backups`
-   permission (Super Admin only) and capture triggers on every public table.
+1. Apply the migrations. **No terminal needed:** Supabase dashboard → SQL
+   Editor → New query → paste and Run.
+
+   * an existing project that already has migration 027 only needs
+     `supabase/migrations/20261025000002_028_backup_admin_processing.sql`
+     (run it **once** — it creates new objects and is deliberately not
+     idempotent, so a second run is refused rather than half-applied);
+   * a brand-new project pastes the regenerated whole-schema bundle
+     `supabase/bundle/campus-plus-schema.sql`.
+
+   Migration 027 added the outbox, worker state, `backup_private`, the
+   `manage_backups` permission (Super Admin only) and capture triggers on every
+   public table. **Migration 028 is what makes the admin buttons process work**:
+   it adds `backup_run_leases`, `backup_run_log`, `backup_admin_state()` and
+   `backup_record_run()`. Without 028 the Backups page says
+   "Live job state is unavailable" and admin runs report
+   `Could not start a backup run`. `supabase db push` works too if you prefer
+   the CLI.
 2. **Do not expose `backup_private` through PostgREST.** Keep
    `supabase/config.toml` → `[api] schemas = ["public"]`. Encrypted credentials
    are only reachable through worker-only `SECURITY DEFINER` RPCs.
@@ -184,8 +199,13 @@ length and refuses to let a backup secret appear in a `NEXT_PUBLIC_*` variable.
    to hold one `REPEATABLE READ` transaction while reading all tables.
 4. Vercel: `vercel.json` declares two **once-daily** cron jobs — worker at
    01:00 UTC, full snapshot at 02:00 UTC. Vercel automatically sends
-   `Authorization: Bearer <CRON_SECRET>`; set `BACKUP_CRON_SECRET` (or
-   `CRON_SECRET`) to the same value. **Why daily:** Vercel's Hobby plan rejects
+   `Authorization: Bearer <CRON_SECRET>` — it can ONLY inject the variable
+   literally named `CRON_SECRET`, so add that variable to the **Production**
+   environment and redeploy. `BACKUP_CRON_SECRET` is still accepted as a legacy
+   alias (the endpoints accept either token), but setting only that name — or
+   setting both to different values — is what produced the
+   `401 {"error":"unauthorized"}` on `/api/backup/worker`. Set both to the
+   same value if you keep both. **Why daily:** Vercel's Hobby plan rejects
    any cron expression that resolves to more than one run per day, and it does so
    at *deploy* time (before the build), which would break every deployment. On a
    Pro plan you may change the worker schedule to `*/5 * * * *` for a ~5-minute
@@ -212,13 +232,35 @@ Admin → Backups (`manage_backups`, Super Admin by default) shows:
 * connection status, account label, restricted-folder flag;
 * last successful verified export and checkpoint id;
 * queue depth and oldest pending change;
+* **Queue states** — `queued`, `processing`, `verified`, `failed` from
+  `backup_jobs`, plus uploading batches, batches waiting for their backoff and
+  the next automatic retry time;
 * failed batch count, pending jobs, recent errors and an **Authorize retry**
   button;
 * backup history (verified/failed batches) and full-snapshot history;
-* **Connect Google Drive**, **Run incremental now**, **Request full snapshot**,
-  **Disconnect** — all audited, all enqueue-only (no Drive call from the button);
+* **Recent runs and jobs** — each admin-triggered run is written to
+  `backup_run_log` with its status, verified object ids and redacted
+  diagnostics, so the page still shows what happened after a refresh;
+* **Connect Google Drive**, **Run incremental now**, **Run full snapshot now**,
+  **Disconnect** — all audited. The two run buttons **process eligible queued
+  work** in bounded batches (up to 12 units / ~45s per click) rather than
+  enqueueing another job, so repeated clicks cannot pile up duplicates and a
+  stuck queue can be drained from the browser without a terminal;
 * presence-only server configuration report and the exact callback URL;
 * the explicit disaster-recovery limitation notice.
+
+`runBackupWorker()` claims exactly one job and one batch per unit, so the
+processor loops over units until the queue drains, a unit fails, or the
+deadline hits. Concurrency is protected twice: a durable per-kind lease in
+`backup_run_leases` (a cron tick, the CLI and an admin click all take it; an
+expired lease from a killed function is taken over and any job the interrupted
+run left `running` is requeued, never deleted or marked done) and the existing
+per-batch lease/`range_key` uniqueness. A failed unit stops the run, reports a
+safe diagnostic plus the backoff window, and leaves untouched jobs pending.
+
+**No CLI or terminal is required for routine operation.** Admin → Backups is the
+supported control surface. `GET/POST /api/backup/worker` keeps its bearer-token
+protection for scheduled runs, and the CLI remains for restore/offline work.
 
 Every action is re-checked in the database (`has_permission('manage_backups')`
 inside `SECURITY DEFINER` functions) and written to `audit_logs` through
@@ -291,24 +333,66 @@ restored database is **not** a working production system.
 | No verified snapshot exists | retention cutoff is zero; the change log is never pruned |
 | Refresh token rotated | worker re-encrypts and persists it through `backup_private_rotate_credentials()` |
 | Key missing / wrong | decryption fails loudly; no plaintext is restored and nothing is committed |
+| Cron request without a matching bearer token | `401 {"error":"unauthorized"}` **before** any Supabase client or Drive runtime is created; no secret is logged. Vercel only ever sends `CRON_SECRET` |
+| Admin click while another run holds the lease | `status: "busy"` — no new job is queued, nothing is overwritten, the in-flight run keeps its result |
+| Run interrupted mid-way (function killed) | lease expires; the next run requeues `running` jobs and re-verifies/reuses the deterministic Drive object |
+| Unit fails during an admin run | run stops, redacted diagnostic + backoff are shown, already-verified objects stay verified, remaining jobs stay queued |
+
+### 8.1 If `/api/backup/worker` returns 401
+
+The endpoint accepts `Authorization: Bearer <token>` matching **either**
+`CRON_SECRET` or `BACKUP_CRON_SECRET`, compared without short-circuiting and
+never logged. Work through this order:
+
+1. Vercel → Settings → Environment Variables → **Production** (not Preview)
+   must contain `CRON_SECRET`. Vercel Cron injects only that exact name.
+2. **Redeploy** — env changes do not apply to an already-built deployment, so
+   editing a variable and re-running cron still validates against the old
+   value inside the running function.
+3. If both names exist they must be identical, or cron's value (the one Vercel
+   sends) must be the one you intend. A stray trailing space or newline is
+   tolerated by trimming, but a *different value* under `CRON_SECRET` is the
+   usual cause.
+4. An **empty/whitespace** value makes `cronAuthorized()` reject everything —
+   check that the variable is actually set for Production, not just defined in
+   the schema.
+5. Confirm without exposing anything: `curl -s -o /dev/null -w '%{http_code}'
+   -X POST https://pccoe.in/api/backup/worker` must be `401`, and with
+   `-H "Authorization: Bearer $CRON_SECRET"` it must be `200`. Never paste the
+   token into a shared terminal history or the browser.
+6. Independent of all of the above, **Admin → Backups → Run incremental now**
+   processes the queue through the authenticated admin action path, which does
+   not use the cron secret at all.
 
 ---
 
 ## 9. Acceptance checklist before claiming production success
 
 1. `npm run verify` (lint + migrations + SQL suites + audit + unit tests) passes.
-2. `npm run db:bundle -- --check` passes (bundle matches migration 027).
-3. `npm run check:env` passes with real values in the deployment environment.
+2. `npm run db:bundle -- --check` passes (bundle matches migrations 027 + 028).
+3. `npm run check:env` passes with real values in the deployment environment, and
+   reports `CRON_SECRET` as set for **Production**.
 4. `npm run verify:security` passes against the live project with the public key
    (anonymous probes cannot read the outbox or call worker RPCs).
-5. Super Admin connects Drive and the callback creates a folder with no
+5. Apply **both** migrations (or the regenerated bundle) to the live project —
+   `backup_acquire_run_lease` missing means admin runs report
+   `Could not start a backup run`.
+6. Super Admin connects Drive and the callback creates a folder with no
    `anyone` permission; Admin → Backups shows `active`.
-6. `npm run backup:worker` returns `status: "verified"` and the admin page shows
-   a new last successful export and a decreased queue depth.
-7. Download that exact Drive object and run `npm run backup:verify-restore --
+7. **From the browser** (no terminal): click **Run incremental now**. The page
+   must move queued jobs `queued → verified`, show the verified Drive object id +
+   SHA-256 prefix, and `queue_depth` must drop. Then confirm the object actually
+   exists in the restricted Drive folder (named `campus-plus-incremental-…cpbe`,
+   private, only the app's own access) and that its size matches the reported
+   byte size.
+8. Download that exact Drive object and run `npm run backup:verify-restore --
    --from-drive ...` — decryption, replay and state comparison succeed.
-8. `npm run backup:snapshot` returns `verified` with a nonzero watermark; repeat
-   step 7 with the snapshot plus subsequent incremental objects into a fresh
-   database.
-9. Only after 5–8 pass should anyone describe the production backup as working.
-   **This change does not make that claim.**
+9. Click **Run full snapshot now** (requires `BACKUP_DATABASE_URL`). It must
+   return `verified` with a nonzero watermark and a row count; confirm the
+   `campus-plus-snapshot-…cpbe` object in the folder. Repeat step 8 with the
+   snapshot plus subsequent incremental objects into a fresh database.
+10. `curl` the cron endpoint with and without the bearer token: without → `401`,
+    with `CRON_SECRET` → `200` (§8.1). The cron path stays protected even though
+    the UI no longer depends on it.
+11. Only after 6–10 pass should anyone describe the production backup as working.
+    **Local verification alone does not make that claim.**

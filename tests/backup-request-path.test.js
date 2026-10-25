@@ -20,7 +20,12 @@ async function jsFiles(relativeDir) {
   return output;
 }
 
-const BACKUP_IO_MODULES = /@\/lib\/backup\/(drive|runtime|worker|snapshot|store|oauth)(\.js)?['"]|from ['"][^'"]*lib\/backup\/(drive|runtime|worker|snapshot|store|oauth)(\.js)?['"]/;
+// Any module that can reach Drive, hold a credential or build the service-role
+// client. `admin-run` is the single admin-only exception, and `endpoints` is the
+// protected background-entry core.
+const BACKUP_IO_MODULES = /@\/lib\/backup\/(drive|runtime|worker|snapshot|store|oauth|processor|admin-run|endpoints)(\.js)?['"]|from ['"][^'"]*lib\/backup\/(drive|runtime|worker|snapshot|store|oauth|processor|admin-run|endpoints)(\.js)?['"]/;
+// Only these modules may import the admin run wiring at all.
+const ADMIN_RUN_IMPORTERS = ['lib/actions/backup.js'];
 const GOOGLE_CALLS = /www\.googleapis\.com|oauth2\.googleapis\.com|accounts\.google\.com\/o\/oauth2|googleapis/;
 
 describe('normal user writes never wait for Google Drive', () => {
@@ -28,10 +33,30 @@ describe('normal user writes never wait for Google Drive', () => {
     const files = [...await jsFiles('lib/actions'), ...await jsFiles('lib/data')];
     expect(files.length).toBeGreaterThan(10);
     for (const file of files) {
+      const relative = path.relative(root, file).replace(/\\/g, '/');
+      // The admin backup action is the ONE sanctioned exception: it is
+      // permission-gated and only runs when a Super Admin clicks a button.
+      if (relative === 'lib/actions/backup.js') continue;
       const source = await readFile(file, 'utf8');
-      expect(source, path.relative(root, file)).not.toMatch(BACKUP_IO_MODULES);
-      expect(source, path.relative(root, file)).not.toMatch(GOOGLE_CALLS);
+      expect(source, relative).not.toMatch(BACKUP_IO_MODULES);
+      expect(source, relative).not.toMatch(GOOGLE_CALLS);
     }
+  });
+
+  it('only the admin backup action may wire the service-role run, and it returns no secret', async () => {
+    const all = [...await jsFiles('lib'), ...await jsFiles('app'), ...await jsFiles('components')];
+    const importers = [];
+    for (const file of all) {
+      const source = await readFile(file, 'utf8');
+      if (/lib\/backup\/admin-run(\.js)?['"]/.test(source)) importers.push(path.relative(root, file).replace(/\\/g, '/'));
+    }
+    expect(importers.sort()).toEqual(ADMIN_RUN_IMPORTERS);
+
+    const actions = await read('lib/actions/backup.js');
+    // A service-role key, an OAuth secret or a refresh token must never be
+    // reachable from the action's return value.
+    expect(actions).not.toMatch(/SUPABASE_SECRET_KEY|GOOGLE_DRIVE_CLIENT_SECRET|refresh_token|credential_ciphertext/);
+    expect(actions).toContain('recordBackupRun');
   });
 
   it('no student app route or component imports the Drive client/background worker', async () => {
@@ -40,20 +65,27 @@ describe('normal user writes never wait for Google Drive', () => {
     for (const file of appRoutes) {
       const relative = path.relative(root, file).replace(/\\/g, '/');
       if (relative.startsWith('app/api/backup/')) continue; // cron + OAuth routes only
+      if (relative === 'app/(app)/admin/page.js') continue; // admin Backups tab
       const source = await readFile(file, 'utf8');
       if (BACKUP_IO_MODULES.test(source) || GOOGLE_CALLS.test(source)) offenders.push(relative);
     }
     expect(offenders).toEqual([]);
   });
 
-  it('admin actions only enqueue durable jobs — they never call Drive themselves', async () => {
+  it('admin actions are permission-gated and never touch Drive directly', async () => {
     const actions = await read('lib/actions/backup.js');
     expect(actions).toContain("'use server'");
+    // Every action passes through the same authorization gate first.
+    expect(actions.match(/await requireBackupAdmin\(\)/g)?.length).toBeGreaterThanOrEqual(4);
     expect(actions).toContain("can(toActor(user), 'manage_backups')");
     expect(actions).toContain('backup_request_job');
     expect(actions).toContain('backup_retry_failed');
     expect(actions).toContain('backup_disconnect');
-    expect(actions).not.toMatch(/DriveClient|createBackupRuntime|www\.googleapis\.com/);
+    // No Drive client, no raw fetch to Google, no service-role construction here.
+    expect(actions).not.toMatch(/DriveClient|createBackupRuntime|createDriveForWorker|www\.googleapis\.com|oauth2\.googleapis\.com/);
+    // Authorization precedes the run in the processing action.
+    const body = actions.slice(actions.indexOf('export async function processBackupNow'));
+    expect(body.indexOf('requireBackupAdmin()')).toBeLessThan(body.indexOf('runAdminBackup('));
   });
 
   it('only the cron routes and CLI scripts wire the service-role runtime', async () => {
@@ -61,13 +93,17 @@ describe('normal user writes never wait for Google Drive', () => {
     const importers = [];
     for (const file of all) {
       const source = await readFile(file, 'utf8');
-      if (/from ['"][^'"]*lib\/backup\/runtime(\.js)?['"]/.test(source)) {
+      // Aliased ('@/lib/backup/runtime.js') and relative ('./runtime.js') forms.
+      if (/from ['"][^'"]*backup\/runtime(\.js)?['"]/.test(source) || /from ['"]\.\/runtime(\.js)?['"]/.test(source)) {
         importers.push(path.relative(root, file).replace(/\\/g, '/'));
       }
     }
+    // The service-role runtime is reachable from exactly two production entry
+    // points — the protected background core and the permission-gated admin
+    // wiring — plus the operator CLI. No page, student route or UI module.
     expect(importers.sort()).toEqual([
-      'app/api/backup/snapshot/route.js',
-      'app/api/backup/worker/route.js',
+      'lib/backup/admin-run.js',
+      'lib/backup/endpoints.js',
       'scripts/backup/disconnect.mjs',
       'scripts/backup/restore.mjs',
       'scripts/backup/snapshot.mjs',

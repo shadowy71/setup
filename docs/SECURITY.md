@@ -135,7 +135,7 @@ Sign-in itself has no bucket — see §2 for why Google OAuth does not need one.
 | `GOOGLE_DRIVE_CLIENT_ID` / `GOOGLE_DRIVE_CLIENT_SECRET` | server only | existing Drive-only OAuth client; separate from the Supabase Google provider used for student sign-in |
 | `BACKUP_ENCRYPTION_KEYS` / `BACKUP_ENCRYPTION_KEY_ID` | server only | 32-byte AES-GCM key ring; losing it makes backups unrecoverable |
 | `BACKUP_DATABASE_URL` / `BACKUP_RESTORE_DATABASE_URL` | server only | direct Postgres connection for snapshots / disposable restore target |
-| `BACKUP_CRON_SECRET` (or `CRON_SECRET`) | server only | bearer token protecting the worker and snapshot cron routes |
+| `CRON_SECRET` (or the `BACKUP_CRON_SECRET` alias) | server only | bearer token protecting the worker and snapshot cron routes. Vercel Cron can only send `CRON_SECRET`, so that is the name that must exist in Production; both are accepted and neither is ever logged |
 
 `.env.local` is git-ignored; `.env.example` contains placeholders only
 (`YOUR_…`). `npm run check:env` fails if a secret-looking value appears in a

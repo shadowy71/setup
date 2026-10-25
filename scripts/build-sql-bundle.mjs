@@ -70,7 +70,8 @@ export async function buildBundle() {
 --   permissions, categories, feature flags, platform settings) → realtime
 --   policies and grants → column privileges → staff actions → marketplace
 --   hardening → function grants → staff visibility → chat inbox → messaging
---   live read model → transactional backup outbox / worker state (027).
+--   live read model → transactional backup outbox / worker state (027) →
+--   admin-authorized backup processing with durable run leases (028).
 --
 -- Safety
 --   Every statement is idempotent or new-object only, so a re-run on a project

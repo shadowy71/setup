@@ -179,6 +179,68 @@ describe('incremental worker', () => {
   });
 });
 
+describe('admin job lifecycle and post-verification bookkeeping', () => {
+  it('claims and closes exactly one queued job per unit', async () => {
+    const { store, state } = fakeStore();
+    const drive = fakeDrive(state);
+    let claimed = false;
+    store.claimJob = async (kind) => {
+      state.calls.push(`claimJob:${kind}`);
+      if (claimed) return null;
+      claimed = true;
+      return { id: 'job-1', kind };
+    };
+    store.finishJob = async (jobId, error) => {
+      state.calls.push(`finishJob:${jobId}:${error === null ? 'ok' : 'error'}`);
+    };
+
+    const result = await run({ store, drive });
+    expect(result.status).toBe('verified');
+    expect(state.calls).toContain('claimJob:incremental');
+    expect(state.calls).toContain('finishJob:job-1:ok');
+  });
+
+  it('marks the job failed (with the error) when the batch fails, so nothing looks successful', async () => {
+    const { store, state } = fakeStore();
+    store.claimJob = async () => ({ id: 'job-2', kind: 'incremental' });
+    store.finishJob = async (jobId, error) => {
+      state.calls.push(`finishJob:${jobId}:${error ? 'error' : 'ok'}`);
+    };
+
+    const result = await run({ store, state, drive: fakeDrive(state, { uploadFails: true }) });
+    expect(result.status).toBe('failed');
+    expect(state.calls).toContain('finishJob:job-2:error');
+    expect(state.calls).toContain('failBatch');
+    expect(state.calls).not.toContain('completeBatch');
+    expect(state.checkpoint.last_change_id).toBe(100);
+  });
+
+  it('still reports a verified batch when retention or job bookkeeping fails', async () => {
+    const { store, state } = fakeStore();
+    const drive = fakeDrive(state);
+    store.finishJob = async () => { throw new Error('finishJob rpc unavailable'); };
+    store.pruneChangeLog = async () => { throw new Error('retention rpc unavailable'); };
+    const warnings = [];
+    const logger = { warn: (message) => warnings.push(message) };
+
+    const result = await runBackupWorker({
+      store, drive, seal: seal(), folderId: 'folder-1', workerId: 'test-worker',
+      retention: true, logger,
+    });
+
+    // The upload was verified and the checkpoint advanced: reporting a failure
+    // here would be wrong and would re-upload the same range.
+    expect(result.status).toBe('verified');
+    expect(state.completeCount).toBe(1);
+    expect(state.checkpoint.last_change_id).toBe(103);
+    expect(result.note).toMatch(/retention|job completion/);
+    expect(warnings.length).toBeGreaterThan(0);
+    // No failure was recorded for a verified batch.
+    expect(state.calls).not.toContain('failBatch');
+  });
+
+});
+
 describe('ordering and payload', () => {
   it('rejects out-of-order, duplicate and mismatched ranges', () => {
     const batch = { id: 'b', range_key: 'incremental:1:3', first_change_id: 1, last_change_id: 3 };

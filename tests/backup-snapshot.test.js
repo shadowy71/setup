@@ -102,6 +102,31 @@ describe('scheduled full snapshots', () => {
     expect(state.failArgs.id).toBe('snap-1');
   });
 
+
+  it('does not flip a verified snapshot to failure when post-processing fails', async () => {
+    const { store, drive, state } = fixture();
+    store.pruneChangeLog = async () => { throw new Error('retention rpc unavailable'); };
+    store.finishJob = async () => { throw new Error('job rpc unavailable'); };
+
+    const result = await createSnapshot({ store, drive, seal: seal(), folderId: 'folder-1' });
+    expect(result.status).toBe('verified');
+    expect(state.calls).toContain('completeSnapshot');
+    expect(state.calls).not.toContain('failSnapshot');
+    expect(result.note).toMatch(/retention|job completion/);
+  });
+
+  it('closes the claimed admin job with the error when the snapshot fails', async () => {
+    const { store, drive, state } = fixture({ uploadFails: true });
+    store.claimJob = async (kind) => ({ id: 'snap-job', kind });
+    store.finishJob = async (jobId, error) => {
+      state.calls.push(`finishJob:${jobId}:${error ? 'error' : 'ok'}`);
+    };
+
+    const result = await createSnapshot({ store, drive, seal: seal(), folderId: 'folder-1' });
+    expect(result.status).toBe('failed');
+    expect(state.calls).toContain('finishJob:snap-job:error');
+    expect(state.calls).toContain('failSnapshot');
+  });
   it('reuses the deterministic snapshot object on a duplicate attempt', async () => {
     const { store, drive, state } = fixture();
     const keys = keyRing();

@@ -69,7 +69,18 @@ describe('admin Drive OAuth', () => {
     expect(config.clientSecret).toBe('secret');
     expect(config.redirectUri).toBe(PRODUCTION_DRIVE_REDIRECT_URI);
     expect(config.keyRef).toBe('primary');
+    // CRON_SECRET is what Vercel Cron can actually send, so it must win when
+    // both names exist; BACKUP_CRON_SECRET stays a usable alias.
+    expect(config.cronSecrets).toEqual(['cron']);
     expect(config.cronSecret).toBe('cron');
+
+    const both = backupEnv({ CRON_SECRET: 'from-vercel', BACKUP_CRON_SECRET: 'legacy' });
+    expect(both.cronSecrets).toEqual(['from-vercel', 'legacy']);
+    expect(both.cronSecret).toBe('from-vercel');
+
+    const empty = backupEnv({ CRON_SECRET: '   ', BACKUP_CRON_SECRET: '' });
+    expect(empty.cronSecrets).toEqual([]);
+    expect(empty.cronSecret).toBeNull();
   });
 
   it('does not redirect to arbitrary external URLs after OAuth', () => {
