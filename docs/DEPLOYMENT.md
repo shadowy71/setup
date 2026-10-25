@@ -174,10 +174,13 @@ address before the session is used. Adding a second domain is a row update — s
 
 The student application still needs no background service. The **backup
 subsystem does**: `vercel.json` schedules `/api/backup/worker` (incremental
-outbox drain) and `/api/backup/snapshot` (daily full snapshot), both protected
-by `BACKUP_CRON_SECRET`. Alternatively run `npm run backup:worker -- --loop` and
-`npm run backup:snapshot` from a trusted scheduler. Nothing on a student request
-path calls Google Drive. See `docs/BACKUPS.md` §5.
+outbox drain) and `/api/backup/snapshot` (full snapshot) **once each per day**,
+both protected by `BACKUP_CRON_SECRET`. Vercel's Hobby plan rejects more
+frequent cron expressions at deploy time, so for a shorter RPO use a Pro-plan
+cron (`*/5 * * * *`) or an external scheduler, or run
+`npm run backup:worker -- --loop` and `npm run backup:snapshot` from a trusted
+host. Nothing on a student request path calls Google Drive. See
+`docs/BACKUPS.md` §5.
 
 ## 7. First Super Admin
 

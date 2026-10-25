@@ -95,9 +95,14 @@ describe('normal user writes never wait for Google Drive', () => {
     expect(suite).not.toMatch(/https?:\/\//);
   });
 
-  it('cron schedules exist for the incremental worker and the full snapshot', async () => {
+  it('cron schedules exist and stay deployable on Vercel Hobby (once per day)', async () => {
     const vercel = JSON.parse(await read('vercel.json'));
     expect(vercel.crons.map((cron) => cron.path)).toEqual(['/api/backup/worker', '/api/backup/snapshot']);
+    // Hobby rejects any expression that resolves to more than one run per day,
+    // at deploy time — before the build even starts.
+    for (const cron of vercel.crons) {
+      expect(cron.schedule, `${cron.path} must be a single daily run`).toMatch(/^\d{1,2} \d{1,2} \* \* \*$/);
+    }
   });
 
   it('shared constants stay dependency-free so the UI cannot pull in secrets', async () => {

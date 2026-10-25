@@ -182,12 +182,21 @@ length and refuses to let a backup secret appear in a `NEXT_PUBLIC_*` variable.
 3. Supabase → Connect → **Session pooler / direct connection** → copy the URI
    into `BACKUP_DATABASE_URL` (add `?sslmode=require` if absent). It must be able
    to hold one `REPEATABLE READ` transaction while reading all tables.
-4. Vercel: `vercel.json` declares two cron jobs. Vercel automatically sends
+4. Vercel: `vercel.json` declares two **once-daily** cron jobs — worker at
+   01:00 UTC, full snapshot at 02:00 UTC. Vercel automatically sends
    `Authorization: Bearer <CRON_SECRET>`; set `BACKUP_CRON_SECRET` (or
-   `CRON_SECRET`) to the same value. `/api/backup/worker` runs every 5 minutes,
-   `/api/backup/snapshot` daily at 02:00 UTC. On plans that do not allow that
-   schedule, run `npm run backup:worker -- --loop --interval=300` and
-   `npm run backup:snapshot` from any trusted scheduler instead.
+   `CRON_SECRET`) to the same value. **Why daily:** Vercel's Hobby plan rejects
+   any cron expression that resolves to more than one run per day, and it does so
+   at *deploy* time (before the build), which would break every deployment. On a
+   Pro plan you may change the worker schedule to `*/5 * * * *` for a ~5-minute
+   RPO; on Hobby, get the same cadence from an external scheduler (GitHub
+   Actions, any cron service) calling `GET /api/backup/worker` with the bearer
+   token, or run `npm run backup:worker -- --loop --interval=300` on a trusted
+   host. The outbox is durable, so a less frequent schedule never loses changes
+   — it only increases the time until they reach Drive.
+   Both routes are capped at `maxDuration = 60`, a value every Vercel plan
+   accepts; for large databases run `npm run backup:snapshot` from a host with
+   no function timeout instead.
 5. `SUPABASE_SECRET_KEY` must be available to the Vercel server runtime (the
    worker's service-role client). It is never sent to the browser.
 6. Sign in as the first Super Admin (`npm run role:grant -- --email

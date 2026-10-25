@@ -10,7 +10,10 @@ import { createSnapshot } from '@/lib/backup/snapshot.js';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 300;
+// 60s is accepted on every Vercel plan (older Hobby projects without Fluid
+// Compute reject higher values at deploy time). Large snapshots should be run
+// via `npm run backup:snapshot` from a trusted host, which has no such cap.
+export const maxDuration = 60;
 
 async function handle(request) {
   try {
