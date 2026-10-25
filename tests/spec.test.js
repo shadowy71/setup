@@ -296,13 +296,25 @@ describe('design system (spec §4)', () => {
   });
 
   it('never hardcodes a colour in a page or component', () => {
-    // The only allowed literal is the one theme-color meta entry, which has
-    // to mirror the canvas token for the browser chrome.
+    // Exactly two files may name a colour, and only because a browser-chrome
+    // value has to be a string at metadata/manifest time, where a CSS custom
+    // property cannot be read: the root `themeColor` meta entry, and the PWA
+    // constants the timetable manifest and viewport share. Both must *mirror*
+    // the canvas token, which is asserted below rather than trusted.
+    const CHROME_COLOUR_FILES = [path.join('app', 'layout.js'), path.join('lib', 'timetable', 'batch.js')];
     const offenders = allSource.filter((file) => {
-      if (file === path.join('app', 'layout.js')) return false;
+      if (CHROME_COLOUR_FILES.includes(file)) return false;
       return /#[0-9a-fA-F]{3,8}\b/.test(read(file));
     });
     expect(offenders).toEqual([]);
+
+    const canvas = /--cp-bg-page:\s*(#[0-9a-fA-F]{3,8})/.exec(globals)?.[1];
+    expect(canvas).toBeTruthy();
+    const mirrored = (file, pattern) => pattern.exec(read(file))?.[1];
+    expect(mirrored(path.join('app', 'layout.js'), /themeColor: '(#[0-9a-fA-F]{3,8})'/)).toBe(canvas);
+    expect(
+      mirrored(path.join('lib', 'timetable', 'batch.js'), /TIMETABLE_CANVAS_COLOR = '(#[0-9a-fA-F]{3,8})'/),
+    ).toBe(canvas);
   });
 
   it('keeps glass, motion and the interactive materials inside the design system', () => {

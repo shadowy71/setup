@@ -730,3 +730,582 @@
     opacity: 0.85;
   }
 }
+
+/* ==========================================================================
+   Offline copy + Add to Home Screen
+   --------------------------------------------------------------------------
+   Two surfaces, one idea: the status of a device's saved timetable has to be
+   readable where the timetable itself is read (the header, beside the clock),
+   and the action that changes it gets exactly one card, below the week.
+
+   Nothing here is fixed or floating. A sticky install bar would sit on top of
+   the NOW/NEXT line — the one thing on this page that a student running late
+   actually needs — so the pill goes in the header flow and the card at the end
+   of it. The card borrows the .card material (light source on the top edge,
+   teal wash in the corner) rather than inventing a second panel style, and its
+   only glass-free ornament is a small app-tile mark: the icon shape the student
+   will see on their Home Screen, drawn at the size it will be seen.
+
+   Touch targets are 44px minimum and the bottom of the card respects the
+   home-indicator inset, because in `display: standalone` on iOS this card is
+   the last thing on the page.
+   ========================================================================== */
+
+@keyframes tt-offline-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tt-offline-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* -------------------------------------------------------------- the pill */
+
+.tt-offline {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.tt-offline__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  align-self: flex-start;
+  min-height: 2.5rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: 999px;
+  background-color: var(--cp-bg-subtle);
+  color: var(--cp-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.3;
+  text-align: left;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.tt-offline__pill:hover {
+  border-color: var(--cp-border-control);
+  background-color: var(--cp-hover-bg);
+}
+
+.tt-offline__pill:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 2px;
+}
+
+/* Colour never carries the meaning alone: the label says it too, and the tone
+   is redundant by design (see the file header). */
+.tt-offline__dot {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--cp-text-muted);
+}
+
+.tt-offline__dot--ready {
+  background-color: var(--cp-success-text);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--cp-success-text) 18%, transparent);
+}
+
+.tt-offline__dot--stale {
+  background-color: var(--cp-warning-text);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--cp-warning-text) 16%, transparent);
+}
+
+.tt-offline__dot--error {
+  background-color: var(--cp-danger-text);
+}
+
+.tt-offline__dot--busy,
+.tt-offline__dot--muted {
+  background-color: var(--cp-text-muted);
+}
+
+.tt-offline__spinner {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in oklab, var(--cp-text-secondary) 35%, transparent);
+  border-top-color: var(--cp-text-accent);
+  animation: tt-offline-spin 0.9s linear infinite;
+}
+
+.tt-offline__detail {
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--cp-text-muted);
+  max-width: 46ch;
+}
+
+/* ------------------------------------------------------------ the card */
+
+.tt-install {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1.15rem 1.15rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .tt-install {
+    gap: 1.125rem;
+    padding: 1.35rem 1.5rem 1.5rem;
+  }
+}
+
+.tt-install__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+/* The tile: the same artwork the manifest points at, so what the student reads
+   here is what the launcher will show. */
+.tt-install__mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.95rem;
+  background-image: linear-gradient(160deg, var(--cp-bg-accent-hover), var(--cp-bg-accent-deep));
+  color: var(--cp-text-on-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 14px 26px -20px var(--cp-glow-accent);
+}
+
+.tt-install__intro {
+  min-width: 0;
+  flex: 1 1 18rem;
+}
+
+.tt-install__points {
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--cp-text-secondary);
+}
+
+.tt-install__points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tt-install__points svg {
+  flex: none;
+  margin-top: 0.1rem;
+  color: var(--cp-text-accent);
+}
+
+.tt-install__steps {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  color: var(--cp-text-muted);
+}
+
+.tt-install__steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tt-install__steps li[data-state='done'] {
+  color: var(--cp-success-text);
+}
+
+.tt-install__steps li[data-state='active'] {
+  color: var(--cp-text-primary);
+}
+
+.tt-install__step-mark {
+  flex: none;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.4;
+}
+
+.tt-install__steps li[data-state='done'] .tt-install__step-mark {
+  opacity: 1;
+}
+
+.tt-install__steps li[data-state='active'] .tt-install__step-mark {
+  opacity: 1;
+  animation: tt-offline-pulse 1.25s ease-in-out infinite;
+}
+
+.tt-install__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.15rem;
+}
+
+.tt-install__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  min-width: 0;
+}
+
+.tt-install__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tt-install__actions .btn {
+  min-height: 2.75rem;
+}
+
+.tt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--cp-border-subtle);
+  background-color: var(--cp-bg-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cp-text-secondary);
+}
+
+.tt-chip--ready {
+  border-color: var(--cp-success-border);
+  background-color: var(--cp-success-bg);
+  color: var(--cp-success-text);
+}
+
+.tt-chip--stale {
+  border-color: var(--cp-warning-border);
+  background-color: var(--cp-warning-bg);
+  color: var(--cp-warning-text);
+}
+
+.tt-install__note {
+  max-width: 72ch;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--cp-text-secondary);
+}
+
+.tt-install__error {
+  margin-top: 0.15rem;
+}
+
+.tt-install__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0 0.15rem;
+  color: var(--cp-text-accent);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tt-install__link:hover {
+  color: var(--cp-accent-highlight);
+}
+
+.tt-install__link:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.tt-install__batches {
+  max-width: 78ch;
+}
+
+/* ------------------------------------------------------------ the sheet */
+
+.tt-sheet__block {
+  min-width: 0;
+}
+
+.tt-sheet__steps {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: sheet-step;
+}
+
+.tt-sheet__steps li {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--cp-text-secondary);
+}
+
+.tt-sheet__steps li::before {
+  counter-increment: sheet-step;
+  content: counter(sheet-step);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-top: 0.05rem;
+  border-radius: 50%;
+  border: 1px solid var(--cp-border-subtle);
+  background-color: var(--cp-bg-subtle);
+  color: var(--cp-text-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tt-sheet__facts {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.tt-sheet__facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--cp-border-subtle);
+}
+
+.tt-sheet__facts dt {
+  font-size: 0.75rem;
+  color: var(--cp-text-muted);
+}
+
+.tt-sheet__facts dd {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  text-align: right;
+  color: var(--cp-text-primary);
+}
+
+/* ------------------------------------------------- the offline app shell */
+
+.tt-shell__panel,
+.tt-shell__saved {
+  display: grid;
+  gap: 1rem;
+}
+
+.tt-shell__panel {
+  padding: 1.25rem 1.25rem 1.4rem;
+}
+
+.tt-shell__details {
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  color: var(--cp-text-muted);
+}
+
+.tt-shell__details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tt-shell__all {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-shell__all a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--cp-text-secondary);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.tt-shell__all a:hover {
+  border-color: var(--cp-border-control);
+  color: var(--cp-text-primary);
+  text-decoration: none;
+}
+
+.tt-shell__batches {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tt-shell__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tt-shell__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: 999px;
+  background-color: var(--cp-bg-elevated);
+  color: var(--cp-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tt-shell__chip:hover {
+  border-color: var(--cp-border-control);
+  color: var(--cp-text-primary);
+  text-decoration: none;
+}
+
+.tt-shell__chip:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 2px;
+}
+
+.tt-shell__chip--active {
+  border-color: var(--cp-selected-border);
+  background-color: var(--cp-selected-bg);
+  color: var(--cp-selected-text);
+}
+
+.tt-shell__chip-letter {
+  font-weight: 720;
+  color: var(--cp-text-primary);
+}
+
+.tt-shell__chip-age {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--cp-text-muted);
+}
+
+.tt-shell__banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-color: var(--cp-warning-border);
+}
+
+.tt-shell__banner-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  background-color: var(--cp-warning-bg);
+  color: var(--cp-warning-text);
+}
+
+.tt-shell__banner-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--cp-text-primary);
+}
+
+.tt-shell__banner-actions {
+  margin-left: auto;
+}
+
+.tt-shell__flagged {
+  padding: 1rem 1.1rem;
+}
+
+/* --------------------------------------------- safe areas and motion */
+
+/* The shell is the page: in standalone it owns the insets, so the card and the
+   footer never sit under a notch or a home indicator. Guarded because the
+   custom property resolves to 0 where the env() is unsupported. */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .tt-shell {
+    padding-top: calc(2rem + env(safe-area-inset-top));
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 639px) {
+  .tt-install__actions {
+    width: 100%;
+  }
+
+  .tt-install__actions .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .tt-install__foot {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-offline__pill,
+  .tt-install__points a {
+    transition: none;
+  }
+
+  .tt-offline__spinner {
+    animation: none;
+    border-top-color: var(--cp-text-accent);
+  }
+
+  .tt-install__steps li[data-state='active'] .tt-install__step-mark {
+    animation: none;
+    opacity: 1;
+  }
+}
