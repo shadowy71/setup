@@ -224,6 +224,14 @@ Every action is re-checked in the database (`has_permission('manage_backups')`
 inside `SECURITY DEFINER` functions) and written to `audit_logs` through
 `log_audit()`.
 
+**Connect Google Drive is deliberately a plain `<a href>` (not `next/link`).**
+The route returns a 307 to `accounts.google.com`; a Next.js `Link` prefetches it
+as an RSC request (`?_rsc=…`) and then attempts to follow that cross-origin
+redirect client-side, which fails CORS. A native anchor performs a top-level
+document GET, so the browser follows the server redirect to Google directly.
+`tests/backup-oauth-navigation.test.js` guards this. Do not "simplify" it back
+to `LinkButton`, and do not add CORS headers to work around the symptom.
+
 ---
 
 ## 7. Restoration procedure (tested)

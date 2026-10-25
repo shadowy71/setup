@@ -1,12 +1,13 @@
 'use client';
 
 /**
- * Admin-only backup controls. Each button calls a server action that ONLY
- * enqueues durable work or revokes local connection state — no button here
- * uploads to Drive. The worker picks the job up on its next scheduled run.
+ * Admin-only backup controls. The action buttons call server actions that ONLY
+ * enqueue durable work or revoke local connection state; the Connect link is a
+ * native anchor to the OAuth start route. Nothing here uploads to Drive — the
+ * worker picks queued jobs up on its next scheduled run.
  */
 
-import { Button, LinkButton, Notice } from '@/components/ui';
+import { Button, Notice } from '@/components/ui';
 import { useFormAction } from '@/lib/forms';
 import {
   disconnectDriveBackup,
@@ -34,9 +35,16 @@ export function BackupActionButtons({ connected }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        <LinkButton href="/api/backup/drive/connect" size="sm" variant="secondary">
+        {/*
+          Native <a>, intentionally NOT LinkButton/next/link: the App Router
+          prefetches Link targets with ?_rsc=… and then tries to follow this
+          route's 307 to accounts.google.com as a client-side (RSC) fetch,
+          which fails CORS. A plain anchor performs a top-level document GET
+          so the browser itself follows the server redirect to Google.
+        */}
+        <Button as="a" href="/api/backup/drive/connect" size="sm" variant="secondary">
           {connected ? 'Reconnect Google Drive' : 'Connect Google Drive'}
-        </LinkButton>
+        </Button>
         <Button type="button" size="sm" disabled={!connected || incremental.pending} onClick={() => enqueue('incremental', incremental.run)}>
           {incremental.pending ? 'Queuing…' : 'Run incremental now'}
         </Button>
