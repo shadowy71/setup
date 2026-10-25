@@ -60,6 +60,77 @@ async function main() {
   const { TEST_HELPER_SQL } = await import('./harness.mjs');
   await client.query(TEST_HELPER_SQL);
 
+  // -------------------------------------------------------------------------
+  // Migration 027 contract: the outbox must cover EVERY application table and
+  // must never capture its own bookkeeping. Re-sync first so a future migration
+  // that adds a table is validated by exactly the code that would fix it.
+  // -------------------------------------------------------------------------
+  banner('Validating transactional backup capture…');
+  const synced = (await client.query('select public.backup_sync_triggers() as n')).rows[0].n;
+  const missingTriggers = (
+    await client.query(`
+      select c.relname as name
+      from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'r'
+        and c.relname not like 'backup%' and c.relname not like '\\_\\_test%'
+        and not exists (select 1 from pg_trigger t
+                        where t.tgrelid = c.oid and t.tgname = 'backup_capture' and not t.tgisinternal)
+      order by 1
+    `)
+  ).rows.map((row) => row.name);
+  const recursiveTriggers = (
+    await client.query(`
+      select c.relname as name from pg_trigger t
+      join pg_class c on c.oid = t.tgrelid
+      join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relname like 'backup%' and t.tgname = 'backup_capture'
+    `)
+  ).rows.map((row) => row.name);
+  const untracked = (
+    await client.query(`
+      select c.relname as name
+      from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'r'
+        and c.relname not like 'backup%' and c.relname not like '\\_\\_test%'
+        and not exists (select 1 from public.backup_tracked_tables t
+                        where t.schema_name = 'public' and t.table_name = c.relname)
+    `)
+  ).rows.map((row) => row.name);
+  const publicBackupRls = (
+    await client.query(`
+      select c.relname as name from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'r'
+        and c.relname like 'backup%' and not c.relrowsecurity
+    `)
+  ).rows.map((row) => row.name);
+  const exposedWorkerRpc = (
+    await client.query(`
+      select p.oid::regprocedure::text as sig
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public'
+        and p.proname in ('backup_claim_batch', 'backup_complete_batch', 'backup_private_get_credentials',
+                          'backup_snapshot_watermark', 'backup_complete_snapshot', 'backup_prune_change_log')
+        and (has_function_privilege('anon', p.oid, 'EXECUTE')
+             or has_function_privilege('authenticated', p.oid, 'EXECUTE'))
+    `)
+  ).rows.map((row) => row.sig);
+
+  const captureProblems = [
+    missingTriggers.length ? `missing capture trigger: ${missingTriggers.join(', ')}` : null,
+    recursiveTriggers.length ? `recursive trigger on backup table: ${recursiveTriggers.join(', ')}` : null,
+    untracked.length ? `missing snapshot catalogue row: ${untracked.join(', ')}` : null,
+    publicBackupRls.length ? `missing RLS: ${publicBackupRls.join(', ')}` : null,
+    exposedWorkerRpc.length ? `worker RPC exposed to clients: ${exposedWorkerRpc.join(', ')}` : null,
+  ].filter(Boolean);
+
+  if (captureProblems.length) {
+    for (const problem of captureProblems) console.error(`  \x1b[31m✗\x1b[0m ${problem}`);
+    await shutdown(pg, client);
+    process.exit(1);
+  }
+  console.log(`  \x1b[32m✓\x1b[0m ${synced} application tables tracked and triggered; backup tables excluded; worker RPCs isolated.`);
+
   banner('Running database test suites…');
   const results = await runTestSuites(client, {
     onSuite: (file) => process.stdout.write(`  → ${file} … `),

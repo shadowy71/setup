@@ -2,7 +2,7 @@
   "name": "campus-plus",
   "version": "1.0.0",
   "private": true,
-  "description": "Campus+ \u2014 an unofficial, text-first digital layer for campus life (PCCOE).",
+  "description": "Campus+ — an unofficial, text-first digital layer for campus life (PCCOE).",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20.9.0"
@@ -30,6 +30,11 @@
     "perf:smoke": "node scripts/dev/perf/smoke.mjs",
     "verify": "npm run lint && npm run verify:db && npm run audit:db && npm run test",
     "verify:security": "node scripts/verify-security.mjs",
+    "backup:worker": "node scripts/backup/worker.mjs",
+    "backup:snapshot": "node scripts/backup/snapshot.mjs",
+    "backup:restore": "node scripts/backup/restore.mjs",
+    "backup:verify-restore": "node scripts/backup/verify-restore.mjs",
+    "backup:disconnect": "node scripts/backup/disconnect.mjs",
     "test:contrast": "node scripts/dev/contrast/audit.mjs",
     "brand:icons": "node scripts/dev/brand-icons.mjs"
   },
@@ -37,6 +42,7 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "next": "^16.3.8",
+    "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "server-only": "^0.0.1",

@@ -24,6 +24,7 @@ const read = (file) => fs.readFileSync(file, 'utf8');
 describe('home feature tiles (Clubs & Gigs)', () => {
   const tiles = read('components/home/HomeFeatureTiles.js');
   const page = read('app/(app)/home/page.js');
+  const feedClient = read('components/home/HomeFeedClient.js');
   const pulse = read('components/home/HomePulse.js');
 
   it('links whole tiles to the real destinations from the route catalogue', () => {
@@ -48,19 +49,23 @@ describe('home feature tiles (Clubs & Gigs)', () => {
 
   it('sits after the composer and before the feed', () => {
     // The 2026 hierarchy is greeting → search → composer → doors → feed: a
-    // student who came to post must not scroll past navigation to do it.
-    const greeting = page.indexOf('<HomePulse');
-    const composer = page.indexOf('home-composer');
-    const doors = page.indexOf('<HomeFeatureTiles');
-    const feed = page.indexOf('home-stream');
-    expect(greeting).toBeGreaterThan(-1);
-    expect(composer).toBeGreaterThan(greeting);
+    // student who came to post must not scroll past navigation to do it. Since
+    // HomeFeedClient owns the column, the page wires the tiles into its
+    // `beforeFeed` slot and the client renders them in that position.
+    expect(page).toContain('beforeFeed={<HomeFeatureTiles />}');
+    expect(page).toContain('afterFeed={<HomeAreas />}');
+    const composer = feedClient.indexOf('home-composer');
+    const doors = feedClient.indexOf('{beforeFeed}');
+    const feed = feedClient.indexOf('id="home-stream-title"');
+    const afterFeed = feedClient.indexOf('{afterFeed}');
+    expect(composer).toBeGreaterThan(-1);
     expect(doors).toBeGreaterThan(composer);
     expect(feed).toBeGreaterThan(doors);
+    expect(afterFeed).toBeGreaterThan(feed);
     // The rail comes after the whole main column in the DOM, so on a phone the
     // feed is reachable before the contextual rail.
-    const rail = page.indexOf('<HomeRail');
-    expect(rail).toBeGreaterThan(feed);
+    const rail = feedClient.indexOf('<HomeRail');
+    expect(rail).toBeGreaterThan(afterFeed);
   });
 
   it('replaces — not duplicates — the Clubs and Gigs discovery chips', () => {

@@ -55,7 +55,7 @@ export async function buildBundle() {
 --      script; run it once on an empty project.
 --   3. Confirm the reference data loaded:
 --        select count(*) from public.roles;             -- 4
---        select count(*) from public.permissions;       -- 47
+--        select count(*) from public.permissions;       -- 56
 --        select key, value from public.platform_settings where key = 'allowed_email_domains';
 --   4. Sign in with an @pccoepune.org address, then grant the first Super Admin
 --      (see docs/DEPLOYMENT.md §7).
@@ -69,7 +69,8 @@ export async function buildBundle() {
 --   Random → platform → auth hooks → reference data (college, roles,
 --   permissions, categories, feature flags, platform settings) → realtime
 --   policies and grants → column privileges → staff actions → marketplace
---   hardening → function grants → staff visibility.
+--   hardening → function grants → staff visibility → chat inbox → messaging
+--   live read model → transactional backup outbox / worker state (027).
 --
 -- Safety
 --   Every statement is idempotent or new-object only, so a re-run on a project
