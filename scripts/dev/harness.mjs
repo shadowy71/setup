@@ -104,9 +104,21 @@ alter default privileges in schema public grant execute on functions to authenti
  * Broadcast channels, plus `realtime.topic()`. Reproducing it locally is what
  * lets the channel-authorization policies in migration 014 be created *and*
  * tested here instead of only in production.
+ *
+ * It also maintains the `supabase_realtime` publication, which is the only thing
+ * Realtime reads Postgres Changes from. Creating it here means the guarded
+ * `alter publication` blocks in the migrations are exercised rather than skipped —
+ * a publication the app depends on is exactly the kind of thing that must not be
+ * discovered only in production.
  */
 export const REALTIME_STUB_SQL = `
 create schema if not exists realtime;
+
+do $$ begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+end $$;
 
 create table if not exists realtime.messages (
   id            bigserial primary key,

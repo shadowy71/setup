@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (28 files):
+-- Contents (29 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -61,9 +61,10 @@
 --   26  20261024000001_026_messaging_live_read_model.sql  (116 lines)
 --   27  20261025000001_027_backup_change_capture.sql  (1262 lines)
 --   28  20261025000002_028_backup_admin_processing.sql  (323 lines)
+--   29  20261026000001_029_feed_realtime_delivery.sql  (113 lines)
 
 -- ==========================================================================
--- FILE 01/28  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/29  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -184,7 +185,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/28  20261005000002_002_identity_roles.sql
+-- FILE 02/29  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -776,7 +777,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/28  20261005000003_003_blocks.sql
+-- FILE 03/29  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -923,7 +924,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/28  20261005000004_004_communities.sql
+-- FILE 04/29  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1330,7 +1331,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/28  20261005000005_005_social.sql
+-- FILE 05/29  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1953,7 +1954,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/28  20261005000006_006_moderation_core.sql
+-- FILE 06/29  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2428,7 +2429,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/28  20261005000007_007_messaging.sql
+-- FILE 07/29  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3017,7 +3018,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/28  20261005000008_008_marketplace.sql
+-- FILE 08/29  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3539,7 +3540,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/28  20261005000009_009_campus.sql
+-- FILE 09/29  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4573,7 +4574,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/28  20261005000010_010_random.sql
+-- FILE 10/29  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5225,7 +5226,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/28  20261005000011_011_platform.sql
+-- FILE 11/29  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -5965,7 +5966,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/28  20261005000012_012_auth_hooks.sql
+-- FILE 12/29  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6422,7 +6423,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/28  20261005000013_013_reference_data.sql
+-- FILE 13/29  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6696,7 +6697,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/28  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/29  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6909,7 +6910,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/28  20261005000015_015_column_privileges.sql
+-- FILE 15/29  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7137,7 +7138,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/28  20261005000016_016_staff_actions.sql
+-- FILE 16/29  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7844,7 +7845,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/28  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/29  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8042,7 +8043,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/28  20261005000018_018_function_grants.sql
+-- FILE 18/29  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8157,7 +8158,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/28  20261005000019_019_staff_visibility.sql
+-- FILE 19/29  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8233,7 +8234,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/28  20261005000020_020_chat_inbox.sql
+-- FILE 20/29  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8327,7 +8328,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/28  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/29  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8665,7 +8666,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/28  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/29  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8738,7 +8739,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/28  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/29  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8768,7 +8769,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/28  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/29  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9241,7 +9242,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/28  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/29  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9535,7 +9536,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/28  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/29  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9655,7 +9656,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/28  20261025000001_027_backup_change_capture.sql
+-- FILE 27/29  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10921,7 +10922,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/28  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/29  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11246,6 +11247,123 @@ comment on function public.backup_admin_state() is
   'Admin-only backup job state: queued/processing/verified/failed counts, batch retry state, active leases and recent run summaries. Never returns credentials or row images.';
 comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
+
+-- ==========================================================================
+-- FILE 29/29  20261026000001_029_feed_realtime_delivery.sql
+-- ==========================================================================
+
+-- =============================================================================
+-- Campus+ migration 029 — live delivery of new posts to already-open feeds
+-- =============================================================================
+-- Problem this fixes (no change to any row, policy or column):
+--   A post was written and published correctly, but a feed that was already open
+--   could not find out about it. Two configurations were missing, and only two:
+--
+--     1. `public.posts` was not a member of the `supabase_realtime` publication.
+--        Realtime only ever *reads* the logical replication stream for tables in
+--        that publication, so no Postgres Changes event for a post can exist
+--        regardless of what any client subscribes to or what RLS allows. This was
+--        deliberate once (migration 014 published only the messaging tables and
+--        `notifications`) and simply never revisited when the feed grew a
+--        client-side surface.
+--     2. A private channel on a `feed:<profile id>` topic had no matching branch in
+--        the `realtime.messages` read policy from migration 014, whose `case`
+--        expression ends in `else false`. Every other branch there is for chat or
+--        for the per-user fan-out channel the shell already owns.
+--
+-- What lands here:
+--   1. `public.posts` is added to the publication — one table, the one the feed
+--      needs. `comments`, `reactions`, `poll_votes`, `mentions` and every private
+--      table stay out of the stream, so this does not widen what Realtime can read
+--      beyond "a post row changed".
+--   2. `campus_channels_read` gains a `feed` branch: the subscriber may receive
+--      events on their own `feed:<uuid>` topic and nobody else's. The
+--      `campus_channels_write` policy is left exactly as it is, so nothing can
+--      broadcast on a feed topic at all.
+--
+-- What this does NOT do (and deliberately must not):
+--   * It does not change row visibility. Delivery is authorised per subscriber by
+--     the existing `posts` SELECT policies — `posts_select_visible` (published,
+--     not deleted, active author, not blocked, not muted, community membership via
+--     `can_view_community()`), `posts_select_author` and `posts_select_staff`. A
+--     student therefore cannot receive a post they could not already fetch with the
+--     same publishable key. Private channels additionally honour column-level
+--     SELECT grants, and `public.posts` restricts no column from `authenticated`
+--     beyond what those policies already expose.
+--   * It adds no trigger, no outbox, no queue and no polling endpoint. The
+--     application side of this change only *invalidates* a rendered feed and lets
+--     the existing read path (`campus_feed()` and its hydration) decide what shows;
+--     no payload generated here is ever rendered directly.
+--   * It grants nothing new to `anon` (migration 014 revokes all of it) and no
+--     service-role key is involved anywhere: Postgres Changes over a browser
+--     channel with the publishable key is the whole mechanism.
+--
+-- Style: identical to migration 014 — guarded so it applies cleanly on plain
+-- PostgreSQL where neither the publication nor `realtime.messages` exists, and
+-- idempotent on re-apply.
+-- =============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 1. Publication membership: posts rows are now on the stream
+-- ----------------------------------------------------------------------------
+
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    begin
+      alter publication supabase_realtime add table public.posts;
+    exception
+      when duplicate_object then null;
+      -- The role applying migrations is not the table owner on every hosting
+      -- topology. Say so, and say what to run, rather than aborting a deployment
+      -- over a delivery optimisation the app degrades away from safely.
+      when insufficient_privilege then
+        raise notice 'Campus+: % is not the owner of public.posts. As the table owner or super user run: alter publication supabase_realtime add table public.posts;', current_user;
+    end;
+  else
+    raise notice 'Campus+: no supabase_realtime publication here — Postgres Changes for posts are unavailable until the hosting platform creates it.';
+  end if;
+end $$;
+
+-- ----------------------------------------------------------------------------
+-- 2. Private-channel authorization for the per-student feed topic
+-- ----------------------------------------------------------------------------
+-- Topics in use, all owned by the subscriber:
+--   conversation:<uuid>  random:<uuid>  user:<profile uuid>   (014)
+--   feed:<profile uuid>                                      (this migration)
+--
+-- The topic is the subscriber's own profile id, so the policy is a
+-- "you may join your own channel" check; which *rows* arrive is the table's
+-- SELECT policy's decision above.
+
+do $$
+begin
+  if to_regclass('realtime.messages') is null then
+    raise notice 'Campus+: realtime.messages not present (plain Postgres). Skipping channel policies.';
+    return;
+  end if;
+
+  execute $policy$
+    drop policy if exists campus_channels_read on realtime.messages;
+  $policy$;
+  execute $policy$
+    create policy campus_channels_read on realtime.messages
+      for select to authenticated
+      using (
+        case split_part(realtime.topic(), ':', 1)
+          when 'conversation' then
+            public.can_access_conversation(public.safe_uuid(split_part(realtime.topic(), ':', 2)))
+          when 'random' then
+            public.can_access_random_session(public.safe_uuid(split_part(realtime.topic(), ':', 2)))
+          when 'user' then
+            public.safe_uuid(split_part(realtime.topic(), ':', 2)) = public.current_profile_id()
+          when 'feed' then
+            public.safe_uuid(split_part(realtime.topic(), ':', 2)) = public.current_profile_id()
+          else false
+        end
+      );
+  $policy$;
+end $$;
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)

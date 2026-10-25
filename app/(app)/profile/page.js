@@ -4,6 +4,7 @@ import { getServerClient } from '@/lib/supabase/server';
 import { can, showsRoleBadge, toActor } from '@/lib/permissions/authorization';
 import { getProfileCounts } from '@/lib/data/profiles';
 import { getPostsByAuthor } from '@/lib/data/feed';
+import { LiveFeedSync } from '@/components/social/LiveFeedSync';
 import { ROUTES } from '@/lib/constants';
 import { PageHeader, LinkButton, EmptyState, Badge, Card, IdentityMark, StaffDot, Notice, TiltCard } from '@/components/ui';
 import { PostCard } from '@/components/posts/PostCard';
@@ -35,6 +36,10 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Re-reads this board when a post lands somewhere else in campus, so an
+          already-open page is not left showing the render it was given. Owns no
+          data and renders nothing — see components/social/LiveFeedSync. */}
+      <LiveFeedSync />
       <PageHeader
         title={name}
         description={`@${profile.username}`}

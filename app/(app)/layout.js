@@ -114,6 +114,7 @@ export default async function AppLayout({ children }) {
       user={shellUser}
       unreadNotifications={unread}
       messagingUserId={user.profile.id}
+      feedUserId={user.profile.id}
       initialUnreadMessages={initialUnreadMessages}
       canModerate={canModerate}
       canAdmin={canAdmin}

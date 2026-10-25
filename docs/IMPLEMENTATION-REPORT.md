@@ -497,3 +497,167 @@ manifests and its offline shell be public without touching proxy auth at all.
   issue is likewise untouched and unmasked.
 * No database, migration, RLS or permission change was needed or made: the
   timetable is public, and it stayed exactly as public as it was.
+
+## 14. Feed refresh and instant post visibility (2026-10-25)
+
+Scope: a post that saved successfully did not appear in the feed that was already on
+screen — not for its author, and not for anybody else — until the student reloaded or
+navigated back. The fix had to be the cause, not a reload button. No second post
+system, no new cache library, no widened database permissions, no service-role key
+in the browser, and no moderation or RLS bypass anywhere in this change.
+
+### 14.1 Root cause, in the order it mattered
+
+The whole pipeline was read before anything was changed: composer → server action →
+insert → feed read → cache → live layer. Five independent defects were found, and all
+five were real:
+
+1. **A dead seam, and nothing else was left.** `HomeFeedClient` passed
+   `onCreated={() => void refresh(true)}` to `PostComposer`; `PostComposer` never
+   declared an `onCreated` prop and never called it. Home's feed lives in client
+   state, fetched from `/api/home/feed`, so the only mechanism that could have
+   updated it was wired at one end only. `router.refresh()` — which is what the
+   shared `useFormAction` calls after any successful action — re-runs a server
+   component that holds no feed data, so it could not help either.
+2. **Nothing to insert even if something had asked.** `createPost` returned
+   `{ ok: true, id }`. A surface that wants to show the post immediately needs the
+   canonical record; with only an id, the alternative was a client-built stub, which
+   `StreamItem` renders as `null` (`if (!post) return null`) — a card that appears
+   empty and then vanishes. That is why "optimistic UI" was not an option here in
+   its usual form.
+3. **A remembered page that was allowed to be wrong.** `homeFeedCache` serves Home's
+   last page for 15 s after a remount. Nothing in the write path patched or
+   invalidated it, so a client navigation back onto Home could serve a snapshot that
+   predated the post with no network request at all.
+4. **Nobody could hear about anybody else's post.** `public.posts` was not a member
+   of the `supabase_realtime` publication — migration 014 added only `messages`,
+   `conversations`, `message_reads` and `notifications` — and no client subscribed to
+   post changes at all. Postgres only streams tables in that publication, so no
+   amount of client code could have received a new-post event. Separately, a private
+   channel on a `feed:<id>` topic had no branch in the `realtime.messages` read
+   policy, whose `case` ends in `else false`, so such a channel could not even be
+   joined.
+5. **Invalidation that stopped at two doors.** `revalidateFeed()` covered `/home` and
+   `/explore` only. Community boards, club boards, profile post lists and the
+   permalink are server-rendered and were relying on the client's router state.
+   And `getCampusFeed` ignored the `currentProfileId` that `app/api/home/feed`
+   already passed it, so a Home card could never show the viewer's own reaction or
+   poll vote — one more way an instantly-shown post looked different from a loaded
+   one.
+
+So: the write was never a publication *signal*, the client had no record to show, the
+cache had no invalidation, the database had no delivery, and the invalidation that
+did exist covered two of seven surfaces.
+
+### 14.2 What was built
+
+New — one shared rule module, one realtime module, one shell provider, one board
+bridge, one migration, one SQL suite, one browser harness check:
+
+| File | Purpose |
+| --- | --- |
+| `lib/social/feed-state.js` (242) | The feed's state transitions as pure data: sort key (`sortAt` → `createdAt`, which is what keeps a pinned notice above a new post), canonical-`post:<id>` dedup across every delivery path, placement, removal, `reconcileFeed`, `isCampusFeedEligible` (published **and** not community-scoped — the two predicates `campus_feed()` applies), and `createFeedDeduper`. Client-safe, no I/O. |
+| `lib/social/realtime.js` (92) | One private channel per signed-in student (`feed:<profile id>`, `config: { private: true }`), three `postgres_changes` bindings on `public.posts` only, and an auth hand-off. It hands the surface `{ eventType, postId, status }` — never the row. |
+| `components/layout/LiveFeedProvider.js` (235) | Shell-scoped: owns the one channel, batches events (450 ms), exposes `subscribe`, `invalidate(reason, ids)` and a `revision()` counter. Holds no post data. A 20 s gap-recovery tick runs **only while the channel is not live**. |
+| `components/social/LiveFeedSync.js` (76) | Renders `null`. For a server-rendered board, turns a feed change into one `router.refresh()` (4 s throttle; immediate for `local`/`reconcile`/`reconnect`). |
+| `supabase/migrations/20261026000001_029_feed_realtime_delivery.sql` (112) | Adds `public.posts` to the publication and re-creates `campus_channels_read` with a `feed` branch. Guarded, idempotent, no trigger, no outbox, no grant or revoke. |
+| `database/tests/15_feed_realtime_delivery.sql` (292) | Publication membership and scope; channel authorization (own `feed:` channel joinable, another student's empty, broadcast denied, existing topics unaffected); and the visibility rules the client mirrors — published vs pending/hidden/community/blocked, plus "the author can still read their own unpublished row". |
+| `scripts/dev/feed-refresh-check.mjs` (379) | The production-build browser gate — §14.4. |
+
+Modified — 15 files, 464 insertions / 77 deletions, plus the regenerated
+`supabase/bundle/campus-plus-schema.sql`. The important ones:
+
+| File | Change |
+| --- | --- |
+| `lib/actions/social.js` | `createPost` now reads its row back with `POST_COLUMNS` and runs it through `hydratePosts`, returns `{ ok, id, status, published, pending, post }`, and mints the id server-side so a write is never reported as failed because an endpoint returned no representation. `revalidateFeed({ postId })` invalidates `/home`, `/explore`, `/profile`, the three dynamic board patterns and the permalink — **after** the write, and never on a failed one. Delete and restore revalidate the same set. |
+| `components/home/HomeFeedClient.js` | `applyCreatedPost` places the canonical row (eligibility-guarded), patches the remembered page under the same dedup/order rules, holds the entry for at most 30 s so a slow revalidation cannot flicker it out, and then invalidates once. Live events re-read through the same path; a `removed` announcement is applied to the window and released from the hold. |
+| `components/home/homeFeedCache.js` | Writes and patches carry the shell's live `revision`; a page may only be served while that revision still matches, which is what makes a page stale the instant a post lands — including while Home is unmounted. TTL unchanged (15 s). |
+| `components/posts/PostComposer.js` | Accepts `onCreated`, and clears body/GIF/options/`form.reset()` only in the success callback, so a failed write keeps the draft. A `pending`/`hidden` result shows a bounded "sent for review" notice instead of pretending publication. `loading={pending}` + `canSubmit` keep a double submit out. |
+| `components/posts/PostActions.js` | Announces `removed`/`local` through the provider instead of threading callbacks up from every card. |
+| `lib/data/feed.js` | `POST_COLUMNS` exported; `getCampusFeed` honours `currentProfileId`. |
+| `components/layout/AppShell.js`, `app/(app)/layout.js` | `feedUserId` (the profile id) into `LiveFeedProvider`, keyed by it, inside `MessagingProvider`. |
+| five board pages | `<LiveFeedSync />` mounted on Explore, profile, community, club and public-profile pages. |
+
+Semantics kept, not approximated: an insert is not a publication. Public feeds filter
+on `status = 'published'`, `deleted_at is null`, the audience rule, and the
+block/mute/inactive author rules — the same predicates `campus_feed()` applies, and
+`isCampusFeedEligible` refuses to place anything the shared read path would not
+return. Realtime payloads are treated as signals and re-hydrated through
+`lib/data/feed.js`, so an instant post and a loaded post are produced by one code
+path.
+
+### 14.3 What was found by running it, not by reading it
+
+The first real-browser pass against the production build failed with
+`The post could not be read back after saving.` The insert had succeeded — the post
+was in the database — but the write endpoint answered `201` with an empty body, so
+`.select(...).single()` gave nothing back. A real PostgREST returns the representation;
+a fronted or proxy-configured one may not, and in that situation the honest answer is
+not "your post failed". `createPost` now mints the id in the action, reads with
+`maybeSingle`, and re-reads the row by that id if no representation came back — one
+canonical record, one source, no client-built placeholder. Unit-tested, and the
+browser pass passes.
+
+### 14.4 Verification
+
+| Gate | Result |
+| --- | --- |
+| `npm run lint` | clean |
+| `npx vitest run` | **794 tests, 64 files** — 80 of them new (`post-create-feed`, `feed-live-state`, `feed-realtime`, `feed-instant-update`) |
+| `npm run verify:db` | 29 migrations applied cleanly; **all 15 SQL suites pass**, including `15_feed_realtime_delivery.sql` |
+| `npm run audit:db` | 66 passed, 0 warnings, 0 failures |
+| `npm run db:bundle -- --check` | bundle current (29 migrations) |
+| `npm run sw:check`, `npm run build` | clean; every route compiled |
+| `node scripts/dev/feed-refresh-check.mjs` | 14 checks passed against `next start` + the harness database — see below |
+
+The browser gate runs the production build with two signed-in Chromium contexts and a
+real PostgreSQL behind real RLS. Observed on this machine:
+
+```
+ok  author: post appears with no reload or navigation    one copy in 2.5s · no reload · view kept at 0px
+ok  author: the card is a complete post, not a placeholder  “Aarav Patil @aarav_p · just now …”
+ok  author: composer cleared only after the server confirmed
+ok  viewer: discovers the post with no manual reload     one copy in 32.1s · no reload
+ok  viewer: one copy survives repeated invalidation
+ok  moderation: a hidden post leaves both open feeds     36.1s / 0.0s
+ok  moderation: a pending post never enters an open feed
+ok  community board: appears on the open page without a reload (server-rendered)
+ok  community post is never placed on the campus feed
+ok  failure: no false success, draft preserved, retry works
+ok  no polling: an idle open feed stops reading          ≤1 read in 24s
+```
+
+"No reload" is measured, not asserted: each page carries a document marker that a
+reload destroys and `router.refresh()` cannot, and the scroll offset is compared
+before and after placement. Duplicate delivery is checked by firing extra
+invalidations (focus, repeated re-reads) and requiring one copy.
+
+### 14.5 What this run could not prove
+
+* **Live websocket delivery.** The harness stub implements PostgREST and the auth
+  endpoints but no Realtime websocket, so the cross-user numbers above are the
+  *degraded* path (gap recovery, ≤ 20 s + a coalesced read) — deliberately, since a
+  feed must still converge when Realtime is unavailable. The half that Realtime itself
+  depends on — publication membership, and who may join a `feed:` channel — is
+  verified against real SQL in suite 15, and the client's bindings, `private: true`,
+  cleanup and reconnect behaviour are unit-tested against a fake channel.
+* **Production itself.** Nothing here was run against the deployed project; the
+  migration and the bundle still have to be applied (Supabase SQL editor, or
+  `supabase db push`). On hosted Supabase the publication already exists and the role
+  applying migrations owns `public.posts`, so `alter publication … add table` runs;
+  where it does not, migration 029 reports that in a `NOTICE` and names the statement
+  to run as the table owner instead of failing a deploy over a delivery optimisation.
+* One pre-existing, unrelated staleness: `npm run perf:smoke` expects the strings
+  `Campus update` / `Events ahead` in `/home`'s server HTML. Neither is in the
+  Home components at `main` either (the rail is client-rendered), so that check fails
+  before and after this change. `/home` was verified separately: composer,
+  skeleton, provider and a 200 `/api/home/feed` with 10 items in the served HTML path.
+
+### 14.6 Files to know about later
+
+`lib/social/feed-state.js` is the only place a feed's ordering, dedup and placement
+rules live; `components/layout/LiveFeedProvider.js` is the only owner of a feed
+subscription; `scripts/dev/feed-refresh-check.mjs` (`npm run verify:feed`) is the gate
+that proves the workflow rather than the mock. A future surface that lists posts
+should reuse all three — the reason `LiveFeedSync` renders nothing at all is that any
+surface with its own copy of the rules is a surface that can drift from the read path.
