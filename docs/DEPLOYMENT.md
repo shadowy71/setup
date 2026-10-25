@@ -42,7 +42,7 @@ cp .env.example .env.local
 | `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET` | backups only | existing **Drive-only** Google OAuth client (separate from the student sign-in client); see `docs/BACKUPS.md` §4 |
 | `BACKUP_ENCRYPTION_KEYS`, `BACKUP_ENCRYPTION_KEY_ID` | backups only | 32-byte base64 AES key ring and the id used for new objects |
 | `BACKUP_DATABASE_URL`, `BACKUP_RESTORE_DATABASE_URL` | backups only | direct Postgres connection for consistent snapshots; separate disposable restore target |
-| `BACKUP_CRON_SECRET` | backups only | bearer token for `/api/backup/worker` and `/api/backup/snapshot` |
+| `CRON_SECRET` | backups only | bearer token Vercel Cron sends to `/api/backup/worker` and `/api/backup/snapshot`. **Must be named exactly `CRON_SECRET`** — Vercel can only inject that name; `BACKUP_CRON_SECRET` is accepted as a legacy alias and should hold the same value |
 | `BACKUP_DRIVE_REDIRECT_URI`, `BACKUP_PUBLIC_ORIGIN` | development only | local callback override; production is pinned to `https://pccoe.in/api/backup/drive/callback` |
 
 `npm run check:env` verifies all of this, refuses placeholders, and fails if a
@@ -175,12 +175,14 @@ address before the session is used. Adding a second domain is a row update — s
 The student application still needs no background service. The **backup
 subsystem does**: `vercel.json` schedules `/api/backup/worker` (incremental
 outbox drain) and `/api/backup/snapshot` (full snapshot) **once each per day**,
-both protected by `BACKUP_CRON_SECRET`. Vercel's Hobby plan rejects more
-frequent cron expressions at deploy time, so for a shorter RPO use a Pro-plan
-cron (`*/5 * * * *`) or an external scheduler, or run
-`npm run backup:worker -- --loop` and `npm run backup:snapshot` from a trusted
-host. Nothing on a student request path calls Google Drive. See
-`docs/BACKUPS.md` §5.
+both protected by the `CRON_SECRET` bearer token (`BACKUP_CRON_SECRET` is also
+accepted). Vercel's Hobby plan rejects more frequent cron expressions at deploy
+time, so for a shorter RPO use a Pro-plan cron (`*/5 * * * *`) or an external
+scheduler, or run `npm run backup:worker -- --loop` and `npm run backup:snapshot`
+from a trusted host. Nothing on a student request path calls Google Drive. See
+`docs/BACKUPS.md` §5. Super Admins can also **process the queue from
+Admin → Backups** without a terminal or a cron hit; that path is authorized by
+`manage_backups`, not by the cron secret, and shares the same run lease.
 
 ## 7. First Super Admin
 

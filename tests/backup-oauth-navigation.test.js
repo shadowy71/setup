@@ -14,6 +14,7 @@ vi.mock('next/navigation', () => ({
 }));
 vi.mock('@/lib/actions/backup.js', () => ({
   disconnectDriveBackup: vi.fn(),
+  processBackupNow: vi.fn(),
   requestManualBackup: vi.fn(),
   retryBackupBatch: vi.fn(),
 }));

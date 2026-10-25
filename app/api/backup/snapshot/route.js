@@ -1,36 +1,27 @@
 /**
- * Scheduled full-snapshot endpoint. Requires BACKUP_DATABASE_URL (a direct
- * Postgres session for the repeatable-read table image) and the same cron
- * bearer token as the incremental worker. Never runs in a student request.
+ * Scheduled full-snapshot endpoint.
+ *
+ * Requires BACKUP_DATABASE_URL (a direct Postgres session for the
+ * repeatable-read table image) and a valid cron bearer token — Vercel Cron
+ * sends `Authorization: Bearer <CRON_SECRET>`, and BACKUP_CRON_SECRET is
+ * accepted as a legacy alias. Neither is ever logged. Never runs during a
+ * student request. See `lib/backup/endpoints.js` for the shared
+ * authorization → configuration → processing order.
  */
 
 import { NextResponse } from 'next/server';
-import { createBackupRuntime, createDriveForWorker, cronAuthorized } from '@/lib/backup/runtime.js';
-import { createSnapshot } from '@/lib/backup/snapshot.js';
+import { scheduledBackupResponse } from '@/lib/backup/endpoints.js';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 // 60s is accepted on every Vercel plan (older Hobby projects without Fluid
-// Compute reject higher values at deploy time). Large snapshots should be run
-// via `npm run backup:snapshot` from a trusted host, which has no such cap.
+// Compute reject higher values at deploy time). Larger databases should be
+// snapshotted from Admin → Backups across runs or from a trusted host.
 export const maxDuration = 60;
 
 async function handle(request) {
-  try {
-    const { config, keyRing, store } = createBackupRuntime();
-    if (!cronAuthorized(request, config.cronSecret)) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-    }
-    if (!config.databaseUrl) {
-      return NextResponse.json({ status: 'failed', error: 'BACKUP_DATABASE_URL is not configured' }, { status: 503 });
-    }
-    const { drive, folderId, seal } = await createDriveForWorker({ store, config, keyRing });
-    const result = await createSnapshot({ store, drive, seal, folderId, workerId: `snapshot-${Date.now()}` });
-    return NextResponse.json(result, { status: result.status === 'verified' ? 200 : 500, headers: { 'Cache-Control': 'no-store' } });
-  } catch (error) {
-    console.error('[backup] snapshot endpoint failed:', error?.message || error);
-    return NextResponse.json({ status: 'failed', error: 'snapshot unavailable' }, { status: 500 });
-  }
+  const { status, body } = await scheduledBackupResponse({ request, kind: 'snapshot' });
+  return NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
 export const GET = handle;

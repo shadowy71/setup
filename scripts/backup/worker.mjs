@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 /**
- * CLI incremental worker — same code path as /api/backup/worker.
+ * CLI incremental worker — the same lease-protected, bounded engine as
+ * /api/backup/worker and Admin → Backups → "Run incremental now".
  *
  * Usage:
  *   npm run backup:worker
  *   npm run backup:worker -- --loop --interval=60
  *
- * Nothing here runs in a student request. The worker claims a durable batch
- * from the transactional outbox and only advances the checkpoint after Drive
- * upload verification.
+ * Routine operation does NOT need this: the admin page is the supported
+ * control surface. The CLI exists for hosts without cron and for repair work.
+ * Nothing here runs in a student request; the worker claims durable batches
+ * from the outbox and only advances the checkpoint after Drive verification.
  */
 
 import { loadEnv, parseArgs, banner, ok, bad, warn } from '../lib/env.mjs';
 import { createBackupRuntime, createDriveForWorker } from '../../lib/backup/runtime.js';
-import { runBackupWorker } from '../../lib/backup/worker.js';
-import { BACKUP_DEFAULTS } from '../../lib/backup/constants.js';
+import { PROCESS_LIMITS, processBackupRun, safeDiagnostic } from '../../lib/backup/processor.js';
 
 const args = parseArgs();
 const env = await loadEnv();
@@ -22,24 +23,25 @@ const env = await loadEnv();
 async function once() {
   const { config, keyRing, store } = createBackupRuntime({ env });
   const { drive, folderId, seal } = await createDriveForWorker({ store, config, keyRing });
-  return runBackupWorker({
+  return processBackupRun({
+    kind: 'incremental',
     store,
     drive,
     seal,
     folderId,
     workerId: `cli-${process.pid}-${Date.now()}`,
-    batchSize: BACKUP_DEFAULTS.batchSize,
-    leaseSeconds: BACKUP_DEFAULTS.leaseSeconds,
+    limits: PROCESS_LIMITS.cron.incremental,
   });
 }
 
 banner('Campus+ Drive backup worker');
 try {
   const first = await once();
-  console.log(JSON.stringify(first, null, 2));
-  if (first.status === 'verified') ok(`verified ${first.eventCount} change(s) → ${first.fileId}`);
-  else if (first.status === 'idle') ok('no pending changes');
-  else bad(`batch failed: ${first.error}`);
+  if (first.status === 'idle') ok('no pending changes');
+  else if (first.status === 'drained') ok(first.message);
+  else if (first.status === 'busy') warn('another run holds the backup lease; nothing was queued or duplicated');
+  else if (first.verified) ok(`${first.verified} batch(es) verified in the restricted Drive folder`);
+  else bad(`run ${first.status}: ${first.message}`);
 
   if (args.loop) {
     const seconds = Math.max(10, Number(args.interval) || 60);
@@ -47,15 +49,18 @@ try {
     setInterval(async () => {
       try {
         const result = await once();
-        console.log(new Date().toISOString(), JSON.stringify(result));
+        console.log(new Date().toISOString(), JSON.stringify({ status: result.status, verified: result.verified, failed: result.failed }));
       } catch (error) {
-        console.error('[backup] loop iteration failed:', error?.message || error);
+        console.error('[backup] loop iteration failed:', safeDiagnostic(error, 'run_failed').code);
       }
     }, seconds * 1000);
   } else if (first.status === 'failed') {
     process.exitCode = 1;
   }
 } catch (error) {
-  bad(error?.message || String(error));
+  // A redacted, actionable diagnostic: a raw message can carry a connection
+  // string or a token, and CI may capture stdout.
+  const diagnostic = safeDiagnostic(error, 'run_failed');
+  bad(`${diagnostic.code}: ${diagnostic.message}`);
   process.exitCode = 1;
 }

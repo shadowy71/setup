@@ -919,6 +919,64 @@ async function auditBackup(client, byTable) {
   } else {
     pass('Backup', 'Capture path contains no HTTP/webhook call', 'AFTER ROW trigger inserts into backup_change_log');
   }
+
+  // Migration 028: admin-triggered processing must stay worker-gated and
+  // must never let a browser role write lease or run-log state directly.
+  const leaseRpcExposed = (await client.query(`
+    select p.oid::regprocedure::text as sig
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in ('backup_acquire_run_lease', 'backup_release_run_lease')
+      and (has_function_privilege('anon', p.oid, 'EXECUTE')
+           or has_function_privilege('authenticated', p.oid, 'EXECUTE'))
+  `)).rows.map((row) => row.sig);
+  if (leaseRpcExposed.length) {
+    fail('Backup', 'Run-lease RPCs are service-role only', leaseRpcExposed.join(', '), 'Revoke EXECUTE from anon/authenticated in migration 028.');
+  } else {
+    pass('Backup', 'Run-lease RPCs are service-role only', 'admin UI cannot forge or steal a processing lease');
+  }
+
+  const writableState = (await client.query(`
+    select table_name || ':' || privilege_type as leak
+    from information_schema.role_table_grants
+    where table_schema = 'public'
+      and table_name in ('backup_run_leases', 'backup_run_log')
+      and grantee = 'authenticated'
+      and privilege_type <> 'SELECT'
+  `)).rows.map((row) => row.leak);
+  if (writableState.length) {
+    fail('Backup', 'Backup run state is read-only for API roles', writableState.join(', '), 'Grant SELECT only; writes go through SECURITY DEFINER RPCs.');
+  } else {
+    pass('Backup', 'Backup run state is read-only for API roles', 'leases and run log are written only by gated RPCs');
+  }
+
+  const adminRpcSignatures = ['backup_admin_state()', 'backup_record_run(text, text, jsonb)'];
+  const adminRpcProblems = [];
+  for (const signature of adminRpcSignatures) {
+    const row = (await client.query(
+      'select to_regprocedure($1) is not null as exists,'
+      + " has_function_privilege('authenticated', to_regprocedure($1), 'EXECUTE') as callable,"
+      + " has_function_privilege('anon', to_regprocedure($1), 'EXECUTE') as anon_callable",
+      [`public.${signature}`],
+    )).rows[0];
+    if (!row?.exists) adminRpcProblems.push(`${signature} is missing`);
+    else if (!row.callable) adminRpcProblems.push(`${signature} is not callable by authenticated`);
+    else if (row.anon_callable) adminRpcProblems.push(`${signature} is callable by anon`);
+  }
+  if (adminRpcProblems.length) {
+    fail('Backup', 'Admin backup RPCs are authenticated-only and gated inside', adminRpcProblems.join('; '), 'Grant execute to authenticated only; each function re-checks manage_backups.');
+  } else {
+    pass('Backup', 'Admin backup RPCs are authenticated-only and gated inside', 'backup_admin_state + backup_record_run deny anon');
+  }
+
+  const runLogLeak = await client.query(`
+    select count(*)::int as n from public.backup_run_log
+  `).catch(() => ({ rows: [{ n: 0 }] }));
+  if (runLogLeak.rows[0].n > 0) {
+    pass('Backup', 'Admin run log stores summaries only', `${runLogLeak.rows[0].n} row(s); every field is whitelisted by backup_record_run()`);
+  } else {
+    pass('Backup', 'Admin run log stores summaries only', 'empty on a fresh database');
+  }
 }
 
 // ---------------------------------------------------------------------------

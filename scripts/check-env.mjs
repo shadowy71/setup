@@ -90,9 +90,17 @@ const checks = [
     validate: (v) => (/^postgres(ql)?:\/\//.test(v) ? true : 'must be a postgresql:// connection string'),
   },
   {
+    // Vercel Cron sends ONLY this variable as `Authorization: Bearer <...>`.
+    // Preferring BACKUP_CRON_SECRET here caused a 401 on every scheduled run.
+    key: 'CRON_SECRET',
+    required: false,
+    hint: 'Vercel Cron sends this automatically as a Bearer token; also used by /api/backup/worker and /api/backup/snapshot.',
+    validate: (v) => (v.length >= 24 ? true : 'use at least 24 random characters'),
+  },
+  {
     key: 'BACKUP_CRON_SECRET',
     required: false,
-    hint: 'Bearer token protecting /api/backup/worker and /api/backup/snapshot.',
+    hint: 'Legacy alias, still accepted by the endpoints. Set it to the SAME value as CRON_SECRET or remove it.',
     validate: (v) => (v.length >= 24 ? true : 'use at least 24 random characters'),
   },
 ];
@@ -126,8 +134,25 @@ for (const key of Object.keys(env)) {
   }
 }
 
+// Cron tokens must match. Vercel can only send CRON_SECRET, so a differing
+// legacy alias used to make every scheduled invocation return 401.
+const primaryCron = value(env, 'CRON_SECRET');
+const legacyCron = value(env, 'BACKUP_CRON_SECRET');
+if (!primaryCron && !legacyCron) {
+  warn('Neither CRON_SECRET nor BACKUP_CRON_SECRET is set — scheduled backup runs will be rejected with 401.');
+} else if (!primaryCron && legacyCron) {
+  // This exact shape is what made every scheduled run return 401: the endpoints
+  // accept the alias, but Vercel Cron only ever sends CRON_SECRET.
+  bad('BACKUP_CRON_SECRET is set but CRON_SECRET is not — Vercel Cron can only send CRON_SECRET, so every scheduled run gets 401. Add CRON_SECRET with the same value (and optionally remove the alias).');
+  failures += 1;
+} else if (primaryCron && legacyCron && primaryCron !== legacyCron) {
+  warn('CRON_SECRET and BACKUP_CRON_SECRET differ. Both are accepted, but Vercel Cron only sends CRON_SECRET; set them to the same value to avoid confusion.');
+} else {
+  ok('cron bearer token configuration is consistent');
+}
+
 // Backup secrets must never be duplicated into a browser-exposed variable.
-for (const secretName of ['GOOGLE_DRIVE_CLIENT_SECRET', 'BACKUP_ENCRYPTION_KEYS', 'BACKUP_CRON_SECRET']) {
+for (const secretName of ['GOOGLE_DRIVE_CLIENT_SECRET', 'BACKUP_ENCRYPTION_KEYS', 'CRON_SECRET', 'BACKUP_CRON_SECRET']) {
   const secret = value(env, secretName);
   if (!secret) continue;
   for (const [key, raw] of Object.entries(env)) {

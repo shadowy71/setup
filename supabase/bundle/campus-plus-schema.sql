@@ -24,14 +24,15 @@
 --   permissions, categories, feature flags, platform settings) → realtime
 --   policies and grants → column privileges → staff actions → marketplace
 --   hardening → function grants → staff visibility → chat inbox → messaging
---   live read model → transactional backup outbox / worker state (027).
+--   live read model → transactional backup outbox / worker state (027) →
+--   admin-authorized backup processing with durable run leases (028).
 --
 -- Safety
 --   Every statement is idempotent or new-object only, so a re-run on a project
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (27 files):
+-- Contents (28 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -59,9 +60,10 @@
 --   25  20261005000025_025_gigs_and_clubs.sql  (290 lines)
 --   26  20261024000001_026_messaging_live_read_model.sql  (116 lines)
 --   27  20261025000001_027_backup_change_capture.sql  (1262 lines)
+--   28  20261025000002_028_backup_admin_processing.sql  (323 lines)
 
 -- ==========================================================================
--- FILE 01/27  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/28  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -182,7 +184,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/27  20261005000002_002_identity_roles.sql
+-- FILE 02/28  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -774,7 +776,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/27  20261005000003_003_blocks.sql
+-- FILE 03/28  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -921,7 +923,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/27  20261005000004_004_communities.sql
+-- FILE 04/28  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1328,7 +1330,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/27  20261005000005_005_social.sql
+-- FILE 05/28  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1951,7 +1953,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/27  20261005000006_006_moderation_core.sql
+-- FILE 06/28  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2426,7 +2428,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/27  20261005000007_007_messaging.sql
+-- FILE 07/28  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3015,7 +3017,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/27  20261005000008_008_marketplace.sql
+-- FILE 08/28  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3537,7 +3539,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/27  20261005000009_009_campus.sql
+-- FILE 09/28  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4571,7 +4573,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/27  20261005000010_010_random.sql
+-- FILE 10/28  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5223,7 +5225,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/27  20261005000011_011_platform.sql
+-- FILE 11/28  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -5963,7 +5965,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/27  20261005000012_012_auth_hooks.sql
+-- FILE 12/28  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6420,7 +6422,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/27  20261005000013_013_reference_data.sql
+-- FILE 13/28  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6694,7 +6696,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/27  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/28  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6907,7 +6909,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/27  20261005000015_015_column_privileges.sql
+-- FILE 15/28  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7135,7 +7137,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/27  20261005000016_016_staff_actions.sql
+-- FILE 16/28  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7842,7 +7844,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/27  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/28  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8040,7 +8042,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/27  20261005000018_018_function_grants.sql
+-- FILE 18/28  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8155,7 +8157,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/27  20261005000019_019_staff_visibility.sql
+-- FILE 19/28  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8231,7 +8233,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/27  20261005000020_020_chat_inbox.sql
+-- FILE 20/28  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8325,7 +8327,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/27  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/28  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8663,7 +8665,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/27  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/28  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8736,7 +8738,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/27  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/28  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8766,7 +8768,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/27  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/28  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9239,7 +9241,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/27  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/28  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9533,7 +9535,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/27  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/28  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9653,7 +9655,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/27  20261025000001_027_backup_change_capture.sql
+-- FILE 27/28  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10917,6 +10919,333 @@ comment on function public.backup_status() is
   'Admin-only backup health: connection status, last verified export, queue depth, failures, history and snapshot scope. Never returns credentials or row payloads.';
 comment on function public.backup_complete_batch(text, uuid, text, text, bigint, jsonb) is
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
+
+-- ==========================================================================
+-- FILE 28/28  20261025000002_028_backup_admin_processing.sql
+-- ==========================================================================
+
+-- =============================================================================
+-- Campus+ migration 028 — admin-authorized, concurrency-safe backup processing
+-- =============================================================================
+-- Problem this fixes (no schema change to the outbox itself):
+--   * The UI only ever called `backup_request_job()`, which ENQUEUES work.
+--     With cron limited to once per day on Vercel Hobby, 12 queued jobs could
+--     sit there forever. `runBackupWorker()` also claims only ONE job and ONE
+--     batch per invocation.
+--   * A Super Admin needs to be able to *drain* that queue from the browser,
+--     in bounded batches, without a terminal, without exposing the service
+--     role or the encrypted Drive credential, and without two runs (admin +
+--     cron) uploading the same range at once.
+--
+-- What lands here:
+--   1. `backup_run_leases` — one durable, expiring lease per backup kind.
+--      Cron ticks, the CLI and the admin action all acquire it. If a function
+--      is killed the lease simply expires; a later run requeues jobs that a
+--      crashed run left `running`. Nothing is ever deleted.
+--   2. `backup_run_log` — a short, secret-free record of each UI-triggered run
+--      (status, verified object ids, redacted diagnostics) so the Admin page
+--      can show queued / processing / verified / failed even after a refresh.
+--   3. `backup_admin_state()` — permission-checked aggregate of job counts,
+--      batch retry state, active leases and recent runs. No row images, no
+--      credentials, no connection strings.
+--   4. `backup_record_run()` — permission-checked, audited writer for the run
+--      log. It re-checks `manage_backups` and rejects any payload that looks
+--      like a secret.
+--
+-- Security: every table is RLS-enabled with admin read only; the lease and
+-- log-writing RPCs are worker/admin gated. `backup_private` is untouched, and
+-- no new grant is given to `anon` or to `authenticated` for writing state.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 1. Durable, expiring run leases (worker-only state)
+-- -----------------------------------------------------------------------------
+
+create table if not exists public.backup_run_leases (
+  kind         text primary key check (kind in ('incremental', 'snapshot')),
+  lease_owner  text not null,
+  lease_until  timestamptz not null,
+  started_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create table if not exists public.backup_run_log (
+  id          uuid primary key default gen_random_uuid(),
+  kind        text not null check (kind in ('incremental', 'snapshot')),
+  status      text not null check (status in ('verified', 'drained', 'idle', 'busy', 'failed', 'not_configured')),
+  summary     jsonb not null default '{}'::jsonb,
+  actor       uuid references public.profiles (id) on delete set null,
+  created_at  timestamptz not null default now()
+);
+create index if not exists backup_run_log_recent_idx on public.backup_run_log (created_at desc);
+-- The `actor` FK is filtered when an operator asks "what did this admin run?",
+-- so it needs its own index (same convention as backup_jobs.requested_by).
+create index if not exists backup_run_log_actor_idx on public.backup_run_log (actor, created_at desc);
+
+comment on table public.backup_run_leases is
+  'One expiring lease per backup kind. Prevents a cron tick and an admin-triggered run from processing the same queue concurrently.';
+comment on table public.backup_run_log is
+  'Secret-free, audited summary of each admin-triggered backup run for the Backups page.';
+
+alter table public.backup_run_leases enable row level security;
+alter table public.backup_run_log    enable row level security;
+
+-- 018 grants new tables to `authenticated` by default. Backup machinery is
+-- worker-only: take everything away, then grant a narrow admin read policy.
+do $$
+declare
+  v_table text;
+begin
+  foreach v_table in array array['backup_run_leases', 'backup_run_log'] loop
+    execute format('revoke all on public.%I from public, anon, authenticated', v_table);
+    execute format('grant all on public.%I to service_role', v_table);
+    execute format('grant select on public.%I to authenticated', v_table);
+    execute format(
+      'create policy %I on public.%I for select to authenticated using (public.has_permission(''manage_backups''))',
+      v_table || '_select_admin', v_table
+    );
+  end loop;
+end $$;
+
+-- -----------------------------------------------------------------------------
+-- 2. Worker-only lease RPCs
+-- -----------------------------------------------------------------------------
+
+/**
+ * Atomically take the lease for one kind. A live lease held by a DIFFERENT
+ * owner cannot be stolen. An expired lease (killed function) is taken over,
+ * and jobs that the interrupted run left `running` are put back to `pending`
+ * with their identity and history intact — never deleted, never marked done.
+ */
+create or replace function public.backup_acquire_run_lease(
+  p_kind       text,
+  p_worker_id  text,
+  p_seconds    integer default 180
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_acquired   boolean := false;
+  v_expired    boolean := false;
+  v_seconds    integer := greatest(30, least(coalesce(p_seconds, 180), 900));
+begin
+  if not public.is_trusted_writer() then
+    raise exception 'backup_acquire_run_lease is worker-only' using errcode = '42501';
+  end if;
+  if p_kind not in ('incremental', 'snapshot') then
+    raise exception 'unknown backup kind';
+  end if;
+  if coalesce(p_worker_id, '') = '' or length(p_worker_id) > 200 then
+    raise exception 'invalid worker id';
+  end if;
+
+  select l.lease_until < now() into v_expired
+    from public.backup_run_leases l where l.kind = p_kind;
+  v_expired := coalesce(v_expired, false);
+
+  insert into public.backup_run_leases (kind, lease_owner, lease_until, started_at, updated_at)
+  values (p_kind, p_worker_id, now() + make_interval(secs => v_seconds), now(), now())
+  on conflict (kind) do update
+     set lease_owner = excluded.lease_owner,
+         lease_until = excluded.lease_until,
+         started_at  = excluded.started_at,
+         updated_at  = now()
+   where public.backup_run_leases.lease_until < now()
+      or public.backup_run_leases.lease_owner = excluded.lease_owner
+  returning true into v_acquired;
+
+  v_acquired := coalesce(v_acquired, false);
+  if v_acquired then
+    -- Taking over an expired lease means no live run exists for this kind, so
+    -- every `running` job is orphaned. Otherwise only genuinely ancient ones
+    -- are recovered (a live run owns its own fresh `running` jobs).
+    update public.backup_jobs j
+       set status = 'pending', last_error = null, updated_at = now()
+     where j.kind = p_kind
+       and j.status = 'running'
+       and (v_expired or j.updated_at < now() - interval '10 minutes');
+  end if;
+  return v_acquired;
+end $$;
+
+/** Release only our own lease. An expired lease is harmless if never released. */
+create or replace function public.backup_release_run_lease(p_kind text, p_worker_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_trusted_writer() then
+    raise exception 'backup_release_run_lease is worker-only' using errcode = '42501';
+  end if;
+  -- `now()` is the transaction-start timestamp, so setting it to exactly now()
+  -- would leave `lease_until < now()` false inside the same transaction. Use a
+  -- definitely-past value: the lease is over, and any waiting run may take it.
+  update public.backup_run_leases
+     set lease_until = now() - interval '1 second', updated_at = now()
+   where kind = p_kind and lease_owner = p_worker_id;
+end $$;
+
+-- -----------------------------------------------------------------------------
+-- 3. Admin-visible job state + audited run log
+-- -----------------------------------------------------------------------------
+
+create or replace function public.backup_admin_state()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_result jsonb;
+begin
+  if not public.has_permission('manage_backups') then
+    raise exception 'You do not have permission to view backup job state.' using errcode = '42501';
+  end if;
+
+  select jsonb_build_object(
+    'jobs', (
+      select jsonb_build_object(
+        'queued',     count(*) filter (where j.status = 'pending'),
+        'processing', count(*) filter (where j.status = 'running'),
+        'verified',   count(*) filter (where j.status = 'done'),
+        'failed',     count(*) filter (where j.status = 'failed')
+      ) from public.backup_jobs j
+    ),
+    'jobs_by_kind', coalesce((
+      select jsonb_object_agg(s.kind, s.counts) from (
+        select j.kind,
+               jsonb_build_object(
+                 'queued',     count(*) filter (where j.status = 'pending'),
+                 'processing', count(*) filter (where j.status = 'running'),
+                 'verified',   count(*) filter (where j.status = 'done'),
+                 'failed',     count(*) filter (where j.status = 'failed')
+               ) as counts
+        from public.backup_jobs j group by j.kind
+      ) s
+    ), '{}'::jsonb),
+    'recent_jobs', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', j.id, 'kind', j.kind, 'status', j.status,
+        'note', j.note, 'last_error', left(j.last_error, 300),
+        'created_at', j.created_at, 'updated_at', j.updated_at, 'completed_at', j.completed_at
+      ) order by j.created_at desc)
+      from (select * from public.backup_jobs order by created_at desc limit 16) j
+    ), '[]'::jsonb),
+    'batches', jsonb_build_object(
+      'uploading',     (select count(*) from public.backup_batches where status = 'uploading'),
+      'pending',       (select count(*) from public.backup_batches where status = 'pending'),
+      'failed',        (select count(*) from public.backup_batches where status = 'failed'),
+      'verified',      (select count(*) from public.backup_batches where status = 'verified'),
+      'retry_waiting', (select count(*) from public.backup_batches where status = 'failed' and next_attempt_at > now()),
+      'next_retry_at', (select min(next_attempt_at) from public.backup_batches where status = 'failed' and next_attempt_at > now())
+    ),
+    'snapshots', jsonb_build_object(
+      'running',    (select count(*) from public.backup_snapshots where status in ('pending', 'uploading')),
+      'failed',     (select count(*) from public.backup_snapshots where status = 'failed'),
+      'last_error', (select left(last_error, 300) from public.backup_snapshots where status = 'failed' order by updated_at desc limit 1)
+    ),
+    'leases', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'kind', l.kind, 'active', l.lease_until > now(),
+        'started_at', l.started_at, 'lease_until', l.lease_until
+      ) order by l.kind) from public.backup_run_leases l
+    ), '[]'::jsonb),
+    'active', exists (select 1 from public.backup_run_leases l where l.lease_until > now()),
+    'last_runs', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', r.id, 'kind', r.kind, 'status', r.status,
+        'record', r.summary, 'created_at', r.created_at
+      ) order by r.created_at desc)
+      from (select * from public.backup_run_log order by created_at desc limit 8) r
+    ), '[]'::jsonb)
+  ) into v_result;
+  return v_result;
+end $$;
+
+/**
+ * Persist a secret-free run summary and write an audit entry. Called with the
+ * ADMIN'S OWN RLS-scoped client so `current_profile_id()` is the real actor
+ * and `manage_backups` is re-checked here, not just in the server action.
+ */
+create or replace function public.backup_record_run(
+  p_kind   text,
+  p_status text,
+  p_record jsonb default '{}'::jsonb
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_id     uuid;
+  v_status text := coalesce(p_status, 'failed');
+  v_record jsonb := coalesce(p_record, '{}'::jsonb);
+begin
+  if not public.has_permission('manage_backups') then
+    raise exception 'You do not have permission to run backups.' using errcode = '42501';
+  end if;
+  if p_kind not in ('incremental', 'snapshot') then
+    raise exception 'unknown backup kind';
+  end if;
+  if v_status not in ('verified', 'drained', 'idle', 'busy', 'failed', 'not_configured') then
+    v_status := 'failed';
+  end if;
+  -- Defence in depth: a client (or a future code change) must never be able
+  -- to smuggle a credential into the admin-visible log.
+  if v_record::text ~* '(client_secret|refresh_token|credential_ciphertext|bearer |postgresql://|password|BEGIN [A-Z ]*PRIVATE KEY)' then
+    v_record := jsonb_build_object('status', v_status, 'redacted', true);
+  elsif length(v_record::text) > 3500 then
+    v_record := jsonb_build_object('status', v_status, 'truncated', true);
+  end if;
+
+  insert into public.backup_run_log (kind, status, summary, actor)
+  values (p_kind, v_status, v_record, public.current_profile_id())
+  returning id into v_id;
+
+  perform public.log_audit(
+    'backup.process', 'backup_run', v_id::text,
+    jsonb_build_object('kind', p_kind, 'status', v_status, 'verified', coalesce((v_record->>'verified')::int, 0)),
+    false, null, 'admin'::public.moderation_visibility
+  );
+  return v_id;
+end $$;
+
+-- -----------------------------------------------------------------------------
+-- 4. Grants — mirror migration 027's explicit, closed-by-default surface
+-- -----------------------------------------------------------------------------
+
+do $$
+declare
+  v_fn text;
+begin
+  foreach v_fn in array array[
+    'backup_acquire_run_lease(text, text, integer)',
+    'backup_release_run_lease(text, text)'
+  ] loop
+    execute format('revoke all on function public.%s from public, anon, authenticated', v_fn);
+    execute format('grant execute on function public.%s to service_role', v_fn);
+  end loop;
+
+  foreach v_fn in array array[
+    'backup_admin_state()',
+    'backup_record_run(text, text, jsonb)'
+  ] loop
+    execute format('revoke all on function public.%s from public, anon', v_fn);
+    execute format('grant execute on function public.%s to authenticated, service_role', v_fn);
+  end loop;
+end $$;
+
+comment on function public.backup_admin_state() is
+  'Admin-only backup job state: queued/processing/verified/failed counts, batch retry state, active leases and recent run summaries. Never returns credentials or row images.';
+comment on function public.backup_record_run(text, text, jsonb) is
+  'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)
