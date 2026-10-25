@@ -19,7 +19,7 @@
  *     source's own branch abbreviation;
  *   - it claims only what the platform can prove. `appinstalled` or a
  *     `display-mode` match earns "Added to Home Screen"; a resolved
- *     `prompt()` does not, and on iOS nothing does, because Safari never
+ *     `prompt()` does not, and on iOS nothing does, because no iOS browser
  *     reports the shortcut being added;
  *   - the primary button changes label with the state, so the card never grows
  *     a new element next to a stale one.
@@ -56,7 +56,9 @@ export function primaryAction({ savedReady, preparing, installOutcome, installPa
   if (error) return { label: 'Could not prepare offline copy — Retry', disabled: false, kind: 'retry' };
   if (!savedReady) return { label: 'Save timetable for offline use', disabled: false, kind: 'save' };
   if (installPath === 'native') return { label: addLabel, disabled: false, kind: 'install' };
-  if (installPath === 'ios') return { label: 'Add to Home Screen from Safari', disabled: false, kind: 'guide' };
+  // Every other path — iOS, desktop Firefox, anything whose menu this page cannot
+  // reach — is the same action: the button opens the guide for the browser actually
+  // in front of the user, which is named there rather than in the label.
   return { label: addLabel, disabled: false, kind: 'guide' };
 }
 
@@ -332,13 +334,13 @@ export function TimetableInstallCard() {
 
 const STEPS = {
   ios: [
-    'Open this page in Safari itself — a link inside another app’s in-app browser has no Share sheet.',
-    'Tap Share in the toolbar (the box with the arrow pointing up).',
+    'Open this page in the browser app itself — a link tapped inside another app usually lands in a view with no Share button.',
+    'Tap Share in that browser’s toolbar (the box with the arrow pointing up).',
     'Choose Add to Home Screen, then Add.',
     'Keep the suggested name: it is the batch, not the whole of Campus+.',
   ],
   chromium: [
-    'Use the install prompt the browser was asked to show, or its menu (⋮) → Install app / Add to Home screen.',
+    'Use the install prompt the browser was asked to show, or the install item in its own menu (⋮ or ≡) — it is called Install app, or Add to Home screen, and a browser that has neither has nothing for this page to press.',
     'Confirm the name and the icon.',
     'The shortcut opens this division’s timetable on its own, without the browser chrome.',
   ],
@@ -347,21 +349,24 @@ const STEPS = {
     'Confirm — Firefox saves a shortcut to this exact address.',
     'The shortcut opens this division’s timetable.',
   ],
-  safari: [
-    'Safari on macOS can add a web app to the Dock: File → Add to Dock (older builds: the share button in the address bar).',
-    'Rename it after the batch, then the timetable lives beside your other apps.',
-  ],
+  // Anything we cannot name a menu for — desktop WebKit, a Chromium build with the
+  // install item renamed or hidden, a keyboard-only browser. Deliberately phrased as a
+  // search for the item rather than a claim about what every browser offers.
   other: [
-    'Open this browser’s menu and choose Add to Home screen or Create shortcut.',
-    'Keep the address — it is what makes the shortcut open this batch rather than Campus+ in general.',
+    'Open this browser’s menu (⋮, ≡ or Tools) and look for its install item: every browser names it differently, and some offer no such item at all.',
+    'Keep the suggested name: it is the batch, not the whole of Campus+, and the address is what makes the shortcut open this division.',
+    'If there is no such item, nothing has failed: the offline copy is already on this device, and the card above says what it can do without a network.',
   ],
 };
 
-function stepsFor(platform) {
+/** The instructions for the browser in front of the user. Exported for the tests. */
+export function stepsFor(platform) {
   if (platform.kind === 'ios') return STEPS.ios;
   if (platform.kind === 'android' || platform.kind === 'chromium-desktop') return STEPS.chromium;
   if (platform.kind === 'firefox') return STEPS.firefox;
-  if (platform.kind === 'safari-desktop') return STEPS.safari;
+  // `safari-desktop` and `unknown` share the search-the-menu guide: on desktop WebKit
+  // it is a real menu item, on anything else it is honest about there being nothing to
+  // click from a page.
   return STEPS.other;
 }
 

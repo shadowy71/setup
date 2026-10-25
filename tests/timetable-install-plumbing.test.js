@@ -24,7 +24,7 @@ import {
   watchInstalled,
   workerAllowed,
 } from '@/lib/timetable/offline-install';
-import { primaryAction } from '@/components/timetable/TimetableOfflineUi';
+import { primaryAction, stepsFor } from '@/components/timetable/TimetableOfflineUi';
 
 /**
  * Platform plumbing: what the browser is, what it allows, and what the button
@@ -101,8 +101,16 @@ describe('what the browser is', () => {
   });
 
   it('labels the platform the way the sheet will say it out loud', () => {
-    expect(detectPlatform(IOS_SAFARI, { maxTouchPoints: 5 }).label).toContain('Safari');
-    expect(detectPlatform(ANDROID_CHROME, { maxTouchPoints: 10 }).label).toContain('Android');
+    // On mobile the label names the platform, because that is what determines the
+    // gesture: every iOS browser is WebKit with the same Share sheet, and the Android
+    // menu item is the system's. Saying "Safari" there would be both wrong (Firefox on
+    // Android reads it as an accusation) and an instruction the user cannot follow.
+    expect(detectPlatform(IOS_SAFARI, { maxTouchPoints: 5 }).label).toBe('iPhone or iPad');
+    expect(detectPlatform(ANDROID_CHROME, { maxTouchPoints: 10 }).label).toBe('Android');
+    // Desktop is the opposite case: the browser picks the wording, and the detection
+    // is specific enough to be true there.
+    expect(detectPlatform(MAC_SAFARI, { maxTouchPoints: 0 }).label).toBe('Safari on desktop');
+    expect(detectPlatform(DESKTOP_CHROME, { maxTouchPoints: 0 }).label).toBe('Chrome on desktop');
   });
 
   it('maps platform plus prompt support onto the three install paths', () => {
@@ -419,7 +427,13 @@ describe('what the copy is allowed to say', () => {
     expect(primaryAction({ ...base, error: 'Storage is full' }).label).toBe('Could not prepare offline copy — Retry');
     expect(primaryAction({ ...base, error: 'x', savedReady: true }).kind).toBe('retry');
     expect(primaryAction({ ...base, savedReady: true }).label).toBe('Add Division O (IT) timetable to Home Screen');
-    expect(primaryAction({ ...base, savedReady: true, installPath: 'ios' }).label).toBe('Add to Home Screen from Safari');
+    // iOS is a guide, not a browser's name: the button says what it does (opens the
+    // steps), and the sheet is where the platform difference is spelled out.
+    expect(primaryAction({ ...base, savedReady: true, installPath: 'ios' }).label).toBe('Add Division O (IT) timetable to Home Screen');
+    expect(primaryAction({ ...base, savedReady: true, installPath: 'ios' }).kind).toBe('guide');
+    for (const installPath of ['ios', 'manual', 'native']) {
+      expect(primaryAction({ ...base, savedReady: true, installPath }).label).not.toMatch(/Safari|Chrome|Firefox|Edge|Dock/i);
+    }
     expect(primaryAction({ ...base, savedReady: true, installPath: 'manual' }).kind).toBe('guide');
     // An unknown batch must not produce a fake name on the button.
     expect(primaryAction({ ...base, savedReady: true, division: null }).label).toBe('Add this timetable to Home Screen');
@@ -433,5 +447,62 @@ describe('what the copy is allowed to say', () => {
     expect(dismissed.label).not.toContain('Added');
     expect(dismissed.disabled).toBe(false);
     expect(dismissed.kind).toBe('install');
+  });
+});
+
+describe('the install guide a user is handed', () => {
+  const kinds = ['ios', 'android', 'chromium-desktop', 'firefox', 'safari-desktop', 'unknown'];
+
+  it('never makes a step depend on a browser the reader may not be using', () => {
+    const browserNames = ['Safari', 'Chrome', 'Edge', 'Opera', 'Brave', 'Firefox', 'Vivaldi', 'Arc'];
+    for (const kind of kinds) {
+      const text = stepsFor({ kind }).join(' ');
+      // A guide may name the browser it is written for — that is the whole point of
+      // having one group per platform. What it may not do is tell somebody on Firefox
+      // about a menu item only Safari has, or send a desktop user to File →.
+      // Case-sensitive on purpose: "without the browser chrome" is a UI term, and a
+      // guide is allowed to say that.
+      const named = browserNames.filter((name) => new RegExp(`\\b${name}\\b`).test(text));
+      expect(named, kind).toEqual(kind === 'firefox' ? ['Firefox'] : []);
+      expect(text, kind).not.toMatch(/File →|Add to Dock|address bar/i);
+    }
+  });
+
+  it('gives every platform something true to do', () => {
+    for (const kind of kinds) {
+      const steps = stepsFor({ kind });
+      expect(steps.length, kind).toBeGreaterThanOrEqual(2);
+      for (const step of steps) {
+        expect(typeof step, kind).toBe('string');
+        expect(step.length, kind).toBeGreaterThan(20);
+      }
+      // Each guide ends by telling the user what the shortcut is for, or that nothing
+      // broke — never by leaving the last tap unexplained.
+      expect(steps.join(' '), kind).toMatch(/Home Screen|home screen|shortcut|install item|offline copy/i);
+    }
+  });
+
+  it('keeps the platform facts it can actually stand behind', () => {
+    const ios = stepsFor({ kind: 'ios' }).join(' ');
+    expect(ios).toContain('Share');
+    expect(ios).toContain('Add to Home Screen');
+    // The in-app-browser warning is a tendency, not a universal claim.
+    expect(ios).toMatch(/usually/);
+
+    const chromium = stepsFor({ kind: 'chromium-desktop' }).join(' ');
+    expect(chromium).toMatch(/menu/);
+    expect(chromium).toMatch(/Install app|Add to Home screen/);
+    expect(stepsFor({ kind: 'android' })).toEqual(stepsFor({ kind: 'chromium-desktop' }));
+
+    const firefox = stepsFor({ kind: 'firefox' }).join(' ');
+    expect(firefox).toMatch(/if your build offers it/);
+
+    // Desktop WebKit is no longer told about a menu only one browser has; it gets the
+    // same search-the-menu guide as an unrecognized browser, plus the honest statement
+    // that the offline copy is already saved either way.
+    const other = stepsFor({ kind: 'safari-desktop' });
+    expect(other).toEqual(stepsFor({ kind: 'unknown' }));
+    expect(other.join(' ')).toMatch(/every browser names it differently/);
+    expect(other.join(' ')).toMatch(/the offline copy is already on this device/);
   });
 });

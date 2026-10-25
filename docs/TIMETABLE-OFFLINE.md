@@ -63,9 +63,9 @@ offered (`installPathFor`), and never a fourth thing.
 | Platform | What happens | What the UI says |
 | --- | --- | --- |
 | Android Chrome / Edge | `beforeinstallprompt` is captured silently at page load (with `preventDefault`, so no unsolicited infobar). A deliberate click on the action calls `prompt()` and the outcome is read back from `userChoice`; `appinstalled` is the only event that turns the label into "Added to Home Screen". Each batch installs as its own app, because the manifest `id` and `start_url` differ. | `Add Division O (IT) timetable to Home Screen` → `Waiting for installation confirmation…` → `Added to Home Screen` / `Installation dismissed` |
-| iOS Safari (iPhone, iPad, and an iPad reporting as Mac) | No prompt API exists. The action opens a small sheet with the Share → Add to Home Screen steps, naming the batch. The offline copy is written **before** the instructions appear, because the OS gives the app its own data store the moment it is added and the save must already be in it. Each saved page becomes its own icon, and its own app, naturally. | `Add to Home Screen from Safari`, then the numbered guide |
-| Desktop Chrome / Edge / Firefox | Chromium behaves as above (the prompt is available on desktop too, and "Install" appears in the address-bar or menu). Firefox has no prompt API at all: the sheet explains the browser's own "Pin tab" / bookmark route. | native where available, otherwise `manual` guide |
-| Anything else, or a browser that declined the prompt | No dialog is invented, no success is claimed. The button remains a guide, and offline saving still works — those are tracked as separate states on purpose. | `Add this timetable to Home Screen` as a guide |
+| iPhone and iPad — any browser on them (including an iPad reporting as a Mac) | No prompt API exists on iOS at all, in any browser: WebKit is the only engine and the Share sheet belongs to the OS. The action opens a small sheet with the Share → Add to Home Screen steps, naming the batch. The offline copy is written **before** the instructions appear, because the OS gives the app its own data store the moment it is added and the save must already be in it. Each saved page becomes its own icon, and its own app, naturally. | `Add Division O (IT) timetable to Home Screen`, then the numbered guide |
+| Desktop Chrome / Edge / Firefox | Chromium behaves as above (the prompt is available on desktop too, and "Install" appears in the address-bar or menu). Firefox has no prompt API at all: the sheet tells the user to look for the install item in the browser's own menu. | native where available, otherwise `manual` guide |
+| Anything else — desktop WebKit included — or a browser that declined the prompt | No dialog is invented, no success is claimed, and no instructions for one browser are handed to another. The button remains a guide, and offline saving still works — those are tracked as separate states on purpose. | `Add this timetable to Home Screen` as a guide |
 
 Two rules keep this honest in code:
 
@@ -295,7 +295,8 @@ Page errors during every offline step: zero. Storage measured for two batches:
   or a device under storage pressure with no durable grant, can lose IndexedDB.
   The feature asks for persistence once, keeps the payload ~11 kB per batch, and
   says "saved" rather than "permanent". Reopening the page online refreshes it.
-* **iOS reading the manifest.** Safari's Add-to-Home-Screen uses the *page URL*
+* **iOS reading the manifest.** Add-to-Home-Screen on iOS (in any browser) uses
+  the *page URL*
   and `apple-mobile-web-app-*` metadata, not `start_url`/`scope`. The metadata is
   emitted per batch (title carries the division name, `statusBarStyle`,
   `theme-color`), so the icon is named and coloured correctly — but the icon is

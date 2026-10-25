@@ -53,7 +53,7 @@ export async function generateMetadata({ params }) {
     manifest: batch ? batch.manifestUrl : undefined,
     alternates: { canonical: batch ? batch.href : undefined },
     // iOS ignores the manifest for its home-screen entry but honours these
-    // three, so a Saved shortcut gets the batch's own label and no Safari
+    // three, so a Saved shortcut gets the batch's own label and no browser
     // chrome. `black-translucent` keeps the night palette under the status bar.
     appleWebApp: {
       capable: true,
