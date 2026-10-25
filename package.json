@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/build-sw.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -28,7 +29,7 @@
     "perf:serve": "node scripts/dev/perf/serve.mjs",
     "perf:measure": "node scripts/dev/perf/measure.mjs",
     "perf:smoke": "node scripts/dev/perf/smoke.mjs",
-    "verify": "npm run lint && npm run verify:db && npm run audit:db && npm run test",
+    "verify": "npm run lint && npm run sw:check && npm run verify:db && npm run audit:db && npm run test",
     "verify:security": "node scripts/verify-security.mjs",
     "backup:worker": "node scripts/backup/worker.mjs",
     "backup:snapshot": "node scripts/backup/snapshot.mjs",
@@ -36,7 +37,11 @@
     "backup:verify-restore": "node scripts/backup/verify-restore.mjs",
     "backup:disconnect": "node scripts/backup/disconnect.mjs",
     "test:contrast": "node scripts/dev/contrast/audit.mjs",
-    "brand:icons": "node scripts/dev/brand-icons.mjs"
+    "brand:icons": "node scripts/dev/brand-icons.mjs",
+    "brand:timetable-icons": "node scripts/dev/timetable-icons.mjs",
+    "sw:bundle": "node scripts/build-sw.mjs",
+    "sw:check": "node scripts/build-sw.mjs --check",
+    "verify:offline": "node scripts/dev/timetable-offline-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

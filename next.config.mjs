@@ -42,7 +42,28 @@ const nextConfig = {
     if (process.env.NODE_ENV === 'production') {
       headers.push({ key: 'X-Frame-Options', value: 'DENY' });
     }
-    return [{ source: '/:path*', headers }];
+    return [
+      { source: '/:path*', headers },
+      // A service worker may only control paths at or above its own directory
+      // unless the response says otherwise. The timetable worker lives at
+      // /timetable/sw.js — beside the pages it exists for, so it needs no
+      // change to the auth proxy's public paths — and this header is what lets
+      // it *ask* for scope '/', which is how it can also keep the shell's
+      // /_next/static chunks for an offline launch. Browsers that ignore the
+      // header (Safari) simply get the narrower /timetable/ scope, where the
+      // documents are still cached and the chunks come from the HTTP cache
+      // instead; the client treats that as success, not as an error.
+      {
+        source: '/timetable/sw.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/' },
+          // Never cached: a worker that cannot be replaced is a worker that
+          // can strand an offline page on an old bundle.
+          { key: 'Cache-Control', value: 'no-cache, no-store, max-age=0, must-revalidate' },
+          { key: 'Content-Type', value: 'text/javascript; charset=utf-8' },
+        ],
+      },
+    ];
   },
 };
 

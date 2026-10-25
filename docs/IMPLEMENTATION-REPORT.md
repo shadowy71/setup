@@ -352,3 +352,148 @@ them.
 * Nothing here exercises a live Supabase project or the GIPHY integration.
 * The screenshots are evidence of layout at fixed viewports, not of interaction —
   the interaction table above is where the behavioural claims come from.
+
+---
+
+## 13. Installable, offline, batch-aware timetable (2026-10-25)
+
+Scope: make the existing public timetable (`/timetable/[division]`, built in the
+performance pass) installable per batch and genuinely usable with no network.
+No new data source, no second timetable, no new surface: the feature reuses
+`TimetableLive`, `lib/timetable/{schedule,clock,meta}`, the UI kit (`Button`,
+`Modal`, `Notice`, `Icon`) and the design tokens, and changes no auth, no
+authorization and no database behavior. The design rationale and the platform
+matrix live in `docs/TIMETABLE-OFFLINE.md`; this section records what was built,
+what was measured, and what was found by measuring.
+
+### 13.1 Files
+
+New — 4 507 lines across 17 files, plus four generated icons and one fixture:
+
+| File | Purpose |
+| --- | --- |
+| `lib/timetable/batch.js` (127) | The one place a batch's identity exists: letter → route, manifest URL, API URL, app id, app/short name, labels, icons, and the scope/path constants. |
+| `lib/timetable/offline.js` (379) | The snapshot contract: build from the live view model, validate on write *and* on read, checksum (FNV-1a over a canonical form), freshness windows, the `Saved copy · today 9:41 PM` wording. |
+| `lib/timetable/offline-store.js` (463) | IndexedDB `campusplus-timetable-offline` v1, one record per batch, idempotent saves, settings allow-list, quota/unavailable/corruption as codes, `localStorage` fallback, durable-storage request. |
+| `lib/timetable/sw-policy.js` (256) | The cache decision as pure data: what may be cached, under which key, in which named versioned cache, what gets pruned, and which URLs a document names. |
+| `lib/timetable/sw-entry.mjs` (380) | The worker: precache the shell, network-first documents, cache-first immutable assets, `cp:*` message API, `clients.claim()`, the shell readiness sentinel, the inline last-resort notice. |
+| `scripts/build-sw.mjs` (88) | Bundles the entry + policy into `public/timetable/sw.js` with esbuild; `--check` fails a build whose committed worker has drifted. |
+| `lib/timetable/offline-install.js` (385) | Platform plumbing: platform/standalone detection, silent `beforeinstallprompt` capture and its outcomes, `appinstalled`, worker registration with scope fallback, the worker round-trip helper, and the chip copy. |
+| `components/timetable/TimetableOfflineProvider.js` (556) | The state machine and the only writer: load-local-first, consent-gated refresh, prepare-then-install, controlled update, remove. |
+| `components/timetable/TimetableOfflineUi.js` (448) | The card, the header chip and the bottom sheet — plus `primaryAction()`, a DOM-free table of the eight button states. |
+| `components/timetable/TimetableOfflineShell.js` (215) | The offline app shell: the same `TimetableLive` view rebuilt from IndexedDB, saved-batch switcher, plain anchors. |
+| `app/timetable/offline/page.js` (32) | That shell as a static route. |
+| `app/timetable/manifest/[division]/route.js` (95) | One manifest per batch (18), `dynamicParams = false`, no session, no database. |
+| `app/api/timetable/[division]/route.js` (60) | The snapshot endpoint, public like the page, ETag = checksum, immutable-asset-friendly caching, never `private`. |
+| `scripts/dev/timetable-icons.mjs` (181) | Generates the 192/512 and maskable launcher icons from `logo.jpeg` (no artwork invented). |
+| `scripts/dev/timetable-offline-check.mjs` (421) | The browser gate — §13.3. |
+| `scripts/dev/timetable-fixture.mjs` (38) | Re-captures the fixture the asset-extraction test asserts against. |
+| `tests/fixtures/timetable-document.html` | Real production markup, so `extractAssetUrls` is tested against what Next emits. |
+
+Modified — 8 files, 719 insertions / 30 deletions:
+
+| File | Change |
+| --- | --- |
+| `app/timetable/[division]/page.js` (+79) | Wraps the page in the provider, passes `offlineSlot`, renders the card and the sheet, and adds per-batch `metadata` (`manifest`, `appleWebApp`, `alternates.canonical`). |
+| `components/timetable/TimetableLive.js` (+9) | One new optional `offlineSlot` rendered inside the header, plus trailing `children`. Nothing else moved. |
+| `app/styles/timetable.css` (+579) | `.tt-offline*`, `.tt-install*`, `.tt-sheet*`, `.tt-shell*`: glass card, chips, step list, keyframes, safe-area and reduced-motion blocks. Tokens only — no colour literal, no `!important`. |
+| `app/timetable/layout.js` (+24) | `viewport` export for the subtree: `viewportFit: 'cover'` and `themeColor` from the shared constant. |
+| `components/ui/icons.js` (+8) | Three glyphs: `install`, `shareIos`, `wifiOff`. |
+| `next.config.mjs` (+23) | `Service-Worker-Allowed: /` and `no-cache` for `/timetable/sw.js`. `X-Frame-Options: DENY` untouched. |
+| `package.json` (+9) | `prebuild`/`sw:bundle`/`sw:check`, `brand:timetable-icons`, `verify:offline`, and `sw:check` added to `verify`. |
+| `tests/spec.test.js` (+18) | The colour guard: two blessed chrome-colour files instead of one, and the mirroring of `--cp-bg-page` is now asserted for both. |
+
+### 13.2 Install behaviour, per platform
+
+Chromium's prompt is the only one that can be scripted, so it is the only one
+whose *outcome* is asserted; everything else is asserted at the decision layer
+and measured in a real browser where a real browser can be driven here.
+
+| Platform | Measured here | Behaviour shipped |
+| --- | --- | --- |
+| Headless Chromium (production build, clean profile) | worker registered, scope `http://127.0.0.1:3100/`, `activated`, controlling the page; `beforeinstallprompt` **never offered**; `appinstalled` never fired | Button correctly took the guide path — no fake dialog, no false "Added". `verify:offline` asserts exactly this and reports the prompt's absence instead of failing on it. |
+| Android Chrome / desktop Chrome / Edge | not reachable from this sandbox | `prompt()` on a deliberate click only, `userChoice` → `Waiting…` → `Added to Home Screen` / `Installation dismissed`, `appinstalled` as the sole evidence. Per-batch icons are separate apps because manifest `id` *and* `start_url` differ per batch. |
+| iOS Safari | not reachable from this sandbox | No `beforeinstallprompt` by design; the save is written first, then the Share → Add to Home Screen sheet naming the batch, with `appleWebApp` metadata (title, status bar, `theme-color`) carrying the batch name. |
+| Firefox (any), other browsers | not reachable from this sandbox | `manual` path: the sheet explains pin/bookmark. Never claims an install. |
+
+**Required platform follow-up:** one pass on a real Android device and one on iOS
+Safari against the deployment — the only way to see the native prompt and a
+launched icon. Nothing in this repository claims those results.
+
+### 13.3 Verification
+
+| Gate | Result |
+| --- | --- |
+| `npm run lint` | clean |
+| `npx vitest run` | **713 tests / 60 files, all passing** (118 new; the pre-existing timetable, live-render, public-cache and architecture-guard suites untouched and green) |
+| `npm run sw:check` | worker current with `lib/timetable/` (15.1 kB) |
+| `npm run build` | success, 85 static pages, `/timetable/[division]` × 18 prerendered, `ƒ` for the dynamic metadata |
+| Live route probes | `/api/timetable/o` 200, 10 959 B, `public, max-age=300, s-maxage=86400, swr=604800`, ETag `07c0b9b4`; `/timetable/manifest/o` `application/manifest+json` 1 427 B with `id/start_url/scope` as designed; `/timetable/sw.js` 200 with `Service-Worker-Allowed: /` |
+| `npm run verify:offline` | **51 / 51** — see below; includes a cold start (every page closed, worker retired, still offline) and a simulated private profile where worker registration is rejected |
+
+The browser gate (`scripts/dev/timetable-offline-check.mjs`, real Chromium against
+the production build, clean profile, network toggled with
+`context.setOffline`) — the load-bearing results:
+
+| Step | Measured |
+| --- | --- |
+| First visit | nothing written before the student taps save; button reads `Save timetable for offline use` |
+| Save Division O | one IndexedDB record, 30 events, 10 886 bytes, schema v1, checksum `07c0b9b4`; button relabels to `Add Division O (IT) timetable to Home Screen`; chip `Offline copy ready · saved today <time>` |
+| Cache hygiene | `campusplus-timetable-{core,assets,documents}-v1` only; `/timetable/o` cached, `/timetable/j` not; `/home`, `/login`, `/admin`, `/api/messages/sync`, `/api/timetable/o` **all absent** |
+| Offline reload | `Division O · 7 rows`, first row `WDL-1/ENG-2/WDL-3`; five weekday tabs walked (7,6,7,8,7 rows); chip `Saved copy · today <time>`; today-marker and NOW/NEXT agree with the campus calendar (Sunday → no marker, no invented class); zero page errors |
+| Back online | same rows; the refresh did not empty or reorder anything |
+| Unsaved batch, offline | `Nothing saved for this timetable yet · Division B (Mech)` — not a blank page, not an error boundary |
+| Second batch, then **both documents deleted from CacheStorage** | shell rebuilds `Division J · 8 rows` from IndexedDB at `/timetable/j`, while `Division O` still renders as itself; checksums independent (`J:bd7262ab`, `O:07c0b9b4`) |
+| Cold start (every page closed, so the worker is retired, still offline) | a new page in the same profile renders `Division O · 7 rows` from disk, a cold worker takes control, the chip still reports the age, no page errors |
+| Worker registration blocked (`NotAllowedError`, as in a private profile) | the save still lands in IndexedDB, the page still renders, the action is not stuck, and the chip says "this browser would not keep the page files" |
+| Placement | `/timetable` index and `/login` carry no pill and no card |
+| Keyboard / motion | Tab reaches real controls; Enter opens the sheet naming the batch; Escape closes it; reduced motion resolves the pill transition to 0.001 ms and the spinner animation to `none`; the card keeps 20 px bottom padding for a notched phone |
+| Storage | 1 703 kB used for the whole feature on the device (two batches plus shell and chunks); durable grant reported as not granted — the browser's call, stated as such |
+
+### 13.4 Defects found by testing the real app
+
+Four of the bugs below are invisible to any unit test, and all four were caught
+only by driving the built app:
+
+| # | Defect | Caught by | Fix |
+| --- | --- | --- | --- |
+| 1 | **The worker never registered**, so nothing was cached and *every* offline symptom downstream looked like "offline is broken". `workerAllowed(env = process.env)` read an empty object: Next inlines only literal `process.env.X` references, so a bare `process.env` in a browser bundle is `{}`. | `caches` empty + `registration: null` in the first browser probe | Read `process.env.NODE_ENV` once at module scope in the provider and pass the boolean (`workerAllowed(production)`). Also satisfies the `react-hooks` purity rules that a per-render read violated. |
+| 2 | **An offline reload rendered nothing.** The document was cached, its lazily-imported chunk was not: `ChunkLoadError: Failed to load chunk /_next/static/chunks/0-wioiv3vk8my.js`, shown as an error boundary — a blank page where an honest notice belongs. | Forced offline reload of the just-saved page (`items: []`, `pill: NONE`) | Three changes: a document is cached *with* every build asset its own markup names (`extractAssetUrls`, re-read each save — never a hand-written list); the worker `clients.claim()`s so the installing tab's later chunk loads are cache-first; and the shell fallback is gated on a readiness sentinel, so an incomplete shell yields text instead of a blank screen. |
+| 3 | **The hidden-iframe warm-up trick does not work here.** Campus+ sends `X-Frame-Options: DENY` on every production route, so the frame was refused. | The probe's console (`Refused to display … in a frame`) | The header was *not* weakened. The worker fetches the shell itself instead (`cp:precache-shell`). |
+| 4 | **Two honesty bugs in the copy.** `Intl` with `hourCycle: 'h12'` plus a manual AM/PM printed `9:07 AM` for 21:07; and a mount-time refresh wrote a saved record (with a "last synced" time) for anybody who merely opened the public page. | Live probe output, and the consent-gating review | `hourMinute12` takes `h23` and converts; the first write now requires the explicit action (`savedRef` gate in `refresh()`), asserted in the browser gate as "nothing was written to the device before the student asked". |
+
+A fifth hardening came from review rather than measurement, and is now an
+asserted invariant: every cache touch in the worker goes through `openCache` /
+`listCaches`, each of which swallows a rejection. A profile with `CacheStorage`
+denied (private browsing, site data blocked) therefore degrades to "nothing was
+cached" instead of turning a navigation that would have succeeded online into a
+failed one — `tests/timetable-offline-ui.test.js` pins that `caches.open` appears
+exactly once in the worker source, and `verify:offline` §6 exercises the case.
+
+The sixth, found by the unit suite rather than the browser: `buildSnapshot` threw
+`RangeError: Invalid time value` on an unparseable upstream `generatedAt` — a
+malformed API payload could have failed the whole save. Timestamps now go
+through `isoOrNull`, and the snapshot test pins the degradation ("build time
+now, checksum unchanged").
+
+Two design rules the repository already enforced turned out to be load-bearing
+here, and both were extended rather than bypassed: the contrast/spec guards
+forbid a colour literal in any page, so the PWA colour became one shared constant
+that `tests/spec.test.js` now *asserts* mirrors `--cp-bg-page` (the pre-existing
+`app/layout.js` literal had never been checked against the token — it now is);
+and `PUBLIC_PATHS` prefix-matching on `/timetable` is what let the worker, its
+manifests and its offline shell be public without touching proxy auth at all.
+
+### 13.5 Known limits (stated, not fixed)
+
+* No device verification of the native prompt or a launched icon (§13.2).
+* The offline copy is as permanent as the browser's storage: no durable grant can
+  be promised, and an uninstalled iOS web app's storage can be evicted. The UI
+  says "saved", never "guaranteed", and always shows the save time.
+* `X-Frame-Options` remains `DENY` (unchanged); the shell is warmed by the
+  worker, not by a frame.
+* The Vercel `CRON_SECRET` item in §10 of `docs/DEPLOYMENT.md` is a **backup**
+  follow-up and is untouched by this work; `/api/messages/sync`'s separate 503
+  issue is likewise untouched and unmasked.
+* No database, migration, RLS or permission change was needed or made: the
+  timetable is public, and it stayed exactly as public as it was.

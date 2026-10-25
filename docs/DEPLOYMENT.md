@@ -184,6 +184,17 @@ from a trusted host. Nothing on a student request path calls Google Drive. See
 Admin → Backups** without a terminal or a cron hit; that path is authorized by
 `manage_backups`, not by the cron secret, and shares the same run lease.
 
+The installable offline timetable needs **nothing** here: no environment
+variable, no `vercel.json` entry, no dashboard switch. Its service worker is a
+static file under `/timetable` and both headers it depends on
+(`Service-Worker-Allowed: /` and `no-cache` for `/timetable/sw.js`) are emitted by
+`next.config.mjs`, which travels with the build. Its manifests, its snapshot
+route and its offline shell are public like the timetable page itself, and it
+reads no secret — so there is no Preview/Production variable to add and no
+permission to grant. The only preconditions are the platform's own: HTTPS (this
+deployment has it) and one online visit per batch to save it.
+See `docs/TIMETABLE-OFFLINE.md` §10.
+
 ## 7. First Super Admin
 
 Roles are database rows, so the very first one is granted from the command line

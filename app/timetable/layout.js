@@ -1,8 +1,32 @@
 import Link from 'next/link';
 import '@/app/styles/timetable.css';
 import { BrandLockup } from '@/components/brand/Brand';
+import { TIMETABLE_CANVAS_COLOR } from '@/lib/timetable/batch';
 import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
 import { ROUTES } from '@/lib/constants';
+
+/**
+ * The timetable's own viewport, declared here because it is the whole
+ * `/timetable` subtree that behaves like an installed app.
+ *
+ * `viewport-fit: cover` is the one field that is not decoration: without it the
+ * browser never gives the page the notch/home-indicator area, so `env(safe-area-inset-*)`
+ * in the install card and the offline shell resolves to 0 and the bottom action
+ * sits under the iOS home indicator in `display: standalone`. The other fields
+ * restate the root viewport deliberately — a nested `viewport` export replaces
+ * fields rather than adding to them, and the timetable must not lose
+ * `width=device-width` by accident.
+ */
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+  // The same constant the manifest and the Apple metadata use, so the browser
+  // chrome, the launch splash and the installed icon's background cannot drift
+  // apart — and no page in this app carries a colour literal.
+  themeColor: TIMETABLE_CANVAS_COLOR,
+};
 
 /**
  * Public chrome for the timetable pages.

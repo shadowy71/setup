@@ -86,7 +86,8 @@ never rendered.
 | Deep links | `/user/[username]`, `/post/[id]`, `/communities/[slug]` (+ `/community/[slug]` alias), `/market/listing/[id]`, `/gigs/[id]`, `/clubs/[id]`, `/campus/events/[id]`, `/campus/noticeboard/[id]`, `/explore/{resources,opportunities,projects}/[id]`, `/chat/[id]` |
 | Create/edit | `/market/new`, `/market/listing/[id]/edit`, `/gigs/new`, `/gigs/[id]/edit`, `/clubs/new`, `/clubs/[id]/edit`, `/communities/new`, `/explore/*/new`, `/campus/{lost-found,housing,rides,teams}/new` |
 | Staff | `/moderator`, `/admin` |
-| Endpoints | `GET /api/search`, `GET /api/giphy/search` |
+| Public, no session | `/timetable`, `/timetable/[division]` (one per division letter), `/timetable/offline` (the offline shell), `/timetable/manifest/[division]` (one web app manifest per batch) |
+| Endpoints | `GET /api/search`, `GET /api/giphy/search`, `GET /api/timetable/[division]` (the offline snapshot, public like the page it mirrors) |
 
 `/` decides at request time: unauthenticated → `/login`, authenticated → `/home`,
 missing configuration → `/setup`. There is no marketing page.
@@ -211,4 +212,35 @@ responsive codebase: desktop sidebar, mobile bottom navigation.
 * `npm run audit:db` — static audit of migrations (tables, policies, grants).
 * `npm run verify:security` — live probe against a configured project: anonymous
   access must be denied everywhere.
+* `npm run sw:check` — the committed service worker must match the policy module
+  it is bundled from (`scripts/build-sw.mjs`), so a shipped worker can never
+  drift from the code the unit tests describe.
+* `npm run verify:offline` — 42 assertions driven in a real browser against a
+  production build: save a batch, cut the network, reload, and check the rows are
+  still there, the other batch is still itself, and nothing sensitive was cached.
 * `npm run build` — production build, must cover every route.
+
+---
+
+## 12. Offline and installable surfaces
+
+One surface in the product is designed to be used with no connection: the
+division timetable. It is the pattern to follow if another ever is, and the
+three rules that make it work are architectural rather than local:
+
+* **Data and documents are cached by different mechanisms, on purpose.** The
+  timetable itself is a validated snapshot in IndexedDB, one record per batch —
+  never in `CacheStorage`, which cannot be pruned per batch or validated. The
+  *document* and the build assets its own markup names are the worker's, and only
+  under `/timetable`.
+* **A client capability never reads the environment.** `lib/timetable/sw-policy.js`
+  and its helpers are imported by the browser, the route handlers and the worker
+  bundle alike; `process.env` is read at module scope in exactly one place
+  (`NODE_ENV`), because Next inlines literal references only.
+* **The worker is scoped by need, not by convenience.** It lives at
+  `/timetable/sw.js` with `Service-Worker-Allowed: /` — a root-scoped worker for a
+  feature this small would have been the larger mistake, since it would then own
+  every other surface's navigation.
+
+`docs/TIMETABLE-OFFLINE.md` is the reference for the cache table, the platform
+matrix and the failure modes.

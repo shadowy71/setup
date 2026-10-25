@@ -67,6 +67,14 @@ const PATHS = {
   info: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm0 4h.01M11 12h1v4h1',
   trash: 'M5 7h14M9.5 7V4.8h5V7m-7.5 0 .9 12.2h8.2L17 7M10.5 11v5.5m3-5.5v5.5',
   copy: 'M9 9h10v11H9V9Zm-4 6V4h10v2',
+  /* Timetable install/offline set. Same 24×24 grid and 1.5px stroke as every
+     other glyph here: a phone with an arrow going into it (add to Home
+     Screen), the iOS share box (the only way iOS installs anything), and a
+     struck-out arc pair (offline). No icon font, no imagery. */
+  install:
+    'M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm4 6v5m0 0 2-2m-2 2-2-2M11 19h2',
+  shareIos: 'M12 15V4m0 0L8.7 7.3M12 4l3.3 3.3M6 12v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6',
+  wifiOff: 'M3 4l18 18M8.6 12.6a5 5 0 0 1 5.8-.4M5.6 9.6a9 9 0 0 1 4-2.1m6.6 1.4a9 9 0 0 1 2.2 1.2M12 17.6h.01',
 };
 
 const FILLED = new Set(['heart', 'star']);

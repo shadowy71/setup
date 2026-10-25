@@ -4,7 +4,10 @@ import { DIVISIONS, ROUTES } from '@/lib/constants';
 import { adjacentDivisions, getDivisionTimetable } from '@/lib/timetable';
 import { defaultTimetableDay, getCampusTime, normalizeTimetableDay, timetableDayFor } from '@/lib/timetable/clock';
 import { divisionTimetableHref } from '@/lib/timetable/meta';
+import { batchShortName, describeBatch } from '@/lib/timetable/batch';
 import TimetableLive from '@/components/timetable/TimetableLive';
+import { TimetableInstallCard, TimetableInstallSheet, TimetableOfflinePill } from '@/components/timetable/TimetableOfflineUi';
+import { TimetableOfflineProvider } from '@/components/timetable/TimetableOfflineProvider';
 import { FlaggedNotice, WeekTable } from '@/components/timetable/TimetableViews';
 import { Icon } from '@/components/ui/icons';
 
@@ -20,6 +23,12 @@ import { Icon } from '@/components/ui/icons';
  * instant plus the requested day, so the first paint already shows the right
  * weekday and clock. Everything after that — the ticking clock, NOW/NEXT
  * moving between periods, crossing midnight — happens in TimetableLive.
+ *
+ * The offline layer hangs off this file and nothing else: the provider reads
+ * and writes this device's saved copy of *this* division, the pill in the header
+ * reports it, and the card below the timetable is the only place on Campus+
+ * that offers a home-screen install. `manifest` in the metadata is what makes
+ * that install batch-specific — see app/timetable/manifest/[division]/route.js.
  */
 
 // Only A–R exist (both cases, so /timetable/O works like /timetable/o);
@@ -34,10 +43,23 @@ export async function generateMetadata({ params }) {
   const { division } = await params;
   const timetable = getDivisionTimetable(division);
   if (!timetable) return { title: 'Timetable not found' };
+  const batch = describeBatch(division);
   const programme = timetable.friendly ? `${timetable.label} (${timetable.friendly})` : timetable.label;
   return {
     title: `Division ${timetable.division} timetable — ${programme}`,
-    description: `Monday–Friday class timetable for first-year Division ${timetable.division} (${programme}) with the live class for Asia/Kolkata time. Lectures, batch practicals, faculty and rooms as printed in the master timetable.`,
+    description: `Monday–Friday class timetable for first-year Division ${timetable.division} (${programme}) with the live class for Asia/Kolkata time. Lectures, batch practicals, faculty and rooms as printed in the master timetable. Save it to read with no signal, or add it to your Home Screen.`,
+    // The per-batch manifest: its `id`, `name` and `start_url` are what make
+    // the installed app "Division O", not "Campus+".
+    manifest: batch ? batch.manifestUrl : undefined,
+    alternates: { canonical: batch ? batch.href : undefined },
+    // iOS ignores the manifest for its home-screen entry but honours these
+    // three, so a Saved shortcut gets the batch's own label and no Safari
+    // chrome. `black-translucent` keeps the night palette under the status bar.
+    appleWebApp: {
+      capable: true,
+      title: batch ? batchShortName(batch.division) : 'Timetable',
+      statusBarStyle: 'black-translucent',
+    },
   };
 }
 
@@ -65,9 +87,11 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
   // chosen explicitly.
   const initialPinned = Boolean(requestedDay && requestedDay !== today);
 
-  // Only what the live view needs: the week grid keeps its slots server-side.
+  // Only what the live view and the offline copy need: the week grid keeps its
+  // slots server-side, the snapshot carries the same events the page renders.
   const liveDays = timetable.days.map(({ day, events, freeRanges }) => ({ day, events, freeRanges }));
   const { previous, next } = adjacentDivisions(timetable.division);
+  const batch = describeBatch(timetable.division);
 
   return (
     <main className="mt-10">
@@ -78,29 +102,36 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
         </Link>
       </nav>
 
-      <TimetableLive
-        division={timetable.division}
-        label={timetable.label}
-        friendly={timetable.friendly}
-        days={liveDays}
-        subjects={timetable.subjects}
-        initialDay={initialDay}
-        initialPinned={initialPinned}
-        initialNow={now.toISOString()}
-      >
-        {timetable.flagged.length ? (
-          <div className="mt-8">
-            <FlaggedNotice flagged={timetable.flagged} />
-          </div>
-        ) : null}
+      <TimetableOfflineProvider division={timetable.division}>
+        <TimetableLive
+          division={timetable.division}
+          label={timetable.label}
+          friendly={timetable.friendly}
+          days={liveDays}
+          subjects={timetable.subjects}
+          initialDay={initialDay}
+          initialPinned={initialPinned}
+          initialNow={now.toISOString()}
+          offlineSlot={batch ? <TimetableOfflinePill /> : null}
+        >
+          {timetable.flagged.length ? (
+            <div className="mt-8">
+              <FlaggedNotice flagged={timetable.flagged} />
+            </div>
+          ) : null}
 
-        <details className="tt-week">
-          <summary>See the full week at a glance</summary>
-          <div className="tt-week__body">
-            <WeekTable days={timetable.days} division={timetable.division} />
-          </div>
-        </details>
-      </TimetableLive>
+          {batch ? <TimetableInstallCard /> : null}
+
+          <details className="tt-week">
+            <summary>See the full week at a glance</summary>
+            <div className="tt-week__body">
+              <WeekTable days={timetable.days} division={timetable.division} />
+            </div>
+          </details>
+        </TimetableLive>
+
+        {batch ? <TimetableInstallSheet /> : null}
+      </TimetableOfflineProvider>
 
       <nav aria-label="Neighbouring divisions" className="mt-10 flex flex-wrap items-center justify-between gap-3">
         {previous ? (

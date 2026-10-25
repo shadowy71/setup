@@ -23,6 +23,12 @@ import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
  * `initialDay` already resolved in the campus timezone), so the server HTML
  * and the first client render are identical — no hydration mismatch and no
  * flash of Monday before the real day appears.
+ *
+ * `offlineSlot` is the one thing the offline feature adds here: an optional
+ * node rendered in the header row, under the clock, where a status can live
+ * without covering the timetable. The live page and the offline shell both
+ * pass the same pill; every other caller passes nothing and renders exactly as
+ * before.
  */
 
 const DAY_SHORT = {
@@ -155,6 +161,7 @@ export default function TimetableLive({
   initialDay,
   initialPinned = false,
   initialNow,
+  offlineSlot = null,
   children,
 }) {
   const [now, setNow] = useState(() => new Date(initialNow));
@@ -302,6 +309,8 @@ export default function TimetableLive({
           <span className="tt-clock__date">{parts.dateLabel}</span>
           <span className="tt-clock__zone">IST · {CAMPUS_TIME_ZONE}</span>
         </div>
+
+        {offlineSlot}
       </header>
 
       <p className="tt-help">
