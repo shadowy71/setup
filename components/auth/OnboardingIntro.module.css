@@ -113,6 +113,30 @@
   color: var(--cp-text-secondary);
 }
 
+.rest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin: 0.85rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--cp-text-secondary);
+}
+
+.rest span + span::before {
+  content: '·';
+  margin-right: 0.6rem;
+  color: var(--cp-border);
+}
+
+.restLabel {
+  color: var(--cp-text-muted);
+  font-family: var(--font-micro), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .firstStep {
   display: flex;
   align-items: baseline;
@@ -124,6 +148,18 @@
 .arrow {
   color: var(--cp-text-accent);
   font-size: 1.25rem;
+}
+
+.guideLink {
+  color: var(--cp-text-accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.guideLink:hover {
+  color: var(--cp-text-primary);
 }
 
 .profile {

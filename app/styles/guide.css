@@ -1,0 +1,1048 @@
+/* ==========================================================================
+   The first-visit guide — a sheet of field notes, not a marketing page.
+   Imported by app/guide/layout.js so only /guide downloads it; the one-line
+   offer Home shows lives in `guide-strip.css`, because it is shell chrome.
+
+   The aesthetic is the one the onboarding sheet already uses (see
+   components/auth/OnboardingIntro.module.css): the UI font for everything that
+   must be read, a monospace micro-face for numbers and labels, ink-blue accent
+   strokes drawn in SVG, slightly irregular corners, and one faint margin rule
+   down the left of the sheet — a notebook edge, not ruled paper, because a grid
+   of baselines that does not land on the text's baselines reads as a bug.
+   No handwriting face is introduced on purpose: the local
+   faces are not handwriting faces, and a `cursive` system stack resolves to
+   junk on Linux and Android — a decoration must not be allowed to cost
+   legibility on the copy that tells a student where their timetable is.
+
+   Every colour here is an existing --cp-* role pair, so the contrast audit
+   covers this page with the same rules as the feed.
+   ========================================================================== */
+
+.guide {
+  position: relative;
+  padding-block: clamp(1rem, 3vw, 2.5rem) clamp(3rem, 6vw, 5rem);
+  color: var(--cp-text-primary);
+  /* The single column is 62rem wide; the hero and the map use the extra space
+     as a two-column grid instead of longer measure. */
+  font-size: 1rem;
+  line-height: 1.62;
+}
+
+/* The one unmistakable notebook cue: a margin rule, in the brand's warm
+   accent, drawn where a student would rule one. It is decoration, so it is
+   aria-hidden by being a pseudo-element and it carries no contrast promise.
+   A ruled *baseline* grid is deliberately not attempted — rules that do not
+   land on the text's baselines read as a mistake, not as paper. */
+.guide::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: max(0.4rem, calc(50% - 30.5rem));
+  inline-size: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--brand-orange) 38%, transparent) 6rem,
+    color-mix(in oklab, var(--brand-orange) 26%, transparent) 85%,
+    transparent
+  );
+}
+
+.guide__frame {
+  display: grid;
+  gap: clamp(2.25rem, 5vw, 3.75rem);
+  width: min(100% - 2rem, 62rem);
+  margin-inline: auto;
+}
+
+@media (min-width: 40rem) {
+  .guide__frame {
+    width: min(100% - 4rem, 62rem);
+  }
+}
+
+/* --- chrome: the brand, and one way back into the app --------------------- */
+.guide-chrome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* --- the post-sign-up line ------------------------------------------------ */
+.guide-welcome {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-block-end: -0.5rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px dashed var(--cp-border);
+  border-radius: 0.75rem 0.35rem 0.9rem 0.4rem;
+  background: var(--cp-bg-accent-tint);
+  color: var(--cp-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.guide-welcome svg {
+  flex: none;
+  margin-block-start: 0.1rem;
+  color: var(--cp-text-accent);
+}
+
+/* --- the hero ------------------------------------------------------------- */
+.guide-hero {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.25rem, 4vw, 2.25rem) 0 0;
+}
+
+.guide-hero__fold {
+  position: absolute;
+  inset-block-start: -0.35rem;
+  inset-inline-end: 0.25rem;
+  width: 2.25rem;
+  color: var(--cp-border);
+  transform: rotate(2deg);
+}
+
+.guide-hero__eyebrow {
+  margin: 0;
+}
+
+.guide-hero__title {
+  margin: 0;
+  max-width: 24ch;
+  font-size: clamp(1.9rem, 1.1rem + 3.9vw, 3.25rem);
+  font-weight: 660;
+  line-height: 1.06;
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+}
+
+.guide-hero__ink {
+  position: relative;
+  display: inline-block;
+}
+
+/* Under the headline, two mechanisms — and the reason is a line break.
+
+   A drawn stroke is one absolutely positioned box pinned to the inline span, and
+   a span that wraps has no single line to sit under: at 320–390px "a little less
+   scattered." is two lines, so the stroke would run on past the last word into
+   empty space. There the underline becomes the wavy rule the onboarding sheet
+   already uses, which follows each line of text it underlines. Once the phrase
+   fits on one line the drawn stroke is used instead, because it has the pen lift
+   the rest of the page is drawn with. */
+.guide-hero__ink {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--cp-text-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.14em;
+}
+
+/* `.guide-mark` also sets `display: block`, and it is later in this sheet, so the
+   switch is written with two classes to actually win the tie. */
+.guide-hero__ink .guide-hero__underline {
+  display: none;
+  position: absolute;
+  inset-inline: -0.1em 0;
+  inset-block-end: -0.22em;
+  width: calc(100% + 0.2em);
+  height: 0.34em;
+  color: var(--cp-text-accent);
+}
+
+@media (min-width: 30rem) {
+  .guide-hero__ink {
+    text-decoration-line: none;
+  }
+
+  .guide-hero__ink .guide-hero__underline {
+    display: block;
+  }
+}
+
+.guide-hero__opening {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 62ch;
+  color: var(--cp-text-secondary);
+}
+
+.guide-hero__opening p {
+  margin: 0;
+}
+
+.guide-hero__time {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--cp-text-muted);
+  font-family: var(--font-micro), ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.guide-hero__time svg {
+  flex: none;
+  width: 1.5rem;
+  color: var(--cp-accent-warm);
+}
+
+/* The taped strip: the one place the page says "student project" out loud. */
+.guide-tape {
+  position: relative;
+  max-width: 58ch;
+  margin-block-start: 0.35rem;
+  padding: 0.85rem 1.1rem;
+  background: color-mix(in oklab, var(--brand-sand) 8%, var(--cp-bg-elevated));
+  border-radius: 0.3rem 0.7rem 0.35rem 0.8rem;
+  box-shadow: 0 10px 24px -18px rgb(0 0 0 / 0.9);
+  color: var(--cp-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transform: rotate(-0.35deg);
+}
+
+.guide-tape::before,
+.guide-tape::after {
+  content: '';
+  position: absolute;
+  inset-block-start: -0.45rem;
+  width: 3.5rem;
+  height: 0.9rem;
+  /* Cream at a share high enough to read as tape rather than as a grey
+     placeholder, with a light edge along the top and torn alpha at the ends. */
+  background:
+    linear-gradient(to bottom, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0) 60%),
+    linear-gradient(to right, transparent 0, var(--brand-sand) 6%, var(--brand-sand) 94%, transparent 100%);
+  border-radius: 1px;
+  /* Cream at full strength would be a sticker; half-alpha over the dark surface is
+     a strip of masking tape — warm, translucent, and you can see the edge of it. */
+  opacity: 0.62;
+}
+
+.guide-tape::before {
+  inset-inline-start: 1.25rem;
+  transform: rotate(-4deg);
+}
+
+.guide-tape::after {
+  inset-inline-end: 1.5rem;
+  transform: rotate(3deg);
+}
+
+.guide-tape p {
+  margin: 0;
+}
+
+/* On a wide screen the hero becomes a page with a margin note: the headline and
+   the opening keep the reading measure, and the time note, the taped disclosure
+   and the jump row sit to the right of it — where a reader's eye goes for the
+   aside, and where an empty 400px of void otherwise sat. Nothing is added for
+   this; the same four pieces are placed in two columns. */
+@media (min-width: 64rem) {
+  .guide-hero {
+    grid-template-columns: minmax(0, 1.4fr) minmax(15rem, 0.6fr);
+    column-gap: clamp(2rem, 4vw, 3.5rem);
+    align-items: start;
+  }
+
+  .guide-hero__eyebrow,
+  .guide-hero__title,
+  .guide-hero__opening {
+    grid-column: 1;
+  }
+
+  .guide-hero__time,
+  .guide-tape,
+  .guide-jump {
+    grid-column: 2;
+    max-width: none;
+  }
+
+  .guide-hero__time {
+    margin-block-start: 0.2rem;
+  }
+
+
+  /* The note column is read after the headline, so it gets a hairline rule at
+     its top-left like a margin annotation, and the arrow points back across. */
+  .guide-tape {
+    margin-block-start: 0.6rem;
+    transform: rotate(-0.5deg);
+  }
+
+  .guide-hero__time svg {
+    transform: scaleX(-1) rotate(6deg);
+  }
+}
+
+/* In-page jump row: the guide is long on purpose, so it says so and offers
+   handles. This is navigation *inside* the page, never a copy of the app rail. */
+.guide-jump {
+  margin-block-start: 0.35rem;
+}
+
+.guide-jump ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-jump a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: 999px;
+  color: var(--cp-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.guide-jump a:hover {
+  border-color: var(--cp-border-control);
+  color: var(--cp-text-primary);
+  text-decoration: none;
+}
+
+/* --- section shells ------------------------------------------------------- */
+.guide-section {
+  display: grid;
+  gap: 1.1rem;
+  padding-block-start: 1.35rem;
+  border-block-start: 1px solid var(--cp-border-subtle);
+}
+
+.guide-section__head {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 58ch;
+}
+
+.guide-section__head h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.65rem);
+  font-weight: 640;
+  letter-spacing: -0.026em;
+  line-height: 1.15;
+}
+
+.guide-section__head p {
+  margin: 0;
+  color: var(--cp-text-muted);
+  font-size: 0.9375rem;
+}
+
+/* --- the map: three primary cards ----------------------------------------- */
+.guide-map {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 48rem) {
+  .guide-map {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Three cards in two columns: the first carries its weight across the row. */
+  .guide-map .guide-card:first-child {
+    grid-column: span 2;
+  }
+}
+
+.guide-card {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 1rem 1.05rem 1.1rem;
+  background: var(--cp-bg-elevated);
+  border: 1px solid var(--cp-border-subtle);
+  /* Deliberately uneven corners: the sheet is cut, not extruded. */
+  border-radius: 0.9rem 0.35rem 1.05rem 0.45rem;
+}
+
+.guide-card:nth-child(2) {
+  border-radius: 0.4rem 1rem 0.45rem 0.95rem;
+}
+
+.guide-card__number {
+  margin: 0;
+  color: var(--cp-text-accent);
+  font-family: var(--font-micro), ui-monospace, monospace;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid currentColor;
+  border-radius: 45%;
+  inline-size: 2.1rem;
+  transform: rotate(-3deg);
+}
+
+.guide-card__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 620;
+  letter-spacing: -0.018em;
+}
+
+.guide-card__why {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--cp-text-muted);
+  font-size: 0.875rem;
+}
+
+.guide-links {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.15rem 0.5rem;
+  padding: 0.5rem 0.55rem 0.55rem 0.6rem;
+  margin-inline: -0.55rem -0.55rem;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.guide-link:hover {
+  background: var(--cp-hover-bg);
+  text-decoration: none;
+}
+
+.guide-link__label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--cp-text-primary);
+}
+
+.guide-link:hover .guide-link__label {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.guide-link__note {
+  grid-column: 1;
+  color: var(--cp-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.guide-link svg {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  color: var(--cp-text-subtle);
+}
+
+/* --- the map: the rest, as ruled rows ------------------------------------- */
+.guide-boards {
+  display: grid;
+  gap: 1.1rem;
+}
+
+@media (min-width: 56rem) {
+  .guide-boards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem 2rem;
+  }
+}
+
+.guide-board {
+  min-width: 0;
+  display: grid;
+  gap: 0.45rem;
+  /* A short board sits next to a long one, and a stretched grid would then pad
+     every row to fill the height — 200px of nothing under a one-line note. The
+     rows hug the heading and the emptiness stays at the bottom, where an index
+     is allowed to be short. */
+  align-content: start;
+}
+
+.guide-board header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.55rem;
+}
+
+.guide-board h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 640;
+  letter-spacing: -0.014em;
+}
+
+.guide-board__number {
+  color: var(--cp-text-subtle);
+  font-family: var(--font-micro), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+}
+
+.guide-board__why {
+  margin: 0;
+  flex-basis: 100%;
+  color: var(--cp-text-muted);
+  font-size: 0.8125rem;
+}
+
+.guide-rows {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-row {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 0.15rem 0.75rem;
+  align-items: baseline;
+  padding: 0.5rem 0.25rem;
+  border-block-end: 1px dashed var(--cp-border-subtle);
+  color: inherit;
+  text-decoration: none;
+}
+
+.guide-row:hover {
+  text-decoration: none;
+}
+
+.guide-row__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--cp-text-primary);
+}
+
+.guide-row:hover .guide-row__label {
+  color: var(--cp-text-accent);
+}
+
+.guide-row__note {
+  color: var(--cp-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 30rem) {
+  /* On a 320px phone the label and the note stack instead of squeezing the
+     note into three unreadable words per line. */
+  .guide-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.15rem;
+  }
+}
+
+/* --- the account row, deliberately the quietest thing on the page --------- */
+.guide-quiet {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem 1rem;
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: 0.4rem 0.85rem 0.5rem 0.9rem;
+  background: var(--cp-bg-inverse);
+}
+
+.guide-quiet h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 620;
+}
+
+.guide-quiet ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 40rem) {
+  .guide-quiet ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.3rem 1.5rem;
+  }
+}
+
+.guide-quiet li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--cp-text-muted);
+}
+
+.guide-quiet a {
+  font-weight: 600;
+  color: var(--cp-text-secondary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.guide-quiet a:hover {
+  color: var(--cp-text-primary);
+}
+
+/* --- the three things ----------------------------------------------------- */
+.guide-steps {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.guide-step {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: 0.5rem 0.85rem;
+  padding: 0.85rem 1rem;
+  background: var(--cp-bg-subtle);
+  border-radius: 0.85rem 0.4rem 1rem 0.45rem;
+}
+
+.guide-step__number {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 2.1rem;
+  block-size: 2.1rem;
+  color: var(--cp-text-accent);
+  font-family: var(--font-micro), ui-monospace, monospace;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.guide-step__number svg {
+  position: absolute;
+  inset: -0.2rem -0.35rem;
+  inline-size: calc(100% + 0.7rem);
+  block-size: calc(100% + 0.4rem);
+  color: var(--cp-accent-cyan);
+  opacity: 0.7;
+}
+
+.guide-step__body {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: start;
+}
+
+.guide-step h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 620;
+  letter-spacing: -0.014em;
+}
+
+.guide-step p {
+  margin: 0;
+  max-width: 58ch;
+  color: var(--cp-text-secondary);
+  font-size: 0.875rem;
+}
+
+/* A wide card with a narrow sentence and a button under it leaves a third of the
+   sheet empty. On a wide screen the action moves to the right edge of the card and
+   the sentence takes the room instead — the note reads as one line of work with a
+   button on it, which is what it is. */
+@media (min-width: 48rem) {
+  .guide-step__body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 1.75rem;
+    align-items: center;
+    justify-items: stretch;
+  }
+
+  .guide-step__body h3,
+  .guide-step__body p {
+    grid-column: 1;
+  }
+
+  .guide-step__body p {
+    max-width: 66ch;
+  }
+
+  .guide-step__body .btn {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    justify-self: end;
+  }
+}
+
+/* --- privacy notes -------------------------------------------------------- */
+.guide-notes {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 56rem) {
+  .guide-notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem 2rem;
+  }
+}
+
+.guide-notes li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  gap: 0.35rem 0.55rem;
+  align-items: start;
+  min-width: 0;
+  padding-block-end: 0.35rem;
+}
+
+.guide-notes svg {
+  margin-block-start: 0.35rem;
+  inline-size: 0.85rem;
+  color: var(--cp-success-text);
+}
+
+.guide-notes h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 620;
+  letter-spacing: -0.012em;
+}
+
+.guide-notes p {
+  margin: 0.2rem 0 0;
+  max-width: 62ch;
+  color: var(--cp-text-secondary);
+  font-size: 0.875rem;
+}
+
+.guide-inline-link {
+  color: var(--cp-text-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.guide-inline-link:hover {
+  color: var(--cp-text-primary);
+}
+
+.guide-footnote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0;
+  padding-block-start: 0.65rem;
+  border-block-start: 1px dashed var(--cp-border-subtle);
+  color: var(--cp-text-muted);
+  font-size: 0.8125rem;
+}
+
+.guide-footnote svg {
+  flex: none;
+  margin-block-start: 0.15rem;
+}
+
+/* --- what is different ---------------------------------------------------- */
+.guide-diff {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+}
+
+@media (min-width: 48rem) {
+  .guide-diff {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 2rem;
+  }
+}
+
+.guide-diff > div {
+  min-width: 0;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 2px solid var(--cp-accent-pale);
+}
+
+.guide-diff dt {
+  font-size: 0.9375rem;
+  font-weight: 640;
+  letter-spacing: -0.012em;
+}
+
+.guide-diff dd {
+  margin: 0.25rem 0 0;
+  color: var(--cp-text-secondary);
+  font-size: 0.875rem;
+}
+
+.guide-formula {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--cp-bg-page-deep);
+  border: 1px dashed var(--cp-border-subtle);
+  border-radius: 0.4rem 0.8rem 0.45rem 0.85rem;
+}
+
+.guide-formula code {
+  font-family: var(--font-micro), ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: var(--cp-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* --- the way out ---------------------------------------------------------- */
+.guide-exit {
+  display: grid;
+  gap: 1.1rem;
+  align-items: start;
+  padding: clamp(1.1rem, 3vw, 1.65rem);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in oklab, var(--brand-teal) 14%, transparent), transparent 60%),
+    var(--cp-bg-elevated);
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: var(--radius-glass);
+}
+
+@media (min-width: 48rem) {
+  .guide-exit {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.guide-exit__copy {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.guide-exit h2 {
+  margin: 0;
+  font-size: clamp(1.15rem, 1rem + 0.7vw, 1.5rem);
+  font-weight: 640;
+  letter-spacing: -0.026em;
+}
+
+.guide-exit p {
+  margin: 0;
+  max-width: 58ch;
+  color: var(--cp-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.guide-exit__actions {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: start;
+}
+
+@media (min-width: 48rem) {
+  .guide-exit__actions {
+    justify-items: end;
+  }
+}
+
+.guide-exit__secondary {
+  font-size: 0.8125rem;
+  color: var(--cp-text-muted);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.guide-exit__secondary:hover {
+  color: var(--cp-text-primary);
+}
+
+.guide-revisit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-revisit li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--cp-text-muted);
+}
+
+.guide-revisit span {
+  font-family: var(--font-micro), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: var(--cp-text-secondary);
+}
+
+.guide-revisit em {
+  font-style: normal;
+}
+
+/* --- footer --------------------------------------------------------------- */
+.guide-footer {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  padding-block-start: 1.1rem;
+  border-block-start: 1px solid var(--cp-border-subtle);
+  color: var(--cp-text-muted);
+  font-size: 0.75rem;
+}
+
+.guide-footer p {
+  margin: 0;
+  max-width: 62ch;
+}
+
+.guide-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex-basis: 100%;
+}
+
+.guide-footer a {
+  color: var(--cp-text-secondary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.guide-footer a:hover {
+  color: var(--cp-text-primary);
+}
+
+/* --- shared details ------------------------------------------------------- */
+.guide a:focus-visible,
+.guide button:focus-visible,
+.guide-jump a:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-xs);
+}
+
+.guide-mark {
+  display: block;
+  pointer-events: none;
+}
+
+/* In the wide margin the row of handles reads as an index, not as chips: one line
+   per part, a dashed rule between them. Written here, after the base `.guide-jump`
+   rules above, because that is the only place it can win without !important or a
+   more specific selector invented for the purpose. */
+@media (min-width: 64rem) {
+  .guide-jump ul {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .guide-jump a {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    border-block-end: 1px dashed var(--cp-border-subtle);
+    padding-inline: 0.15rem;
+    background: none;
+    color: var(--cp-text-secondary);
+  }
+
+  .guide-jump a:hover {
+    color: var(--cp-text-primary);
+    background: var(--cp-hover-bg);
+  }
+}
+
+/* A card that stretches the whole sheet must not stretch its sentences with it:
+   the measure stays readable at the top card, where the lines were 140 characters
+   long, and the two below it are unaffected because they were already narrower. */
+.guide-card__why,
+.guide-card .guide-links,
+.guide-board__why {
+  max-width: 72ch;
+}
+
+/* --- touch ---------------------------------------------------------------
+   A thumb needs more room than a cursor: the jump tags and the chrome button are
+   the two things a student actually presses on a phone (the destination rows
+   carry a label and a note, so they are tall on their own). Keyed on
+   `pointer: coarse`, not on width — a touchscreen laptop deserves the same room,
+   and a wide tablet should not be punished for being wide.
+
+   The brand lockup is deliberately left at the shared size: it is the app-wide
+   mark, and making it bigger only here would make /guide disagree with every
+   other screen for no gain. */
+@media (pointer: coarse) {
+  .guide-jump a {
+    min-height: 2.75rem;
+    padding-block: 0.65rem;
+  }
+
+  /* Every button on this page is a call to action, so every one of them gets the
+     room: the chrome, the three first steps and the way out. `min-height` only —
+     the sizes and the padding stay as the shared `.btn` defines them, so the guide
+     does not invent a second button. */
+  .guide .btn {
+    min-height: 2.75rem;
+  }
+
+  .guide-chrome .btn {
+    padding-inline: 1.1rem;
+  }
+
+  .guide-exit__secondary,
+  .guide-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The sheet itself carries a transition as well as its children, so both are
+     stopped; `*` alone would leave the frame animating. */
+  .guide,
+  .guide * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -989,3 +989,153 @@ the explanation. `database/tests/16_random_channel_authorization.sql` is the iso
 proof. `auditRealtimeChannelPolicies` in `scripts/dev/audit.mjs` is the invariant that
 would have caught this before a deploy: a policy may only call what its subscribing role
 can execute, and a cross-user predicate may never be client-callable.
+
+---
+
+## 16. The first-visit guide at `/guide` (2026-10-26)
+
+**Brief:** give a student who has never seen Campus+ a guide worth two minutes, at a
+memorable route, reachable from the public pages and from inside the app, firing once
+on a new device and never nagging a returning one — without inventing a feature, a
+number, or a database migration to remember the dismissal.
+
+### 16.1 The constraint that shaped everything
+
+The guide is allowed to say only what the app already keeps. So the copy was written
+*after* the audit, from the files, and every destination is read back out of
+`lib/guide/content.js` by a test that resolves it against the routes Next actually
+serves (`app/**/page.js`, route groups stripped, `[segment]` → `:segment`). Nothing
+in the guide is typed twice: page titles come from the real `PageHeader`s, the empty
+state of `/explore` and `/campus` is described as the code leaves it, the ranking
+sentence quotes `TRENDING_FORMULA` and `TRENDING_WINDOW_HOURS` from `lib/constants.js`
+rather than paraphrasing them, and the privacy notes are the ones Settings, Legal and
+the `show_branch_year` view already enforce — including the things the product would
+rather not say (a public username is the opposite of anonymous; moderation is
+after-the-fact and by people; no moderation catches everything; deactivation is not
+deletion).
+
+Deliberately absent: Random Chat (no UI entry point in the app), reputation
+(`reputation_*` is projected but displayed nowhere), and any claim that nothing is
+ranked — something *is* ranked, deterministically, and the page says so.
+
+### 16.2 One onboarding, not two
+
+`components/auth/OnboardingIntro.js` used to be a separately-written description of the
+same product: three notes and six destinations, each with its own one-line pitch, none
+of it checkable against the real pages. It is now a **subset** of the guide — same
+headline, a shorter form of the same opening sentence, and the three primary groups
+with the guide's own reasons — so the two screens cannot drift apart. The slice keeps
+exactly one link, to `/guide`. The other group names are rendered as text on purpose:
+every app route redirects a student without a profile straight back to `/onboarding`,
+so a link placed there before the form is finished is a dead end with a tab stop on it.
+
+The hand-off is `completeOnboarding` → `redirectTo: '/guide?welcome=1'`. The guide
+renders a `welcome` state (profile done, Home one tap, Explore offered beside it) and
+an `onboarding` state for a signed-in student who still owes a profile — where the
+honest action is "Continue setup", not "Sign in".
+
+### 16.3 The one-time trigger, and why there is no migration
+
+`lib/guide/first-visit.js` is three pure functions over a storage object and one key,
+`campusplus:guide-seen`, whose value is an ISO timestamp and nothing else. No column,
+no table, no RLS change: "has this device seen the guide" is a device question, and
+answering it in the database would mean a write on someone's first scroll, a new
+policy to audit, and a cross-device profile of reading habits nobody asked for.
+
+`readGuideSeen` answers `true` / `false` / **`null`**. `null` means storage is unreadable
+— private mode, a blocked third-party area, a locked-down WebView that throws on the
+*property read*, which is why every caller goes through `deviceStorage()` instead of
+touching `window.localStorage`. When it is `null` the offer still appears (that student
+may need it most) and the button says "Dismiss for now", because promising a permanent
+dismissal the browser cannot keep would be a lie. `markGuideSeen` returns a boolean and
+throws nothing into a click handler. Opening `/guide` writes the flag itself, so the
+first-visit flow is one click and no button-press-to-stop-the-nag.
+
+The read is a `useSyncExternalStore` with `getServerSnapshot = () => true`: the strip
+renders nothing on the server and nothing on the hydration pass, and appears when the
+live tree knows the answer. That is also why there is no `setState` in an effect — the
+lint rule that made the first draft fail was right, not fussy.
+
+### 16.4 What looking at the running page found
+
+Lint and a green build could not have caught any of these.
+
+* **The offer was unstyled on Home.** Its markup lives in `AppShell`, but the sheet
+  that styles it was imported only by `app/guide/layout.js`. Split into
+  `app/styles/guide-strip.css`, imported by `app/(app)/layout.js` — the layout that
+  renders it — and pinned by a test that reads the import list, because this failure is
+  silent: the text is present, correct, and unstyled.
+* **A CSS tie made the drawn underline show up where it cannot work.** The headline's
+  ink stroke is an absolutely positioned SVG; when the headline wraps (below ~30rem)
+  one box cannot follow two lines, so the stroke ran past the last word into empty
+  space. The narrow layout now uses the wavy `text-decoration` the onboarding sheet
+  already uses, which repeats per line. The first version of that fix did nothing at
+  all: `.guide-mark { display: block }` sits later in the sheet and tied on
+  specificity, so the override needed `.guide-hero__ink .guide-hero__underline`.
+* **`<main>`'s arrival animation made the strip invisible in a throttled renderer.**
+  `night.css` animates every direct child of `.shell-main` with `route-arrive … both`,
+  which starts at `opacity: 0`. The strip is a direct child, so it became a second
+  route wrapper — the same containing-block hazard the island sheet documents — and any
+  frozen animation leaves a line of text that cannot be read or dismissed. It opts out
+  (`animation: none`) and sits at `z-index: 2` above Home's depth field, which is
+  painted by a sibling that comes after it.
+* **Short boards stretched their own rows.** Two `.guide-board`s share a grid row, so
+  the shorter one's auto rows were stretched to match: 200px of nothing between a
+  heading and its first link. `align-content: start` on the board fixed it.
+* **The `onboarding` state told a signed-in student to sign in**, because the exit fell
+  back to the signed-out copy. `GUIDE_EXIT.onboarding` now exists and a test asserts
+  that no signed-in state ever links to `/login`.
+
+Two things that looked like defects and were not, both recorded so the next reader does
+not chase them: `ERR_CONNECTION_CLOSED` on Vercel's analytics script (dev) and the
+404 on `/_vercel/insights/script.js` (a build served off Vercel) are environmental, and
+`Failed to execute 'measure' on 'Performance': the `\u200bAppLayout` mark (Next prefixes that
+  name with a zero-width space) cannot have a negative
+time stamp` is Next's own dev-only RSC timing — it appears on `/login` too. The check
+files them as noise, with the reason in a comment, rather than pretending they are
+clean.
+
+### 16.5 Verification
+
+`scripts/dev/guide-check.mjs` drives the real application and prints one line per
+claim. It was run against the dev server **and** against `next start` on a production
+build (with the harness env baked in — a build without `NEXT_PUBLIC_SUPABASE_URL`
+renders `/setup` everywhere, which is what the first production pass showed):
+**52/52 checks passed** in both. Covered: 26 destinations swept over HTTP in both
+states (no 404/5xx, signed-out guard intact, no signed-in route bouncing to `/login`);
+layout at 1440/390/320 (no viewport overflow, no clipped line, one h1 then the five
+parts in order, tap targets ≥40px on touch, the underline under the words not past
+them); axe at desktop and mobile with zero serious or critical violations; keyboard
+focus rings on the first six stops; every in-page jump reaching its section after the
+smooth scroll settles; the strip appearing once on Home, the flag being written on
+opening the guide, dismissal surviving reload *and* navigation, clearing the key
+re-arming it, the account menu and the mobile sheet both carrying the entry point, and
+a blocked-`localStorage` context still rendering Home and closing the offer; the
+`welcome=1` landing; the setup guard still bouncing a profile-less student from `/home`
+to `/onboarding`. Unit side: `tests/guide.test.js` (42 tests) plus re-pinned
+`tests/onboarding.test.js`; `npm run verify` (lint, `sw:check`, `verify:db`,
+`audit:db`, 872 tests) green, and `npm run build` clean with `ƒ /guide` dynamic.
+
+### 16.6 What this run could not prove
+
+No real phone: the tap-target and overflow numbers come from Chromium at 320/390 in
+this sandbox, not from an iPhone or an Android WebView. Not deployed: the production
+run here is a local `next start` against the perf harness, so the Supabase stub's
+timings and the Realtime websocket failing are the harness, not the product. Private
+mode was emulated by making `window.localStorage` throw, which is the closest
+available stand-in for a real Safari private window. And nothing here can promise the
+guide is *understood* — only that it is short, true, and reachable.
+
+### 16.7 Files to know about later
+
+`lib/guide/content.js` is the single source of what Campus+ is: change the copy there
+and both the page and the onboarding slice move together. `lib/guide/first-visit.js`
+owns the flag and `deviceStorage()`; no caller may touch `window.localStorage`
+directly. `components/guide/GuidePage.js` is presentational and takes one prop
+(`state`); `app/guide/page.js` decides the state and imports no data.
+`app/guide/layout.js` owns the Boldonse display face for this route, which is the
+house pattern for a route's display font. `app/styles/guide.css` is the page,
+`app/styles/guide-strip.css` is Home's one-line offer, and each is imported by the
+layout that renders it. `scripts/dev/guide-check.mjs` is the browser check; if a
+sentence in the guide stops matching the app, `tests/guide.test.js` is what fails
+first, and it fails because the route or the claim no longer exists.

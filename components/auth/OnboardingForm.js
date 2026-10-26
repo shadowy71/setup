@@ -13,7 +13,11 @@ import { normalizeUsername } from '@/lib/utils';
  * and returns the real conflict if the name was taken meanwhile.
  */
 export function OnboardingForm() {
-  const { run, pending, error, fieldErrors } = useFormAction(completeOnboarding, { redirectTo: '/home' });
+  // The first visit ends on the guide, not on a feed the student has not been
+  // told anything about yet. It is a real route with a real "Open Home" button at
+  // the end, so the flow still lands on Home one tap later; `useFormAction`
+  // refreshes the session, so the guide renders its post-sign-up state.
+  const { run, pending, error, fieldErrors } = useFormAction(completeOnboarding, { redirectTo: '/guide?welcome=1' });
   const [username, setUsername] = useState('');
   const [accepted, setAccepted] = useState(false);
 

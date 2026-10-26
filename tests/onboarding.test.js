@@ -22,6 +22,33 @@ vi.mock('@/lib/forms', () => ({ useFormAction: () => ({ run: vi.fn(), ...state.f
 import OnboardingPage from '@/app/onboarding/page';
 import { OnboardingIntro } from '@/components/auth/OnboardingIntro';
 import { OnboardingForm } from '@/components/auth/OnboardingForm';
+import {
+  GUIDE_GROUPS,
+  GUIDE_HEADLINE_INK,
+  GUIDE_HEADLINE_LEAD,
+  GUIDE_OPENING,
+  GUIDE_OPENING_SHORT,
+} from '@/lib/guide/content';
+
+/**
+ * Every page Next actually serves, derived from `app/` (route groups stripped,
+ * `[segment]` becoming `:segment`), so this file can only ever assert over
+ * destinations that exist.
+ */
+const PAGE_ROUTES = new Set();
+const walkRoutes = (dir, prefix) => {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const absolute = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const dynamic = /^\[\.?\.{0,2}([^\]]+)\]$/.exec(entry.name);
+      const segment = /^\(.*\)$/.test(entry.name) ? prefix : `${prefix}/${dynamic ? `:${dynamic[1]}` : entry.name}`;
+      walkRoutes(absolute, segment);
+    } else if (entry.name === 'page.js') {
+      PAGE_ROUTES.add(prefix === '' ? '/' : prefix);
+    }
+  }
+};
+walkRoutes(path.join(process.cwd(), 'app'), '');
 
 const htmlOf = (node) => renderToStaticMarkup(node);
 
@@ -35,7 +62,9 @@ describe('first-profile onboarding lifecycle', () => {
   it('renders the existing profile form before the introduction and guide', async () => {
     const html = htmlOf(await OnboardingPage());
     expect(html.match(/<h1\b/g)).toHaveLength(1);
-    expect(html).toContain('Campus life, a little less');
+    // The headline is the guide's, not a second telling of it.
+    expect(html).toContain(`${GUIDE_HEADLINE_LEAD} <span`);
+    expect(html).toContain(GUIDE_HEADLINE_INK);
     expect(html.indexOf('</form>')).toBeLessThan(html.indexOf('id="onboarding-heading"'));
     expect(html.indexOf('</form>')).toBeLessThan(html.indexOf('Where do I go first?'));
     expect(html).toContain('<h1 id="profile-heading"');
@@ -68,16 +97,54 @@ describe('first-profile onboarding lifecycle', () => {
 });
 
 describe('field notes and orientation', () => {
-  it('names all six real destinations without sending students out of setup', () => {
+  /*
+   * Both purposes survived the rewrite of the intro into a slice of `/guide`:
+   * nothing under the form may lead a student away from the step they are on, and
+   * the slice may not become its own account of the product. So the labels and the
+   * reasons are read back out of `lib/guide/content.js` — the same source the guide
+   * renders — and the only link allowed is the one that works without a profile.
+   */
+  it('renders the guide as a subset, with no way out of setup', () => {
     const html = htmlOf(React.createElement(OnboardingIntro));
-    for (const route of ['Home', 'Explore', 'Communities', 'Campus', 'Market', 'Chat']) {
-      expect(html).toContain(`<dt>${route}</dt>`);
-      expect(fs.existsSync(`app/(app)/${route.toLowerCase()}/page.js`)).toBe(true);
+    const primary = GUIDE_GROUPS.filter((group) => group.emphasis === 'primary');
+    expect(primary.map((group) => group.label)).toEqual(['Find information', 'Find your people', 'Get involved']);
+
+    for (const group of primary) {
+      expect(html).toContain(`<dt>${group.label}</dt>`);
+      expect(html, group.why).toContain(group.why);
     }
-    expect(html).toContain('you&#x27;ll land on Home');
-    expect(html).not.toMatch(/<a\b|<button\b|<input\b/);
-    expect(html.match(/<li\b/g)).toHaveLength(3);
-    expect(html).toContain('Reports go to human moderators');
+    // The rest are named, not linked — a map of what is waiting.
+    for (const group of GUIDE_GROUPS.filter((item) => item.emphasis !== 'primary')) {
+      expect(html, group.label).toContain(group.links[0].label);
+    }
+    // Exactly one link, and it is the guide. Every app route redirects a student
+    // without a profile straight back to this page.
+    expect(html.match(/<a\b/g) ?? []).toHaveLength(1);
+    expect(html).toContain('href="/guide"');
+    expect(html).not.toMatch(/<button\b|<input\b|<li\b/);
+    expect(html).toMatch(/you will land on Home/i);
+    // Nothing here may name a destination the app does not serve.
+    const named = ['/guide', ...primary.map((group) => group.links[0].href)];
+    for (const href of named) {
+      expect(PAGE_ROUTES.has(href), href).toBe(true);
+    }
+  });
+
+  it('keeps one source for what Campus+ is', () => {
+    const source = fs.readFileSync('components/auth/OnboardingIntro.js', 'utf8');
+    // The old locally-written lists are gone for good; the intro may only read.
+    expect(source).not.toMatch(/const (NOTES|DESTINATIONS) = /);
+    expect(source).toContain("from '@/lib/guide/content'");
+    expect(source).toContain('GUIDE_OPENING_SHORT');
+    // The short form is a shorter telling of the same claim, not a different claim:
+    // both say "searchable", and only the guide has room for the rest.
+    const opening = GUIDE_OPENING.join(' ');
+    expect(GUIDE_OPENING_SHORT).toContain('searchable');
+    expect(opening).toContain('searchable');
+    expect(opening.length).toBeGreaterThan(GUIDE_OPENING_SHORT.length);
+    // The independence disclosure is not duplicated here — the shared public shell
+    // already says it on this page, and the guide repeats it where it stands alone.
+    expect(source).not.toMatch(/not an official/i);
   });
 });
 
