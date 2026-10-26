@@ -51,7 +51,7 @@ export default function RulesPage() {
         <LinkButton href="/login" variant="primary" icon="chevronRight">
           Back to sign-in
         </LinkButton>
-        <Link href="/" className="text-[0.8125rem] font-medium text-muted underline hover:text-ink">
+        <Link href="/guide" className="text-[0.8125rem] font-medium text-muted underline hover:text-ink">
           What is Campus+?
         </Link>
       </div>

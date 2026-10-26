@@ -87,6 +87,7 @@ export function MobileMenuBody({
         <SheetLink href={ROUTES.study} icon="book" label="Study finder" onNavigate={close} />
         <SheetLink href={ROUTES.notifications} icon="bell" label="Notifications" unread={unread} onNavigate={close} />
         <SheetLink href={ROUTES.settings} icon="settings" label="Settings" onNavigate={close} />
+        <SheetLink href={ROUTES.guide} icon="mapPin" label="First-visit guide" onNavigate={close} />
         {canModerate ? <SheetLink href={ROUTES.moderator} icon="shield" label="Moderation" onNavigate={close} /> : null}
         {canAdmin ? <SheetLink href={ROUTES.admin} icon="eye" label="Admin" onNavigate={close} /> : null}
       </div>

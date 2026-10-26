@@ -23,8 +23,12 @@ import { originFromHeaders } from '@/lib/auth/oauth';
  * `/timetable` (and every `/timetable/[division]` under it, via the prefix
  * match below) is a public read-only mirror of the department master
  * timetable — it must work from a shared link before a student has an
- * account, and it changes nothing about any other route's protection. */
-const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules', '/timetable'];
+ * account, and it changes nothing about any other route's protection. `/guide`
+ * joins `/legal` and `/rules` as a public *document*: the first-visit guide is
+ * static text with no query, no session data and nothing private in it, and a
+ * student deciding whether to make a profile is the reader it exists for. It
+ * grants no access to any other route — the pages themselves still re-check. */
+const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules', '/guide', '/timetable'];
 
 /**
  * The one-time-code step (and its route) was replaced by Google sign-in.

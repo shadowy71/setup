@@ -21,7 +21,6 @@ const SECTIONS = [
   { href: '/campus/rides', label: 'Rides', icon: 'bus', description: 'Share a ride home or to the station.' },
   { href: '/campus/teams', label: 'Team finder', icon: 'users', description: 'Find teammates for a project or hackathon.' },
   { href: '/campus/study', label: 'Study partner finder', icon: 'book', description: 'Find peers for a subject or exam.' },
-  { href: '/campus/study', label: 'Study partner finder', icon: 'book', description: 'Find peers for a subject or exam.' },
   { href: '/campus/utilities', label: 'Campus utilities', icon: 'book', description: 'Directory, services, cafeteria, transport, calendar, forms and help.' },
 ];
 

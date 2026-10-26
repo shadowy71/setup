@@ -1,0 +1,134 @@
+/* ==========================================================================
+   The one-line offer Home shows a device that has not opened the guide yet.
+
+   It lives in its own sheet because it is mounted by `AppShell`, on every
+   authenticated route, while the guide itself is a single page. Importing
+   `guide.css` here would ship the whole notebook to a student who only ever
+   sees this strip, and *forgetting* to import anything is the subtler failure:
+   the strip would render as an unstyled sentence under the header. So
+   `app/(app)/layout.js` imports this file and `app/guide/layout.js` does not
+   need to — the guide never contains the offer.
+
+   Colours are the same --cp-* roles as the rest of the app, and the shape is
+   the uneven border-radius the onboarding note uses, so the strip reads as part
+   of the same hand-written sheet rather than a banner someone bolted on.
+   ========================================================================== */
+
+/* --- the Home offer (rendered inside the app shell) ----------------------- */
+/* Two lines of defence for a note that is inserted into `<main>` after hydration.
+
+   `animation: none` — the shell gives every direct child of `main` a filled
+   `route-arrive` (`night.css`), which is meant for a route's own wrapper. A
+   second wrapper in that slot would repeat the containing-block problem the island
+   sheet documents for the depth field, so the strip opts out; it also means the
+   note is never left at the animation's `opacity: 0` keyframe by a frozen or
+   throttled renderer, which would be text nobody can read or dismiss.
+
+   `z-index` — Home paints its depth field from a sibling that comes *after* this
+   element, so a note with no stacking order of its own can end up under the sky. */
+.shell-main > .guide-strip {
+  animation: none;
+}
+
+.guide-strip {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.85rem;
+  margin-block-end: 0.85rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--cp-bg-elevated);
+  border: 1px solid var(--cp-border-subtle);
+  border-radius: 0.75rem 0.3rem 0.85rem 0.35rem;
+}
+
+.guide-strip__tape {
+  position: absolute;
+  inset-block-start: -0.4rem;
+  inset-inline-start: 1.35rem;
+  inline-size: 2.75rem;
+  block-size: 0.75rem;
+  background: color-mix(in oklab, var(--brand-sand) 24%, transparent);
+  transform: rotate(-3deg);
+}
+
+.guide-strip__lead {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 18rem;
+  color: var(--cp-text-secondary);
+  font-size: 0.875rem;
+}
+
+.guide-strip__lead svg {
+  flex: none;
+  color: var(--cp-text-accent);
+}
+
+.guide-strip__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+}
+
+.guide-strip__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.7rem;
+  background: var(--cp-bg-accent);
+  border-radius: var(--radius-sm);
+  color: var(--cp-text-on-accent);
+  font-size: 0.8125rem;
+  font-weight: 620;
+  text-decoration: none;
+}
+
+.guide-strip__link:hover {
+  background: var(--cp-bg-accent-hover);
+  color: var(--cp-text-on-accent);
+  text-decoration: none;
+}
+
+.guide-strip__dismiss {
+  min-height: 2.25rem;
+  padding: 0.3rem 0.45rem;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-xs);
+  color: var(--cp-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 550;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.guide-strip__dismiss:hover {
+  color: var(--cp-text-primary);
+}
+
+/* The strip is a real interruption, so its controls get the same focus ring and
+   the same "no motion" promise as the page it points at. */
+.guide-strip a:focus-visible,
+.guide-strip button:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-strip,
+  .guide-strip * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

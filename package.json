@@ -42,7 +42,8 @@
     "sw:bundle": "node scripts/build-sw.mjs",
     "sw:check": "node scripts/build-sw.mjs --check",
     "verify:offline": "node scripts/dev/timetable-offline-check.mjs",
-    "verify:feed": "node scripts/dev/feed-refresh-check.mjs"
+    "verify:feed": "node scripts/dev/feed-refresh-check.mjs",
+    "verify:viewport": "node scripts/dev/mobile-fit-check.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

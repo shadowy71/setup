@@ -111,6 +111,20 @@ export default async function LoginPage({ searchParams }) {
             </span>
             <span>Text-first by design: posts, discussions, communities and messages.</span>
           </li>
+          {/* The guide is public, so the person deciding whether to sign in can
+              read it before deciding — which is the only honest place for it. */}
+          <li className="flex items-start gap-2.5">
+            <span className="login-fact">
+              <Icon name="mapPin" size={15} />
+            </span>
+            <span>
+              Never used it before?{' '}
+              <Link href="/guide" className="font-semibold text-ink underline">
+                The first-visit guide
+              </Link>{' '}
+              says where everything is.
+            </span>
+          </li>
         </ul>
 
         <p className="login-intro login-sky mt-8 text-2xs leading-relaxed text-muted">

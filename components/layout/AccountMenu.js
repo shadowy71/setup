@@ -63,6 +63,11 @@ export function AccountMenu({ user = null, isStaff = false }) {
       <MenuLink href={ROUTES.notifications} icon="bell">
         Notifications
       </MenuLink>
+      {/* The guide is where a student sends a classmate, so it is reachable from
+          the one control that exists at every screen size. */}
+      <MenuLink href={ROUTES.guide} icon="mapPin">
+        First-visit guide
+      </MenuLink>
       <div className="border-t border-line p-1.5" onClick={(e) => e.stopPropagation()}>
         <SignOutButton variant="ghost" />
       </div>

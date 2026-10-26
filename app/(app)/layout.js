@@ -5,6 +5,9 @@ import { ROUTES } from '@/lib/constants';
 import { getTimetableHref } from '@/lib/timetable/meta';
 import { toShellUser } from '@/lib/identity/shell-user';
 import { AppShell } from '@/components/layout/AppShell';
+// The shell hosts the first-visit offer (see components/guide/GuideWelcomeStrip),
+// so the sheet that styles it belongs to this layout, not to /guide.
+import '@/app/styles/guide-strip.css';
 import { getUnreadMessageState } from '@/lib/data/messaging';
 
 // Every page in this group depends on the signed-in student, so nothing here is
@@ -95,6 +98,7 @@ export default async function AppLayout({ children }) {
     { section: 'Navigation', label: 'Market', href: '/market', icon: 'tag' },
     { section: 'Navigation', label: 'Profile', href: '/profile', icon: 'user' },
     { section: 'Navigation', label: 'Settings', href: '/settings', icon: 'settings' },
+    { section: 'Navigation', label: 'First-visit guide', href: ROUTES.guide, icon: 'mapPin', keywords: 'new here orientation what is campus plus where is everything' },
     ...(canModerate ? [{ section: 'Navigation', label: 'Moderation', href: '/moderator', icon: 'shield' }] : []),
     ...(canAdmin ? [{ section: 'Navigation', label: 'Admin', href: '/admin', icon: 'eye' }] : []),
     ...createItems.map((item) => ({ ...item, section: 'Create' })),

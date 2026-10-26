@@ -329,3 +329,24 @@ describe('the two boards are not the marketplace', () => {
     expect(css).toContain('var(--c-accent)');
   });
 });
+
+describe('Campus hub tiles', () => {
+  /**
+   * The hub's tile list, as written: `href` is a literal or one `ROUTES.x` name.
+   * The grid keys itself on `href`, so two tiles pointing at one destination are a
+   * duplicated card on screen and a duplicate-key warning in the console.
+   */
+  const tileHrefs = () => {
+    const source = read('app/(app)/campus/page.js');
+    const block = /const SECTIONS = \[([\s\S]*?)\n\];/.exec(source)[1];
+    return Array.from(block.matchAll(/href:\s*(?:'([^']+)'|ROUTES\.(\w+))/g)).map(
+      ([, literal, key]) => literal ?? ROUTES[key],
+    );
+  };
+
+  it('points at each destination exactly once', () => {
+    const hrefs = tileHrefs();
+    expect(hrefs.length).toBeGreaterThan(5);
+    expect(hrefs).toEqual([...new Set(hrefs)]);
+  });
+});

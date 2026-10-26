@@ -989,3 +989,251 @@ the explanation. `database/tests/16_random_channel_authorization.sql` is the iso
 proof. `auditRealtimeChannelPolicies` in `scripts/dev/audit.mjs` is the invariant that
 would have caught this before a deploy: a policy may only call what its subscribing role
 can execute, and a cross-user predicate may never be client-callable.
+
+---
+
+## 16. The first-visit guide at `/guide` (2026-10-26)
+
+**Brief:** give a student who has never seen Campus+ a guide worth two minutes, at a
+memorable route, reachable from the public pages and from inside the app, firing once
+on a new device and never nagging a returning one — without inventing a feature, a
+number, or a database migration to remember the dismissal.
+
+### 16.1 The constraint that shaped everything
+
+The guide is allowed to say only what the app already keeps. So the copy was written
+*after* the audit, from the files, and every destination is read back out of
+`lib/guide/content.js` by a test that resolves it against the routes Next actually
+serves (`app/**/page.js`, route groups stripped, `[segment]` → `:segment`). Nothing
+in the guide is typed twice: page titles come from the real `PageHeader`s, the empty
+state of `/explore` and `/campus` is described as the code leaves it, the ranking
+sentence quotes `TRENDING_FORMULA` and `TRENDING_WINDOW_HOURS` from `lib/constants.js`
+rather than paraphrasing them, and the privacy notes are the ones Settings, Legal and
+the `show_branch_year` view already enforce — including the things the product would
+rather not say (a public username is the opposite of anonymous; moderation is
+after-the-fact and by people; no moderation catches everything; deactivation is not
+deletion).
+
+Deliberately absent: Random Chat (no UI entry point in the app), reputation
+(`reputation_*` is projected but displayed nowhere), and any claim that nothing is
+ranked — something *is* ranked, deterministically, and the page says so.
+
+### 16.2 One onboarding, not two
+
+`components/auth/OnboardingIntro.js` used to be a separately-written description of the
+same product: three notes and six destinations, each with its own one-line pitch, none
+of it checkable against the real pages. It is now a **subset** of the guide — same
+headline, a shorter form of the same opening sentence, and the three primary groups
+with the guide's own reasons — so the two screens cannot drift apart. The slice keeps
+exactly one link, to `/guide`. The other group names are rendered as text on purpose:
+every app route redirects a student without a profile straight back to `/onboarding`,
+so a link placed there before the form is finished is a dead end with a tab stop on it.
+
+The hand-off is `completeOnboarding` → `redirectTo: '/guide?welcome=1'`. The guide
+renders a `welcome` state (profile done, Home one tap, Explore offered beside it) and
+an `onboarding` state for a signed-in student who still owes a profile — where the
+honest action is "Continue setup", not "Sign in".
+
+### 16.3 The one-time trigger, and why there is no migration
+
+`lib/guide/first-visit.js` is three pure functions over a storage object and one key,
+`campusplus:guide-seen`, whose value is an ISO timestamp and nothing else. No column,
+no table, no RLS change: "has this device seen the guide" is a device question, and
+answering it in the database would mean a write on someone's first scroll, a new
+policy to audit, and a cross-device profile of reading habits nobody asked for.
+
+`readGuideSeen` answers `true` / `false` / **`null`**. `null` means storage is unreadable
+— private mode, a blocked third-party area, a locked-down WebView that throws on the
+*property read*, which is why every caller goes through `deviceStorage()` instead of
+touching `window.localStorage`. When it is `null` the offer still appears (that student
+may need it most) and the button says "Dismiss for now", because promising a permanent
+dismissal the browser cannot keep would be a lie. `markGuideSeen` returns a boolean and
+throws nothing into a click handler. Opening `/guide` writes the flag itself, so the
+first-visit flow is one click and no button-press-to-stop-the-nag.
+
+The read is a `useSyncExternalStore` with `getServerSnapshot = () => true`: the strip
+renders nothing on the server and nothing on the hydration pass, and appears when the
+live tree knows the answer. That is also why there is no `setState` in an effect — the
+lint rule that made the first draft fail was right, not fussy.
+
+### 16.4 What looking at the running page found
+
+Lint and a green build could not have caught any of these.
+
+* **The offer was unstyled on Home.** Its markup lives in `AppShell`, but the sheet
+  that styles it was imported only by `app/guide/layout.js`. Split into
+  `app/styles/guide-strip.css`, imported by `app/(app)/layout.js` — the layout that
+  renders it — and pinned by a test that reads the import list, because this failure is
+  silent: the text is present, correct, and unstyled.
+* **A CSS tie made the drawn underline show up where it cannot work.** The headline's
+  ink stroke is an absolutely positioned SVG; when the headline wraps (below ~30rem)
+  one box cannot follow two lines, so the stroke ran past the last word into empty
+  space. The narrow layout now uses the wavy `text-decoration` the onboarding sheet
+  already uses, which repeats per line. The first version of that fix did nothing at
+  all: `.guide-mark { display: block }` sits later in the sheet and tied on
+  specificity, so the override needed `.guide-hero__ink .guide-hero__underline`.
+* **`<main>`'s arrival animation made the strip invisible in a throttled renderer.**
+  `night.css` animates every direct child of `.shell-main` with `route-arrive … both`,
+  which starts at `opacity: 0`. The strip is a direct child, so it became a second
+  route wrapper — the same containing-block hazard the island sheet documents — and any
+  frozen animation leaves a line of text that cannot be read or dismissed. It opts out
+  (`animation: none`) and sits at `z-index: 2` above Home's depth field, which is
+  painted by a sibling that comes after it.
+* **Short boards stretched their own rows.** Two `.guide-board`s share a grid row, so
+  the shorter one's auto rows were stretched to match: 200px of nothing between a
+  heading and its first link. `align-content: start` on the board fixed it.
+* **The `onboarding` state told a signed-in student to sign in**, because the exit fell
+  back to the signed-out copy. `GUIDE_EXIT.onboarding` now exists and a test asserts
+  that no signed-in state ever links to `/login`.
+
+Two things that looked like defects and were not, both recorded so the next reader does
+not chase them: `ERR_CONNECTION_CLOSED` on Vercel's analytics script (dev) and the
+404 on `/_vercel/insights/script.js` (a build served off Vercel) are environmental, and
+`Failed to execute 'measure' on 'Performance': the `\u200bAppLayout` mark (Next prefixes that
+  name with a zero-width space) cannot have a negative
+time stamp` is Next's own dev-only RSC timing — it appears on `/login` too. The check
+files them as noise, with the reason in a comment, rather than pretending they are
+clean.
+
+### 16.5 Verification
+
+`scripts/dev/guide-check.mjs` drives the real application and prints one line per
+claim. It was run against the dev server **and** against `next start` on a production
+build (with the harness env baked in — a build without `NEXT_PUBLIC_SUPABASE_URL`
+renders `/setup` everywhere, which is what the first production pass showed):
+**52/52 checks passed** in both. Covered: 26 destinations swept over HTTP in both
+states (no 404/5xx, signed-out guard intact, no signed-in route bouncing to `/login`);
+layout at 1440/390/320 (no viewport overflow, no clipped line, one h1 then the five
+parts in order, tap targets ≥40px on touch, the underline under the words not past
+them); axe at desktop and mobile with zero serious or critical violations; keyboard
+focus rings on the first six stops; every in-page jump reaching its section after the
+smooth scroll settles; the strip appearing once on Home, the flag being written on
+opening the guide, dismissal surviving reload *and* navigation, clearing the key
+re-arming it, the account menu and the mobile sheet both carrying the entry point, and
+a blocked-`localStorage` context still rendering Home and closing the offer; the
+`welcome=1` landing; the setup guard still bouncing a profile-less student from `/home`
+to `/onboarding`. Unit side: `tests/guide.test.js` (42 tests) plus re-pinned
+`tests/onboarding.test.js`; `npm run verify` (lint, `sw:check`, `verify:db`,
+`audit:db`, 872 tests) green, and `npm run build` clean with `ƒ /guide` dynamic.
+
+### 16.6 What this run could not prove
+
+No real phone: the tap-target and overflow numbers come from Chromium at 320/390 in
+this sandbox, not from an iPhone or an Android WebView. Not deployed: the production
+run here is a local `next start` against the perf harness, so the Supabase stub's
+timings and the Realtime websocket failing are the harness, not the product. Private
+mode was emulated by making `window.localStorage` throw, which is the closest
+available stand-in for a real Safari private window. And nothing here can promise the
+guide is *understood* — only that it is short, true, and reachable.
+
+### 16.7 Files to know about later
+
+`lib/guide/content.js` is the single source of what Campus+ is: change the copy there
+and both the page and the onboarding slice move together. `lib/guide/first-visit.js`
+owns the flag and `deviceStorage()`; no caller may touch `window.localStorage`
+directly. `components/guide/GuidePage.js` is presentational and takes one prop
+(`state`); `app/guide/page.js` decides the state and imports no data.
+`app/guide/layout.js` owns the Boldonse display face for this route, which is the
+house pattern for a route's display font. `app/styles/guide.css` is the page,
+`app/styles/guide-strip.css` is Home's one-line offer, and each is imported by the
+layout that renders it. `scripts/dev/guide-check.mjs` is the browser check; if a
+sentence in the guide stops matching the app, `tests/guide.test.js` is what fails
+first, and it fails because the route or the claim no longer exists.
+
+---
+
+## 17. The week grid that zoomed the phone out (2026-10-26)
+
+Reported from a real phone: on `/timetable/o`, tapping **“See the full week at a glance”**
+“glitches out and zooms out to make everything smaller”. That toggle is a
+`<details>` whose panel holds the printed week — `.tt-table { min-width: 84rem }` inside
+`.tt-scroll { overflow-x: auto }`.
+
+### 17.1 The mechanism, measured rather than reasoned about
+
+A phone browser lays the page out at the device width, then treats the **document's**
+scrollable overflow as a request for more room: it widens the layout viewport and scales
+the page down to fit. It does not show a scrollbar. Measured on the page with the panel
+open, at a 390px viewport:
+
+```
+closed   innerWidth 390  · documentElement.scrollWidth 390  · visualViewport 390@1.0
+open     innerWidth 1255 · documentElement.scrollWidth 1255 · visualViewport 390@1.0
+```
+
+`innerWidth` is the browser's own number for “how wide you decided I am”, so 390 → 1255
+*is* the report. The scroll container was clipping the table visually the whole time;
+what leaked was its contribution to the root scroller's overflow area.
+
+Candidate rules were measured against the open panel (`scripts/dev/week-probe.mjs`, which
+exists so the next reader can re-run the comparison instead of trusting this paragraph):
+
+| change | result |
+| --- | --- |
+| `overflow-x: hidden` / `clip` on the scroller or the panel | still 1255 |
+| `clip-path: inset(0)`, `width: 100%; max-width: 100%` | still 1255 |
+| dropping `position: sticky` from the header | still 1255 |
+| `min-width: 0` on the table or its cells | still 1255 (and a squashed grid) |
+| **`contain: paint`** on `.tt-scroll`, `.tt-week__body` or `details.tt-week` | **390** |
+
+Clipping the *painting* does not remove the overflow; paint **containment** does. The rule
+went on `.tt-scroll` — the box that owns the wide content owns the containment, and it is
+the box that already clips — with the reasoning in a comment above it. Shrinking the grid to
+fit was rejected: nine columns is the printed source, and the live day view is the reading
+surface, not this one.
+
+Containment has one side effect worth naming: it makes a stacking and containing context,
+so anything that intentionally paints outside the scroller would be cut. Everything inside
+`.tt-scroll` (sticky header row, sticky Day column, inset accent edges) already lives
+inside its own clip edge, which is why this box was the safe choice.
+
+### 17.2 `verify:viewport` — the check that generalises it
+
+`scripts/dev/mobile-fit-check.mjs` (`npm run verify:viewport`) walks 24 routes at 390, 320
+and 1440 in a phone-emulated browser, **taps every `<details>` on each page**, and asserts
+`documentElement.scrollWidth === clientWidth` and `innerWidth === device width` afterwards.
+Tapping rather than setting `.open` matters: the overflow only exists in the open state, and
+the gesture is what the user reported.
+
+It also asserts the *opposite* failure wherever a `.tt-scroll` exists — the grid must still
+scroll to its far end (measured by how far the table actually travelled, not by
+`scrollWidth - clientWidth`, which disagrees by the reserved `scrollbar-gutter`) and the
+sticky Day column must stay pinned at the scroller's left edge. That half exists so nobody
+“fixes” a zoom-out with `overflow: hidden` and quietly throws the table away.
+
+Three findings from building it, none of them the timetable:
+
+- **`/campus` listed “Study partner finder” twice** and keyed its tile grid by `href`, so the
+  duplicate was a React duplicate-key error on every visit as well as a second identical card.
+  Removed; `tests/sections.test.js` now parses the hub's `SECTIONS` list (resolving `ROUTES.x`
+  too) and requires one entry per destination.
+- **The onboarding note's closing line rendered as three narrow columns.** `.firstStep` is a
+  flex row so the `↳` can baseline with the text — and a flex row turns *every* child, including
+  each bare text run, into its own item, so `text {link} text` is four items each wrapping inside
+  itself at 390px (measured: three ~96px columns inside a 350px box). The prose is now one block
+  beside the arrow (`flex: 1 1 12rem; min-width: 0`). Pixels cannot tell this apart reliably —
+  the columns share a baseline, so a union of “a line” looks as wide as prose — so
+  `scripts/dev/guide-check.mjs` measures the *shape*: no bare text node child, exactly one prose
+  block. It fails on the old markup (“1 block, 2 bare text nodes”) and passes on the new one.
+- **Console noise had to be classified honestly, twice.** The check filters Vercel's off-sandbox
+  analytics script, the router's cancelled `_rsc` prefetches, the stub's missing Realtime websocket,
+  Next's dev-only `flushComponentPerformance` timing flush, and the “unique key” warning that fires
+  whenever a *server* component passes several children to a *client* component: the keys are set on
+  server and dropped by flight serialization, so neither adding `key`s nor wrapping the children in a
+  `Fragment` silences it, and a production build does not contain it (checked on `next start`). Filtered
+  lines are counted and printed as `noise: n` per route, so a run says what it could not see.
+
+### 17.3 Verification
+
+`npm run verify` green — lint clean, `sw:check`, `verify:db`, `audit:db`, **874 tests** in 67 files
+(two new: the containment contract in `tests/timetable-live.test.js`, the hub uniqueness in
+`tests/sections.test.js`). `npm run build` clean. Against the **development server**: `verify:viewport`
+366/366 over all three viewports (including the signed-in half) and `guide-check` 53/53. Against a
+**production `next start` build** carrying the harness `NEXT_PUBLIC_*` env: 244/244 phone+small and
+53/53. `scripts/dev/week-probe.mjs` prints the before/after numbers for one route in seconds.
+
+Headless Chromium cannot photograph this bug the way a phone shows it: it rasterises the expanded
+1255px layout at scale 1, so the “before” frame is a crop of a desktop-width page rather than the
+shrunken page a phone paints — which is why the pair in `node_modules/.cache/previews/` carries the
+measured numbers in its caption instead of relying on the picture. A real iPhone Safari and an Android
+WebView are still not covered here; nor is a 390px device at a zoom level the user changed by hand.
