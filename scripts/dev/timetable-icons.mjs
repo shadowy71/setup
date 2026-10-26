@@ -17,9 +17,14 @@
  * and the channels are snapped to the same step of 20 so a 192px tile is a few
  * kilobytes rather than a few hundred.
  *
- * The files land in `public/brand/`, next to the crest, because the manifest
- * route references them by URL and the service worker precaches that exact
- * path — see PRECACHE_URLS in lib/timetable/sw-policy.js.
+ * The files land in `public/timetable/install/`, and the name matters more than
+ * it looks: `/brand/…` is behind the auth proxy, so a signed-out visitor's
+ * browser would be redirected to `/login` when it fetched the icons the
+ * manifest names — a broken tile, and on Chrome an install it will not offer at
+ * all. Everything the timetable's install path touches therefore lives under the
+ * public `/timetable/` prefix, which needs no proxy change. The manifest route
+ * references these by URL and the service worker precaches that exact path —
+ * see PRECACHE_URLS in lib/timetable/sw-policy.js.
  *
  *   node scripts/dev/timetable-icons.mjs
  */
@@ -30,16 +35,16 @@ import { launchBrowser } from './browser.mjs';
 import { root } from './perf/lib.mjs';
 
 const SOURCE = path.join(root, 'logo.jpeg');
-const OUT_DIR = path.join(root, 'public/brand');
+const OUT_DIR = path.join(root, 'public/timetable/install');
 
 /** `{ background, radius, scale }` per target, size last for the filename. */
 const TARGETS = [
-  { file: 'timetable-icon-192.png', size: 192, radius: 0.19, scale: 0.94 },
-  { file: 'timetable-icon-512.png', size: 512, radius: 0.19, scale: 0.94 },
+  { file: 'icon-192.png', size: 192, radius: 0.19, scale: 0.94 },
+  { file: 'icon-512.png', size: 512, radius: 0.19, scale: 0.94 },
   // Maskable: full bleed, no rounding (the launcher supplies the shape), and
   // the mark pulled back into the safe zone.
-  { file: 'timetable-maskable-192.png', size: 192, radius: 0, scale: 0.62 },
-  { file: 'timetable-maskable-512.png', size: 512, radius: 0, scale: 0.62 },
+  { file: 'maskable-192.png', size: 192, radius: 0, scale: 0.62 },
+  { file: 'maskable-512.png', size: 512, radius: 0, scale: 0.62 },
 ];
 
 const RASTERISE = async ({ dataUrl, size, radius, scale }) => {

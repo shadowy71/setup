@@ -547,6 +547,113 @@ sheet's text and the button label were read from the DOM, not from the source fi
 physical iPhone, iPad and a real Firefox/Edge pass remain unverified — and no gate here
 can prove a tap a page cannot make.
 
+### 13.7 The prompt itself, made to work on phones (2026-10-26)
+
+The brief was not "redesign the button": it was to find out why an install prompt was
+not working on mobile and fix the handling. Four defects were found, and the button's
+design was not one of them.
+
+**1. The capture could simply miss.** `watchInstallPrompt` was attached in a mount
+effect, and Chrome fires `beforeinstallprompt` when *it* decides — after it has a
+fetched service worker and a parsed manifest, at any point in or after load. There was
+no buffer, so an early event was gone: the card then had `hasPrompt: false`, and an
+Android Chrome user was handed the manual guide (or nothing) instead of the native
+action. Fix: `parkInstallPrompt(window)` runs at **module scope** in
+`components/timetable/TimetableOfflineProvider.js`. That listener prevents the default
+(the strategy, below), counts the event on `window.__cpInstallPromptSeen` and parks the
+event object; `watchInstallPrompt` drains the park on attach and clears it before
+delivering, so one native event is delivered exactly once however many listeners come
+and go. An inline `<script>` in `app/timetable/layout.js` would be marginally earlier
+and was rejected: `eslint.config.mjs` sets `react/no-danger: 'error'` site-wide
+(`tests/spec.test.js` re-asserts it), and this project does not carve an exception out
+of that rule for one convenience — and it does not need to, because Chrome cannot fire
+the event before this page's own script has registered a worker.
+
+**2. The worker was registered too late to help.** Registration sat behind the
+IndexedDB/settings read in the same effect, so the very condition Chrome checks for its
+own promotion was the last thing to happen. Registration now happens in the first
+effect, next to the capture; the storage read stays where it belongs. There is still
+exactly one `registerTimetableWorker` call site and one install-listener site, and the
+architecture guard in `tests/timetable-offline-ui.test.js` is what keeps it that way —
+it failed loudly while a comment in the provider spelled the event name out, which is
+the guard working.
+
+**3. Nothing on a phone ever reached the card.** The card lives below a week of
+timetable, so `installOfferDecision` (pure, unit-tested) was added and the offer sheet
+now opens itself once per page view on a phone-shaped device, and refuses to on every
+other one: installed, recently accepted (180 days), recently declined (30 days), sheet
+open, preparing, offline with nothing saved, still hydrating, no batch. `isMobileFormFactor`
+asks for a coarse pointer or a touch-capable narrow viewport, so a 412 px desktop window
+is not interrupted. `TimetableInstallOffer` is the existing `Modal` with the existing
+`Button`, so there is one install action per screen and no second dialog; the sign-in
+state is never consulted, and the timetable behind it stays interactive once it is
+dismissed.
+
+**4. The install assets were behind the auth proxy — found by fetching, not reading.**
+The manifest named `/brand/timetable-*.png` and `/apple-icon.png`; against the built
+app, signed out, every one of those returned `307 → /login?next=…`. Chrome that cannot
+read its icons does not offer an install, and iOS puts a screenshot on the home screen.
+`tests/timetable-offline-identity.test.js` had a test called "is served under the
+public `/timetable` prefix, so no proxy change is needed" and it passed — because it
+only ever looked at the manifest, never at what the manifest points at. The fix follows
+that test's own rule instead of weakening it: `public/timetable/install/*.png` (via
+`npm run brand:timetable-icons`), plus segment metadata `app/timetable/icon.png` and
+`app/timetable/apple-icon.png` (via `npm run brand:icons`), all inside the already
+public prefix; `proxy.js` was not touched, and the `tests/contrast.test.js` pin that
+forbids `/brand/` in the public list still holds. The manifest `id`, `scope`,
+`start_url` and per-division names are unchanged, so installs already on phones are not
+orphaned; the service worker precache list moved with the files and `SW_CACHE_VERSION`
+was deliberately not bumped, for the reason written next to that list.
+
+**The strategy, in one sentence: capture the event, suppress Chrome's own promotion, and
+expose the native dialog through one clearly labelled action.** `preventDefault` in the
+capture is what stops the infobar/badge and the custom sheet from competing; the cost is
+the address-bar install button, so the guide names the browser's own menu item as the
+alternative. `prompt()` is called from one place, `showInstallPrompt(event)`, reached
+only from a click inside the sheet or the card — never on load, never from a timer,
+never from the capture — and the event is dropped as soon as it is spent. Nothing
+promises a dialog it cannot open: `offerAction` labels the button `Install app` only
+when a captured event exists, otherwise `Show installation steps`, and `offerSummary`
+says which of the two worlds this is. iOS gets the Share-sheet path with no claim of a
+web API, Firefox on Android gets its own menu wording, and no group of instructions is
+written for a browser the user was not detected in.
+
+Pins, and the parts a unit test cannot reach: `tests/timetable-install-offer.test.js`
+(12 assertions) evaluates the real route handler — the served manifest must carry
+`id`/`name`/`short_name`/`standalone`/`start_url`-in-`scope`, 192 and 512 PNG icons plus
+maskable variants, a 404 for an unknown division, and each named file must exist on disk
+at the size its IHDR claims; the worker's message names must be sent *and* handled;
+`SETTING_KEYS` must list `installOfferDismissedAt` and `installAcceptedAt`, or the
+dismissal silently never persists. `tests/timetable-install-plumbing.test.js` grew 12
+more: park adoption and its once-only delivery, `isMobileFormFactor`'s six shapes,
+`installOfferDecision`'s every deny path including a clock that went backwards and a
+corrupt stamp, and `offerAction`/`offerSummary` refusing to over-promise.
+
+`npm run verify:offline` grew from 51 checks to 97, and section 9 is a real Chromium
+driving the phone flow against the production build: the offer opens itself and is the
+only surface on screen; its action saves the week (asserted in IndexedDB, division `O`)
+and then swaps to the steps in the same dialog; closing the steps is not a refusal, so
+the offer returns after a reload, while "Not now" is honoured across a reload
+(`data-offer: dismissed-recently`); an emulated installed iOS app is never asked; a
+dispatched cancelable `beforeinstallprompt` is `preventDefault`ed, adopted without a
+reload, changes the wording to the Chrome one, and `window.__promptCalls` is `0` before
+the click and `1` after it — with the acceptance closing the sheet, the card flipping to
+"Added to Home Screen" + disabled, and the next visit reading `installed-recently`.
+Finally every icon is fetched with `redirect: 'manual'` and must answer `200 image/png`
+signed out — the check that failed on the `/brand/` paths and is the regression test for
+this whole class of bug. 97/97, exit 0; `npx vitest run` 829/829; `npm run lint` clean;
+`npm run sw:check` current after regeneration.
+
+What is still not proven here, and is not claimed anywhere in the UI: that a real
+Android Chrome *decides* to offer this install. This sandbox has no display server and
+`scripts/dev/browser.mjs` forces `headless: true`; headless Chromium never fires the
+event on its own, so the event is dispatched by the test — which proves the page's half
+(capture, suppression, single click, spent event, persisted answers) and nothing about
+Chrome's judgement. `appinstalled` is likewise answered by the test, not by a launcher.
+Real iPhone/iPad Safari, iPadOS-as-Mac, Firefox on Android and a physical Pixel install
+remain post-deploy checks; the copy for each is what the built app renders, verified per
+user-agent in §13.6, and no gate can verify a tap the page cannot make.
+
 ## 14. Feed refresh and instant post visibility (2026-10-25)
 
 Scope: a post that saved successfully did not appear in the feed that was already on

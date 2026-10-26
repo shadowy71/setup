@@ -152,6 +152,7 @@ export function TimetableInstallCard() {
     storage,
     worker,
     openSheet,
+    offer,
     prepare,
     installNow,
     refresh,
@@ -185,7 +186,13 @@ export function TimetableInstallCard() {
   }
 
   return (
-    <section className="tt-install card" aria-labelledby="tt-install-title" data-state={installed ? 'installed' : 'available'}>
+    <section
+      className="tt-install card"
+      aria-labelledby="tt-install-title"
+      data-state={installed ? 'installed' : 'available'}
+      data-install-path={installPath}
+      data-offer={offer?.reason ?? 'unknown'}
+    >
       <div className="tt-install__head">
         <span className="tt-install__mark" aria-hidden="true">
           <Icon name="install" size={20} />
@@ -370,10 +377,154 @@ export function stepsFor(platform) {
   return STEPS.other;
 }
 
+/**
+ * The offer's primary button, and the only rule it follows: a label may promise the
+ * browser's dialog when a captured install event exists to open it, and may not
+ * promise it when one does not. Everything else the sheet says is the same in
+ * both cases, which is why an unsupported browser gets instructions from a button
+ * rather than a dead control or an error.
+ */
+export function offerAction({ hasPrompt, preparing, installOutcome, error }) {
+  if (preparing) return { label: 'Preparing offline copy…', disabled: true, kind: 'busy' };
+  if (installOutcome === 'waiting') return { label: 'Waiting for the browser…', disabled: true, kind: 'busy' };
+  if (installOutcome === 'accepted') return { label: 'Added to Home Screen', disabled: false, kind: 'done' };
+  if (hasPrompt) return { label: 'Install app', disabled: false, kind: 'install' };
+  return { label: error ? 'Show installation steps again' : 'Show installation steps', disabled: false, kind: 'guide' };
+}
+
+/** One line per capability, so the sheet never describes a browser it has not met. */
+export function offerSummary({ installPath, savedReady }) {
+  if (installPath === 'native') {
+    return savedReady
+      ? 'Android Chrome asks where to keep it — that dialog belongs to the browser, so Campus+ cannot tick the box for you.'
+      : 'The week gets saved on this device first, then Android Chrome asks where to keep it.';
+  }
+  if (installPath === 'ios') {
+    return savedReady
+      ? 'iPhone and iPad add the shortcut from the Share sheet in your browser. The offline copy is already saved, so the next step is only the two taps.'
+      : 'iPhone and iPad add the shortcut from the Share sheet in your browser — there is no web API for it, so nothing here will claim otherwise.';
+  }
+  return savedReady
+    ? 'This browser exposes no install button to pages, so the next step points at its own menu.'
+    : 'The offline copy is saved by this page; the icon is added from your browser’s menu, which the next step points at.';
+}
+
+/**
+ * The proactive offer, for a phone that has not installed this batch.
+ *
+ * Same Modal, same provider, same `installNow` as the card — one install path, one
+ * set of listeners, no second copy of any decision. The difference is only in when it
+ * appears and how much room it takes: on a small screen the card lives below a week of
+ * timetable, so most students never reach it, and the offer would otherwise be missed
+ * by exactly the people it is for.
+ */
+export function TimetableInstallOffer() {
+  const {
+    batch,
+    dismissSheet,
+    installNow,
+    installPath,
+    savedReady,
+    savedAgo,
+    freshness,
+    phase,
+    error,
+    install,
+    hasPrompt,
+  } = useTimetableOffline();
+
+  const preparing = phase === 'preparing' || phase === 'refreshing';
+  const name = batchName(batch?.division);
+  const action = offerAction({
+    hasPrompt,
+    preparing,
+    installOutcome: install.outcome,
+    error,
+  });
+  const installed = install.installed || install.outcome === 'accepted';
+
+  function handlePrimary() {
+    if (installed) {
+      void dismissSheet();
+      return;
+    }
+    // One action for both cases: it prepares when the copy is missing, calls
+    // `prompt()` when the browser gave us an event, and opens the steps when it
+    // did not. The sheet never has to know which one it is doing.
+    void installNow();
+  }
+
+  function handleDismiss() {
+    void dismissSheet();
+  }
+
+  return (
+    <Modal
+      open
+      onClose={dismissSheet}
+      title={`Add ${name} to your Home Screen`}
+      description={`One tap keeps this division’s week a screen away: the icon opens straight on ${name}, and the saved copy renders with no signal at all.`}
+      size="sm"
+      closeLabel="Close this sheet"
+    >
+      <div className="tt-offer">
+        <p className="tt-offer__status" aria-live="polite">
+          {installed ? (
+            'This browser confirmed the install. Open the icon and the timetable is already there.'
+          ) : savedReady ? (
+            <>
+              Offline copy ready{savedAgo ? ` · saved ${savedAgo}` : ''}
+              {freshness.state !== 'fresh' ? ` — ${freshness.label.toLowerCase()}` : ''}. Installing adds the icon; it does
+              not re-download the week.
+            </>
+          ) : (
+            'Nothing saved on this device yet. Pressing Install saves the printed week first, then offers the icon — that order is deliberate, so an installed shortcut always has something to open.'
+          )}
+        </p>
+
+        <p className="tt-offer__summary">{offerSummary({ installPath, savedReady })}</p>
+
+        {error ? (
+          <Notice tone="danger" icon="alert" className="tt-offer__error">
+            <p className="font-semibold">The offline copy is not ready.</p>
+            <p className="mt-1 t-secondary">{error}</p>
+          </Notice>
+        ) : null}
+
+        <div className="tt-offer__actions">
+          <Button
+            variant={installed ? 'quiet' : 'primary'}
+            size="lg"
+            block
+            disabled={action.disabled}
+            loading={action.kind === 'busy'}
+            onClick={handlePrimary}
+          >
+            {action.label}
+          </Button>
+          {!installed ? (
+            <Button variant="quiet" size="md" block onClick={handleDismiss}>
+              Not now
+            </Button>
+          ) : null}
+        </div>
+
+        <p className="tt-offer__hint">
+          “Not now” is remembered on this device, and nothing is installed or cached by closing this sheet. The card under
+          the timetable asks again whenever you want it.
+        </p>
+      </div>
+    </Modal>
+  );
+}
+
 export function TimetableInstallSheet() {
   const { sheet, dismissSheet, batch, installPath, platform, savedReady, freshness, savedAgo, install, hasPrompt } =
     useTimetableOffline();
   if (!sheet) return null;
+  // The offer is a different conversation — it asks for a decision rather than
+  // explaining one — so it gets its own dialog instead of a fourth branch here.
+  if (sheet === 'offer') return <TimetableInstallOffer />;
 
   const name = batchName(batch?.division);
   const kind = sheet === 'offline' || sheet === 'status' ? sheet : 'guide';

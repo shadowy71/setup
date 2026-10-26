@@ -11,8 +11,13 @@ import {
   collectShellAssetUrls,
   detectPlatform,
   dropOfflineCaches,
+  installOfferDecision,
   installPathFor,
+  isMobileFormFactor,
   isStandalone,
+  parkInstallPrompt,
+  TIMETABLE_INSTALL_OFFER_COOLDOWN_MS,
+  TIMETABLE_INSTALL_REOFFER_MS,
   offlineStateCopy,
   precacheOfflineShell,
   registerTimetableWorker,
@@ -24,7 +29,12 @@ import {
   watchInstalled,
   workerAllowed,
 } from '@/lib/timetable/offline-install';
-import { primaryAction, stepsFor } from '@/components/timetable/TimetableOfflineUi';
+import {
+  offerAction,
+  offerSummary,
+  primaryAction,
+  stepsFor,
+} from '@/components/timetable/TimetableOfflineUi';
 
 /**
  * Platform plumbing: what the browser is, what it allows, and what the button
@@ -161,6 +171,47 @@ describe('beforeinstallprompt', () => {
 
     stop();
     expect(events.has('beforeinstallprompt')).toBe(false);
+  });
+
+  it('adopts an event that arrived before the component was listening', () => {
+    // The race this exists for: Chrome fires the event whenever it likes, and the
+    // provider's listener only exists after hydration. The module-scope capture
+    // parks it on `window`; a listener attached later must take it from there.
+    const events = new Map();
+    const early = { preventDefault: () => {}, prompt: () => {}, userChoice: Promise.resolve({ outcome: 'dismissed' }) };
+    const target = {
+      __cpInstallPrompt: early,
+      addEventListener: (type, handler) => events.set(type, handler),
+      removeEventListener: (type) => events.delete(type),
+    };
+    const seen = [];
+    watchInstallPrompt(target, (event) => seen.push(event));
+    expect(seen).toEqual([early]);
+    expect(target.__cpInstallPrompt).toBeUndefined();
+    // And a second, later event is still delivered — once, not twice.
+    events.get('beforeinstallprompt')({ preventDefault: () => {} });
+    expect(seen).toHaveLength(2);
+  });
+
+  it('the module-scope capture parks the event instead of answering it', () => {
+    const events = new Map();
+    const target = {
+      addEventListener: (type, handler) => events.set(type, handler),
+      removeEventListener: (type) => events.delete(type),
+    };
+    const stop = parkInstallPrompt(target);
+    let prevented = false;
+    const event = { preventDefault: () => (prevented = true) };
+    events.get('beforeinstallprompt')(event);
+    // Suppressed (one install UI at a time is the strategy) and parked for whoever
+    // mounts next. It is *not* shown here: nothing may call prompt() from a listener.
+    expect(prevented).toBe(true);
+    expect(target.__cpInstallPrompt).toBe(event);
+    expect(target.__cpInstallPromptSeen).toBe(1);
+    expect(event.prompt).toBeUndefined();
+    stop();
+    expect(events.has('beforeinstallprompt')).toBe(false);
+    expect(typeof parkInstallPrompt(undefined)).toBe('function');
   });
 
   it('tolerates a browser without the event at all', () => {
@@ -504,5 +555,131 @@ describe('the install guide a user is handed', () => {
     expect(other).toEqual(stepsFor({ kind: 'unknown' }));
     expect(other.join(' ')).toMatch(/every browser names it differently/);
     expect(other.join(' ')).toMatch(/the offline copy is already on this device/);
+  });
+});
+
+describe('who is asked to install, and when', () => {
+  const now = Date.parse('2026-10-25T10:00:00.000Z');
+  const iso = (ms) => new Date(now - ms).toISOString();
+  const eligible = {
+    hasBatch: true,
+    hydrated: true,
+    mobile: true,
+    savedReady: true,
+    now,
+  };
+
+  it('asks a phone-shaped device with something to install', () => {
+    expect(installOfferDecision(eligible)).toEqual({ show: true, reason: 'ready' });
+    // Nothing saved yet is still an offer worth making — the action prepares
+    // first, which is the card's existing order of operations.
+    expect(installOfferDecision({ ...eligible, savedReady: false }).reason).toBe('save-then-install');
+  });
+
+  it('never interrupts a device where the answer is already known', () => {
+    expect(installOfferDecision({ ...eligible, standalone: true })).toEqual({ show: false, reason: 'installed' });
+    expect(installOfferDecision({ ...eligible, installed: true }).reason).toBe('installed');
+    expect(installOfferDecision({ ...eligible, hydrated: false }).reason).toBe('checking-device');
+    expect(installOfferDecision({ ...eligible, hasBatch: false }).reason).toBe('no-batch');
+    // Desktop keeps the card. A modal nobody asked for is not "mobile-first".
+    expect(installOfferDecision({ ...eligible, mobile: false }).reason).toBe('not-mobile');
+  });
+
+  it('honours a dismissal for a cool-off instead of forever', () => {
+    const denied = installOfferDecision({ ...eligible, dismissedAt: iso(60_000) });
+    expect(denied).toEqual({ show: false, reason: 'dismissed-recently' });
+    expect(installOfferDecision({ ...eligible, dismissedAt: iso(TIMETABLE_INSTALL_OFFER_COOLDOWN_MS + 1) }).show).toBe(true);
+    // A clock that went backwards must not produce a second question this minute.
+    expect(installOfferDecision({ ...eligible, dismissedAt: iso(-60_000) }).reason).toBe('dismissed-recently');
+    // Corrupt storage mutes nothing: an unreadable stamp is treated as no record,
+    // so the offer survives a half-written IndexedDB.
+    expect(installOfferDecision({ ...eligible, dismissedAt: 'not-a-date' }).show).toBe(true);
+  });
+
+  it('leaves somebody who installed it alone for longer', () => {
+    expect(installOfferDecision({ ...eligible, acceptedAt: iso(60_000) }).reason).toBe('installed-recently');
+    expect(
+      installOfferDecision({ ...eligible, acceptedAt: iso(TIMETABLE_INSTALL_REOFFER_MS + 1) }).show,
+    ).toBe(true);
+    // A dismissable sheet and an in-flight save are both "not now, ask again later".
+    expect(installOfferDecision({ ...eligible, sheet: 'status' }).reason).toBe('sheet-open');
+    expect(installOfferDecision({ ...eligible, preparing: true }).reason).toBe('preparing');
+    // Once per page view, including after the user closes it: the offer must not
+    // re-arm the moment its own sheet disappears.
+    expect(installOfferDecision({ ...eligible, alreadyShown: true }).reason).toBe('already-asked');
+    // Offline with nothing saved: an install that cannot open would be a lie.
+    expect(installOfferDecision({ ...eligible, offline: true, savedReady: false }).reason).toBe('nothing-to-install');
+    expect(installOfferDecision({ ...eligible, offline: true, savedReady: true }).show).toBe(true);
+    // Installed beats a pending cool-off, and everything beats a missing batch.
+    expect(installOfferDecision({ hasBatch: false, standalone: true, dismissedAt: null, now }).reason).toBe('no-batch');
+    expect(installOfferDecision({ ...eligible, standalone: true, acceptedAt: null, dismissedAt: iso(0) }).reason).toBe('installed');
+  });
+
+  it('reads a phone as a phone, and nothing else as one', () => {
+    const coarse = (query) => ({ matches: query === '(pointer: coarse)' });
+    expect(isMobileFormFactor({ matchMedia: coarse, navigatorLike: { maxTouchPoints: 5 }, innerWidth: 1440, innerHeight: 900 })).toBe(true);
+    expect(isMobileFormFactor({ matchMedia: () => ({ matches: false }), navigatorLike: { maxTouchPoints: 1 }, innerWidth: 390, innerHeight: 844 })).toBe(true);
+    expect(isMobileFormFactor({ matchMedia: () => ({ matches: false }), navigatorLike: { maxTouchPoints: 0 }, innerWidth: 390, innerHeight: 844 })).toBe(false);
+    expect(isMobileFormFactor({ matchMedia: coarse, navigatorLike: {}, innerWidth: 0, innerHeight: 0 })).toBe(false);
+    expect(isMobileFormFactor({})).toBe(false);
+    expect(
+      isMobileFormFactor({
+        matchMedia: () => {
+          throw new Error('no matchMedia');
+        },
+        navigatorLike: { maxTouchPoints: 3 },
+        innerWidth: 1200,
+        innerHeight: 800,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('what the offer may promise', () => {
+  it('offers the native dialog only when there is an event to open it', () => {
+    expect(offerAction({ hasPrompt: true, preparing: false, installOutcome: 'unknown', error: null })).toEqual({
+      label: 'Install app',
+      disabled: false,
+      kind: 'install',
+    });
+    // No event, no claim: the button opens steps, and a browser with no dialog at
+    // all is never handed a control that quietly does nothing.
+    const manual = offerAction({ hasPrompt: false, preparing: false, installOutcome: null, error: null });
+    expect(manual.kind).toBe('guide');
+    expect(manual.label).toMatch(/installation steps/i);
+    expect(manual.label).not.toMatch(/install (now|app)/i);
+    for (const installOutcome of [null, 'unsupported', 'dismissed']) {
+      expect(offerAction({ hasPrompt: false, preparing: false, installOutcome, error: null }).disabled).toBe(false);
+    }
+  });
+
+  it('shows progress and never disables the way out', () => {
+    const busy = offerAction({ hasPrompt: true, preparing: true, installOutcome: null, error: null });
+    expect(busy).toEqual({ label: 'Preparing offline copy…', disabled: true, kind: 'busy' });
+    expect(offerAction({ hasPrompt: true, preparing: false, installOutcome: 'waiting', error: null }).disabled).toBe(true);
+    expect(offerAction({ hasPrompt: true, preparing: false, installOutcome: 'accepted', error: null }).label).toBe(
+      'Added to Home Screen',
+    );
+    // A failed save is said out loud, and the button keeps a way forward.
+    expect(offerAction({ hasPrompt: false, preparing: false, installOutcome: null, error: 'Storage is full' }).kind).toBe('guide');
+  });
+
+  it('says the true thing for the path this browser has', () => {
+    const native = offerSummary({ installPath: 'native', savedReady: true });
+    expect(native).toMatch(/Chrome asks/);
+    expect(native).toMatch(/cannot tick the box for you/i);
+    const ios = offerSummary({ installPath: 'ios', savedReady: true });
+    expect(ios).toMatch(/Share sheet/);
+    expect(ios).not.toMatch(/Chrome/i);
+    const manual = offerSummary({ installPath: 'manual', savedReady: false });
+    expect(manual).toMatch(/this page/);
+    for (const path of ['native', 'ios', 'manual']) {
+      for (const saved of [true, false]) {
+        const text = offerSummary({ installPath: path, savedReady: saved });
+        expect(text.length).toBeGreaterThan(40);
+        // Nothing in the offer may claim the icon exists yet.
+        expect(text).not.toMatch(/has been added|is installed on your/i);
+      }
+    }
   });
 });

@@ -45,12 +45,15 @@ import {
   collectShellAssetUrls,
   detectPlatform,
   dropOfflineCaches,
+  installOfferDecision,
   installPathFor,
+  isMobileFormFactor,
   isStandalone,
   precacheOfflineShell,
   registerTimetableWorker,
   sendPrecacheMessage,
   unregisterOwnWorker,
+  parkInstallPrompt,
   showInstallPrompt,
   skipWaiting,
   watchInstallPrompt,
@@ -79,6 +82,17 @@ export const PREPARE_STEPS = [
 
 const UNKNOWN_FRESHNESS = { state: 'unknown', label: 'Saved copy', ageMs: null };
 
+/**
+ * The first listener, attached when this module is evaluated rather than when React
+ * renders: the install event has no queue, so one that fires while the page is still
+ * reading IndexedDB is simply gone. The event is parked on `window` (where the browser
+ * gate can see it too) and adopted by the provider's first effect, so the offer is as
+ * early as the browser allows without ever calling `prompt()` before a click. Never
+ * disposed on purpose — there is one document per page view here, and the listener
+ * holds nothing but a reference the provider takes over.
+ */
+if (typeof window !== 'undefined') parkInstallPrompt(window);
+
 export function useTimetableOffline() {
   const context = useContext(TimetableOfflineContext);
   if (!context) throw new Error('useTimetableOffline must be used inside <TimetableOfflineProvider>');
@@ -106,6 +120,12 @@ export function TimetableOfflineProvider({ division, children }) {
   const [worker, setWorker] = useState({ state: 'unsupported', scope: null, wide: false, updateAvailable: false });
   const [storage, setStorage] = useState({ backend: 'unknown', persisted: false });
   const [dismissed, setDismissed] = useState(false);
+  /** The newest of the two dismissal stamps, as ISO text; drives the cool-off. */
+  const [dismissedAt, setDismissedAt] = useState(null);
+  /** The last native prompt this device accepted — a longer silence than a dismissal. */
+  const [acceptedAt, setAcceptedAt] = useState(null);
+  const [mobile, setMobile] = useState(false);
+  const [offer, setOffer] = useState({ show: false, reason: 'checking-device' });
   const [sheet, setSheet] = useState(null);
   const [device, setDevice] = useState({ savedAgo: null, freshness: UNKNOWN_FRESHNESS });
 
@@ -115,6 +135,12 @@ export function TimetableOfflineProvider({ division, children }) {
   const busy = useRef(false);
   /** Whether *this device* has an offline copy, kept in step from effects only. */
   const savedRef = useRef(false);
+  /**
+   * At most one proactive offer per page view — including after it is dismissed,
+   * closed, or answered. Without this the offer effect would re-open the sheet the
+   * instant the user closes it, which is nagging with extra steps.
+   */
+  const offerAsked = useRef(false);
   const registration = useRef(null);
   const mounted = useRef(true);
 
@@ -187,44 +213,23 @@ export function TimetableOfflineProvider({ division, children }) {
     [batch],
   );
 
-  /* -----------------------------------------------------------------------
-     Mount: read the device, then refresh
-     ----------------------------------------------------------------------- */
-
+  /**
+   * Capture the install event before anything else runs.
+   *
+   * This effect is deliberately the first one, and it is synchronous: Chrome
+   * fires the install event when it decides the app is installable, not when
+   * this page is ready to hear about it, so a listener attached after an `await`
+   * can miss it outright. `watchInstallPrompt` also adopts the event the module-scope
+   * capture parked in `window.__cpInstallPrompt`, which covers the case where it
+   * fired before this effect ran at all.
+   */
   useEffect(() => {
-    if (!batch) return undefined;
-
-    let stopWatchingPrompt = () => {};
-    let stopWatchingInstalled = () => {};
-
-    (async () => {
-      const [stored, all, dismissedAt, storageState] = await Promise.all([
-        loadBatch(batch.division),
-        listSavedBatches(),
-        readSetting('installDismissedAt'),
-        storageStatus(),
-      ]);
-      if (!mounted.current) return;
-
-      setSaved(stored?.snapshot ? stored.record : null);
-      savedRef.current = Boolean(stored?.snapshot);
-      setSavedList(all?.batches ?? []);
-      setDismissed(Boolean(dismissedAt));
-      setStorage(storageState ?? { backend: 'unknown', persisted: false });
-      setOfflineView(!navigator.onLine);
-      setPhase(stored?.snapshot ? 'ready' : 'idle');
-      setHydrated(true);
-
-      // The event has to be captured before it can be offered, and capturing it
-      // is exactly what stops the browser prompting on its own.
-      stopWatchingPrompt = watchInstallPrompt(window, (event) => setPromptEvent(event));
-      stopWatchingInstalled = watchInstalled(window, () => {
-        if (!mounted.current) return;
-        setInstall((state) => ({ ...state, installed: true, outcome: 'accepted' }));
-        setSheet(null);
-      });
-
-      if (workerAllowed(PRODUCTION)) {
+    const stopWatchingPrompt = watchInstallPrompt(window, (event) => setPromptEvent(event));
+    // Chrome only offers an install for an app it can see a worker for, so the
+    // registration is the first thing this page does — not something that happens
+    // after the offline store has been opened and the snapshot revalidated.
+    if (workerAllowed(PRODUCTION)) {
+      void (async () => {
         const result = await registerTimetableWorker(navigator);
         if (!mounted.current) return;
         setWorker((state) => ({ ...state, ...result, updateAvailable: Boolean(result.registration?.waiting) }));
@@ -238,19 +243,107 @@ export function TimetableOfflineProvider({ division, children }) {
             if (next.state === 'installed' && mounted.current) setWorker((state) => ({ ...state, updateAvailable: true }));
           });
         });
-      }
-
-      await refresh({ silent: true });
-    })();
-
+      })();
+    }
+    const stopWatchingInstalled = watchInstalled(window, () => {
+      if (!mounted.current) return;
+      setInstall((state) => ({ ...state, installed: true, outcome: 'accepted' }));
+      setSheet(null);
+    });
     return () => {
       stopWatchingPrompt();
       stopWatchingInstalled();
     };
+  }, []);
+
+  /* -----------------------------------------------------------------------
+     Mount: read the device, then refresh
+     ----------------------------------------------------------------------- */
+
+  useEffect(() => {
+    if (!batch) return undefined;
+
+    (async () => {
+      const [stored, all, promptDismissedAt, offerDismissedAt, acceptedAt, storageState] = await Promise.all([
+        loadBatch(batch.division),
+        listSavedBatches(),
+        readSetting('installDismissedAt'),
+        readSetting('installOfferDismissedAt'),
+        readSetting('installAcceptedAt'),
+        storageStatus(),
+      ]);
+      if (!mounted.current) return;
+
+      setSaved(stored?.snapshot ? stored.record : null);
+      savedRef.current = Boolean(stored?.snapshot);
+      setSavedList(all?.batches ?? []);
+      setDismissed(Boolean(promptDismissedAt || offerDismissedAt));
+      setDismissedAt(newestIso(promptDismissedAt, offerDismissedAt));
+      setAcceptedAt(acceptedAt ?? null);
+      setStorage(storageState ?? { backend: 'unknown', persisted: false });
+      // Read with the rest of the device state rather than in the effect body: the
+      // offer must not be decided from a value that changes between the first paint
+      // and hydration, and React's rule against synchronous setState in an effect
+      // is the same instinct as this file's "nothing device-shaped in render".
+      setMobile(
+        isMobileFormFactor({
+          matchMedia: (query) => window.matchMedia?.(query),
+          navigatorLike: navigator,
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+        }),
+      );
+      setOfflineView(!navigator.onLine);
+      setPhase(stored?.snapshot ? 'ready' : 'idle');
+      setHydrated(true);
+
+      await refresh({ silent: true });
+    })();
+
     // The provider is mounted per division page — a batch change is a
     // navigation to a different page, not a prop update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batch?.division, refresh]);
+
+  const installPath = installPathFor(platform, { hasBeforeInstallPrompt: Boolean(promptEvent) });
+  const savedReady = Boolean(saved?.checksum);
+
+  /* -----------------------------------------------------------------------
+     The proactive offer: one sheet, on phones, when it can actually help
+     ----------------------------------------------------------------------- */
+
+  useEffect(() => {
+    const decision = installOfferDecision({
+      hasBatch: Boolean(batch),
+      hydrated,
+      mobile,
+      standalone,
+      installed: install.installed,
+      savedReady,
+      preparing: phase === 'preparing' || phase === 'refreshing',
+      offline: offlineView,
+      sheet,
+      alreadyShown: offerAsked.current,
+      dismissedAt,
+      acceptedAt,
+    });
+    setOffer((state) => (state.reason === decision.reason && state.show === decision.show ? state : decision));
+    if (!decision.show) return;
+    offerAsked.current = true;
+    setSheet('offer');
+  }, [
+    batch,
+    hydrated,
+    mobile,
+    standalone,
+    install.installed,
+    savedReady,
+    phase,
+    offlineView,
+    sheet,
+    dismissedAt,
+    acceptedAt,
+  ]);
 
   /* -----------------------------------------------------------------------
      Connectivity, and the age of the copy we are showing
@@ -384,14 +477,26 @@ export function TimetableOfflineProvider({ division, children }) {
       setInstall((state) => ({ ...state, outcome: 'waiting', path: 'native' }));
       const result = await showInstallPrompt(promptEvent);
       if (!mounted.current) return result;
+      // A used prompt event is spent — Chrome will not hand this navigation
+      // another one — so it is dropped rather than kept behind a button that has
+      // quietly stopped doing anything. `installPath` follows, and the offer
+      // becomes instructions, which is still a way to install.
+      setPromptEvent(null);
       setInstall((state) => ({
         ...state,
         outcome: result.outcome,
         installed: result.outcome === 'accepted' ? true : state.installed,
       }));
+      const stamp = new Date().toISOString();
+      if (result.outcome === 'accepted') {
+        setSheet(null);
+        setAcceptedAt(stamp);
+        await writeSetting('installAcceptedAt', stamp);
+      }
       if (result.outcome === 'dismissed') {
         setDismissed(true);
-        await writeSetting('installDismissedAt', new Date().toISOString());
+        setDismissedAt(stamp);
+        await writeSetting('installDismissedAt', stamp);
       }
       // The browser refused to show a prompt (criteria unmet, or already
       // handled): fall back to instructions instead of a dead end.
@@ -439,6 +544,22 @@ export function TimetableOfflineProvider({ division, children }) {
     setPhase('idle');
   }, []);
 
+  /**
+   * Closing the offer is an answer, not a pause: the stamp is written before the
+   * sheet goes away, so a reload of the same page does not ask again. Only the
+   * proactive offer records it — closing a status or instructions sheet changes
+   * nothing, because reading the status is not a refusal.
+   */
+  const dismissSheet = useCallback(async () => {
+    if (sheet === 'offer') {
+      const stamp = new Date().toISOString();
+      offerAsked.current = true;
+      setDismissedAt(stamp);
+      await writeSetting('installOfferDismissedAt', stamp);
+    }
+    if (mounted.current) setSheet(null);
+  }, [sheet]);
+
   /** Deliberately manual: the student chooses when the page swaps under them. */
   const applyUpdate = useCallback(async () => {
     const target = registration.current ?? (await navigator.serviceWorker?.getRegistration?.()) ?? null;
@@ -447,9 +568,6 @@ export function TimetableOfflineProvider({ division, children }) {
     if (applied) window.setTimeout(() => window.location.reload(), 50);
     return applied;
   }, []);
-
-  const installPath = installPathFor(platform, { hasBeforeInstallPrompt: Boolean(promptEvent) });
-  const savedReady = Boolean(saved?.checksum);
 
   const value = useMemo(
     () => ({
@@ -473,12 +591,14 @@ export function TimetableOfflineProvider({ division, children }) {
       install: { ...install, path: installPath },
       installPath,
       hasPrompt: Boolean(promptEvent),
+      mobile,
+      offer,
       standalone,
       platform,
       dismissed,
       sheet,
       openSheet: setSheet,
-      dismissSheet: () => setSheet(null),
+      dismissSheet,
       prepare,
       installNow,
       refresh,
@@ -504,12 +624,15 @@ export function TimetableOfflineProvider({ division, children }) {
       install,
       installPath,
       promptEvent,
+      mobile,
+      offer,
       standalone,
       platform,
       dismissed,
       sheet,
       prepare,
       installNow,
+      dismissSheet,
       refresh,
       removeSaved,
       removeAllSaved,
@@ -523,6 +646,15 @@ export function TimetableOfflineProvider({ division, children }) {
 /* --------------------------------------------------------------------------
    Failure copy
    -------------------------------------------------------------------------- */
+
+/** The later of two ISO stamps, or null when neither exists. */
+function newestIso(first, second) {
+  const a = Date.parse(first ?? '');
+  const b = Date.parse(second ?? '');
+  if (Number.isNaN(a)) return Number.isNaN(b) ? null : second;
+  if (Number.isNaN(b)) return first;
+  return a >= b ? first : second;
+}
 
 /**
  * The three storage failures a student can actually hit, in their words. A

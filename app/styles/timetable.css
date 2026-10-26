@@ -1054,6 +1054,70 @@
   max-width: 78ch;
 }
 
+/* ------------------------------------------------------------ the offer */
+
+/*
+ * The proactive offer. It is a sheet, not a banner: on a phone the install card sits
+ * below a week of timetable, so the decision has to come to the student. Sizes are
+ * rem-based and the tap targets are the same 2.75rem the card uses, because a modal is
+ * where a small thumb is least forgiving.
+ */
+
+.tt-offer {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tt-offer__status,
+.tt-offer__summary {
+  max-width: 62ch;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--cp-text-secondary);
+}
+
+.tt-offer__status {
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--cp-border-subtle);
+  background-color: var(--cp-bg-subtle);
+  color: var(--cp-text-primary);
+  font-size: 0.8125rem;
+}
+
+.tt-offer__actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tt-offer__actions .btn {
+  min-height: 2.75rem;
+  width: 100%;
+}
+
+@media (min-width: 30rem) {
+  .tt-offer__actions {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .tt-offer__actions .btn {
+    width: auto;
+  }
+
+  .tt-offer__actions .btn:first-child {
+    justify-self: start;
+  }
+}
+
+.tt-offer__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--cp-text-muted);
+}
+
 /* ------------------------------------------------------------ the sheet */
 
 .tt-sheet__block {

@@ -35,6 +35,15 @@ const TARGETS = [
   // compact file; anything larger is bytes no browser will use.
   { file: path.join(root, 'app/icon.png'), size: 128, radius: 0.19, opaque: false },
   { file: path.join(root, 'app/apple-icon.png'), size: 180, radius: 0, opaque: true },
+  // The timetable is the one surface expected to work signed out, and it is the
+  // one surface that gets installed. `/icon.png` and `/apple-icon.png` sit behind
+  // the auth proxy, so a home-screen tile added from a shared link would lose its
+  // artwork; these are byte-identical copies that Next serves from the public
+  // `/timetable/` prefix instead. Same artwork, deliberately — nothing is invented
+  // for the second copy, and the manifest's icons come from
+  // `npm run brand:timetable-icons`, also under `/timetable/`.
+  { file: path.join(root, 'app/timetable/icon.png'), size: 128, radius: 0.19, opaque: false },
+  { file: path.join(root, 'app/timetable/apple-icon.png'), size: 180, radius: 0, opaque: true },
 ];
 
 /** Trim the artwork's empty margin, then rasterise at each target size. */
