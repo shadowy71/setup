@@ -594,6 +594,17 @@
   background-color: var(--cp-bg-elevated);
   box-shadow: var(--shadow-card), var(--shadow-inset-top);
   scrollbar-gutter: stable;
+
+  /* Paint containment, not decoration: an 84rem table inside `overflow-x: auto`
+     still counts towards the *document's* scrollable overflow, and a phone answers
+     that by widening the layout viewport and shrinking the whole page to fit. On
+     /timetable/[division] that is what "the page zooms out when I open the week"
+     is: innerWidth jumps 390 → 1255 the moment the <details> opens. Clipping at the
+     scrollport (overflow: hidden/clip, clip-path) leaves the overflow registered and
+     does nothing; `contain: paint` is the one thing measured to work here, and it is
+     safe because every child of this box — the sticky header row, the sticky day
+     column, the inset accent edges — lives inside its own clip edge anyway. */
+  contain: paint;
 }
 
 .tt-table {

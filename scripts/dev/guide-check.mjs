@@ -40,6 +40,20 @@ const check = (label, ok, detail = '') => {
   console.log(`  ${ok ? '\u001b[32mok\u001b[39m  ' : '\u001b[31mFAIL\u001b[39m'} ${label}${detail ? ` — ${detail}` : ''}`);
 };
 const note = (text) => console.log(`       ${text}`);
+
+/**
+ * Lines that are the harness or the framework talking, not the page. Used by every
+ * page in this file so a crash filter cannot differ between one section and the
+ * next: the Supabase stub has no Realtime websocket, the sandbox cannot reach
+ * Vercel's analytics script, the router cancels its own prefetches, and Next's
+ * dev-only server-component timing (`flushComponentPerformance`, throwing on a
+ * negative stamp) fires on /login as much as here. Production builds carry none of
+ * that instrumentation, and a check that cried wolf would be switched off in a week.
+ */
+const isHarnessNoise = (text) =>
+  /realtime\/v1\/websocket|va\.vercel-scripts|_vercel\/insights|ERR_CONNECTION_CLOSED|ERR_ABORTED|_rsc=|flushComponentPerformance|cannot have a negative time stamp/.test(
+    String(text),
+  );
 const run = (name) => !values.only || name.includes(values.only);
 
 /**
@@ -132,10 +146,7 @@ async function open(contextOptions = {}) {
    * here, which is why it is treated as the framework's dev noise and not as a
    * defect of this page. Production builds do not carry that instrumentation.
    */
-  const harnessNoise = (text) =>
-    /realtime\/v1\/websocket|va\.vercel-scripts|_vercel\/insights|ERR_CONNECTION_CLOSED|ERR_ABORTED|_rsc=|flushComponentPerformance|cannot have a negative time stamp/.test(
-      text,
-    );
+  const harnessNoise = isHarnessNoise;
   page.on('pageerror', (error) => {
     const line = `pageerror: ${error.message} ${(error.stack || '').split('\n').slice(0, 3).join(' ')}`;
     (harnessNoise(line) ? external : problems).push(line);
@@ -583,8 +594,15 @@ if (run('handoff')) {
         await context.addCookies([{ name: cookie.name, value: cookie.value, url: BASE, sameSite: 'Lax' }]);
       }
       const page = await context.newPage();
+      // Same filter as everywhere else in this file: Next's dev-only RSC timing
+      // flush throws on several routes at once (it fires on /login too) and is not
+      // this feature's business.
       const problems = [];
-      page.on('pageerror', (error) => problems.push(error.message));
+      page.on('pageerror', (error) => {
+        if (!isHarnessNoise(`${error.message} ${(error.stack || '').split('\n').slice(0, 2).join(' ')}`)) {
+          problems.push(error.message);
+        }
+      });
 
       await page.goto(`${BASE}/guide`, { waitUntil: 'load', timeout: 90_000 });
       await page.waitForTimeout(500);
@@ -612,6 +630,74 @@ if (run('handoff')) {
       check('the slice does not duplicate the guide’s map', /Find information|Find your people/.test(sliceHtml) && (await page.locator('h1').count()) === 1, `${links.length} links on the page`);
 
       await page.goto(`${BASE}/onboarding`, { waitUntil: 'load', timeout: 90_000 });
+
+      // The closing line has to read as one sentence. `firstStep` is a flex row (the
+      // arrow needs baselining with the text), and a flex row makes an anonymous item
+      // out of every text run — so a paragraph written as `↳ When your profile … {link}
+      // … for what is where` is *four* items, each wrapping inside its own narrow
+      // column. At 390px that came out as three columns of stranded words. The
+      // measurement is the left edge of every line box in the paragraph: prose that
+      // flows has exactly one.
+      // The mechanism, measured structurally: `firstStep` is a flex row so the arrow
+      // can baseline with the text, and a flex row turns *every* child — including
+      // each bare text run — into an item of its own. Written as `↳ text {link} text`
+      // that is four items, each wrapping inside itself, which at 390px read as three
+      // narrow columns of stranded words with the link in the middle. Pixels cannot
+      // tell that apart reliably (the columns share a baseline, so a union of a
+      // "line" looks as wide as prose), so the shape is read directly: no bare text
+      // node as a child, and exactly one prose block beside the arrow.
+      let closing = null;
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        closing = await page.evaluate(() => {
+          const paragraph = Array.from(document.querySelectorAll('p')).find((el) =>
+            /saved you will land on Home/.test(el.textContent || ''),
+          );
+          if (!paragraph) return null;
+          const box = paragraph.getBoundingClientRect();
+          if (box.width < 1) return { ready: false };
+          const children = Array.from(paragraph.childNodes);
+          const bareText = children.filter((node) => node.nodeType === 3 && node.textContent.trim()).length;
+          const blocks = Array.from(paragraph.children).filter((el) => !el.hasAttribute('aria-hidden'));
+          const tops = new Set();
+          for (const block of blocks) {
+            const range = document.createRange();
+            range.selectNodeContents(block);
+            for (const rect of range.getClientRects()) {
+              if (rect.width > 1 && rect.height > 1) tops.add(Math.round(rect.top));
+            }
+          }
+          const widest = Math.round(
+            Math.max(
+              0,
+              ...Array.from(blocks).map((el) => {
+                const r = el.getBoundingClientRect();
+                return r.right - r.left;
+              }),
+            ),
+          );
+          return {
+            ready: true,
+            bareText,
+            blocks: blocks.length,
+            lines: tops.size,
+            widest,
+            width: Math.round(box.width),
+          };
+        });
+        // A dev server can let `load` resolve before the CSS chunk lands, and an
+        // unstyled paragraph has nothing to measure.
+        if (closing && closing.ready) break;
+        await page.waitForTimeout(250);
+      }
+
+      check(
+        'the slice’s closing line is prose in one block, not bare runs in a flex row',
+        Boolean(closing) && closing.ready && closing.bareText === 0 && closing.blocks === 1,
+        closing && closing.ready
+          ? `${closing.blocks} block(s), ${closing.bareText} bare text node(s) · ${closing.lines} lines · ${closing.widest}px of ${closing.width}px`
+          : 'closing line not found',
+      );
+
       const formBefore = await page.evaluate(() => {
         const form = document.querySelector('form');
         const intro = document.querySelector('section[aria-labelledby="onboarding-heading"]');

@@ -66,11 +66,17 @@ export function OnboardingIntro() {
           <span aria-hidden="true" className={styles.arrow}>
             ↳
           </span>
-          When your profile is saved you will land on Home.{' '}
-          <Link href={ROUTES.guide} className={styles.guideLink}>
-            Read the two-minute guide
-          </Link>{' '}
-          for what is where.
+          {/* One span, not four flex items. The arrow is the only thing that should
+              be sized by its content here: as bare text, each run becomes its own
+              anonymous flex item and the sentence wraps inside itself — at 390px that
+              reads as three narrow columns with the link stranded in the middle. */}
+          <span className={styles.firstStepText}>
+            When your profile is saved you will land on Home.{' '}
+            <Link href={ROUTES.guide} className={styles.guideLink}>
+              Read the two-minute guide
+            </Link>{' '}
+            for what is where.
+          </span>
         </p>
       </section>
     </section>

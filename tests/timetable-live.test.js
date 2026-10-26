@@ -382,6 +382,24 @@ describe('live component contracts', () => {
     expect(source).toContain('useState(initialDay ?? defaultTimetableDay(null))');
   });
 
+  it('keeps the full-week grid inside a phone viewport', () => {
+    // The week grid is 84rem wide on purpose — it is the printed source, nine
+    // columns across. A box that wide inside `overflow-x: auto` still counts towards
+    // the *document's* scrollable overflow, and a phone answers that by widening the
+    // layout viewport and scaling the whole page down: on /timetable/o, opening
+    // "See the full week at a glance" moved innerWidth from 390 to 1255 and left the
+    // page a thumbnail. Paint containment on the scroller is what fixed it;
+    // overflow: hidden, overflow: clip and clip-path were measured to leave the
+    // overflow registered, and shrinking the table would throw the design away.
+    const scrollRule = /\.tt-scroll\s*\{[^}]*\}/.exec(css)[0];
+    expect(scrollRule).toContain('overflow-x: auto');
+    expect(scrollRule).toContain('contain: paint');
+    // The table keeps its printed width, and the row headings keep their sticky
+    // pinning, because containment is on the scrollport and not on the content.
+    expect(/\.tt-table\s*\{[^}]*\}/.exec(css)[0]).toContain('min-width: 84rem');
+    expect(/\.tt-table tbody th\[scope='row'\]\s*\{[^}]*\}/.exec(css)[0]).toContain('position: sticky');
+  });
+
   it('uses a single, backed glass surface and no theme switch', () => {
     // One unprefixed declaration for the clock (the -webkit alias sits on its
     // own line, and the @supports condition is a feature query, not a second

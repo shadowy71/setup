@@ -146,8 +146,17 @@
 }
 
 .arrow {
+  flex: 0 0 auto;
   color: var(--cp-text-accent);
   font-size: 1.25rem;
+}
+
+/* The prose takes the rest of the row and shrinks honestly — `flex: 1 1 12rem` is
+   what keeps it one column of text on a phone instead of three. */
+.firstStepText {
+  flex: 1 1 12rem;
+  min-width: 0;
+  text-wrap: pretty;
 }
 
 .guideLink {

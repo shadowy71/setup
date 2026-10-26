@@ -1139,3 +1139,101 @@ house pattern for a route's display font. `app/styles/guide.css` is the page,
 layout that renders it. `scripts/dev/guide-check.mjs` is the browser check; if a
 sentence in the guide stops matching the app, `tests/guide.test.js` is what fails
 first, and it fails because the route or the claim no longer exists.
+
+---
+
+## 17. The week grid that zoomed the phone out (2026-10-26)
+
+Reported from a real phone: on `/timetable/o`, tapping **“See the full week at a glance”**
+“glitches out and zooms out to make everything smaller”. That toggle is a
+`<details>` whose panel holds the printed week — `.tt-table { min-width: 84rem }` inside
+`.tt-scroll { overflow-x: auto }`.
+
+### 17.1 The mechanism, measured rather than reasoned about
+
+A phone browser lays the page out at the device width, then treats the **document's**
+scrollable overflow as a request for more room: it widens the layout viewport and scales
+the page down to fit. It does not show a scrollbar. Measured on the page with the panel
+open, at a 390px viewport:
+
+```
+closed   innerWidth 390  · documentElement.scrollWidth 390  · visualViewport 390@1.0
+open     innerWidth 1255 · documentElement.scrollWidth 1255 · visualViewport 390@1.0
+```
+
+`innerWidth` is the browser's own number for “how wide you decided I am”, so 390 → 1255
+*is* the report. The scroll container was clipping the table visually the whole time;
+what leaked was its contribution to the root scroller's overflow area.
+
+Candidate rules were measured against the open panel (`scripts/dev/week-probe.mjs`, which
+exists so the next reader can re-run the comparison instead of trusting this paragraph):
+
+| change | result |
+| --- | --- |
+| `overflow-x: hidden` / `clip` on the scroller or the panel | still 1255 |
+| `clip-path: inset(0)`, `width: 100%; max-width: 100%` | still 1255 |
+| dropping `position: sticky` from the header | still 1255 |
+| `min-width: 0` on the table or its cells | still 1255 (and a squashed grid) |
+| **`contain: paint`** on `.tt-scroll`, `.tt-week__body` or `details.tt-week` | **390** |
+
+Clipping the *painting* does not remove the overflow; paint **containment** does. The rule
+went on `.tt-scroll` — the box that owns the wide content owns the containment, and it is
+the box that already clips — with the reasoning in a comment above it. Shrinking the grid to
+fit was rejected: nine columns is the printed source, and the live day view is the reading
+surface, not this one.
+
+Containment has one side effect worth naming: it makes a stacking and containing context,
+so anything that intentionally paints outside the scroller would be cut. Everything inside
+`.tt-scroll` (sticky header row, sticky Day column, inset accent edges) already lives
+inside its own clip edge, which is why this box was the safe choice.
+
+### 17.2 `verify:viewport` — the check that generalises it
+
+`scripts/dev/mobile-fit-check.mjs` (`npm run verify:viewport`) walks 24 routes at 390, 320
+and 1440 in a phone-emulated browser, **taps every `<details>` on each page**, and asserts
+`documentElement.scrollWidth === clientWidth` and `innerWidth === device width` afterwards.
+Tapping rather than setting `.open` matters: the overflow only exists in the open state, and
+the gesture is what the user reported.
+
+It also asserts the *opposite* failure wherever a `.tt-scroll` exists — the grid must still
+scroll to its far end (measured by how far the table actually travelled, not by
+`scrollWidth - clientWidth`, which disagrees by the reserved `scrollbar-gutter`) and the
+sticky Day column must stay pinned at the scroller's left edge. That half exists so nobody
+“fixes” a zoom-out with `overflow: hidden` and quietly throws the table away.
+
+Three findings from building it, none of them the timetable:
+
+- **`/campus` listed “Study partner finder” twice** and keyed its tile grid by `href`, so the
+  duplicate was a React duplicate-key error on every visit as well as a second identical card.
+  Removed; `tests/sections.test.js` now parses the hub's `SECTIONS` list (resolving `ROUTES.x`
+  too) and requires one entry per destination.
+- **The onboarding note's closing line rendered as three narrow columns.** `.firstStep` is a
+  flex row so the `↳` can baseline with the text — and a flex row turns *every* child, including
+  each bare text run, into its own item, so `text {link} text` is four items each wrapping inside
+  itself at 390px (measured: three ~96px columns inside a 350px box). The prose is now one block
+  beside the arrow (`flex: 1 1 12rem; min-width: 0`). Pixels cannot tell this apart reliably —
+  the columns share a baseline, so a union of “a line” looks as wide as prose — so
+  `scripts/dev/guide-check.mjs` measures the *shape*: no bare text node child, exactly one prose
+  block. It fails on the old markup (“1 block, 2 bare text nodes”) and passes on the new one.
+- **Console noise had to be classified honestly, twice.** The check filters Vercel's off-sandbox
+  analytics script, the router's cancelled `_rsc` prefetches, the stub's missing Realtime websocket,
+  Next's dev-only `flushComponentPerformance` timing flush, and the “unique key” warning that fires
+  whenever a *server* component passes several children to a *client* component: the keys are set on
+  server and dropped by flight serialization, so neither adding `key`s nor wrapping the children in a
+  `Fragment` silences it, and a production build does not contain it (checked on `next start`). Filtered
+  lines are counted and printed as `noise: n` per route, so a run says what it could not see.
+
+### 17.3 Verification
+
+`npm run verify` green — lint clean, `sw:check`, `verify:db`, `audit:db`, **874 tests** in 67 files
+(two new: the containment contract in `tests/timetable-live.test.js`, the hub uniqueness in
+`tests/sections.test.js`). `npm run build` clean. Against the **development server**: `verify:viewport`
+366/366 over all three viewports (including the signed-in half) and `guide-check` 53/53. Against a
+**production `next start` build** carrying the harness `NEXT_PUBLIC_*` env: 244/244 phone+small and
+53/53. `scripts/dev/week-probe.mjs` prints the before/after numbers for one route in seconds.
+
+Headless Chromium cannot photograph this bug the way a phone shows it: it rasterises the expanded
+1255px layout at scale 1, so the “before” frame is a crop of a desktop-width page rather than the
+shrunken page a phone paints — which is why the pair in `node_modules/.cache/previews/` carries the
+measured numbers in its caption instead of relying on the picture. A real iPhone Safari and an Android
+WebView are still not covered here; nor is a 390px device at a zoom level the user changed by hand.
