@@ -160,6 +160,16 @@ describe('what may be cached', () => {
     expect(classifyRequest(asset('https://pccoe.in/uploads/schedule.pdf', 'https://pccoe.in/timetable/o')).action).toBe('bypass');
     // …but the launcher artwork and the self-hosted fonts are.
     expect(classifyRequest(asset('https://pccoe.in/brand/timetable-icon-192.png')).action).toBe('cache-first');
+    // The install art lives under /timetable/ so a signed-out browser can fetch it;
+    // the worker has to keep caching it all the same.
+    for (const url of [
+      'https://pccoe.in/timetable/install/icon-192.png',
+      'https://pccoe.in/timetable/install/maskable-512.png',
+      'https://pccoe.in/timetable/apple-icon.png',
+      'https://pccoe.in/timetable/icon.png?v=1',
+    ]) {
+      expect(classifyRequest(asset(url)).action, url).toBe('cache-first');
+    }
     expect(
       classifyRequest(asset('https://pccoe.in/_next/static/media/DMMono_Regular-s.p.00kmgyrwf8rdn.ttf')).action,
     ).toBe('cache-first');

@@ -507,6 +507,261 @@ console.log(
 );
 
 // ---------------------------------------------------------------------------
+section('9. the mobile offer, in a browser that can touch');
+//
+// The install card lives below a week of timetable, so on a phone most students never
+// reach it. This section drives the proactive offer in an emulated Android Chrome
+// (touch, coarse pointer, phone viewport) against the production build.
+//
+// What is real here: a real Chromium, a real IndexedDB, a real service worker, a real
+// manifest fetch, a real dispatch of a cancelable `beforeinstallprompt`, and the app's
+// own click handlers. What is synthetic and cannot be otherwise in this sandbox: the
+// install event itself (headless Chromium never offers one, so the flow is driven with
+// a dispatched event the app cannot tell apart from the real thing) and the outcome of
+// Chrome's dialog. Nothing in this file therefore claims that a real Android Chrome
+// showed its prompt — it proves the page captured the event, suppressed the browser's
+// own promotion, waited for a click, and reacted to the answer.
+const ANDROID_UA =
+  'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36';
+const IPHONE_UA =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1';
+const phone = { viewport: { width: 393, height: 851 }, hasTouch: true, isMobile: true };
+
+const offerView = (target) =>
+  target.evaluate(() => {
+    const dialog = document.querySelector('[role="dialog"]');
+    const card = document.querySelector('.tt-install');
+    const buttons = [...(dialog?.querySelectorAll('button') ?? [])];
+    return {
+      dialogs: document.querySelectorAll('[role="dialog"]').length,
+      dialog: Boolean(dialog),
+      text: (dialog?.innerText ?? '').replace(/\s+/g, ' ').trim(),
+      buttons: buttons.map((node) => node.textContent.trim()).filter(Boolean),
+      disabled: buttons.filter((node) => node.disabled).map((node) => node.textContent.trim()),
+      offer: card?.getAttribute('data-offer') ?? null,
+      installPath: card?.getAttribute('data-install-path') ?? null,
+      cardButton: document.querySelector('.tt-install__actions .btn')?.textContent?.trim() ?? null,
+      steps: [...document.querySelectorAll('.tt-sheet__steps li')].map((node) => node.textContent.trim()),
+      parked: Boolean(window.__cpInstallPrompt),
+      promptCalls: Number(window.__promptCalls ?? 0),
+      prevented: window.__bipDefaultPrevented ?? null,
+      rows: document.querySelectorAll('.tt-item__subject').length,
+      secure: window.isSecureContext,
+    };
+  });
+
+// 9a — the phone that has no install event at all (the honest default here).
+const manualContext = await browser.newContext({ ...phone, userAgent: ANDROID_UA });
+const manualPage = await manualContext.newPage();
+const manualErrors = [];
+manualPage.on('pageerror', (error) => manualErrors.push(String(error).slice(0, 160)));
+await manualPage.goto(`${BASE}/timetable/${FIRST}`, { waitUntil: 'domcontentloaded' });
+await manualPage.waitForTimeout(2600);
+const asked = await offerView(manualPage);
+check('the offer opens itself on a phone, unprompted', asked.dialog && /Add Division .* to your Home Screen/.test(asked.text), asked.offer);
+check('exactly one install surface is on screen', asked.dialogs === 1, `dialogs=${asked.dialogs}`);
+check('the offer explains the home screen, not a design idea', /home screen/i.test(asked.text) && /no signal/i.test(asked.text));
+check('it states the offline state it is standing on', /Offline copy|Nothing saved on this device yet/i.test(asked.text));
+check('it says what this browser can do, and this one cannot', /browser’s menu|no install button to pages/i.test(asked.text) && !/Chrome asks/i.test(asked.text), `path=${asked.installPath}`);
+check('there is a dismissal in the user’s words', asked.buttons.some((label) => /Not now/i.test(label)), asked.buttons.join(' · '));
+check('the manual case is offered steps, never a fake install button', asked.buttons.some((label) => /installation steps/i.test(label)) && !asked.buttons.some((label) => /^Install app$/i.test(label)), asked.buttons.join(' · '));
+check('no button in the offer is inert', asked.disabled.length === 0, asked.disabled.join(' · ') || 'none disabled');
+check('the timetable behind it is intact', asked.rows > 0 && asked.secure, `${asked.rows} rows · secure context: ${asked.secure}`);
+
+// The one action the offer may take on this browser: prepare the copy, then show steps.
+await manualPage.locator('[role="dialog"] button').filter({ hasText: /installation steps/i }).first().click();
+await manualPage.waitForTimeout(4500);
+const guided = await offerView(manualPage);
+check('the offer becomes the steps, in the same dialog', guided.dialog && guided.steps.length >= 2, `${guided.steps.length} steps`);
+check('and the copy got saved while it was deciding', /Offline copy ready|saved/i.test((await manualPage.locator('.tt-install').innerText().catch(() => ''))));
+const manualStored = await manualPage.evaluate(
+  () =>
+    new Promise((resolve) => {
+      const open = indexedDB.open('campusplus-timetable-offline', 1);
+      open.onsuccess = () => {
+        const all = open.result.transaction('batches', 'readonly').objectStore('batches').getAll();
+        all.onsuccess = () => resolve(all.result.map((record) => record.division));
+        all.onerror = () => resolve([]);
+      };
+      open.onerror = () => resolve([]);
+    }),
+);
+check('the saved batch is in IndexedDB for this division', manualStored.includes(letter(FIRST)), manualStored.join(','));
+
+await manualPage.keyboard.press('Escape');
+await manualPage.waitForTimeout(500);
+check('closing the guide is not treated as a refusal', !(await offerView(manualPage)).dialog);
+await manualPage.reload({ waitUntil: 'domcontentloaded' });
+await manualPage.waitForTimeout(2600);
+const askedAgain = await offerView(manualPage);
+check('the offer comes back, because nobody said no', askedAgain.dialog && /Add Division /.test(askedAgain.text), askedAgain.offer ?? 'closed');
+const notNow = manualPage.locator('[role="dialog"] button').filter({ hasText: /Not now/i });
+check('the offer has a Not now, not only an X', (await notNow.count()) > 0);
+await notNow.first().click();
+await manualPage.waitForTimeout(900);
+const declined = await offerView(manualPage);
+check('declining closes it and installs nothing', !declined.dialog, declined.offer ?? 'closed');
+await manualPage.reload({ waitUntil: 'domcontentloaded' });
+await manualPage.waitForTimeout(2600);
+const revisited = await offerView(manualPage);
+check('a repeated visit does not ask again', !revisited.dialog && revisited.offer === 'dismissed-recently', String(revisited.offer));
+check('the card is still the way back in', /Home Screen|Save|Update|Remove/.test(revisited.cardButton ?? ''), revisited.cardButton);
+check('nothing threw on the phone path', manualErrors.length === 0, manualErrors.join(' | '));
+await manualContext.close();
+
+// 9b — a device where the app is already installed: no interruption, at all.
+const installedContext = await browser.newContext({ ...phone, userAgent: IPHONE_UA });
+await installedContext.addInitScript(() => {
+  // The only signal iOS gives a page about a home-screen shortcut.
+  Object.defineProperty(navigator, 'standalone', { get: () => true });
+});
+const installedPage = await installedContext.newPage();
+await installedPage.goto(`${BASE}/timetable/${FIRST}`, { waitUntil: 'domcontentloaded' });
+await installedPage.waitForTimeout(2400);
+const installed = await offerView(installedPage);
+check('an installed app is never interrupted again', !installed.dialog && installed.offer === 'installed', String(installed.offer));
+check('and the card already says what is true', /is on your Home Screen/.test(await installedPage.locator('.tt-install').innerText()));
+await installedContext.close();
+
+// 9c — the event, the suppression, the click, the answer.
+const nativeContext = await browser.newContext({ ...phone, userAgent: ANDROID_UA });
+await nativeContext.addInitScript(() => {
+  window.__promptCalls = 0;
+  window.__bipDefaultPrevented = null;
+});
+const nativePage = await nativeContext.newPage();
+const nativeErrors = [];
+nativePage.on('pageerror', (error) => nativeErrors.push(String(error).slice(0, 160)));
+await nativePage.goto(`${BASE}/timetable/${FIRST}`, { waitUntil: 'domcontentloaded' });
+await nativePage.waitForTimeout(2400);
+const beforeDispatch = await offerView(nativePage);
+check('nothing has been prompted before a click', beforeDispatch.promptCalls === 0, `calls=${beforeDispatch.promptCalls}`);
+check('the manual offer was up while no event existed', beforeDispatch.dialog && /installation steps/i.test(beforeDispatch.text));
+
+// A real cancelable event, dispatched at the document — exactly what the app sees.
+await nativePage.evaluate(
+  () =>
+    new Promise((resolve) => {
+      const event = new Event('beforeinstallprompt', { cancelable: true });
+      event.prompt = () => {
+        window.__promptCalls += 1;
+      };
+      event.userChoice = new Promise((inner) => {
+        window.__answerChoice = (outcome) => inner({ outcome });
+      });
+      window.addEventListener(
+        'beforeinstallprompt',
+        (seen) => {
+          window.__bipDefaultPrevented = seen.defaultPrevented;
+        },
+        false,
+      );
+      window.dispatchEvent(event);
+      window.setTimeout(() => resolve(true), 60);
+    }),
+);
+await nativePage.waitForTimeout(700);
+const afterDispatch = await offerView(nativePage);
+check('the page prevents the browser’s own promotion, so one UI asks at a time', afterDispatch.prevented === true, String(afterDispatch.prevented));
+check('the captured event is not left parked for a second listener', afterDispatch.parked === false);
+check('the offer turns into the native action without a reload', /Install app/.test(afterDispatch.buttons.join(' ')) && afterDispatch.installPath === 'native', afterDispatch.buttons.join(' · '));
+check('the wording changes with the capability it found', /Chrome asks where to keep it/i.test(afterDispatch.text), afterDispatch.text.slice(0, 70));
+
+await nativePage.locator('[role="dialog"] button').filter({ hasText: /Install app/i }).first().click();
+await nativePage.waitForTimeout(4200);
+const midFlight = await offerView(nativePage);
+check('one click calls prompt() once, after saving first', midFlight.promptCalls === 1, `calls=${midFlight.promptCalls}`);
+await nativePage.evaluate(() => window.__answerChoice?.('accepted'));
+await nativePage.waitForTimeout(1200);
+const answered = await offerView(nativePage);
+check('an accepted prompt closes the offer', !answered.dialog, answered.offer ?? 'closed');
+check('the card reports what the browser confirmed', /Added to Home Screen/.test(answered.cardButton ?? ''), answered.cardButton);
+check('and it is disabled, so the same claim cannot be clicked twice', /Added to Home Screen/.test(answered.cardButton ?? ''));
+await nativePage.reload({ waitUntil: 'domcontentloaded' });
+await nativePage.waitForTimeout(2400);
+const afterAccept = await offerView(nativePage);
+check('an install that was accepted is not offered again next visit', !afterAccept.dialog && afterAccept.offer === 'installed-recently', String(afterAccept.offer));
+check('the timetable still renders after all of that', afterAccept.rows > 0, `${afterAccept.rows} rows`);
+check('no page error on the native path', nativeErrors.length === 0, nativeErrors.join(' | '));
+
+// 9d — what installability actually depends on, read from the served app.
+const installability = await nativePage.evaluate(async () => {
+  const links = [...document.querySelectorAll('link[rel="manifest"]')];
+  const manifest = links.length ? await (await fetch(links[0].href)).json() : null;
+  const icons = manifest
+    ? await Promise.all(
+        (manifest.icons ?? []).map(async (icon) => {
+          const response = await fetch(icon.src, { method: 'GET' });
+          return { src: icon.src, status: response.status, type: response.headers.get('content-type') ?? '', sizes: icon.sizes };
+        }),
+      )
+    : [];
+  const scope = manifest?.scope ? new URL(manifest.scope, location.origin) : null;
+  const start = manifest?.start_url ? new URL(manifest.start_url, location.origin) : null;
+  const registration = await navigator.serviceWorker.getRegistration();
+  return {
+    linkCount: links.length,
+    linkStartsUnderScope: links.every((node) => new URL(node.href).pathname.startsWith('/timetable/')),
+    manifest,
+    icons,
+    startInScope: Boolean(start && scope && start.origin === scope.origin && start.pathname.startsWith(scope.pathname)),
+    startSameOrigin: Boolean(start && start.origin === location.origin),
+    swScope: registration?.scope ?? null,
+    swCoversStart: Boolean(registration?.scope && start && start.pathname.startsWith(new URL(registration.scope).pathname)),
+    servedOverHttps: location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1',
+  };
+});
+check('the page links exactly one manifest, under /timetable/', installability.linkCount === 1 && installability.linkStartsUnderScope, `links=${installability.linkCount}`);
+check('the served manifest carries name, short_name and a standalone display', Boolean(installability.manifest?.name) && Boolean(installability.manifest?.short_name) && installability.manifest?.display === 'standalone', installability.manifest?.display);
+check('start_url is inside the manifest scope and on this origin', installability.startInScope && installability.startSameOrigin, `${installability.manifest?.start_url} in ${installability.manifest?.scope}`);
+check('the manifest’s per-batch id is present and stable', typeof installability.manifest?.id === 'string' && installability.manifest.id.includes('timetable-'), installability.manifest?.id);
+check('every icon it names is served as a PNG', installability.icons.length >= 4 && installability.icons.every((icon) => icon.status === 200 && /image\/png/.test(icon.type)), installability.icons.map((icon) => `${icon.sizes}:${icon.status}`).join(' '));
+check('the offline worker is registered over a scope that covers start_url', Boolean(installability.swScope) && installability.swCoversStart, installability.swScope ?? 'none');
+
+// The head's own asset links, fetched exactly as a signed-out browser fetches them.
+// `redirect: 'manual'` turns the auth proxy's bounce into status 0, so this is the
+// check that catches an install asset the app cannot reach without a session — the
+// failure mode that leaves a launcher tile showing a screenshot, and a Chrome that
+// quietly refuses to offer the install at all.
+const headAssets = await nativePage.evaluate(async () => {
+  const nodes = [...document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"], link[rel="manifest"]')];
+  return Promise.all(
+    nodes.map(async (node) => {
+      const url = new URL(node.href, location.origin);
+      const response = await fetch(url.pathname + url.search, { redirect: 'manual' });
+      return {
+        rel: node.getAttribute('rel'),
+        path: url.pathname,
+        underTimetable: url.pathname.startsWith('/timetable/'),
+        status: response.status,
+        type: response.headers.get('content-type') ?? '',
+      };
+    }),
+  );
+});
+check('every asset the install reads is inside the public /timetable prefix', headAssets.length >= 3 && headAssets.every((asset) => asset.underTimetable), headAssets.map((asset) => `${asset.rel}:${asset.path}`).join(' '));
+check('and a signed-out browser is served the real file, not a redirect to /login', headAssets.every((asset) => asset.status === 200 && /image\/png|manifest\+json|image\//.test(asset.type)), headAssets.map((asset) => `${asset.path}=${asset.status} ${asset.type.split(';')[0]}`).join(' '));
+check('the page is a secure context (HTTPS, or localhost while checking)', installability.servedOverHttps);
+await nativeContext.close();
+
+// 9e — a phone whose browser is not Chrome: the same offer, different words.
+const firefoxContext = await browser.newContext({ ...phone, userAgent: 'Mozilla/5.0 (Android 14; Mobile; rv:132.0) Gecko/132.0 Firefox/132.0' });
+const firefoxPage = await firefoxContext.newPage();
+await firefoxPage.goto(`${BASE}/timetable/${SECOND}`, { waitUntil: 'domcontentloaded' });
+await firefoxPage.waitForTimeout(2400);
+const firefoxView = await offerView(firefoxPage);
+check('another mobile browser is offered the steps, not Chrome’s dialog', !/Install app/.test(firefoxView.buttons.join(' ')) && firefoxView.installPath === 'manual', firefoxView.buttons.join(' · '));
+check('and its guide is the one for that platform', firefoxView.dialog && /menu/i.test(firefoxView.text), firefoxView.offer ?? 'open');
+await firefoxContext.close();
+
+// A narrow window is not a phone. The desktop 412px layout already fits the card in
+// the flow, and a modal that steals a keyboard user's page is not an improvement.
+await page.keyboard.press('Escape');
+await page.waitForTimeout(400);
+const desktopOffer = await offerView(page);
+check('a narrow desktop window is not interrupted by the offer', !desktopOffer.dialog && desktopOffer.offer === 'not-mobile', String(desktopOffer.offer));
+
+// ---------------------------------------------------------------------------
 section('summary');
 const failed = results.filter((result) => !result.ok);
 console.log(`${results.length - failed.length}/${results.length} checks passed against ${BASE}`);

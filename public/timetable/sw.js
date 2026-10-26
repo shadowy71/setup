@@ -9,17 +9,25 @@
   var OFFLINE_SHELL_READY_URL = "/timetable/offline.ready";
   var PRECACHE_URLS = [
     OFFLINE_SHELL_URL,
-    "/brand/timetable-icon-192.png",
-    "/brand/timetable-icon-512.png",
-    "/brand/timetable-maskable-192.png",
-    "/brand/timetable-maskable-512.png"
+    "/timetable/install/icon-192.png",
+    "/timetable/install/icon-512.png",
+    "/timetable/install/maskable-192.png",
+    "/timetable/install/maskable-512.png"
   ];
   var ASSET_LIMIT = 220;
   var DOCUMENT_LIMIT = 24;
   var MAX_CACHED_BYTES = 256 * 1024;
   var TIMETABLE_PATH = "/timetable";
   var IMMUTABLE_PREFIXES = ["/_next/static/"];
-  var STATIC_PREFIXES = ["/brand/", "/fonts/", "/icon.png", "/apple-icon.png"];
+  var STATIC_PREFIXES = [
+    "/brand/",
+    "/fonts/",
+    "/icon.png",
+    "/apple-icon.png",
+    "/timetable/install/",
+    "/timetable/icon.png",
+    "/timetable/apple-icon.png"
+  ];
   var NEVER_PREFIXES = ["/api/", "/auth/", "/login", "/logout", "/setup", "/onboarding", "/admin", "/moderator", "/settings", "/account-status"];
   function cacheNames(version = SW_CACHE_VERSION) {
     return {

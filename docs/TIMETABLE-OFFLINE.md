@@ -62,12 +62,69 @@ offered (`installPathFor`), and never a fourth thing.
 
 | Platform | What happens | What the UI says |
 | --- | --- | --- |
-| Android Chrome / Edge | `beforeinstallprompt` is captured silently at page load (with `preventDefault`, so no unsolicited infobar). A deliberate click on the action calls `prompt()` and the outcome is read back from `userChoice`; `appinstalled` is the only event that turns the label into "Added to Home Screen". Each batch installs as its own app, because the manifest `id` and `start_url` differ. | `Add Division O (IT) timetable to Home Screen` → `Waiting for installation confirmation…` → `Added to Home Screen` / `Installation dismissed` |
+| Android Chrome / Edge | `beforeinstallprompt` is captured the moment the timetable's client module is evaluated — not at mount — and `preventDefault` is called there, so Chrome never promotes the install on its own. A deliberate click on the action calls `prompt()`, and the outcome is read back from `userChoice`; `userChoice` (or `appinstalled`) is the only thing that turns the label into "Added to Home Screen". Each batch installs as its own app, because the manifest `id` and `start_url` differ. | `Add Division O (IT) timetable to Home Screen` → `Waiting for installation confirmation…` → `Added to Home Screen` / `Installation dismissed` |
 | iPhone and iPad — any browser on them (including an iPad reporting as a Mac) | No prompt API exists on iOS at all, in any browser: WebKit is the only engine and the Share sheet belongs to the OS. The action opens a small sheet with the Share → Add to Home Screen steps, naming the batch. The offline copy is written **before** the instructions appear, because the OS gives the app its own data store the moment it is added and the save must already be in it. Each saved page becomes its own icon, and its own app, naturally. | `Add Division O (IT) timetable to Home Screen`, then the numbered guide |
 | Desktop Chrome / Edge / Firefox | Chromium behaves as above (the prompt is available on desktop too, and "Install" appears in the address-bar or menu). Firefox has no prompt API at all: the sheet tells the user to look for the install item in the browser's own menu. | native where available, otherwise `manual` guide |
 | Anything else — desktop WebKit included — or a browser that declined the prompt | No dialog is invented, no success is claimed, and no instructions for one browser are handed to another. The button remains a guide, and offline saving still works — those are tracked as separate states on purpose. | `Add this timetable to Home Screen` as a guide |
 
-Two rules keep this honest in code:
+### 2.1 The one place the event is handled
+
+The install prompt is a single event with three ways to get it wrong, so it is
+handled in exactly one place — `lib/timetable/offline-install.js` — and the
+documented strategy is: **capture it, suppress Chrome's own promotion, and put
+the native dialog behind one clearly labelled action.**
+
+* **Capture at module scope, not at mount.** `TimetableOfflineProvider.js` calls
+  `parkInstallPrompt(window)` when the module is evaluated. That listener
+  `preventDefault()`s the event, counts it (`window.__cpInstallPromptSeen`) and
+  parks the event object on `window`. A listener attached in an effect that runs
+  after hydration can miss the event entirely: nothing guarantees Chrome waits
+  for React. The park is the buffer, and `watchInstallPrompt` drains it — so an
+  event that arrived first-second is adopted by whoever mounts, and is delivered
+  once and only once. A strictly earlier inline `<script>` would be marginally
+  faster and is not on the table: this project bans raw HTML injection
+  site-wide (`react/no-danger`, re-asserted by `tests/spec.test.js`), and Chrome
+  can only fire the event after this page's own script has registered a worker,
+  which is far enough for the park to be reliable.
+* **`preventDefault()` is the whole of the "competing prompt" answer.** The
+  custom UI is the only UI. Chrome's infobar/badge and its menu item are the
+  browser's own promotion; suppressing them here is what keeps a student from
+  seeing two install affordances fight over one tap. It costs the address-bar
+  install button on Chromium desktop, which is why the sheet's guide names the
+  menu item as an alternative rather than pretending the page owns the dialog.
+* **`prompt()` only ever runs from a click.** Not on load, not after a timer, not
+  from an event handler. `showInstallPrompt(event)` is the only `prompt()` call
+  in the app, it is reached from `installNow()`, and the event is dropped the
+  moment it is spent, so a second click cannot reopen a dialog the browser will
+  not show twice. Browsers that never fire the event (iOS, Firefox on Android,
+  anything without the API) simply have no event to spend: their action is a
+  guide, and the copy says so.
+
+### 2.2 The offer, on phones only
+
+The install card sits below a week of timetable, so most phone users never reach
+it. `installOfferDecision` — a pure function of what the page knows — decides
+whether to ask, once per page view:
+
+| Condition | Decision |
+| --- | --- |
+| no batch, still hydrating, no worker allowed and nothing to offer | stay quiet (`no-batch`, `checking-device`) |
+| already running as an installed app, or an install was accepted recently | stay quiet (`installed`, `installed-recently` — 180 days) |
+| not a phone-shaped device (`isMobileFormFactor`: coarse pointer or touch plus a narrow viewport) | stay quiet (`not-mobile`); the card is the desktop path |
+| the user said "Not now" within 30 days | stay quiet (`dismissed-recently`) |
+| a sheet is open, a save is running, offline with nothing saved | stay quiet (`sheet-open`, `preparing`, `nothing-to-install`) |
+| otherwise, with something to install | ask once — `ready`, or `save-then-install` when nothing is saved yet |
+
+The sheet it opens (`TimetableInstallOffer`) is one `Modal` that reuses the
+card's own action, so there is never a second install control on screen. It
+names the offline state it is standing on, states what this browser can do, and
+its primary button is exactly the card's button: `Install app` where an event
+was captured, `Show installation steps` everywhere else. Dismissing it records
+`installOfferDismissedAt`; closing the *guide* is not a refusal and records
+nothing. Both stamps are whitelisted in `SETTING_KEYS` (an unlisted key is
+silently never persisted, and the offer would nag on every load).
+
+Four rules keep this honest in code:
 
 * **Install evidence is never inferred from a click.** `installOutcome` moves to
   `accepted` only from `appinstalled` or a `display-mode: standalone` /
@@ -77,13 +134,33 @@ Two rules keep this honest in code:
   refuses the icon still gets the offline copy, and the pill says so. A student
   whose install succeeded but whose storage is full is not told everything is
   fine.
+* **The install surfaces all live in the public prefix.** The manifest, the
+  worker, the launcher icons (`/timetable/install/*.png`) and the Apple tile
+  (`/timetable/apple-icon.png`) are served from `/timetable/…`, which the auth
+  proxy already lets through. That is not cosmetic: an icon the browser cannot
+  fetch without a session is a tile that shows a screenshot on iOS and, on
+  Chrome, an install it will not offer at all. `npm run verify:offline` fetches
+  every head asset with `redirect: 'manual'` so a future move back behind the
+  proxy fails the gate instead of shipping.
+* **One capture site, one worker registration.** `tests/timetable-offline-ui.test.js`
+  asserts the install event is listened for in `lib/timetable/offline-install.js`
+  and nowhere else, and the provider registers the worker from exactly one call
+  site in its first effect — before any storage read, because the read is what
+  used to delay it.
 
 What could not be verified in this environment, and is not claimed anywhere:
-the native prompt itself. Headless Chromium never fires
-`beforeinstallprompt` (`npm run verify:offline` reports
-`offered: no (headless Chromium never fires it)`), so the guide path is what the
-browser gate exercises. Real-device installs need the same gate run on those
-devices.
+**whether a real Chrome decides to offer the install.** Headless Chromium never
+fires `beforeinstallprompt` on its own (`npm run verify:offline` reports
+`offered: no (headless Chromium never fires it)`), and this sandbox has no
+display server, so a headful Android Chrome with a real launcher cannot be
+driven here. What the gate *does* prove, in real Chromium against the production
+build, is the page's half of the contract: a dispatched cancelable
+`beforeinstallprompt` is prevented (so no competing promotion), adopted by the
+provider without a reload, turned into an `Install app` action, `prompt()` is
+called exactly once and only after a click, and an accepted `userChoice` closes
+the offer, updates the card and stops the offer from returning on the next
+visit. That is handling, not proof about Chrome's own UI. Real-device installs
+on Android Chrome, iOS Safari, iPadOS and Firefox remain the post-deploy step.
 
 ## 3. What is stored where
 
@@ -262,14 +339,23 @@ we stored", never "the current week".
 
 ```bash
 npm run sw:bundle && npm run sw:check   # the worker is generated; fail if it drifted
-npm run lint && npx vitest run          # 116 new assertions across 5 files
+npm run lint && npx vitest run          # 829 assertions across 66 files
 npm run build && npm start              # a production build, no dev server
-npm run verify:offline                  # 42 browser assertions in real Chromium
+npm run verify:offline                  # 97 browser assertions in real Chromium
 ```
+
+`npx vitest run` covers the install plumbing in three files:
+`tests/timetable-install-plumbing.test.js` (38 — what the browser is, the event,
+the worker, the caches, what the copy may say), `tests/timetable-install-offer.test.js`
+(12 — the served manifest, the icons on disk, the worker's message contract, the
+provider's wiring, the persisted keys) and `tests/timetable-offline-ui.test.js`
+(the architecture guards: one listener site, one registration site).
+`tests/timetable-offline-identity.test.js` and `tests/timetable-sw-policy.test.js`
+keep the per-batch identity and the cache policy pinned.
 
 The last command is the only one that can honestly answer "does it work".
 Its result, on the build shipped here (`node scripts/dev/timetable-offline-check.mjs`,
-51/51, exit 0):
+97/97, exit 0):
 
 | Step | Checks | Result |
 | --- | --- | --- |
@@ -282,9 +368,15 @@ Its result, on the build shipped here (`node scripts/dev/timetable-offline-check
 | Placement (index and sign-in carry no action), keyboard, sheet, reduced motion, safe area | 9 | ✓ |
 | Private-profile simulation (`serviceWorker.register` rejected) | 5 | ✓ — the save still landed, the page still rendered, and the chip said "this browser would not keep the page files" rather than over-promising |
 | Platform honesty (no prompt in headless Chromium ⇒ guide path, no fake success) | 2 | ✓ |
+| Mobile offer in an emulated Android phone: opens unprompted, one surface only, copy honest about what this browser can do, its action saves the copy and then shows the steps | 12 | ✓ |
+| Refusal semantics: closing the guide is not a refusal, the offer returns; "Not now" is remembered across a reload and the card stays as the way back | 7 | ✓ |
+| Already installed (iOS `navigator.standalone`): no dialog at all, and the card states what is true | 2 | ✓ |
+| Real dispatched `beforeinstallprompt`: prevented, adopted without a reload, `prompt()` exactly once and only from a click, accepted ⇒ card updates and the offer stays away for 180 days | 13 | ✓ |
+| Manifest, icons, worker scope, and every head asset fetched signed-out with `redirect: 'manual'` (a proxy bounce to `/login` fails here, not on a launcher) | 9 | ✓ |
+| A non-Chrome mobile browser gets steps, not Chrome's dialog, with that platform's guide; a narrow desktop window is not mistaken for a phone | 3 | ✓ |
 
-Page errors during every offline step: zero. Storage measured for two batches:
-1 702 kB, including the app shell and its chunks.
+Page errors during every offline step: zero. Storage measured for two batches in
+the run quoted above: 1 492 kB, including the app shell and its chunks.
 
 ## 9. What remains impossible
 
@@ -323,7 +415,10 @@ external service, no dashboard switch. `Service-Worker-Allowed: /` and the
 worker's `no-cache` header are in `next.config.mjs` and travel with the build, so
 `/timetable/sw.js` is served with the right headers on Vercel without any
 `vercel.json` entry. Icons are emitted by `npm run brand:timetable-icons` from
-`logo.jpeg` and committed, so a deploy cannot regress them.
+`logo.jpeg` into `public/timetable/install/`, and the tab/Apple tiles by
+`npm run brand:icons` into `app/timetable/`; both are committed, so a deploy
+cannot regress them, and both live under `/timetable/` precisely so that no
+proxy rule has to be relaxed for an install to complete.
 
 The two platform preconditions are the ordinary ones: the site must be served
 over HTTPS (it is), and a batch must have been opened online once — the flow
