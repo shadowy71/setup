@@ -52,14 +52,15 @@ fabricates credentials.
 
 ## 3. Migrations
 
-The schema lives in `supabase/migrations/` (27 ordered files: extensions and
+The schema lives in `supabase/migrations/` (30 ordered files: extensions and
 enums, identity/roles, blocks, communities, social, moderation core, messaging,
 marketplace, campus, Random, platform, auth hooks, reference data, realtime and
 grants, column privileges, staff actions, marketplace hardening, function grants,
-staff visibility, chat inbox, messaging live read model, and — at 027 — the
-transactional backup outbox and Drive worker state). Run
-`public.backup_sync_triggers()` (or re-run migration 027) after adding new
-public application tables so every table stays covered by change capture.
+staff visibility, chat inbox, messaging live read model, the transactional backup
+outbox and Drive worker state (027–028), live feed delivery (029) and the Realtime
+channel-authorization fix (030)). Run `public.backup_sync_triggers()` (or re-run
+migration 027) after adding new public application tables so every table stays covered
+by change capture.
 
 **Option A — Supabase CLI (recommended)**
 
@@ -71,7 +72,7 @@ supabase db push
 **Option B — SQL editor (one script)**
 
 The whole schema is committed as a single script at
-**`supabase/bundle/campus-plus-schema.sql`** (~461 KB, 27 migrations). Open it on
+**`supabase/bundle/campus-plus-schema.sql`** (~493 KB, 30 migrations). Open it on
 GitHub (Raw → copy all), then Supabase → **SQL Editor → New query**, paste, Run.
 No CLI, no database password, no local tooling — this is the Dashboard-only path.
 
@@ -107,8 +108,8 @@ Reference data included in the migrations, ready to use:
 After migrating, confirm the schema is intact:
 
 ```bash
-npm run verify:db     # throwaway Postgres: applies 27 migrations + 13 suites
-npm run audit:db      # 54 static assertions: RLS, policies, grants, columns
+npm run verify:db     # throwaway Postgres: applies 30 migrations + 16 suites
+npm run audit:db      # 70 static assertions: RLS, policies, grants, columns
 ```
 
 ## 4. Authentication configuration

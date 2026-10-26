@@ -5,6 +5,7 @@ import { ROUTES } from '@/lib/constants';
 import { PageHeader, EmptyState, SectionHeader } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { SearchResults } from '@/components/search/SearchResults';
+import { LiveFeedSync } from '@/components/social/LiveFeedSync';
 import { compactNumber } from '@/lib/utils';
 
 export const metadata = { title: 'Explore' };
@@ -77,6 +78,10 @@ export default async function ExplorePage({ searchParams }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Re-reads this board when a post lands somewhere else in campus, so an
+          already-open page is not left showing the render it was given. Owns no
+          data and renders nothing — see components/social/LiveFeedSync. */}
+      <LiveFeedSync />
       <PageHeader title="Explore" description="Search, trending, and the modules you might not have opened yet." />
       <SearchResults initialQuery="" initialScope="all" />
 

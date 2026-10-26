@@ -66,6 +66,17 @@ and after every deployment.
   (migration 015). Platform settings change through
   `admin_set_platform_setting()`; roles change through `grant_role()` /
   `revoke_role()`; anything else is an operator migration (see DEPLOYMENT.md).
+* A **third** surface exists: Realtime's private channels are gated by policies on
+  `realtime.messages`, evaluated as the *subscribing* role. Two rules follow from that,
+  both audited. (1) A policy may only call functions that role can execute — otherwise a
+  subscription does not get denied, it gets an error, and the client retries:
+  `42501 permission denied for function can_access_random_session` filled 815 of 1 000
+  exported log lines at one per 15 s (migration 030). (2) A function that can answer a
+  question about *another* profile must not be executable by a client role, because
+  PostgREST exposes every executable public function as an RPC. `can_access_random_session
+  (p_session, p_user)` is therefore `service_role`-only and the policies call the
+  one-argument `can_access_own_random_session(p_session)`, which reads
+  `current_profile_id()` and cannot be pointed at anybody else.
 * Deeper coverage: `npm run audit:db` asserts that every exposed table has RLS
   enabled with explicit policies, that `public_profiles` never exposes private
   columns, and that moderation access to messages requires an open report.

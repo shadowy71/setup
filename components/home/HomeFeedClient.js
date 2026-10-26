@@ -10,7 +10,35 @@ import { IslandMotion } from '@/components/home/IslandMotion';
 import { HomePulse, HomeZone } from '@/components/home/HomePulse';
 import { StreamItem, StreamSlot } from '@/components/home/StreamItem';
 import { HomeRail } from '@/components/home/HomeRail';
-import { clearHomeFeedCache, readHomeFeedCache, writeHomeFeedCache } from '@/components/home/homeFeedCache';
+import {
+  HOME_FEED_LIMIT,
+  clearHomeFeedCache,
+  patchHomeFeedCache,
+  readHomeFeedCache,
+  writeHomeFeedCache,
+} from '@/components/home/homeFeedCache';
+import { useLiveFeed } from '@/components/layout/LiveFeedProvider';
+import {
+  isCampusFeedEligible,
+  placePostInFeed,
+  postToFeedItem,
+  reconcileFeed,
+  removePostFromFeed,
+} from '@/lib/social/feed-state';
+
+/**
+ * A live change is folded into at most one re-read per window, and that window is
+ * the provider's own batch on top of this one: a burst of posts, a mention fan-out
+ * and a reconnect reconcile all land as a single request instead of a queue.
+ */
+const LIVE_REFRESH_MS = 700;
+/**
+ * How long a locally placed post may be held onto when the server page has not
+ * caught up with it. Long enough to survive a slow revalidation, short enough that
+ * a row the feed genuinely excludes (blocked between the write and the read, say)
+ * cannot camp on screen: after this, the server page is the whole truth again.
+ */
+const HELD_POST_MS = 30_000;
 
 function FeedSkeleton() {
   return (
@@ -47,6 +75,29 @@ function RailSkeleton() {
   );
 }
 
+/** A remembered page is usable while it is in date *and* still current. */
+function cacheIsUsable(cached, revision) {
+  return Boolean(cached?.payload) && cached.fresh && cached.revision === revision;
+}
+
+/**
+ * Locally held entries the authoritative page has not delivered yet.
+ *
+ * Anything the server did return is released (that copy is now canonical), and
+ * anything older than the hold window is dropped, so a row the feed genuinely
+ * excludes cannot linger on screen.
+ */
+function heldEntries(held, serverFeed = []) {
+  const now = Date.now();
+  const delivered = new Set((serverFeed || []).map((item) => String(item?.id ?? '')));
+  const output = [];
+  for (const [id, entry] of held) {
+    if (delivered.has(id) || now - entry.at > HELD_POST_MS) held.delete(id);
+    else output.push(entry.item);
+  }
+  return output;
+}
+
 export function HomeFeedClient({
   user,
   userId,
@@ -58,14 +109,27 @@ export function HomeFeedClient({
   quickLinks = [],
 }) {
   const router = useRouter();
+  // Only the stable members are pulled out: the provider's `status` changes when a
+  // channel reconnects, and a feed surface must not re-run its whole load because of
+  // that. `revision()` is a getter over the same live counter either way.
+  const { subscribe: subscribeToFeed, revision: feedRevision, invalidate: invalidateFeed } = useLiveFeed();
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const requestRef = useRef(null);
+  // Rows this tab confirmed to the author that the authoritative page has not
+  // returned yet. Held for a bounded moment so the post cannot flicker out of the
+  // feed between the write and the re-read, then dropped so the server always wins.
+  const [held] = useState(() => new Map());
+  const liveTimerRef = useRef(null);
 
   const refresh = useCallback(async (force = false) => {
     const cached = readHomeFeedCache(userId);
-    if (!force && cached?.fresh) {
+    // A page is served from memory only while nothing has changed to invalidate it
+    // — a publish, a delete, a moderation action or a live event from another
+    // student moves the shell's revision, which is what makes the difference
+    // between "fast first paint" and "silently stale".
+    if (!force && cacheIsUsable(cached, feedRevision())) {
       setSnapshot(cached.payload);
       setLoading(false);
       setError(false);
@@ -118,8 +182,13 @@ export function HomeFeedClient({
         }
 
         // The server returns newest-first. Replacing the cache with its first
-        // ten entries inserts any new post and FIFO-evicts the oldest one.
-        const next = writeHomeFeedCache(userId, payload);
+        // ten entries inserts any new post and FIFO-evicts the oldest one, and the
+        // held entries are what stop the author's own row from disappearing if this
+        // page was composed a beat before the write became visible to the feed.
+        const feedWindow = reconcileFeed(payload.feed, heldEntries(held, payload.feed), {
+          limit: HOME_FEED_LIMIT,
+        });
+        const next = writeHomeFeedCache(userId, { ...payload, feed: feedWindow }, feedRevision());
         setSnapshot(next);
         setError(false);
         return next;
@@ -143,7 +212,72 @@ export function HomeFeedClient({
     } finally {
       if (requestRef.current === task) requestRef.current = null;
     }
-  }, [router, userId]);
+  }, [feedRevision, held, router, userId]);
+
+  /**
+   * The author's own post, placed the moment the server confirms it.
+   *
+   * `createPost` returns the canonical hydrated row — database id, timestamp,
+   * author block, counters, poll options, viewer state — so this is the same shape
+   * the feed read produces, not a stub: `StreamItem` renders it with no further
+   * work, and the re-read that follows reconciles it in place. A post that the
+   * shared eligibility rule excludes (a community-scoped row, or one the database
+   * did not publish) is never placed at all, and is reported by the composer
+   * instead.
+   */
+  const applyCreatedPost = useCallback((result) => {
+    const post = result?.post;
+    if (!isCampusFeedEligible(post)) return;
+    const item = postToFeedItem(post);
+    if (!item) return;
+    held.set(String(post.id), { item, at: Date.now() });
+
+    const patch = (payload) => ({
+      ...payload,
+      feed: placePostInFeed(payload?.feed || [], post, { limit: HOME_FEED_LIMIT }),
+    });
+    // Patch the remembered page too, so navigating away and back inside the cache
+    // window shows the post instead of the feed as it was before the write.
+    const stored = patchHomeFeedCache(userId, patch, feedRevision());
+    if (stored) setSnapshot(stored);
+    else setSnapshot((current) => (current ? patch(current) : current));
+
+    // The authoritative page is then re-read once, through the same coalesced path a
+    // live change uses: order, counters and the rail all come from the server, and
+    // the canonical-id dedup means the reconcile cannot leave a second copy of the
+    // row it just placed. Other surfaces mounted in this tab hear the same signal.
+    invalidateFeed('local', [post.id]);
+  }, [feedRevision, held, invalidateFeed, userId]);
+
+  // Live changes: one subscription for the whole surface (never per card), and it
+  // only ever triggers a re-read — the rows are hydrated by the shared read path.
+  useEffect(() => {
+    const unsubscribe = subscribeToFeed((event) => {
+      const ids = (event?.postIds || []).map(String);
+      // A removal is applied to the window straight away — a card that the database
+      // says is gone must not sit there for another beat — and the row is released
+      // from the hold set so nothing this tab placed locally can resurrect it.
+      if (event?.reason === 'removed' && ids.length) {
+        for (const id of ids) held.delete(id);
+        const drop = (payload) => ids.reduce((items, id) => removePostFromFeed(items, id), payload?.feed || []);
+        const stored = patchHomeFeedCache(userId, drop, feedRevision());
+        if (stored) setSnapshot(stored);
+        else setSnapshot((current) => (current ? { ...current, feed: drop(current) } : current));
+      }
+      if (liveTimerRef.current) return;
+      liveTimerRef.current = setTimeout(() => {
+        liveTimerRef.current = null;
+        void refresh(true);
+      }, LIVE_REFRESH_MS);
+    });
+    return () => {
+      unsubscribe();
+      if (liveTimerRef.current) {
+        clearTimeout(liveTimerRef.current);
+        liveTimerRef.current = null;
+      }
+    };
+  }, [feedRevision, held, refresh, subscribeToFeed, userId]);
 
   useEffect(() => {
     const cached = readHomeFeedCache(userId);
@@ -161,7 +295,9 @@ export function HomeFeedClient({
 
     const refreshIfStale = () => {
       if (document.visibilityState !== 'visible') return;
-      if (!readHomeFeedCache(userId)?.fresh) void refresh(false);
+      // Both ways a page can be out of date: the window expired, or the shell moved
+      // on while this surface was unmounted or hidden.
+      if (!cacheIsUsable(readHomeFeedCache(userId), feedRevision())) void refresh(false);
     };
     window.addEventListener('focus', refreshIfStale);
     document.addEventListener('visibilitychange', refreshIfStale);
@@ -169,7 +305,7 @@ export function HomeFeedClient({
       window.removeEventListener('focus', refreshIfStale);
       document.removeEventListener('visibilitychange', refreshIfStale);
     };
-  }, [refresh, userId]);
+  }, [feedRevision, refresh, userId]);
 
   const feed = snapshot?.feed || [];
   const events = snapshot?.events || [];
@@ -207,7 +343,7 @@ export function HomeFeedClient({
               {canPost ? (
                 <PostComposer
                   authorName={user.profile.display_name || user.profile.username}
-                  onCreated={() => { void refresh(true); }}
+                  onCreated={applyCreatedPost}
                 />
               ) : (
                 <Notice tone="neutral" icon="lock">

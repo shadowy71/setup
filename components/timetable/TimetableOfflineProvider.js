@@ -399,7 +399,8 @@ export function TimetableOfflineProvider({ division, children }) {
       return result;
     }
 
-    // iOS has no install API, and neither does desktop Safari: instructions.
+    // iOS has no install API at all, and no other browser has one either when the
+    // event was never offered: instructions.
     setSheet(platform.kind === 'ios' ? 'ios' : 'manual');
     return { outcome: 'manual' };
   }, [platform.kind, prepare, promptEvent, saved]);

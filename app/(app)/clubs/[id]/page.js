@@ -20,6 +20,7 @@ import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { ExternalLink } from '@/components/content/ExternalLink';
 import { IdentityLine } from '@/components/identity/IdentityLine';
 import { PostComposer } from '@/components/posts/PostComposer';
+import { LiveFeedSync } from '@/components/social/LiveFeedSync';
 import { CommunityActions } from '@/components/communities/CommunityActions';
 import { MessageButton } from '@/components/social/MessageButton';
 import { ReportDialog } from '@/components/social/ReportDialog';
@@ -100,6 +101,10 @@ export default async function ClubPage({ params }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Re-reads this board when a post lands somewhere else in campus, so an
+          already-open page is not left showing the render it was given. Owns no
+          data and renders nothing — see components/social/LiveFeedSync. */}
+      <LiveFeedSync />
       <PageHeader
         title={club.name}
         eyebrow={club.club_category ? `${club.club_category} club` : 'Club'}

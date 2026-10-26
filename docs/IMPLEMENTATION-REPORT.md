@@ -413,8 +413,8 @@ and measured in a real browser where a real browser can be driven here.
 | --- | --- | --- |
 | Headless Chromium (production build, clean profile) | worker registered, scope `http://127.0.0.1:3100/`, `activated`, controlling the page; `beforeinstallprompt` **never offered**; `appinstalled` never fired | Button correctly took the guide path — no fake dialog, no false "Added". `verify:offline` asserts exactly this and reports the prompt's absence instead of failing on it. |
 | Android Chrome / desktop Chrome / Edge | not reachable from this sandbox | `prompt()` on a deliberate click only, `userChoice` → `Waiting…` → `Added to Home Screen` / `Installation dismissed`, `appinstalled` as the sole evidence. Per-batch icons are separate apps because manifest `id` *and* `start_url` differ per batch. |
-| iOS Safari | not reachable from this sandbox | No `beforeinstallprompt` by design; the save is written first, then the Share → Add to Home Screen sheet naming the batch, with `appleWebApp` metadata (title, status bar, `theme-color`) carrying the batch name. |
-| Firefox (any), other browsers | not reachable from this sandbox | `manual` path: the sheet explains pin/bookmark. Never claims an install. |
+| iOS (Safari, and any other browser there) | not reachable from this sandbox | No `beforeinstallprompt` by design; the save is written first, then the browser's own Share → Add to Home Screen sheet naming the batch, with `appleWebApp` metadata (title, status bar, `theme-color`) carrying the batch name. |
+| Firefox (any), other browsers | not reachable from this sandbox | `manual` path: the sheet points at the install item in that browser's own menu, or says there is none. Never claims an install. |
 
 **Required platform follow-up:** one pass on a real Android device and one on iOS
 Safari against the deployment — the only way to see the native prompt and a
@@ -497,3 +497,388 @@ manifests and its offline shell be public without touching proxy auth at all.
   issue is likewise untouched and unmasked.
 * No database, migration, RLS or permission change was needed or made: the
   timetable is public, and it stayed exactly as public as it was.
+
+### 13.6 Cross-browser install copy (same day, after review)
+
+The guide shipped with three sentences that only made sense in one browser: the
+primary button on iOS said `Add to Home Screen from Safari`, the first iOS step said
+`Open this page in Safari itself`, and desktop WebKit was told to use
+*File → Add to Dock* on macOS. The behaviour underneath was already cross-browser;
+the copy was not. What changed, and what deliberately did not:
+
+| Changed | To | Why it is still true |
+| --- | --- | --- |
+| `primaryAction` for `installPath === 'ios'` | the iOS branch is gone; iOS now falls through to the same guide label as every manual path | the button already opened instructions rather than calling an API, so the label had no platform fact in it |
+| first step of the iOS guide | `Open this page in the browser app itself — a link tapped inside another app usually lands in a view with no Share button.` | the fact worth telling is about in-app web views, not about Safari |
+| `STEPS.safari` (macOS *File → Add to Dock*) | deleted; desktop WebKit now shares `STEPS.other` | a group whose only content is one vendor's menu is a support page, not guidance |
+| `STEPS.other` | *look for the install item, every browser names it differently, some offer no such item; and if there is none the offline copy is already on this device* | states the variability instead of denying it, and ends with what the user has already got |
+| `detectPlatform` labels on mobile | `Safari on iPhone or iPad` → `iPhone or iPad`, `Chrome on Android` → `Android` | those labels are printed in the status sheet; on iOS every browser is WebKit with the OS Share sheet, so naming one was wrong as often as it was right |
+| `stepsFor` | exported, and the `safari-desktop` case removed | so the copy is asserted per platform rather than eyeballed |
+
+Kept, because it is compatibility code and not copy: the whole of `detectPlatform`
+including the iPad-reports-as-Mac case, `isStandalone`'s `navigator.standalone` check
+beside `display-mode`, the `ios`/`native`/`manual` install-path mapping, the
+`unsupported` outcome when `beforeinstallprompt` was never offered (which is what makes
+the no-prompt path a guide instead of a dead button), the wide-scope-then-`/timetable/`
+service worker registration fallback with its `Service-Worker-Allowed` header — whose
+comment still says Safari ignores that header, because that is the reason the fallback
+exists — and every `-webkit-*` / `@supports not (backdrop-filter)` rule in
+`app/styles/timetable.css`.
+
+Two mentions of a browser are left on purpose. `Safari on desktop` is still a
+*detection result* shown in the status sheet: on desktop the user-agent test really does
+single the browser out (it is the last branch, after Chrome/Edge/Opera/Firefox), and the
+name there is the platform, not an instruction. And `components/auth/LoginForm.js` plus
+`lib/auth/sign-in.js` still describe the iPhone-WebKit callback-race they work around;
+that is auth code, outside this task, and the comment is the workaround's rationale.
+
+The Chromium group's glyph hint became `(⋮ or ≡)` for the same reason: `kind: 'android'`
+shares that group with desktop Chromium, and Firefox on Android opens its menu from the
+other icon.
+
+Pins: `tests/timetable-install-plumbing.test.js` now asserts a guide may name only the
+browser it is written for, that no group contains `Safari`, `File →` or
+`Add to Dock`, that every platform gets at least two non-empty steps, that
+`safari-desktop` and `unknown` share one group, and that no button label names a browser
+at all. `scripts/dev/timetable-offline-check.mjs` asserts the same two properties against
+the rendered dialog in a real browser. The copy change was verified in headless Chromium
+against the production build, which is the only browser reachable from this sandbox: the
+sheet's text and the button label were read from the DOM, not from the source file. A
+physical iPhone, iPad and a real Firefox/Edge pass remain unverified — and no gate here
+can prove a tap a page cannot make.
+
+## 14. Feed refresh and instant post visibility (2026-10-25)
+
+Scope: a post that saved successfully did not appear in the feed that was already on
+screen — not for its author, and not for anybody else — until the student reloaded or
+navigated back. The fix had to be the cause, not a reload button. No second post
+system, no new cache library, no widened database permissions, no service-role key
+in the browser, and no moderation or RLS bypass anywhere in this change.
+
+### 14.1 Root cause, in the order it mattered
+
+The whole pipeline was read before anything was changed: composer → server action →
+insert → feed read → cache → live layer. Five independent defects were found, and all
+five were real:
+
+1. **A dead seam, and nothing else was left.** `HomeFeedClient` passed
+   `onCreated={() => void refresh(true)}` to `PostComposer`; `PostComposer` never
+   declared an `onCreated` prop and never called it. Home's feed lives in client
+   state, fetched from `/api/home/feed`, so the only mechanism that could have
+   updated it was wired at one end only. `router.refresh()` — which is what the
+   shared `useFormAction` calls after any successful action — re-runs a server
+   component that holds no feed data, so it could not help either.
+2. **Nothing to insert even if something had asked.** `createPost` returned
+   `{ ok: true, id }`. A surface that wants to show the post immediately needs the
+   canonical record; with only an id, the alternative was a client-built stub, which
+   `StreamItem` renders as `null` (`if (!post) return null`) — a card that appears
+   empty and then vanishes. That is why "optimistic UI" was not an option here in
+   its usual form.
+3. **A remembered page that was allowed to be wrong.** `homeFeedCache` serves Home's
+   last page for 15 s after a remount. Nothing in the write path patched or
+   invalidated it, so a client navigation back onto Home could serve a snapshot that
+   predated the post with no network request at all.
+4. **Nobody could hear about anybody else's post.** `public.posts` was not a member
+   of the `supabase_realtime` publication — migration 014 added only `messages`,
+   `conversations`, `message_reads` and `notifications` — and no client subscribed to
+   post changes at all. Postgres only streams tables in that publication, so no
+   amount of client code could have received a new-post event. Separately, a private
+   channel on a `feed:<id>` topic had no branch in the `realtime.messages` read
+   policy, whose `case` ends in `else false`, so such a channel could not even be
+   joined.
+5. **Invalidation that stopped at two doors.** `revalidateFeed()` covered `/home` and
+   `/explore` only. Community boards, club boards, profile post lists and the
+   permalink are server-rendered and were relying on the client's router state.
+   And `getCampusFeed` ignored the `currentProfileId` that `app/api/home/feed`
+   already passed it, so a Home card could never show the viewer's own reaction or
+   poll vote — one more way an instantly-shown post looked different from a loaded
+   one.
+
+So: the write was never a publication *signal*, the client had no record to show, the
+cache had no invalidation, the database had no delivery, and the invalidation that
+did exist covered two of seven surfaces.
+
+### 14.2 What was built
+
+New — one shared rule module, one realtime module, one shell provider, one board
+bridge, one migration, one SQL suite, one browser harness check:
+
+| File | Purpose |
+| --- | --- |
+| `lib/social/feed-state.js` (242) | The feed's state transitions as pure data: sort key (`sortAt` → `createdAt`, which is what keeps a pinned notice above a new post), canonical-`post:<id>` dedup across every delivery path, placement, removal, `reconcileFeed`, `isCampusFeedEligible` (published **and** not community-scoped — the two predicates `campus_feed()` applies), and `createFeedDeduper`. Client-safe, no I/O. |
+| `lib/social/realtime.js` (92) | One private channel per signed-in student (`feed:<profile id>`, `config: { private: true }`), three `postgres_changes` bindings on `public.posts` only, and an auth hand-off. It hands the surface `{ eventType, postId, status }` — never the row. |
+| `components/layout/LiveFeedProvider.js` (235) | Shell-scoped: owns the one channel, batches events (450 ms), exposes `subscribe`, `invalidate(reason, ids)` and a `revision()` counter. Holds no post data. A 20 s gap-recovery tick runs **only while the channel is not live**. |
+| `components/social/LiveFeedSync.js` (76) | Renders `null`. For a server-rendered board, turns a feed change into one `router.refresh()` (4 s throttle; immediate for `local`/`reconcile`/`reconnect`). |
+| `supabase/migrations/20261026000001_029_feed_realtime_delivery.sql` (112) | Adds `public.posts` to the publication and re-creates `campus_channels_read` with a `feed` branch. Guarded, idempotent, no trigger, no outbox, no grant or revoke. |
+| `database/tests/15_feed_realtime_delivery.sql` (292) | Publication membership and scope; channel authorization (own `feed:` channel joinable, another student's empty, broadcast denied, existing topics unaffected); and the visibility rules the client mirrors — published vs pending/hidden/community/blocked, plus "the author can still read their own unpublished row". |
+| `scripts/dev/feed-refresh-check.mjs` (379) | The production-build browser gate — §14.4. |
+
+Modified — 15 files, 464 insertions / 77 deletions, plus the regenerated
+`supabase/bundle/campus-plus-schema.sql`. The important ones:
+
+| File | Change |
+| --- | --- |
+| `lib/actions/social.js` | `createPost` now reads its row back with `POST_COLUMNS` and runs it through `hydratePosts`, returns `{ ok, id, status, published, pending, post }`, and mints the id server-side so a write is never reported as failed because an endpoint returned no representation. `revalidateFeed({ postId })` invalidates `/home`, `/explore`, `/profile`, the three dynamic board patterns and the permalink — **after** the write, and never on a failed one. Delete and restore revalidate the same set. |
+| `components/home/HomeFeedClient.js` | `applyCreatedPost` places the canonical row (eligibility-guarded), patches the remembered page under the same dedup/order rules, holds the entry for at most 30 s so a slow revalidation cannot flicker it out, and then invalidates once. Live events re-read through the same path; a `removed` announcement is applied to the window and released from the hold. |
+| `components/home/homeFeedCache.js` | Writes and patches carry the shell's live `revision`; a page may only be served while that revision still matches, which is what makes a page stale the instant a post lands — including while Home is unmounted. TTL unchanged (15 s). |
+| `components/posts/PostComposer.js` | Accepts `onCreated`, and clears body/GIF/options/`form.reset()` only in the success callback, so a failed write keeps the draft. A `pending`/`hidden` result shows a bounded "sent for review" notice instead of pretending publication. `loading={pending}` + `canSubmit` keep a double submit out. |
+| `components/posts/PostActions.js` | Announces `removed`/`local` through the provider instead of threading callbacks up from every card. |
+| `lib/data/feed.js` | `POST_COLUMNS` exported; `getCampusFeed` honours `currentProfileId`. |
+| `components/layout/AppShell.js`, `app/(app)/layout.js` | `feedUserId` (the profile id) into `LiveFeedProvider`, keyed by it, inside `MessagingProvider`. |
+| five board pages | `<LiveFeedSync />` mounted on Explore, profile, community, club and public-profile pages. |
+
+Semantics kept, not approximated: an insert is not a publication. Public feeds filter
+on `status = 'published'`, `deleted_at is null`, the audience rule, and the
+block/mute/inactive author rules — the same predicates `campus_feed()` applies, and
+`isCampusFeedEligible` refuses to place anything the shared read path would not
+return. Realtime payloads are treated as signals and re-hydrated through
+`lib/data/feed.js`, so an instant post and a loaded post are produced by one code
+path.
+
+### 14.3 What was found by running it, not by reading it
+
+The first real-browser pass against the production build failed with
+`The post could not be read back after saving.` The insert had succeeded — the post
+was in the database — but the write endpoint answered `201` with an empty body, so
+`.select(...).single()` gave nothing back. A real PostgREST returns the representation;
+a fronted or proxy-configured one may not, and in that situation the honest answer is
+not "your post failed". `createPost` now mints the id in the action, reads with
+`maybeSingle`, and re-reads the row by that id if no representation came back — one
+canonical record, one source, no client-built placeholder. Unit-tested, and the
+browser pass passes.
+
+### 14.4 Verification
+
+| Gate | Result |
+| --- | --- |
+| `npm run lint` | clean |
+| `npx vitest run` | **794 tests, 64 files** — 80 of them new (`post-create-feed`, `feed-live-state`, `feed-realtime`, `feed-instant-update`) |
+| `npm run verify:db` | 29 migrations applied cleanly; **all 15 SQL suites pass**, including `15_feed_realtime_delivery.sql` |
+| `npm run audit:db` | 66 passed, 0 warnings, 0 failures |
+| `npm run db:bundle -- --check` | bundle current (29 migrations) |
+| `npm run sw:check`, `npm run build` | clean; every route compiled |
+| `node scripts/dev/feed-refresh-check.mjs` | 14 checks passed against `next start` + the harness database — see below |
+
+The browser gate runs the production build with two signed-in Chromium contexts and a
+real PostgreSQL behind real RLS. Observed on this machine:
+
+```
+ok  author: post appears with no reload or navigation    one copy in 2.5s · no reload · view kept at 0px
+ok  author: the card is a complete post, not a placeholder  “Aarav Patil @aarav_p · just now …”
+ok  author: composer cleared only after the server confirmed
+ok  viewer: discovers the post with no manual reload     one copy in 32.1s · no reload
+ok  viewer: one copy survives repeated invalidation
+ok  moderation: a hidden post leaves both open feeds     36.1s / 0.0s
+ok  moderation: a pending post never enters an open feed
+ok  community board: appears on the open page without a reload (server-rendered)
+ok  community post is never placed on the campus feed
+ok  failure: no false success, draft preserved, retry works
+ok  no polling: an idle open feed stops reading          ≤1 read in 24s
+```
+
+"No reload" is measured, not asserted: each page carries a document marker that a
+reload destroys and `router.refresh()` cannot, and the scroll offset is compared
+before and after placement. Duplicate delivery is checked by firing extra
+invalidations (focus, repeated re-reads) and requiring one copy.
+
+### 14.5 What this run could not prove
+
+* **Live websocket delivery.** The harness stub implements PostgREST and the auth
+  endpoints but no Realtime websocket, so the cross-user numbers above are the
+  *degraded* path (gap recovery, ≤ 20 s + a coalesced read) — deliberately, since a
+  feed must still converge when Realtime is unavailable. The half that Realtime itself
+  depends on — publication membership, and who may join a `feed:` channel — is
+  verified against real SQL in suite 15, and the client's bindings, `private: true`,
+  cleanup and reconnect behaviour are unit-tested against a fake channel.
+* **Production itself.** Nothing here was run against the deployed project; the
+  migration and the bundle still have to be applied (Supabase SQL editor, or
+  `supabase db push`). On hosted Supabase the publication already exists and the role
+  applying migrations owns `public.posts`, so `alter publication … add table` runs;
+  where it does not, migration 029 reports that in a `NOTICE` and names the statement
+  to run as the table owner instead of failing a deploy over a delivery optimisation.
+* One pre-existing, unrelated staleness: `npm run perf:smoke` expects the strings
+  `Campus update` / `Events ahead` in `/home`'s server HTML. Neither is in the
+  Home components at `main` either (the rail is client-rendered), so that check fails
+  before and after this change. `/home` was verified separately: composer,
+  skeleton, provider and a 200 `/api/home/feed` with 10 items in the served HTML path.
+
+### 14.6 Files to know about later
+
+`lib/social/feed-state.js` is the only place a feed's ordering, dedup and placement
+rules live; `components/layout/LiveFeedProvider.js` is the only owner of a feed
+subscription; `scripts/dev/feed-refresh-check.mjs` (`npm run verify:feed`) is the gate
+that proves the workflow rather than the mock. A future surface that lists posts
+should reuse all three — the reason `LiveFeedSync` renders nothing at all is that any
+surface with its own copy of the rules is a surface that can drift from the read path.
+
+## 15. `permission denied for function can_access_random_session` (2026-10-25)
+
+Scope: the production Postgres log was dominated by one error. Nothing about the site
+looked broken to a student, which is exactly why it needed a root cause rather than a
+grant.
+
+### 15.1 What the log said, and what it was worth
+
+| Measurement | Value |
+| --- | --- |
+| Entries in the exported window | 815 of 1 000 (81.5 % of the log's content) |
+| Message | `42501 permission denied for function can_access_random_session` |
+| Cadence | ≈ every 15 s while the site is in use, i.e. ≈ 240 lines per hour per stale client |
+| Second symptom, correlated | `08P01 unexpected EOF on standby connection` |
+| Cost per authorization attempt, measured locally | 0.23 ms failing vs 0.19 ms clean denial (+0.04 ms, ~23 %) |
+
+That last row is the reason this section does not claim to have fixed slowness. The
+failing path is a fraction of a millisecond per attempt at a 15-second cadence, and it
+is not on any request path a page takes — see 15.2. What it does cost is observability
+(4 of every 5 log lines were this error), a subscription that never succeeds, and a
+socket that is torn down and reopened forever.
+
+### 15.2 The caller, traced
+
+`can_access_random_session(p_session, p_user uuid default null)` is defined in migration
+010 and referenced by exactly ten things, all found by grepping the whole schema and the
+whole app:
+
+* the two `realtime.messages` private-channel policies — `campus_channels_read`
+  (migration 014, recreated by 029) and `campus_channels_write` (014) — call it once per
+  joined channel, from their `when 'random' then …` branch;
+* six SECURITY DEFINER Random RPCs in 010 (`end_random_session`, `random_session_state`,
+  `send_random_message`, `report_random_session`, `purge_random_data`,
+  `sweep_random_state`) call it as the function owner.
+
+Realtime — not the application — evaluates the first group. So the caller is a client
+subscribing to `random:<session uuid>`, and the *why now* is migration 023: Random Chat's
+UI was retired, so nothing in the shipped app opens such a channel any more. Verified: the
+only three `.channel(` call sites in `app/`, `components/` and `lib/` are `user:`,
+`conversation:` and (since 029) `feed:`; there is no `/api/random` route, and
+`lib/actions/random.js` is imported by nothing. The requests therefore come from clients
+that predate the retirement — a tab left open, a Router/prefetch cache, any long-lived
+socket that reconnects to what it had. Realtime re-runs the channel policy on every
+(re)subscribe, and the client retries on its own backoff. That is the 15-second clock:
+not a poll this repository contains, but a reconnect loop it cannot see.
+
+A `false` from the policy would be a clean denial. An exception is a log line, a failed
+subscription and a reconnect — and the exception happened because the role evaluating the
+policy does not hold EXECUTE on that function.
+
+### 15.3 Production ACLs versus the repository's history
+
+They disagree, and that is the finding:
+
+* the history *grants* it — migration 018 loops over every function in `public`,
+  revoking from `public`/`anon` and granting to `authenticated` + `service_role`, so a
+  database built from these files has `authenticated` able to execute the helper;
+* no migration after 018 revokes it (019–029 checked; 022 changes view options only, 023
+  is one `feature_flags` row);
+* production therefore has an ACL that its migration history cannot produce. Migration
+  022 documents an earlier live change of exactly that kind — made in the project, not in
+  `supabase/migrations/` — so this repository already knows its production schema drifts.
+
+This could not be confirmed from here: there is no route to the production database or the
+Realtime logs from this sandbox, only the exported log lines. `supabase/migrations` and
+`database/tests` are the source of truth for the schema, and the drift is the reason the
+fix below stops *depending* on a grant nobody owns instead of re-asserting it. To compare
+the two directly, run this read-only query in the Supabase SQL editor and diff it against
+`npm run audit:db`'s four `Realtime` checks:
+
+```sql
+select p.oid::regprocedure as function, p.proacl as acl,
+       has_function_privilege('authenticated', p.oid, 'execute') as authenticated_can_execute
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public'
+   and p.proname in ('can_access_random_session', 'can_access_own_random_session');
+```
+
+### 15.4 The fix
+
+Migration 030, in this order:
+
+1. **A safe predicate.** `public.can_access_own_random_session(p_session uuid)`: one
+   argument, no way to ask about anyone but the caller (`rp.user_id =
+   public.current_profile_id()` inside), `left_at is null`, `rs.status = 'active'`,
+   SECURITY DEFINER with a pinned `search_path` — definer because the base Random tables
+   deliberately have no participant policies (022), which is also why it must not leak.
+   Granted to `authenticated` + `service_role` explicitly (and to `supabase_realtime`
+   only where that role exists), revoked from `public` and `anon`.
+2. **Both channel policies re-created** with only the `random` branch substituted. The
+   `conversation`, `user` and `feed` branches and the `else false` fallback are carried
+   over verbatim, inside the same `to_regclass('realtime.messages')` guard 014 and 029
+   use, so a plain-Postgres deploy skips the block with a NOTICE instead of failing.
+3. **The oracle closed.** `can_access_random_session(uuid, uuid)` keeps its body and its
+   internal callers and loses EXECUTE for `public`, `anon` **and `authenticated`**,
+   keeping `service_role`. The optionality of `p_user` made it a session-membership
+   oracle — it answers "is this other profile in that private session", and because those
+   tables have no participant policies it was the only door. PostgREST exposes every
+   executable public function as an RPC, so "not executable by `authenticated`" is what
+   makes it internal again. All six callers were checked to be SECURITY DEFINER before the
+   revoke was written; the application never called it (010's RPCs pass their own
+   `v_me`, and `lib/actions/random.js` only reads the two participant-safe views).
+
+Nothing was deleted: `random_*` tables, views, their moderation access and 023's flag all
+stay, as 022 and 023 decided. Messaging, notifications and the feed channels are
+unchanged apart from the branch substitution.
+
+### 15.5 What was measured, not assumed
+
+* Reproduced the failure locally by putting the schema into the state production is in —
+  the pre-030 policy plus `revoke … from authenticated` — and the query a subscription
+  runs raised exactly `42501 permission denied for function can_access_random_session`.
+  With 030 applied the same probe returns a clean deny, 0 rows, no error.
+* Cost, 200 iterations each on that cluster: 0.14 ms (no channel policy in the way),
+  0.19 ms (fixed deny), 0.23 ms (failing), against a 0.12 ms baseline read. So the fix
+  removes log volume and failed subscriptions; it does not measurably move query time.
+* `database/tests/16_random_channel_authorization.sql` — new suite, 37 assertions:
+  participants of an open session see the channel, a student who left does not, a
+  stranger does not, a closed session does not, a malformed topic (`null`) is a `no`
+  rather than an error; `authenticated` may not call the oracle at all (both directions,
+  including "not even about herself"); `anon` executes neither function; a participant can
+  still *broadcast* on their own session channel and read their own `user:` channel (so
+  the hardening is not a stealth outage); another student's `user:` channel stays closed;
+  `random_session_state` still answers for a participant and still returns `null` — not an
+  error — for a stranger; and the policy text is read back from `pg_policies` to prove
+  which function each branch calls.
+* `npm run audit:db` grew four catalog checks, the general one being: **every function a
+  `realtime.messages` policy calls must be executable by the role that policy is granted
+  to**. Derived from `pg_depend`, not from a list, so it catches the next policy someone
+  writes at 3 a.m. Verified to fail on the broken state (it names `campus_channels_read →
+  can_access_random_session(uuid,uuid)`) and to pass after.
+* `tests/realtime-channel-authorization.test.js` — 9 assertions: the migration's shape
+  (one argument, definer, pinned search_path, the exact grants/revokes, both policies
+  routed through the safe predicate, nothing dropped that 023 kept) and the client-surface
+  contract (no `random:` topic, no import of the retired actions module, every `.channel(`
+  call still `private: true`).
+* Timing evidence for the latency question, such as it is here: per-attempt cost above;
+  and the structural argument that the page path cannot be slowed by this — the function
+  is referenced by two Realtime policies and six internal RPCs, and by no query
+  `app/`, `components/` or `lib/data` issues. Realtime delivery, when it works, is an
+  alternative to polling; it is not in the render path of a page.
+
+### 15.6 What disappears from the log, and what does not
+
+* **Gone, once migration 030 is applied to the project:** every `42501 permission denied
+  for function can_access_random_session` line. There is no remaining code path that can
+  raise it: the only policy that could call a function `authenticated` cannot execute now
+  calls one it can execute, and that one cannot raise for a missing grant. A stale client
+  is answered with `false`, which means "not authorized" and nothing more.
+* **Expected to follow:** the `08P01 unexpected standby EOF` entries should drop sharply,
+  because the reconnect loop that kept opening and abandoning Realtime sockets — including
+  one whose replication connection was mid-setup — is the same loop. This is a
+  correlation-based prediction from one exported window, not a proof: it needs the
+  Realtime server's own connect/disconnect counters to confirm.
+* **Not claimed fixed:** any latency. If `/home` or a timetable render is slow, this
+  change does not make it faster, and 15.5's numbers are the reason for saying so. The
+  `/api/messages/sync` 503 is a separate issue and was not touched, masked, or even
+  re-tested here. If the 42501 lines survive deployment, the only remaining explanation
+  worth chasing is a second project or a read replica sharing the role definitions — that
+  would show up in 15.3's query as a healthy ACL in the project you migrated.
+* **Cannot be verified from this sandbox:** the deployment itself, the production ACL
+  state, Realtime's reconnect counters, and any client bundle still in somebody's tab.
+  What is verified is that the migrated schema denies cleanly where it used to raise.
+
+### 15.7 Files to know about later
+
+`supabase/migrations/20261027000001_030_random_channel_authorization.sql` is the fix and
+the explanation. `database/tests/16_random_channel_authorization.sql` is the isolation
+proof. `auditRealtimeChannelPolicies` in `scripts/dev/audit.mjs` is the invariant that
+would have caught this before a deploy: a policy may only call what its subscribing role
+can execute, and a cross-user predicate may never be client-callable.

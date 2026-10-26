@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useFormAction } from '@/lib/forms';
 import { deletePost, restorePost } from '@/lib/actions/social';
+import { useLiveFeed } from '@/components/layout/LiveFeedProvider';
 import { Button, DeleteButton, KeycapButton, Notice } from '@/components/ui';
 
 /**
@@ -11,11 +12,28 @@ import { Button, DeleteButton, KeycapButton, Notice } from '@/components/ui';
  *
  * Destructive intent gets the tactile delete material; the confirmation itself
  * is a deliberate keycap, never a second destructive-looking button.
+ *
+ * Both actions change what a feed must contain, so each one announces itself to the
+ * shell's live feed after the server confirms it (`reason: 'removed'` here, because
+ * a delete also releases the entry a Home stream may still be holding for the
+ * author). The row is soft-deleted in the database — visible to nobody but the
+ * author at its permalink — and the surfaces re-read that fact rather than being
+ * told to hide it, so nothing here can leave a card on screen that the next render
+ * would disagree with.
  */
 export function PostActions({ postId, status = 'published', canManage = false }) {
-  const { run, pending, error } = useFormAction(deletePost);
-  const { run: runRestore, pending: restoring, error: restoreError } = useFormAction(restorePost);
+  const feed = useLiveFeed();
   const [confirming, setConfirming] = useState(false);
+
+  // `useFormAction` calls `onSuccess` only after the action reported a real
+  // `{ ok: true }`, so reaching here already means the database moved the row.
+  const announce = useCallback((reason) => feed.invalidate(reason, [postId]), [feed, postId]);
+  const { run, pending, error } = useFormAction(deletePost, {
+    onSuccess: () => announce('removed'),
+  });
+  const { run: runRestore, pending: restoring, error: restoreError } = useFormAction(restorePost, {
+    onSuccess: () => announce('local'),
+  });
 
   if (!canManage) return null;
 

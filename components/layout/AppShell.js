@@ -5,6 +5,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { CommandPaletteHost } from '@/components/search/CommandPalette';
 import { isStaffRoles } from '@/lib/identity/shell-user';
 import { MessagingProvider } from '@/components/layout/MessagingProvider';
+import { LiveFeedProvider } from '@/components/layout/LiveFeedProvider';
 
 /**
  * The one application frame.
@@ -24,11 +25,17 @@ import { MessagingProvider } from '@/components/layout/MessagingProvider';
  * `unreadNotifications` is measured once per request in the layout and handed
  * to every surface that shows it (header, sidebar, menu). No surface queries
  * the count itself, so the three numbers can never disagree.
+ *
+ * `messagingUserId` and `feedUserId` are the same profile id, and each provider
+ * owns exactly one live subscription for the tab. The feed one exists so a post
+ * published by someone else reaches an already-open feed — see
+ * `components/layout/LiveFeedProvider`.
  */
 export function AppShell({
   user = null,
   unreadNotifications = 0,
   messagingUserId = null,
+  feedUserId = null,
   initialUnreadMessages = [],
   canModerate = false,
   canAdmin = false,
@@ -45,26 +52,14 @@ export function AppShell({
       userId={messagingUserId}
       initialUnread={initialUnreadMessages}
     >
-      <div className="min-h-dvh">
-        <NightSky />
-        <a href="#content" className="skip-link">
-          Skip to content
-        </a>
+      <LiveFeedProvider key={feedUserId || 'signed-out'} userId={feedUserId}>
+        <div className="min-h-dvh">
+          <NightSky />
+          <a href="#content" className="skip-link">
+            Skip to content
+          </a>
 
-        <Sidebar
-          user={user}
-          unreadNotifications={unreadNotifications}
-          isStaff={isStaff}
-          canModerate={canModerate}
-          canAdmin={canAdmin}
-          createItems={createItems}
-        />
-
-        {/* `.shell-root` lifts the chrome and the page above the fixed night
-            sky, which is a positioned layer and would otherwise paint over
-            static content. */}
-        <div className="shell-root lg:pl-[17rem]">
-          <ShellHeader
+          <Sidebar
             user={user}
             unreadNotifications={unreadNotifications}
             isStaff={isStaff}
@@ -73,17 +68,31 @@ export function AppShell({
             createItems={createItems}
           />
 
-          <main
-            id="content"
-            className="shell-content shell-main mx-auto w-full px-4 pb-28 pt-4 sm:px-6 lg:pb-16 lg:pt-5"
-          >
-            {children}
-          </main>
-        </div>
+          {/* `.shell-root` lifts the chrome and the page above the fixed night
+              sky, which is a positioned layer and would otherwise paint over
+              static content. */}
+          <div className="shell-root lg:pl-[17rem]">
+            <ShellHeader
+              user={user}
+              unreadNotifications={unreadNotifications}
+              isStaff={isStaff}
+              canModerate={canModerate}
+              canAdmin={canAdmin}
+              createItems={createItems}
+            />
 
-        <BottomNav />
-        <CommandPaletteHost actions={paletteActions} />
-      </div>
+            <main
+              id="content"
+              className="shell-content shell-main mx-auto w-full px-4 pb-28 pt-4 sm:px-6 lg:pb-16 lg:pt-5"
+            >
+              {children}
+            </main>
+          </div>
+
+          <BottomNav />
+          <CommandPaletteHost actions={paletteActions} />
+        </div>
+      </LiveFeedProvider>
     </MessagingProvider>
   );
 }

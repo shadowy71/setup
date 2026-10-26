@@ -393,7 +393,15 @@ const opened = await view();
 check('Enter on the action opens the sheet', opened.dialog);
 const sheetText = await evaluate(() => document.querySelector('[role="dialog"]')?.innerText?.replace(/\s+/g, ' ') ?? '');
 check('the sheet names this batch', sheetText.includes(`Division ${letter(FIRST)}`), sheetText.slice(0, 80));
-check('and it tells the truth about the platform in front of us', /Home Screen|browser menu|Chrome|Safari|Firefox/i.test(sheetText));
+// The guide has to say something true for *this* browser (headless Chromium here,
+// Safari or Firefox on a real device) and must not send anybody to a menu item only
+// one browser has.
+check(
+  'and it tells the truth about the platform in front of us',
+  /Home Screen|browser menu|this browser|Install app|Create shortcut|menu \(\)/i.test(sheetText)
+    && !/in Safari itself|Add to Dock|File →/i.test(sheetText),
+  sheetText.slice(0, 80),
+);
 await page.keyboard.press('Escape');
 await settle(500);
 check('Escape closes it', !(await view()).dialog);
@@ -481,7 +489,14 @@ section('8. what the platform actually offered');
 const probe = await evaluate(() => window.__installProbe ?? {});
 const standalone = await evaluate(() => window.matchMedia('(display-mode: standalone)').matches);
 console.log(`  beforeinstallprompt offered: ${probe.offered ? 'yes' : 'no (headless Chromium never fires it)'} · appinstalled: ${probe.accepted ? 'yes' : 'no'} · standalone: ${standalone}`);
-check('an unoffered prompt becomes a guide, never a fake success or a failure', /^Add (Division .* )?timetable to Home Screen$/.test((await view()).button ?? '') || /from Safari|guide/i.test((await view()).button ?? ''));
+// With no prompt to show, the button must still be the batch's own add-action: it
+// opens the steps. A label naming one browser would be a lie on the other five.
+const guideButton = (await view()).button ?? '';
+check(
+  'an unoffered prompt becomes a guide, never a fake success or a failure',
+  /^Add (Division .* )?timetable to Home Screen$/.test(guideButton) && !/Safari|Chrome|Firefox|Edge/i.test(guideButton),
+  guideButton,
+);
 const quota = await evaluate(async () => {
   if (!navigator.storage?.estimate) return null;
   const estimate = await navigator.storage.estimate();

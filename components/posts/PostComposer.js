@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFormAction } from '@/lib/forms';
 import { createPost } from '@/lib/actions/social';
 import { LIMITS } from '@/lib/constants';
@@ -8,6 +8,9 @@ import { Button, Field, IdentityMark, Input, Notice, Textarea } from '@/componen
 import { GifPicker } from '@/components/media/GifPicker';
 import { Icon } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
+
+/** Long enough to be read once, short enough not to sit on the composer. */
+const HELD_NOTICE_MS = 9_000;
 
 const KINDS = [
   { value: 'post', label: 'Post', icon: 'sparkle', hint: 'A thought, a notice, a link' },
@@ -25,21 +28,59 @@ const KINDS = [
  * The surface opens with the question the product exists to ask: "What's
  * happening on campus?".
  */
-export function PostComposer({ communityId = null, defaultKind = 'post', compact = false, authorName = null }) {
+export function PostComposer({
+  communityId = null,
+  defaultKind = 'post',
+  compact = false,
+  authorName = null,
+  onCreated = null,
+}) {
   const [kind, setKind] = useState(defaultKind);
   const [gif, setGif] = useState(null);
   const [options, setOptions] = useState(['', '']);
   const [body, setBody] = useState('');
   const [focused, setFocused] = useState(false);
+  // Set only when the server confirmed the write but the row is not published —
+  // i.e. moderation holds it. Nothing about it is guessed on the client.
+  const [held, setHeld] = useState(null);
   const formRef = useRef(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }, []);
+
+  const showHeldNotice = (message) => {
+    setHeld(message);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      setHeld(null);
+    }, HELD_NOTICE_MS);
+  };
 
   const { run, pending, error, fieldErrors } = useFormAction(createPost, {
-    onSuccess: () => {
+    onSuccess: (result) => {
+      // The draft is cleared only here — after the action has confirmed a real row
+      // — and a failed write returns before this callback ever runs, so the text,
+      // the GIF and the poll options survive for another attempt.
       setBody('');
       setGif(null);
       setOptions(['', '']);
       setKind(defaultKind);
       formRef.current?.reset();
+      if (result?.pending) {
+        // Not published, so no feed is told anything: the surfaces that list posts
+        // filter on `status = 'published'`, exactly like `campus_feed()` does. The
+        // author is the only person who can see the row, and only here.
+        showHeldNotice(
+          result.status === 'hidden' || result.status === 'removed'
+            ? 'Saved, but this post is not showing on the feed right now. A moderator can see why.'
+            : 'Saved and sent for review. It appears on the feed once a moderator approves it.',
+        );
+      }
+      onCreated?.(result);
     },
   });
 
@@ -200,6 +241,12 @@ export function PostComposer({ communityId = null, defaultKind = 'post', compact
         {error ? (
           <Notice tone="danger" className="mt-3" icon="flag">
             {error}
+          </Notice>
+        ) : null}
+
+        {held ? (
+          <Notice tone="warning" className="mt-3" icon="clock">
+            {held}
           </Notice>
         ) : null}
       </div>

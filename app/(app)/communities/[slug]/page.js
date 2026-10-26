@@ -16,6 +16,7 @@ import { PageHeader, Badge, Notice, EmptyState, Card, StaffDot } from '@/compone
 import { Icon } from '@/components/ui/icons';
 import { PostCard } from '@/components/posts/PostCard';
 import { PostComposer } from '@/components/posts/PostComposer';
+import { LiveFeedSync } from '@/components/social/LiveFeedSync';
 import { IdentityLine } from '@/components/identity/IdentityLine';
 import { CommunityActions } from '@/components/communities/CommunityActions';
 import { MessageButton } from '@/components/social/MessageButton';
@@ -76,6 +77,10 @@ export default async function CommunityPage({ params }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Re-reads this board when a post lands somewhere else in campus, so an
+          already-open page is not left showing the render it was given. Owns no
+          data and renders nothing — see components/social/LiveFeedSync. */}
+      <LiveFeedSync />
       <PageHeader
         title={community.name}
         description={`${kindLabel} · ${community.member_count} member${community.member_count === 1 ? '' : 's'}`}
