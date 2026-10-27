@@ -51,6 +51,21 @@ describe('Home feed cache', () => {
     expect(result).toContain(original[9].id);
   });
 
+  it('holds every page a reader has opened, so a remount does not shrink the list', () => {
+    // Ten is a page, not a ceiling: three pages of ten in, thirty entries back out.
+    const page = (start) => Array.from({ length: 10 }, (_, index) => ({
+      id: `p${start + index}`,
+      type: 'post',
+      sortAt: new Date(Date.UTC(2026, 0, 200 - (start + index))).toISOString(),
+    }));
+    writeHomeFeedCache('cache-test-a', { feed: [...page(20), ...page(10), ...page(0)], events: [], notices: [] });
+
+    const stored = readHomeFeedCache('cache-test-a').payload.feed;
+    expect(stored).toHaveLength(30);
+    expect(stored[0].id).toBe('p0');
+    expect(stored.at(-1).id).toBe('p29');
+  });
+
   it('scopes cached data by user and marks entries stale after the short TTL', () => {
     writeHomeFeedCache('cache-test-a', { feed: items(12), events: [], notices: [] });
     writeHomeFeedCache('cache-test-b', { feed: items(3), events: [], notices: [] });

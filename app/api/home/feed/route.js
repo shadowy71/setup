@@ -18,9 +18,10 @@ const PRIVATE_HEADERS = {
  * RLS-scoped page after first paint. It is intentionally not HTTP-
  * cached: post visibility and `reacted_by_me` / poll vote state are viewer-specific.
  *
- * `?offset=` is the only pagination argument. `campus_feed()` already does the ordering,
- * so a page is "the next N entries of the same deterministic list" and the client simply
- * keeps the pages it has asked for — Home is not capped at one page. The offset is a page
+ * `?offset=` is the only pagination argument and a page is `HOME_FEED_PAGE_SIZE` rows — ten.
+ * `campus_feed()` already does the ordering, so a page is "the next ten entries of the same
+ * deterministic list" and the client keeps every page it has asked for: Home is not capped at
+ * one page, it is just loaded one page at a time. The offset is a page
  * boundary rather than a cap on how far back a reader can go, up to `HOME_FEED_MAX_OFFSET`,
  * past which `hasMore` turns off instead of pretending the feed ended. The events and
  * notices rails are Home's own fixed three-row sets and ignore the offset: paging the
@@ -78,7 +79,7 @@ export async function GET(request) {
         notices: notices || [],
         eventsUnavailable: Boolean(eventsError),
         noticesUnavailable: Boolean(noticesError),
-        // The client renders "load older" off this, rather than guessing from the
+        // The client renders its "Show more" control off this, rather than guessing from the
         // length it happened to receive: a short page is the feed saying it is over.
         page: {
           limit: HOME_FEED_PAGE_SIZE,

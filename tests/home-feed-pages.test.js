@@ -2,14 +2,15 @@ import fs from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 
 /**
- * Home's feed is a list of *pages*, not a ten-entry window.
+ * Home loads ten at a time and can be told to show more.
  *
- * Home used to stop at ten posts, enforced twice: `/api/home/feed` asked the database
- * for ten and `homeFeedCache` re-truncated whatever came back. The surface now keeps
- * every page it has loaded and asks for the next one when the reader wants to go further
- * back, so what is pinned here is the seam between the three parts that has to agree:
- * the merge rule, the page size the database will honour, and what the route says about
- * whether more exists.
+ * Home used to *stop* at ten posts, enforced twice: `/api/home/feed` asked the database
+ * for ten and `homeFeedCache` re-truncated whatever came back. Ten is still the page size
+ * — it is a screenful, and it is what a request costs — but it is no longer a ceiling: the
+ * surface keeps every page it has loaded and "Show more" fetches the next one. What has to
+ * agree is the seam between three parts, so that is what is pinned here: the merge rule,
+ * the page size the database will actually answer, and what the route says about whether
+ * anything older exists.
  */
 
 const { HOME_FEED_PAGE_SIZE, HOME_FEED_MAX_OFFSET } = await import('@/lib/constants');
@@ -52,7 +53,21 @@ describe('mergeFeedPages', () => {
     const few = Array.from({ length: 20 }, (_, index) => entry(`q${index}`, 50 - index));
     expect(mergeFeedPages(many, few)).toHaveLength(60);
     expect(mergeFeedPages(many, few, { limit: 0 })).toHaveLength(60);
-    expect(mergeFeedPages(many, few, { limit: 50 })).toHaveLength(50);
+    expect(mergeFeedPages(many, few, { limit: 30 })).toHaveLength(30);
+  });
+
+  it('accumulates every tap of "Show more", and an overlap at a page boundary stays one entry', () => {
+    // Three successive pages of ten, the third starting one row early because a post
+    // landed while the reader was scrolling: the seam must not become a duplicate.
+    const page = (start) => Array.from({ length: 10 }, (_, index) => entry(`p${start + index}`, 200 - (start + index)));
+    const first = page(0);
+    const second = mergeFeedPages(page(10), first);
+    const third = mergeFeedPages(page(19), second);
+    expect(second).toHaveLength(20);
+    expect(third).toHaveLength(29);
+    expect(new Set(third.map((item) => item.id)).size).toBe(third.length);
+    const times = third.map((item) => Date.parse(item.sortAt));
+    expect(times).toEqual([...times].sort((a, b) => b - a));
   });
 
   it('survives the shapes a failure can hand it', () => {
@@ -62,17 +77,18 @@ describe('mergeFeedPages', () => {
 });
 
 describe('the page size Home asks for', () => {
-  it('is one page, and it is exactly what campus_feed() will allow', () => {
-    expect(HOME_FEED_PAGE_SIZE).toBe(50);
-    // The SQL clamps `p_limit` to at most 50 (`least(greatest(coalesce(p_limit, 20), 1), 50)`),
-    // so raising the constant without a migration would mean Home silently asking for more
-    // and getting 50 — and the "load older" rule below (`a full page means there is more`)
-    // would then never fire. Pinned together on purpose.
+  it('is ten — a screenful per request, not a limit on the list', () => {
+    expect(HOME_FEED_PAGE_SIZE).toBe(10);
+    // Ten is small on purpose: the first paint costs what it always did and depth is one
+    // tap each. What must not happen is asking for a page the database would round down —
+    // `campus_feed()` clamps `p_limit` to at most 50, and a full page is the only signal
+    // that an older one exists, so a silently-shrunken page would read as "end of feed".
     const sql = fs.readFileSync('supabase/migrations/20261005000011_011_platform.sql', 'utf8');
     const clamp = new RegExp(`limit least\\(greatest\\(coalesce\\(p_limit, \\d+\\), 1\\), (\\d+)\\)`).exec(sql);
     expect(clamp).not.toBeNull();
-    expect(Number(clamp[1])).toBe(HOME_FEED_PAGE_SIZE);
-    expect(HOME_FEED_MAX_OFFSET).toBeGreaterThan(HOME_FEED_PAGE_SIZE);
+    expect(HOME_FEED_PAGE_SIZE).toBeLessThanOrEqual(Number(clamp[1]));
+    expect(HOME_FEED_MAX_OFFSET % HOME_FEED_PAGE_SIZE).toBe(0);
+    expect(HOME_FEED_MAX_OFFSET / HOME_FEED_PAGE_SIZE).toBe(50);
   });
 });
 
@@ -113,17 +129,25 @@ const items = (count, start = 0) =>
   Array.from({ length: count }, (_, index) => entry(`p${start + index}`, 100 - (start + index)));
 
 describe('GET /api/home/feed paging', () => {
-  it('asks for one full page from the newest end when no offset is given', async () => {
-    getCampusFeed.mockResolvedValue({ items: items(10), unavailable: false });
+  it('asks for one page of ten from the newest end when no offset is given', async () => {
+    getCampusFeed.mockResolvedValue({ items: items(HOME_FEED_PAGE_SIZE), unavailable: false });
     const { status, body, args } = await fetchFeed();
     expect(status).toBe(200);
     expect(args).toEqual({ limit: HOME_FEED_PAGE_SIZE, offset: 0, currentProfileId: 'profile-1' });
-    expect(body.page).toEqual({ limit: HOME_FEED_PAGE_SIZE, offset: 0, hasMore: false });
-    expect(body.feed).toHaveLength(10);
+    expect(body.page).toEqual({ limit: HOME_FEED_PAGE_SIZE, offset: 0, hasMore: true });
+    expect(body.feed).toHaveLength(HOME_FEED_PAGE_SIZE);
+  });
+
+  it('stops offering a next page the moment a page comes back short', async () => {
+    getCampusFeed.mockResolvedValue({ items: items(HOME_FEED_PAGE_SIZE - 3), unavailable: false });
+    const { body } = await fetchFeed();
+    // Seven is the feed saying it ran out, which is the only honest way to hide the control.
+    expect(body.feed).toHaveLength(HOME_FEED_PAGE_SIZE - 3);
+    expect(body.page.hasMore).toBe(false);
   });
 
   it('passes a valid offset straight through, so the reader can page back past one page', async () => {
-    getCampusFeed.mockResolvedValue({ items: items(HOME_FEED_PAGE_SIZE, 50), unavailable: false });
+    getCampusFeed.mockResolvedValue({ items: items(HOME_FEED_PAGE_SIZE, HOME_FEED_PAGE_SIZE), unavailable: false });
     const { body, args } = await fetchFeed(`?offset=${HOME_FEED_PAGE_SIZE}`);
     expect(args.offset).toBe(HOME_FEED_PAGE_SIZE);
     expect(body.page.offset).toBe(HOME_FEED_PAGE_SIZE);
@@ -186,7 +210,8 @@ describe('the Home surface around those pages', () => {
   it('offers the next page only when the server said one exists', () => {
     expect(home).toContain('const canPageBack = Boolean(snapshot?.page?.hasMore) && feed.length > 0 && !unavailable;');
     expect(home).toContain('{canPageBack ? (');
-    expect(home).toContain('Load ${HOME_FEED_PAGE_SIZE} older entries');
+    expect(home).toContain("{loadingMore ? 'Loading more…' : 'Show more'}");
+    expect(home).toContain('aria-label={`Show ${HOME_FEED_PAGE_SIZE} more entries`}');
   });
 
   it('never re-truncates the cached payload on the way in', () => {
