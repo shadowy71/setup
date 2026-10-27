@@ -335,11 +335,11 @@ export function HomeFeedClient({
   const canPageBack = Boolean(snapshot?.page?.hasMore) && feed.length > 0 && !unavailable;
 
   /**
-   * One page older, appended to what is on screen.
+   * One page older — another `HOME_FEED_PAGE_SIZE` entries — appended to what is on screen.
    *
    * A separate request rather than a bigger first page on purpose: Home's first paint
-   * stays the size it always was, and the cost of depth is paid only by the reader who
-   * asks for it. The rails keep coming from the newest page, and a failure leaves every
+   * stays one screenful, and the cost of depth is paid only by the reader who asks for
+   * it, one tap at a time. The rails keep coming from the newest page, and a failure leaves every
    * loaded entry on screen — falling back to page one would look like the reader's own
    * scrolling had reset the feed.
    */
@@ -471,13 +471,19 @@ export function HomeFeedClient({
                 <div className="flex flex-col items-start gap-2">
                   {loadMoreError ? (
                     <Notice tone="warning" icon="flag">
-                      The older part of the feed could not be loaded. Everything above is still what the
-                      database returned.
+                      The older posts could not be loaded. Everything above is still what the database
+                      returned, and nothing has been thrown away.
                     </Notice>
                   ) : null}
                   {canPageBack ? (
-                    <Button variant="secondary" size="sm" disabled={loadingMore} onClick={() => { void loadMore(); }}>
-                      {loadingMore ? 'Loading older entries…' : `Load ${HOME_FEED_PAGE_SIZE} older entries`}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={loadingMore}
+                      aria-label={`Show ${HOME_FEED_PAGE_SIZE} more entries`}
+                      onClick={() => { void loadMore(); }}
+                    >
+                      {loadingMore ? 'Loading more…' : 'Show more'}
                     </Button>
                   ) : null}
                 </div>

@@ -1341,3 +1341,81 @@ offset. Going beyond either needs `campus_feed()`’s clamp widened, and that nu
 `getPostsByIds` hydrates the page’s post ids in one `in (…)` list, so a page is also the bound on
 that request’s URL length. A deeper per-page read should therefore be a migration plus a chunked
 hydration, not a constant.
+
+## 19. Ten at a time, with Show more (2026-10-27)
+
+§18 removed Home's ten-post ceiling by making the page as large as the database will answer
+(50). The follow-up request was the other shape of the same system: **load ten at a time, and give
+the reader an option to show more.** This section is the delta, because the machinery §18 built —
+`?offset=`, `page.hasMore`, `mergeFeedPages`, a cache that no longer slices — is exactly what a
+"load 10, then 10 more, then 10 more" surface needs, and none of it had to change.
+
+### 19.1 What changed
+
+| | §18 | now |
+| --- | --- | --- |
+| `HOME_FEED_PAGE_SIZE` | 50, chosen to match `campus_feed()`'s clamp | **10**, chosen as a screenful |
+| first paint | 50 entries | 10 entries — the cost Home has always had |
+| the control | “Load 50 older entries” | **“Show more”**, adding ten each press, repeatable |
+| `HOME_FEED_MAX_OFFSET` | 500 = ten pages | 500 = **fifty** pages; the ceiling is unchanged, the step is smaller |
+| the constant's test | pinned *equal* to the SQL clamp | pinned **at or below** it |
+
+The last row is the one worth reading. The page size is no longer allowed to *be* the clamp, and
+the reason is `hasMore`'s definition: “this page came back full” is the only signal that an older
+page exists. If somebody sets `HOME_FEED_PAGE_SIZE = 100`, `campus_feed()` clamps the query to 50
+rows, `50 !== 100` reads as “the feed ended”, and the control quietly disappears at fifty entries —
+Home would look capped again, which is the bug this whole thread started from. The test reads the
+migration and fails on `HOME_FEED_PAGE_SIZE > clamp` for exactly that reason, and also asserts
+`HOME_FEED_MAX_OFFSET % HOME_FEED_PAGE_SIZE === 0` so the deepest page cannot be a partial one
+that hides the control early.
+
+The smaller page also retires the concern §18.5 raised about hydration: `getPostsByIds` builds one
+`in (…)` list per page, so a page of ten is a fifth of that URL, and a reader who pages all the way
+to the offset ceiling still never has a request wider than ten ids.
+
+### 19.2 The affordance
+
+`components/home/HomeFeedClient.js` keeps the label honest without hard-coding the number into the
+UI copy: the button reads `Show more` (and `Loading more…` while a request is in flight), and the
+page size is carried in the accessible name — `aria-label={`Show ${HOME_FEED_PAGE_SIZE} more entries`}`.
+It renders only when `snapshot.page.hasMore` says an older page exists, is disabled while loading,
+and `loadMore` returns early on `loadingMore`, so a double-tap cannot fetch the same offset twice.
+The failure copy says what actually stays on screen: the older posts could not be loaded, and
+nothing that was already loaded is thrown away — there is no fallback to page one, which would look
+like the reader's own scrolling had reset the feed.
+
+### 19.3 Evidence
+
+`scripts/dev/home-feed-depth-check.mjs` (`npm run verify:homefeed`) was rewritten for this shape and
+learns the page size from the route (`context.request.get('/api/home/feed')` → `page.limit`) instead
+of duplicating the constant, so `--page 10` *asserts the number* while the rest of the run stays
+true if it moves. Every count is read from a **settled** DOM: the stream mounts placeholder slots
+first, and a check that counts rows the moment some appear measures a skeleton — that is what failed
+the first run of this version, not the paging.
+
+Real Chromium against the production build and the local harness (real PostgreSQL, real RLS, 240
+published posts):
+
+```
+ok    the first paint is one page — ten entries, not the whole feed 10 entries, page size 10
+ok    the page is complete, not a skeleton that fills in later 10 cards, each with content
+ok    the rail and the stream agree about how much is loaded   10 entries
+ok    the route reports a full page and that an older page exists 10 rows, hasMore true
+ok    the next page continues the list without repeating or skipping 10 + 10 distinct entries, no overlap
+ok    "Show more" tap 1 appends one page under what is on screen 10 → 20 entries
+ok    "Show more" tap 2 appends one page under what is on screen 20 → 30 entries
+ok    it offers another page while one exists, and the rail keeps count button: Show more · rail: 30 entries
+ok    the pages stay in the feed's own order across every seam 19 timestamps, descending across 2 page boundary(ies)
+ok    a fresh post lands in front without evicting the loaded tail 30 → 31 entries, new post in front of the loaded pages
+ok    nothing in the run threw in the page                     no page errors
+```
+
+Unit level: `tests/home-feed-pages.test.js` gained the repeated-tap contract (three successive pages
+of ten, the third starting one row early because a post landed mid-scroll → **29** unique entries,
+newest-first, no duplicate at the seam) and a “short page means the feed is over” route test, which
+is what hides the control; `tests/home-feed-cache.test.js` gained “three pages in, thirty entries
+back out”, i.e. the cache holds the accumulated list rather than the newest ten.
+
+Gates: `npm run verify` exit 0 — `eslint .` clean, `sw:check` current, `verify:db` + `audit:db`
+against the live embedded cluster (30 migrations), **894 tests / 68 files** passing; `npm run build`
+exit 0; `npm run verify:homefeed` as above.

@@ -1,26 +1,27 @@
 #!/usr/bin/env node
 /**
- * Real-browser check for Home's feed depth — the thing "don't cap Home at ten posts"
- * is actually about.
+ * Real-browser check for Home's paging: ten at a time, and a "Show more" that keeps going.
  *
- * Home's list used to be cut twice: the route asked `campus_feed()` for ten rows, and the
- * browser cache re-truncated whatever came back, so no request could have made the page
- * longer. It is now a page at a time (one page = the biggest page the SQL function
- * accepts), and the surface keeps every page the reader has asked for.
+ * Home used to *stop* at ten — the route asked `campus_feed()` for ten rows and the browser
+ * cache re-truncated whatever came back, so no request could have made the page longer. Ten is
+ * still the page size (a screenful is what a request should cost), but it is now a page rather
+ * than a ceiling: each tap of "Show more" appends another ten under what is already on screen,
+ * and nothing slices the list afterwards.
  *
- * This runs against the local harness (`npm run perf:serve`: real PostgreSQL, real
- * migrations, real RLS, 240 published posts) and a real Chromium, and asserts the
- * behaviour a student would see rather than the source of the component:
+ * This runs against the local harness (`npm run perf:serve`: real PostgreSQL, real migrations,
+ * real RLS, 240 published posts) and a real Chromium, and asserts what a student would see
+ * rather than the source of the component:
  *
- *   • the first page is a page, not ten;
- *   • the SQL offset boundary does not repeat or skip an entry;
- *   • "load older" appends the next page underneath what is on screen, once each;
- *   • the newest entry still arrives at the head without evicting the oldest loaded one.
+ *   • the first paint is exactly one page, and the page size is what the route says it is;
+ *   • the SQL offset boundary neither repeats nor skips an entry;
+ *   • "Show more" can be pressed repeatedly and each press grows the list by one page;
+ *   • a post that arrives while the reader is three pages deep does not evict their oldest
+ *     loaded entry, and the merged list stays in the feed's documented order.
  *
  *   npm run build && npx next start -p 3100      # .env.local pointing at the stub
  *   node scripts/dev/home-feed-depth-check.mjs
  *
- * Options: --base <url> --student <email> --page <n> --shots <dir>
+ * Options: --base <url> --student <email> --page <n> --taps <n> --shots <dir>
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -33,19 +34,24 @@ const { values } = parseArgs({
   options: {
     base: { type: 'string', default: process.env.PERF_APP_URL || 'http://127.0.0.1:3100' },
     student: { type: 'string', default: 'perf.student1@pccoepune.org' },
-    page: { type: 'string', default: '50' },
+    // The expected page size. Unset means "whatever the route reports", so a deliberate change
+    // to `HOME_FEED_PAGE_SIZE` does not need this script edited as well — but passing `--page 10`
+    // is how you assert the number itself.
+    page: { type: 'string', default: '' },
+    taps: { type: 'string', default: '2' },
     shots: { type: 'string', default: path.join(root, 'node_modules/.cache/home-feed-depth') },
   },
 });
 
 const BASE = values.base;
-const PAGE = Number(values.page);
+const EXPECTED_PAGE = values.page ? Number(values.page) : null;
+const TAPS = Number(values.taps);
 const SHOTS = values.shots;
 await mkdir(SHOTS, { recursive: true });
 
 const harness = JSON.parse(await readFile(path.join(root, 'node_modules/.cache/perf/harness.json'), 'utf8'));
 let failures = 0;
-const report = { base: BASE, page: PAGE, checks: [], startedAt: new Date().toISOString() };
+const report = { base: BASE, expectedPage: EXPECTED_PAGE, taps: TAPS, checks: [], startedAt: new Date().toISOString() };
 
 function log(kind, label, detail = '') {
   report.checks.push({ label, kind, detail });
@@ -95,31 +101,68 @@ const railCount = () =>
     const match = /(\d+)\s+entries/.exec(document.body.innerText || '');
     return match ? Number(match[1]) : null;
   });
+const showMore = () => page.locator('button', { hasText: 'Show more' }).first();
 
 /**
- * Waits for the first page to paint and returns its slot count. Polls the DOM rather
- * than a fixed sleep because a cold production route needs a database round trip.
+ * The stream mounts placeholder slots and then fills them, so counting rows the instant some
+ * appear measures the skeleton. `settledCount` returns a number only after it has stopped moving,
+ * which is what makes "one page of ten" a measurement rather than a race.
  */
+async function settledCount(timeoutMs = 60_000, samples = 3) {
+  const started = Date.now();
+  let last = -1;
+  let stable = 0;
+  while (Date.now() - started < timeoutMs) {
+    const count = (await slots()).length;
+    if (count === last && count > 0) {
+      stable += 1;
+      if (stable >= samples) return count;
+    } else {
+      stable = 0;
+      last = count;
+    }
+    await page.waitForTimeout(300);
+  }
+  return last;
+}
+
 async function waitForPaint(minimum, timeoutMs = 60_000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
-    const count = (await slots()).length;
-    if (count >= minimum) return count;
-    await page.waitForTimeout(500);
+    if ((await slots()).length >= minimum) return settledCount(timeoutMs - (Date.now() - started));
+    await page.waitForTimeout(300);
   }
   throw new Error(`the stream never reached ${minimum} entries (last count ${(await slots()).length})`);
 }
+
+/** Clicks "Show more" and waits for exactly one more page to have settled on screen. */
+async function tapShowMore(loaded, pageSize, tap) {
+  const wanted = loaded + pageSize;
+  await showMore().click();
+  const count = await waitForPaint(wanted, 45_000);
+  expect(count === wanted, `tap ${tap}: the stream holds ${count} entries, expected ${wanted}`);
+  return count;
+}
+
+// The page size is read from the route before the page is opened, so every expectation below is
+// "one page" as the server defines it rather than a number duplicated into this script. The
+// request runs in the browser context, so it carries the same session cookie Home will get.
+const meta = await (await context.request.get(`${BASE}/api/home/feed`, { headers: { Accept: 'application/json' } })).json();
+const PAGE = meta.page?.limit ?? 0;
+expect(PAGE > 0, `the feed route did not report a page size (${JSON.stringify(meta).slice(0, 120)})`);
+expect(EXPECTED_PAGE === null || PAGE === EXPECTED_PAGE, `the route pages ${PAGE} at a time, expected ${EXPECTED_PAGE}`);
+expect(PAGE <= 20, `a page is ${PAGE} entries — that is not a screenful, it is a dump`);
 
 await page.goto(`${BASE}/home`, { waitUntil: 'load', timeout: 90_000 });
 
 /* ------------------------------------------------------------------- the checks */
 
 let firstPage = 0;
-await check(`first page paints more than the ten posts Home used to cap at`, async () => {
-  firstPage = await waitForPaint(PAGE > 10 ? 11 : 1);
-  expect(firstPage > 10, `only ${firstPage} entries rendered — the ten-entry cap is still in force`);
-  expect(firstPage <= PAGE, `${firstPage} entries on one page, but a page is ${PAGE}`);
-  return `${firstPage} entries`;
+
+await check('the first paint is one page — ten entries, not the whole feed', async () => {
+  firstPage = await waitForPaint(PAGE);
+  expect(firstPage === PAGE, `the stream settled at ${firstPage} entries for a page of ${PAGE}`);
+  return `${firstPage} entries, page size ${PAGE}`;
 });
 
 await check('the page is complete, not a skeleton that fills in later', async () => {
@@ -140,16 +183,15 @@ await check('the route reports a full page and that an older page exists', async
   const body = await page.evaluate(async () => (await fetch('/api/home/feed', { headers: { Accept: 'application/json' } })).json());
   expect(body.ok === true, `the feed route answered ${JSON.stringify(body).slice(0, 120)}`);
   expect(body.feed.length === PAGE, `the route returned ${body.feed.length} rows, expected one page of ${PAGE}`);
-  expect(body.page?.limit === PAGE, `page.limit says ${body.page?.limit}`);
   expect(body.page?.offset === 0, `page.offset says ${body.page?.offset}`);
   expect(body.page?.hasMore === true, 'hasMore is false with 240 published posts in the database');
   return `${body.feed.length} rows, hasMore ${body.page.hasMore}`;
 });
 
-await check('the second page continues the list without repeating or skipping', async () => {
+await check('the next page continues the list without repeating or skipping', async () => {
   const both = await page.evaluate(
     async (pageSize) => {
-      const one = await (await fetch(`/api/home/feed`, { headers: { Accept: 'application/json' } })).json();
+      const one = await (await fetch('/api/home/feed', { headers: { Accept: 'application/json' } })).json();
       const two = await (await fetch(`/api/home/feed?offset=${pageSize}`, { headers: { Accept: 'application/json' } })).json();
       const ids = (payload) => payload.feed.map((item) => `${item.type}:${item.id}`);
       const a = ids(one);
@@ -161,53 +203,41 @@ await check('the second page continues the list without repeating or skipping', 
   expect(both.b.length === PAGE, `the second page returned ${both.b.length} rows`);
   expect(both.overlap === 0, `${both.overlap} entries appear on both pages — the offset boundary is wrong`);
   expect(both.page?.offset === PAGE, `the second page reports offset ${both.page?.offset}`);
-  const firstOfTwo = both.b[0];
-  const boundary = new Set(both.a);
-  expect(!boundary.has(firstOfTwo), 'the newest entry of page two was already on page one');
+  expect(!new Set(both.a).has(both.b[0]), 'the newest entry of page two was already on page one');
   return `${both.a.length} + ${both.b.length} distinct entries, no overlap`;
 });
 
 await page.screenshot({ path: path.join(SHOTS, 'home-first-page.png'), fullPage: false });
 
-let withSecondPage = firstPage;
-await check('the button offers exactly one more page', async () => {
-  const label = await page.locator('button', { hasText: `Load ${PAGE} older entries` }).first().innerText();
-  expect(label.includes(String(PAGE)), `the button says "${label}"`);
-  return label.trim();
-});
+let loaded = firstPage;
+for (let tap = 1; tap <= TAPS; tap += 1) {
+  await check(`"Show more" tap ${tap} appends one page under what is on screen`, async () => {
+    const label = (await showMore().innerText()).trim();
+    expect(label === 'Show more', `the control says "${label}"`);
+    const before = loaded;
+    loaded = await tapShowMore(loaded, PAGE, tap);
+    return `${before} → ${loaded} entries`;
+  });
+}
 
-await check('pressing it appends the older page under the newer one', async () => {
-  await page.locator('button', { hasText: `Load ${PAGE} older entries` }).first().click();
-  const started = Date.now();
-  while (Date.now() - started < 45_000) {
-    withSecondPage = (await slots()).length;
-    if (withSecondPage >= firstPage + PAGE) break;
-    await page.waitForTimeout(400);
-  }
-  expect(withSecondPage === firstPage + PAGE, `the stream holds ${withSecondPage} entries after one more page (expected ${firstPage + PAGE})`);
+await page.screenshot({ path: path.join(SHOTS, 'home-after-taps.png'), fullPage: false });
+
+await check('it offers another page while one exists, and the rail keeps count', async () => {
+  const onScreen = await settledCount(10_000);
+  expect(onScreen === loaded, `the stream settled at ${onScreen} entries after ${TAPS} taps (expected ${loaded})`);
+  expect((await showMore().count()) === 1, `the control is gone after ${loaded} entries, but 240 posts are seeded`);
   const shown = await railCount();
-  expect(shown === withSecondPage, `the rail says ${shown} while the stream holds ${withSecondPage}`);
-  return `${firstPage} → ${withSecondPage} entries`;
-});
-
-await page.screenshot({ path: path.join(SHOTS, 'home-two-pages.png'), fullPage: false });
-
-// The affordance itself, in place: what a reader sees at the bottom of the list.
-await check('the offer to go further back is still there after a page', async () => {
-  const button = page.locator('button', { hasText: `Load ${PAGE} older entries` }).first();
-  expect(await button.count() === 1, 'the stream no longer offers an older page after one page was added');
-  await button.scrollIntoViewIfNeeded();
-  await page.screenshot({ path: path.join(SHOTS, 'home-load-more.png'), fullPage: false });
-  return `button: ${(await button.innerText()).trim()}`;
+  expect(shown === loaded, `the rail says ${shown} while the stream holds ${loaded}`);
+  await showMore().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(SHOTS, 'home-show-more.png'), fullPage: false });
+  return `button: ${(await showMore().innerText()).trim()} · rail: ${shown} entries`;
 });
 
 const POST_KINDS = ['post', 'discussion', 'poll'];
 const firstPostSlot = () =>
-  page
-    .locator(POST_KINDS.map((kind) => `.home-stream .stream-slot[data-kind="${kind}"]`).join(', '))
-    .first();
+  page.locator(POST_KINDS.map((kind) => `.home-stream .stream-slot[data-kind="${kind}"]`).join(', ')).first();
 
-await check('a page deeper still keeps the feed ordered newest-first', async () => {
+await check('the pages stay in the feed’s own order across every seam', async () => {
   const rows = await page.$$eval('.home-stream .stream-slot', (els) =>
     els.map((el) => ({
       kind: el.dataset.kind || '',
@@ -216,16 +246,16 @@ await check('a page deeper still keeps the feed ordered newest-first', async () 
   );
   // Only the entries `campus_feed()` sorts by their own timestamp: pinned notices lead the
   // stream by design (the SQL gives them a sort key a day ahead of everything else), and
-  // events sort by when they start, so comparing their rendered dates would be checking
-  // the wrong column, not the wrong order.
+  // events sort by when they start, so comparing their rendered dates would be checking the
+  // wrong column, not the wrong order.
   const stamps = rows.filter((row) => POST_KINDS.includes(row.kind) && row.time).map((row) => Date.parse(row.time));
-  expect(stamps.length > firstPage, `${stamps.length} timestamped entries after loading two pages of ${PAGE}`);
+  expect(stamps.length > firstPage, `${stamps.length} timestamped entries after ${TAPS} more page(s) of ${PAGE}`);
   const sorted = [...stamps].sort((a, b) => b - a);
   expect(JSON.stringify(stamps) === JSON.stringify(sorted), 'the merged pages are not newest-first');
-  return `${stamps.length} timestamps, descending across the page boundary`;
+  return `${stamps.length} timestamps, descending across ${TAPS} page boundary(ies)`;
 });
 
-await check('a fresh post lands at the head without evicting the loaded tail', async () => {
+await check('a fresh post lands in front without evicting the loaded tail', async () => {
   const before = (await slots()).length;
   // A body the 240 seeded posts cannot contain, so a match is unambiguous.
   const probe = `home-feed-depth ${Date.now().toString(36)}`;
@@ -261,9 +291,11 @@ await check('nothing in the run threw in the page', async () => {
 await page.screenshot({ path: path.join(SHOTS, 'home-after-write.png'), fullPage: false });
 await browser.close();
 
+report.page = PAGE;
+report.loaded = loaded;
 report.finishedAt = new Date().toISOString();
 report.failures = failures;
 await writeFile(path.join(SHOTS, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
 
-console.log(`\n${failures === 0 ? 'home-feed depth ✓' : `home-feed depth ✗ (${failures} failing check${failures === 1 ? '' : 's'})`}  ·  report: ${path.relative(process.cwd(), path.join(SHOTS, 'report.json'))}`);
+console.log(`\n${failures === 0 ? 'home-feed paging ✓' : `home-feed paging ✗ (${failures} failing check${failures === 1 ? '' : 's'})`}  ·  ${loaded} entries on screen  ·  report: ${path.relative(process.cwd(), path.join(SHOTS, 'report.json'))}`);
 process.exit(failures === 0 ? 0 : 1);
