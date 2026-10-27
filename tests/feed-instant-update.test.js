@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 
 import {
-  HOME_FEED_LIMIT,
   clearHomeFeedCache,
   patchHomeFeedCache,
   readHomeFeedCache,
@@ -87,7 +86,9 @@ describe('the composer hands the confirmed post to the surface', () => {
 
     expect(apply).toMatch(/if \(!isCampusFeedEligible\(post\)\) return;/);
     expect(apply).toMatch(/postToFeedItem\(post\)/);
-    expect(apply).toMatch(/placePostInFeed\(payload\?\.feed \|\| \[\], post, \{ limit: HOME_FEED_LIMIT \}\)/);
+    // No window argument: placing the author's row must not evict the oldest entry the
+    // reader has already paged back to.
+    expect(apply).toMatch(/placePostInFeed\(payload\?\.feed \|\| \[\], post\)/);
     expect(apply).toMatch(/patchHomeFeedCache\(userId, patch, feedRevision\(\)\)/);
     expect(apply).toMatch(/held\.set\(String\(post\.id\), \{ item, at: Date\.now\(\) \}\)/);
     // Exactly one follow-up read, through the invalidation path the other surfaces
@@ -149,7 +150,7 @@ describe('the remembered page follows the write', () => {
     expect(readHomeFeedCache(USER)).toBeNull();
   });
 
-  it('collapses the placed row and the server page into one entry at the window size', () => {
+  it('collapses the placed row and the server page into one entry, keeping both pages', () => {
     const post = createdPost();
     const server = [entry('a', 1), entry('b', 2)];
     writeHomeFeedCache(USER, { feed: server, events: [], notices: [] }, 1);
@@ -167,12 +168,12 @@ describe('the remembered page follows the write', () => {
     const fromServer = { ...postToFeedItem(post), post: { ...post, reaction_count: 7 } };
     const caught = patchHomeFeedCache(USER, (payload) => ({
       ...payload,
-      feed: reconcileFeed([fromServer, ...server], [postToFeedItem(post)], { limit: HOME_FEED_LIMIT }),
+      feed: reconcileFeed([fromServer, ...server], [postToFeedItem(post)]),
     }));
 
     expect(caught.feed.filter((item) => item.id === post.id)).toHaveLength(1);
     expect(caught.feed[0].post.reaction_count).toBe(7);
-    expect(caught.feed.length).toBeLessThanOrEqual(HOME_FEED_LIMIT);
+    expect(caught.feed.length).toBe(3);
     const times = caught.feed.map((item) => Date.parse(item.sortAt || item.createdAt));
     expect(times).toEqual([...times].sort((a, b) => b - a));
   });

@@ -1237,3 +1237,107 @@ Headless Chromium cannot photograph this bug the way a phone shows it: it raster
 shrunken page a phone paints — which is why the pair in `node_modules/.cache/previews/` carries the
 measured numbers in its caption instead of relying on the picture. A real iPhone Safari and an Android
 WebView are still not covered here; nor is a 390px device at a zoom level the user changed by hand.
+
+## 18. Home's feed became a list of pages (2026-10-27)
+
+Reported as “don’t cap the home page posts to 10”. It was true, and it was not one cap: Home
+could never show an eleventh entry however the request was written, because three bounds were
+stacked on top of each other. Removing any one of them alone changes nothing a reader sees.
+
+### 18.1 The three caps, and why “just ask for more” is the wrong fix
+
+| where | what it did |
+| --- | --- |
+| `app/api/home/feed/route.js` | asked `getCampusFeed(supabase, { limit: 10, … })` |
+| `components/home/homeFeedCache.js` | `HOME_FEED_LIMIT = 10`, re-applied *inside* `writeHomeFeedCache`, so a bigger response was truncated again on its way into memory — and again at both client merge sites (`reconcileFeed` on refresh, `placePostInFeed` on a new post) |
+| `campus_feed()` (`20261005000011_011_platform.sql`) | `limit least(greatest(coalesce(p_limit, 20), 1), 50) offset greatest(coalesce(p_offset, 0), 0)` |
+
+The third row is why this is a paging change and not a constant bump. The database ignores any
+`p_limit` above 50, so 50 is the largest *page* obtainable without a migration; and
+`coalesce(p_limit, 20)` plus the SQL parameter default means the value cannot simply be deleted
+either — a parameter default applies only when the argument is *omitted*, and `null` is
+coalesced back to 20. So “pass a bigger number” and “pass nothing” are both traps: the first
+looks like the cap still exists, the second quietly changes the cap from 10 to 20.
+
+`getCampusFeed`’s own default is `PAGE_SIZE.feed` (20), which is what Explore asks for. That is
+deliberately not what Home now does.
+
+### 18.2 What shipped: one page, plus the older ones the reader asks for
+
+* `HOME_FEED_PAGE_SIZE = 50` and `HOME_FEED_MAX_OFFSET = 500` in `lib/constants.js`. The page
+  size is the SQL clamp — not a taste — and `tests/home-feed-pages.test.js` reads the migration
+  and fails if the two ever disagree, which is the guard against someone raising the constant and
+  silently asking for more than the function will return.
+* `/api/home/feed` takes `?offset=`, clamps it to a safe non-negative integer at or below
+  `HOME_FEED_MAX_OFFSET`, and answers with `page: { limit, offset, hasMore }`. `hasMore` is
+  `feed.length === HOME_FEED_PAGE_SIZE && offset + feed.length < HOME_FEED_MAX_OFFSET`: a short
+  page is the feed saying it is over, and the ceiling turns the offer off rather than pretending
+  there is nothing left. A junk offset is not a 400 — a stale or hand-typed URL gets the newest
+  page, which is the right answer for it.
+* `mergeFeedPages(primary, secondary, { limit })` in `lib/social/feed-state.js` is the one new
+  rule: dedupe, keep what the primary list says about an entry both lists carry, re-sort. It
+  cannot be `dedupeFeed([...fresh, ...loaded])`, because `dedupeFeed` merges field-by-field with
+  the *later* entry winning — correct when an optimistic row meets its server row, wrong when an
+  older page meets a newer read of the same post, where the fresher reaction counts would be
+  overwritten by stale ones. So the loaded entries that the fresh page already carries are
+  filtered out before the merge instead.
+* Home keeps every page it holds. `refresh` merges the authoritative page over the cached list
+  rather than replacing it, so a live change landing while a reader is three pages deep cannot
+  reset the stream; `placePostInFeed` no longer truncates, so a new post cannot evict the oldest
+  entry somebody paged back to. “Load 50 older entries” appends the next page under the list and
+  writes the whole accumulation to the cache.
+* The events and notices rails still ignore the offset. They are Home’s own fixed three-row sets;
+  paging the stream must not swap the rail under a reader for a different page’s data.
+
+### 18.3 The cache is now a memory of the surface, not a window
+
+`homeFeedCache` keeps `MAX_CACHED_USERS = 3` and the 15s TTL and drops the ten-entry slice:
+`prepareHomeFeed` = `sortFeed(dedupeFeed(items))`. What bounds it is the reader (older pages exist
+only once they have been asked for) and the per-user count — the same reasoning as
+`lib/social/feed-state.js`’s bounded deduper, documented where the old constant used to be.
+
+### 18.4 Evidence
+
+`tests/home-feed-pages.test.js` (15 tests) pins the merge semantics, the constant against the SQL
+clamp, the route’s offset clamping and `hasMore`, and — in the repo’s source-pin style — that the
+client merges instead of replacing and that the cache no longer slices. Two tests were added to
+`tests/post-create-feed.test.js` so the `p_limit`/`p_offset` that actually reaches
+`campus_feed()` is asserted rather than assumed. `tests/home-feed-cache.test.js` and
+`tests/feed-instant-update.test.js` were rewritten to the new contract (they pinned the old one,
+including a regex on the exact `{ limit: HOME_FEED_LIMIT }` call text).
+
+`scripts/dev/home-feed-depth-check.mjs` (`npm run verify:homefeed`) drives the production build
+against the local harness — real PostgreSQL, real migrations, real RLS, 240 published posts — in a
+real Chromium:
+
+```
+ok    first page paints more than the ten posts Home used to cap at 50 entries
+ok    the page is complete, not a skeleton that fills in later 50 cards, each with content
+ok    the rail and the stream agree about how much is loaded   50 entries
+ok    the route reports a full page and that an older page exists 50 rows, hasMore true
+ok    the second page continues the list without repeating or skipping 50 + 50 distinct entries, no overlap
+ok    the button offers exactly one more page                  Load 50 older entries
+ok    pressing it appends the older page under the newer one   50 → 100 entries
+ok    the offer to go further back is still there after a page button: Load 50 older entries
+ok    a page deeper still keeps the feed ordered newest-first  84 timestamps, descending across the page boundary
+ok    a fresh post lands at the head without evicting the loaded tail 100 → 101 entries, new post in front of the loaded pages
+ok    nothing in the run threw in the page                     no page errors
+```
+
+Two of those checks failed on the first run and were wrong, which is worth recording: the feed’s
+own order puts **pinned notices** above everything (`case when n.pinned then now() + interval
+'1 day'`), and events sort by when they start, so comparing every rendered `<time>` in DOM order
+was checking the wrong column. The checks now compare the entries `campus_feed()` sorts by their
+own timestamp, and look for the new post at the head of those rather than at slot zero.
+
+Gates for this change: `npm run verify` (lint, `sw:check`, `verify:db` and `audit:db` against the
+live embedded cluster, 891 tests / 68 files) exit 0, and `npm run verify:homefeed` as above.
+
+### 18.5 The bound that is left, on purpose
+
+Home is uncapped in the sense a reader feels — depth is a page away, repeatedly, and nothing
+truncates what has been loaded — with one documented ceiling: 50 rows per request and 500 of
+offset. Going beyond either needs `campus_feed()`’s clamp widened, and that number is not free:
+`getPostsByIds` hydrates the page’s post ids in one `in (…)` list, so a page is also the bound on
+that request’s URL length. A deeper per-page read should therefore be a migration plus a chunked
+hydration, not a constant.

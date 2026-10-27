@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ROUTES } from '@/lib/constants';
+import { HOME_FEED_PAGE_SIZE, ROUTES } from '@/lib/constants';
 import { Button, EmptyState, Notice } from '@/components/ui';
 import { PostComposer } from '@/components/posts/PostComposer';
 import { IslandMotion } from '@/components/home/IslandMotion';
@@ -11,7 +11,6 @@ import { HomePulse, HomeZone } from '@/components/home/HomePulse';
 import { StreamItem, StreamSlot } from '@/components/home/StreamItem';
 import { HomeRail } from '@/components/home/HomeRail';
 import {
-  HOME_FEED_LIMIT,
   clearHomeFeedCache,
   patchHomeFeedCache,
   readHomeFeedCache,
@@ -20,6 +19,7 @@ import {
 import { useLiveFeed } from '@/components/layout/LiveFeedProvider';
 import {
   isCampusFeedEligible,
+  mergeFeedPages,
   placePostInFeed,
   postToFeedItem,
   reconcileFeed,
@@ -115,6 +115,8 @@ export function HomeFeedClient({
   const { subscribe: subscribeToFeed, revision: feedRevision, invalidate: invalidateFeed } = useLiveFeed();
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
   const [error, setError] = useState(false);
   const requestRef = useRef(null);
   // Rows this tab confirmed to the author that the authoritative page has not
@@ -181,13 +183,15 @@ export function HomeFeedClient({
           return null;
         }
 
-        // The server returns newest-first. Replacing the cache with its first
-        // ten entries inserts any new post and FIFO-evicts the oldest one, and the
-        // held entries are what stop the author's own row from disappearing if this
-        // page was composed a beat before the write became visible to the feed.
-        const feedWindow = reconcileFeed(payload.feed, heldEntries(held, payload.feed), {
-          limit: HOME_FEED_LIMIT,
-        });
+        // The server returns a page, newest-first. It replaces the head of the list —
+        // that is the reconciliation, and the held entries are what stop the author's own
+        // row from disappearing if this page was composed a beat before the write became
+        // visible — while any older page this reader already pulled stays underneath.
+        // Truncating here is what used to make "the newest ten" the whole of Home.
+        const feedWindow = mergeFeedPages(
+          reconcileFeed(payload.feed, heldEntries(held, payload.feed)),
+          readHomeFeedCache(userId)?.payload?.feed || [],
+        );
         const next = writeHomeFeedCache(userId, { ...payload, feed: feedWindow }, feedRevision());
         setSnapshot(next);
         setError(false);
@@ -234,7 +238,8 @@ export function HomeFeedClient({
 
     const patch = (payload) => ({
       ...payload,
-      feed: placePostInFeed(payload?.feed || [], post, { limit: HOME_FEED_LIMIT }),
+      // No window: placing a post must not push the oldest loaded entry off the page.
+      feed: placePostInFeed(payload?.feed || [], post),
     });
     // Patch the remembered page too, so navigating away and back inside the cache
     // window shows the post instead of the feed as it was before the write.
@@ -326,6 +331,46 @@ export function HomeFeedClient({
         { label: 'Market listings', value: marketplace.length },
       ].filter((stat) => stat.value > 0)
     : [];
+
+  const canPageBack = Boolean(snapshot?.page?.hasMore) && feed.length > 0 && !unavailable;
+
+  /**
+   * One page older, appended to what is on screen.
+   *
+   * A separate request rather than a bigger first page on purpose: Home's first paint
+   * stays the size it always was, and the cost of depth is paid only by the reader who
+   * asks for it. The rails keep coming from the newest page, and a failure leaves every
+   * loaded entry on screen — falling back to page one would look like the reader's own
+   * scrolling had reset the feed.
+   */
+  const loadMore = useCallback(async () => {
+    if (!canPageBack || loadingMore) return;
+    // Read the loaded pages off the snapshot rather than the render-local `feed`, so this
+    // callback's identity follows the data instead of changing on every render.
+    const loaded = snapshot?.feed || [];
+    setLoadingMore(true);
+    setLoadMoreError(false);
+    try {
+      const response = await fetch(`/api/home/feed?offset=${loaded.length}`, {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) throw new Error('Home feed page request failed.');
+      const payload = await response.json();
+      if (!payload?.ok || payload.unavailable) throw new Error('Home feed page response was invalid.');
+      const next = {
+        ...(snapshot || payload),
+        feed: mergeFeedPages(loaded, payload.feed),
+        page: payload.page,
+      };
+      writeHomeFeedCache(userId, next, feedRevision());
+      setSnapshot(next);
+    } catch {
+      setLoadMoreError(true);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [canPageBack, feedRevision, loadingMore, snapshot, userId]);
 
   return (
     <>
@@ -419,6 +464,22 @@ export function HomeFeedClient({
                 <div className="flex flex-col items-start gap-2">
                   <Notice tone="warning" icon="flag">The campus feed could not be loaded.</Notice>
                   <Button variant="secondary" size="sm" onClick={() => { void refresh(true); }}>Try again</Button>
+                </div>
+              ) : null}
+
+              {canPageBack || loadMoreError ? (
+                <div className="flex flex-col items-start gap-2">
+                  {loadMoreError ? (
+                    <Notice tone="warning" icon="flag">
+                      The older part of the feed could not be loaded. Everything above is still what the
+                      database returned.
+                    </Notice>
+                  ) : null}
+                  {canPageBack ? (
+                    <Button variant="secondary" size="sm" disabled={loadingMore} onClick={() => { void loadMore(); }}>
+                      {loadingMore ? 'Loading older entries…' : `Load ${HOME_FEED_PAGE_SIZE} older entries`}
+                    </Button>
+                  ) : null}
                 </div>
               ) : null}
 

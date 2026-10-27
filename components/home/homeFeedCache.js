@@ -1,14 +1,13 @@
-import { limitFeed } from '@/lib/social/feed-state';
+import { dedupeFeed, sortFeed } from '@/lib/social/feed-state';
 
 /**
  * Small, browser-memory-only cache for the signed-in student's Home feed.
  *
- * The API response is already ordered newest-first. Keeping its first ten
- * distinct entries gives the cache FIFO eviction behaviour: when a new entry
- * appears at the front, the oldest entry falls off the end. This is deliberately
- * not localStorage/sessionStorage and must only be imported by client modules.
+ * It holds the page (or pages) the surface actually has, deduplicated and
+ * newest-first, so a remount inside the TTL window paints the same list the reader
+ * was looking at. It is deliberately not localStorage/sessionStorage and must only be
+ * imported by client modules.
  */
-export const HOME_FEED_LIMIT = 10;
 /**
  * How long a stored page may be served before a surface must re-read.
  *
@@ -22,17 +21,20 @@ const MAX_CACHED_USERS = 3;
 const cache = new Map();
 
 /**
- * Deduplicate and window a feed payload.
+ * Deduplicate and order a feed payload for storage.
  *
  * The rules live in `lib/social/feed-state.js`, shared with the live provider, the
  * Home stream and the write path, so a cached page, an optimistic insert and a
  * Realtime reconcile can never disagree about which two entries are the same post.
- * `limitFeed` dedupes on the canonical database post id and then applies this
- * surface's ten-entry window — which is what keeps "the newest ten" a list rather
- * than a snapshot that grew a second copy of a post under itself.
+ *
+ * There used to be a window applied here as well — ten entries, oldest evicted — which
+ * is why Home could not show more than ten posts however many the request asked for.
+ * The surface owns every page it has loaded now, so the cache stores exactly that and
+ * no more: dedup and ordering, no slice. What bounds memory is the reader (older pages
+ * are fetched on request) and `MAX_CACHED_USERS`.
  */
-export function limitHomeFeed(items) {
-  return limitFeed(items, HOME_FEED_LIMIT);
+export function prepareHomeFeed(items) {
+  return sortFeed(dedupeFeed(Array.isArray(items) ? items : []));
 }
 
 export function readHomeFeedCache(userId) {
@@ -52,7 +54,7 @@ export function readHomeFeedCache(userId) {
 }
 
 /**
- * Store the authoritative newest-first response and evict everything past 10.
+ * Store the authoritative newest-first response — every page the surface holds.
  *
  * `revision` is the live-feed revision this page reflects, so a later change
  * anywhere in the app can mark it stale without deleting it (a stale page is still
@@ -62,7 +64,7 @@ export function writeHomeFeedCache(userId, payload, revision = 0) {
   if (!userId || !payload || !Array.isArray(payload.feed)) return payload;
 
   const key = String(userId);
-  const next = { ...payload, feed: limitHomeFeed(payload.feed) };
+  const next = { ...payload, feed: prepareHomeFeed(payload.feed) };
   cache.delete(key);
   cache.set(key, { payload: next, storedAt: Date.now(), revision });
 

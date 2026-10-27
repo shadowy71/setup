@@ -35,6 +35,7 @@ vi.mock('@/lib/notifications', () => ({ notify: mocks.notify }));
 
 const { createPost, deletePost } = await import('@/lib/actions/social');
 const { getCampusFeed, POST_COLUMNS } = await import('@/lib/data/feed');
+const { HOME_FEED_PAGE_SIZE, PAGE_SIZE } = await import('@/lib/constants');
 
 const AUTHOR = '15fe0000-0000-4000-a000-000000000001';
 const POST_ID = '15fe0000-0000-4000-b000-000000000001';
@@ -466,5 +467,41 @@ describe('getCampusFeed hydrates for the viewer it was given', () => {
       reacted_by_me: false,
     });
     expect(items[0].post).toBeTruthy();
+  });
+});
+
+/**
+ * Home asks `campus_feed()` for a page, not for a fixed window, so the argument that
+ * reaches the database is the whole of Home's depth per request. Pinned here because the
+ * number is agreed in three places at once: `HOME_FEED_PAGE_SIZE`, the SQL clamp inside
+ * `campus_feed()`, and the "there is an older page" rule the route reports off it.
+ */
+describe('the page Home asks the database for', () => {
+  it('passes the page size and offset through as p_limit and p_offset', async () => {
+    const calls = [];
+    const client = {
+      rpc: async (name, args) => {
+        calls.push([name, args]);
+        return { data: [], error: null };
+      },
+    };
+
+    await getCampusFeed(client, { limit: HOME_FEED_PAGE_SIZE, offset: HOME_FEED_PAGE_SIZE, currentProfileId: AUTHOR });
+
+    expect(calls[0][0]).toBe('campus_feed');
+    expect(calls[0][1]).toEqual({ p_limit: HOME_FEED_PAGE_SIZE, p_offset: HOME_FEED_PAGE_SIZE, p_sort: 'newest' });
+    // Nothing to hydrate, so nothing else was read: one page of ids is also the bound on
+    // the follow-up `in (...)` list, which keeps the request URL bounded as pages grow.
+    expect(calls).toHaveLength(1);
+  });
+
+  it('keeps the default at one page of the feed for callers that ask for nothing', async () => {
+    const calls = [];
+    const client = { rpc: async (name, args) => { calls.push(args); return { data: [], error: null }; } };
+    await getCampusFeed(client);
+    // `PAGE_SIZE.feed` (20) is Explore's default; Home overrides it. The distinction is the
+    // reason the cap could not be removed by simply dropping the argument.
+    expect(calls[0].p_limit).toBe(PAGE_SIZE.feed);
+    expect(calls[0].p_offset).toBe(0);
   });
 });
