@@ -7,6 +7,7 @@ import { isStaffRoles } from '@/lib/identity/shell-user';
 import { MessagingProvider } from '@/components/layout/MessagingProvider';
 import { LiveFeedProvider } from '@/components/layout/LiveFeedProvider';
 import { GuideWelcomeStrip } from '@/components/guide/GuideWelcomeStrip';
+import { NavigationTour } from '@/components/navigation/NavigationTour';
 
 /**
  * The one application frame.
@@ -94,6 +95,12 @@ export function AppShell({
           </div>
 
           <BottomNav />
+          <NavigationTour
+            canModerate={canModerate}
+            canAdmin={canAdmin}
+            canCreate={createItems.length > 0}
+            isStaff={isStaff}
+          />
           <CommandPaletteHost actions={paletteActions} />
         </div>
       </LiveFeedProvider>

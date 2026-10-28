@@ -23,8 +23,10 @@ export function CommunityActions({
   communityId,
   slug,
   membership = null,
+  joinRequest = null,
   joinPolicy = 'open',
   canJoin = true,
+  joinDisabledReason = null,
   canChat = false,
   chatConversationId = null,
   pendingRequests = [],
@@ -37,13 +39,13 @@ export function CommunityActions({
   const decide = useFormAction(decideJoinRequest, { resetOnSuccess: false });
 
   const isMember = membership?.status === 'active';
-  const isPending = membership?.status === 'pending';
+  const isPending = membership?.status === 'pending' || joinRequest?.status === 'pending';
   const canInvite = joinPolicy !== 'invite';
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        {!membership && canJoin && canInvite ? (
+        {!membership && !isPending && canJoin && canInvite ? (
           <form
             action={(formData) => {
               formData.set('community_id', communityId);
@@ -57,6 +59,7 @@ export function CommunityActions({
         ) : null}
 
         {isPending ? <span className="text-2xs text-muted">Your join request is waiting for review.</span> : null}
+        {!isMember && !isPending && joinDisabledReason ? <span className="text-2xs text-muted">{joinDisabledReason}</span> : null}
 
         {isMember ? (
           <>

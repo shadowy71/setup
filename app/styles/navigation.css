@@ -497,3 +497,198 @@
     box-shadow: var(--shadow-float);
   }
 }
+
+/* Contextual destination help and the optional navigation tour. These extend
+   the existing chrome; they do not add destinations or replace its overlays. */
+@layer components {
+  .nav-destination,
+  .sheet-destination {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-destination > .nav-item,
+  .sheet-destination > a {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .nav-destination > .nav-item {
+    padding-right: 2.25rem;
+  }
+
+  .sheet-destination > a {
+    padding-right: 3rem;
+  }
+
+  .nav-destination > .nav-help,
+  .sheet-destination > .nav-help {
+    position: absolute;
+    right: 0.35rem;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
+  }
+
+  .nav-help {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .nav-help__trigger {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    color: var(--cp-icon-muted);
+    opacity: 0.62;
+    transition: opacity var(--dur-fast) ease, background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+  }
+
+  .nav-destination:hover .nav-help__trigger,
+  .nav-destination:focus-within .nav-help__trigger,
+  .sheet-destination:hover .nav-help__trigger,
+  .sheet-destination:focus-within .nav-help__trigger,
+  .nav-help__trigger[aria-expanded='true'] {
+    opacity: 1;
+  }
+
+  .nav-help__trigger:hover,
+  .nav-help__trigger[aria-expanded='true'] {
+    background-color: color-mix(in oklab, var(--cp-bg-accent) 18%, transparent);
+    color: var(--cp-accent-highlight);
+  }
+
+  .nav-help__trigger:focus-visible,
+  .nav-help__close:focus-visible {
+    outline: 2px solid var(--cp-focus);
+    outline-offset: 2px;
+    opacity: 1;
+  }
+
+  .nav-help__popover {
+    width: min(18rem, calc(100vw - 1rem));
+    border: 1px solid var(--cp-border);
+    background-color: var(--cp-bg-elevated);
+    box-shadow: var(--shadow-float);
+  }
+
+  .nav-help__icon {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background-color: var(--cp-accent-pale);
+    color: var(--cp-accent-highlight);
+  }
+
+  .nav-help__close {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    color: var(--cp-icon-muted);
+  }
+
+  .nav-help__close:hover {
+    background-color: var(--cp-hover-bg);
+    color: var(--cp-text-primary);
+  }
+
+  .sheet-destination .nav-help__trigger {
+    width: 2.75rem;
+    height: 2.75rem;
+    opacity: 0.82;
+  }
+
+  .navigation-tour-offer {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(5.75rem + env(safe-area-inset-bottom));
+    left: 1rem;
+    z-index: 60;
+    display: flex;
+    gap: 0.75rem;
+    width: auto;
+    max-width: 23rem;
+    margin-inline: auto;
+    padding: 1rem;
+    border: 1px solid var(--cp-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--cp-bg-elevated);
+    box-shadow: var(--shadow-float);
+  }
+
+  .navigation-tour-offer__icon,
+  .navigation-tour-step__icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid color-mix(in oklab, var(--cp-bg-accent) 40%, transparent);
+    border-radius: var(--radius-md);
+    background-color: var(--cp-accent-pale);
+    color: var(--cp-accent-highlight);
+  }
+
+  .navigation-tour-offer__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .navigation-tour-step__icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .navigation-tour-progress {
+    height: 0.1875rem;
+    flex: 1 1 0;
+    border-radius: 999px;
+    background-color: var(--cp-border-subtle);
+  }
+
+  .navigation-tour-progress.is-active {
+    background-color: var(--cp-accent-cyan);
+  }
+
+  .navigation-tour-step {
+    min-height: 12rem;
+    padding-top: 1.5rem;
+  }
+
+  @media (min-width: 64rem) {
+    .navigation-tour-offer {
+      right: 1.5rem;
+      bottom: 1.5rem;
+      left: auto;
+      margin: 0;
+    }
+  }
+
+  @media (max-width: 22rem) {
+    .navigation-tour-offer {
+      right: 0.75rem;
+      left: 0.75rem;
+      padding: 0.875rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-help__trigger,
+    .navigation-tour-offer,
+    .navigation-tour-dialog,
+    .navigation-tour-step,
+    .navigation-tour-progress {
+      scroll-behavior: auto !important;
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}

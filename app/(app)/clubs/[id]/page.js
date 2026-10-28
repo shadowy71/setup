@@ -9,7 +9,9 @@ import {
   listCommunityMembers,
   listJoinRequests,
   getCommunityChatConversation,
+  listOpportunities,
 } from '@/lib/data/campus';
+import { getCommunityJoinRequest } from '@/lib/data/clubs';
 import { getCommunityPosts } from '@/lib/data/feed';
 import { listPublishedEvents } from '@/lib/data/public-cache';
 import { ROUTES, UUID_REGEX } from '@/lib/constants';
@@ -62,20 +64,22 @@ export default async function ClubPage({ params }) {
     can(actor, 'moderate_all');
   if (club.status !== 'published' && !isStaff && club.created_by !== user.profile.id) notFound();
 
-  const [membership, members, events, chat, posts] = await Promise.all([
+  const [membership, joinRequest, members, events, opportunities, chat, posts] = await Promise.all([
     getCommunityMembership(supabase, club.id, user.profile.id),
+    getCommunityJoinRequest(supabase, club.id, user.profile.id),
     listCommunityMembers(supabase, club.id, { limit: 60 }),
     listPublishedEvents({ limit: 5, clubId: club.id, upcoming: true }),
+    listOpportunities(supabase, { limit: 5, clubId: club.id }),
     getCommunityChatConversation(supabase, club.id),
     getCommunityPosts(supabase, club.id, { limit: 6, currentProfileId: user.profile.id }),
   ]);
 
   const isMember = membership?.status === 'active';
-  const isOwner = membership?.role === 'owner' || club.created_by === user.profile.id;
-  const canManage = isStaff || isOwner || membership?.role === 'moderator';
+  const isOwner = isMember && membership?.role === 'owner';
+  const canManage = isStaff || isOwner || (isMember && membership?.role === 'moderator');
   const requests = canManage ? await listJoinRequests(supabase, club.id) : [];
   const canPostHere = (isMember || isStaff) && can(actor, 'create_posts');
-  const owner = members.find((member) => member.role === 'owner') || members[0] || null;
+  const owner = members.find((member) => member.role === 'owner') || null;
 
   // Recent activity is derived from rows already on the page — posts, joins and
   // the next event. Nothing is inferred and nothing is invented.
@@ -108,12 +112,12 @@ export default async function ClubPage({ params }) {
       <PageHeader
         title={club.name}
         eyebrow={club.club_category ? `${club.club_category} club` : 'Club'}
-        description={`${club.member_count} member${club.member_count === 1 ? '' : 's'} · created ${formatDate(club.created_at)}`}
+        description={`${club.member_count} member${club.member_count === 1 ? '' : 's'} · page added ${formatDate(club.created_at)}`}
         back={{ href: ROUTES.clubs, label: 'Clubs' }}
         action={
           <>
             {canManage ? (
-              <LinkButton href={ROUTES.clubEdit(club.id)} size="sm" variant="secondary" icon="sliders">
+              <LinkButton href={ROUTES.clubManage(club.id)} size="sm" variant="secondary" icon="sliders">
                 Manage club
               </LinkButton>
             ) : null}
@@ -127,13 +131,13 @@ export default async function ClubPage({ params }) {
           <ClubMonogram name={club.name} id={club.id} size={64} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              {club.is_official ? <Badge tone="accent">Official</Badge> : <Badge>Student-run</Badge>}
-              {club.recruitment_info ? (
-                <Badge tone="info" icon="megaphone">
-                  Recruiting
-                </Badge>
+              {club.verification_status === 'source_checked' ? <Badge tone="accent" icon="check">Source checked</Badge> : <Badge>Details pending</Badge>}
+              {club.is_official ? <Badge tone="accent">Campus+ reviewed</Badge> : null}
+              {!club.admin_assigned ? <Badge tone="warning">Admin assignment needed</Badge> : null}
+              {club.admin_assigned && club.recruitment_info ? (
+                <Badge tone="info" icon="megaphone">Recruiting</Badge>
               ) : null}
-              {club.join_policy !== 'open' ? <Badge tone="warning">Approval needed</Badge> : null}
+              {club.admin_assigned && club.join_policy !== 'open' ? <Badge>Approval needed</Badge> : null}
               {isMember ? (
                 <Badge tone="success" icon="check">
                   Member
@@ -167,6 +171,17 @@ export default async function ClubPage({ params }) {
           ) : null}
         </div>
 
+        <div className="rounded-[var(--radius-md)] border border-line bg-surface-2 p-3 text-2xs leading-relaxed text-muted">
+          {club.source_url ? (
+            <ExternalLink url={club.source_url} className="font-medium text-ink underline">
+              Directory source: {club.source_label || club.source_url}
+            </ExternalLink>
+          ) : (
+            <span>{club.source_label ? `Source: ${club.source_label}` : 'Public source and contact details are pending.'}</span>
+          )}
+          <span className="mt-1 block">Source checked means the organization is listed by the cited source; it does not verify every detail on this page.</span>
+        </div>
+
         {club.recruitment_info ? (
           <p className="user-text rounded-[var(--radius-md)] border border-line bg-surface-2 p-3 text-[0.8125rem] leading-relaxed">
             <span className="mr-1.5 font-semibold">Recruiting:</span>
@@ -184,8 +199,10 @@ export default async function ClubPage({ params }) {
           communityId={club.id}
           slug={club.slug}
           membership={membership}
+          joinRequest={joinRequest}
           joinPolicy={club.join_policy}
-          canJoin={can(actor, 'join_clubs') || can(actor, 'create_communities')}
+          canJoin={club.admin_assigned && (can(actor, 'join_clubs') || can(actor, 'create_communities'))}
+          joinDisabledReason={!club.admin_assigned ? 'Membership opens after Campus+ staff assign a real club administrator.' : null}
           canChat={isMember && can(actor, 'send_messages')}
           chatConversationId={chat?.id || null}
           pendingRequests={requests}
@@ -263,6 +280,26 @@ export default async function ClubPage({ params }) {
               ))
             ) : (
               <EmptyState icon="calendar" title="No upcoming events" description="This club has not scheduled anything yet." />
+            )}
+          </Card>
+
+          <Card className="flex flex-col gap-3 p-4">
+            <SectionHeader title="Opportunities" icon="briefcase" action={
+              <Link href="/explore/opportunities" className="text-2xs text-muted underline hover:text-ink">All opportunities</Link>
+            } />
+            {opportunities.items.length ? opportunities.items.map((opportunity) => (
+              <ContentCard
+                key={opportunity.id}
+                href={ROUTES.opportunity(opportunity.id)}
+                title={opportunity.title}
+                description={opportunity.description}
+                icon="briefcase"
+                official={opportunity.source === 'official'}
+                badges={[{ label: opportunity.source === 'official' ? 'Verified source' : 'Community submitted', tone: 'neutral' }]}
+                meta={[opportunity.organization, opportunity.deadline ? `Deadline ${formatDate(opportunity.deadline)}` : null]}
+              />
+            )) : (
+              <EmptyState icon="briefcase" title="No linked opportunities" description="Published opportunities linked to this club will appear here." />
             )}
           </Card>
         </div>

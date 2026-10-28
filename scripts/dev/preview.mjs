@@ -97,6 +97,53 @@ const server = http.createServer((req, res) => {
   req.pipe(upstream);
 });
 
+// Next's development client uses `/_next/hmr` during application bootstrap.
+// A plain HTTP proxy accepts that WebSocket request but never answers its
+// upgrade, leaving server-rendered controls without their React handlers.
+// Forward upgrades as raw bidirectional streams just as we forward HTTP above.
+// This is also what lets the framed sandbox preview behave like direct `next
+// dev` access; production servers simply never receive an HMR upgrade.
+server.on('upgrade', (req, clientSocket, head) => {
+  const upstream = http.request({
+    protocol: APP.protocol,
+    hostname: APP.hostname,
+    port: APP.port,
+    method: req.method,
+    path: req.url,
+    headers: { ...req.headers, host: APP.host },
+  });
+
+  upstream.on('upgrade', (upstreamResponse, upstreamSocket, upstreamHead) => {
+    const status = `HTTP/1.1 ${upstreamResponse.statusCode || 101} ${upstreamResponse.statusMessage || 'Switching Protocols'}`;
+    const headers = [];
+    for (let index = 0; index < upstreamResponse.rawHeaders.length; index += 2) {
+      headers.push(`${upstreamResponse.rawHeaders[index]}: ${upstreamResponse.rawHeaders[index + 1]}\r\n`);
+    }
+    clientSocket.write(`${status}\r\n${headers.join('')}\r\n`);
+    if (upstreamHead.length) clientSocket.write(upstreamHead);
+    if (head.length) upstreamSocket.write(head);
+    upstreamSocket.pipe(clientSocket).pipe(upstreamSocket);
+    clientSocket.on('close', () => upstreamSocket.destroy());
+    upstreamSocket.on('close', () => clientSocket.destroy());
+  });
+
+  // A non-WebSocket route (or an unavailable fixture realtime endpoint) may
+  // answer an upgrade with an ordinary HTTP error. Preserve that response so
+  // the browser closes the socket instead of waiting forever.
+  upstream.on('response', (upstreamResponse) => {
+    const status = `HTTP/1.1 ${upstreamResponse.statusCode || 502} ${upstreamResponse.statusMessage || ''}`;
+    const headers = [];
+    for (let index = 0; index < upstreamResponse.rawHeaders.length; index += 2) {
+      headers.push(`${upstreamResponse.rawHeaders[index]}: ${upstreamResponse.rawHeaders[index + 1]}\r\n`);
+    }
+    clientSocket.write(`${status}\r\n${headers.join('')}\r\n`);
+    upstreamResponse.pipe(clientSocket);
+  });
+  upstream.on('error', () => clientSocket.destroy());
+  clientSocket.on('error', () => upstream.destroy());
+  upstream.end();
+});
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Campus+ preview: http://0.0.0.0:${PORT} → ${APP.origin}`);
   console.log(`  signed in as ${EMAIL} (harness session, no Google round trip)`);
