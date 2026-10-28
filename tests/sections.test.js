@@ -216,6 +216,7 @@ describe('club validation', () => {
     slug: 'robotics-and-automation-club',
     description: 'Builds competition robots and runs weekly workshops in the robotics lab.',
     club_category: 'Technical',
+    organization_type: 'technical_club',
     recruitment_info: 'Open to first and second year students.',
     visibility: 'campus',
     join_policy: 'open',
@@ -225,6 +226,11 @@ describe('club validation', () => {
     expect(validate(base, clubSchema).ok).toBe(true);
     expect(validate({ ...base, club_category: 'Astrology' }, clubSchema).ok).toBe(false);
     expect(validate({ ...base, club_category: '' }, clubSchema).ok).toBe(false);
+  });
+
+  it('requires a controlled organization type', () => {
+    expect(validate({ ...base, organization_type: 'unofficial_fan_club' }, clubSchema).ok).toBe(false);
+    expect(validate({ ...base, organization_type: '' }, clubSchema).ok).toBe(false);
   });
 });
 
@@ -272,7 +278,7 @@ describe('board queries', () => {
     expect(items.find((entry) => entry.label === '')).toBeUndefined();
   });
 
-  it('searches clubs by name or interest and filters by category', async () => {
+  it('searches clubs by name, interest, category or alias and filters by category', async () => {
     const supabase = stub([]);
     await listCommunities(supabase, { kind: 'club', category: 'Technical', q: 'robotics, drones' });
 
@@ -283,7 +289,7 @@ describe('board queries', () => {
     // Commas and parentheses would break PostgREST's or= syntax; the term is
     // sanitised before it is sent.
     expect(search[1]).toBe(
-      'name.ilike.%robotics  drones%,subject.ilike.%robotics  drones%,club_category.ilike.%robotics  drones%',
+      'name.ilike.%robotics  drones%,subject.ilike.%robotics  drones%,description.ilike.%robotics  drones%,club_category.ilike.%robotics  drones%,directory_aliases.ilike.%robotics  drones%',
     );
   });
 

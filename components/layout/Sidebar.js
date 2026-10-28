@@ -12,6 +12,7 @@ import { formatUnread } from '@/lib/notifications/format';
 import { handleOf } from '@/lib/identity/shell-user';
 import { resolveActiveHref } from '@/lib/navigation/active';
 import { MessageUnreadBadge } from '@/components/layout/MessageUnreadBadge';
+import { NavigationHelp } from '@/components/navigation/NavigationHelp';
 
 /**
  * Desktop navigation: a suspended sheet of frosted glass carrying the Campus+
@@ -61,17 +62,23 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
       <nav aria-label="Primary" className="nav-panel mt-4 flex flex-col gap-0.5">
         <p className="nav-group-label mb-1.5">Campus</p>
         {PRIMARY_NAV.map((item) => (
-          <Link key={item.href} href={item.href} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
-            <Icon name={item.icon} size={18} className="nav-icon" />
-            {item.label}
-          </Link>
+          <div key={item.href} className="nav-destination">
+            <Link href={item.href} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
+              <Icon name={item.icon} size={18} className="nav-icon" />
+              {item.label}
+            </Link>
+            <NavigationHelp topic={item.href} label={item.label} />
+          </div>
         ))}
         {/* Public pages, personalised landing: a saved division opens its
             own timetable; without one, the selector. Never inferred. */}
-        <Link href={timetableHref} aria-current={active(timetableHref) ? 'page' : undefined} className="nav-item">
-          <Icon name="calendar" size={18} className="nav-icon" />
-          Timetable
-        </Link>
+        <div className="nav-destination">
+          <Link href={timetableHref} aria-current={active(timetableHref) ? 'page' : undefined} className="nav-item">
+            <Icon name="calendar" size={18} className="nav-icon" />
+            Timetable
+          </Link>
+          <NavigationHelp topic={ROUTES.timetable} label="Timetable" />
+        </div>
       </nav>
 
       <div className="side-panel__rule my-3" aria-hidden="true" />
@@ -79,32 +86,41 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
       <nav aria-label="Secondary" className="nav-panel flex flex-col gap-0.5">
         <p className="nav-group-label mb-1.5">Direct</p>
         {secondary.map((item) => (
-          <Link key={item.href} href={item.href} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
-            <Icon name={item.icon} size={18} className="nav-icon" />
-            <span className="flex-1">{item.label}</span>
-            {item.href === ROUTES.chat ? <MessageUnreadBadge /> : null}
-            {item.unread?.visible ? (
-              <span className="nav-count" aria-label={item.unread.aria}>
-                {item.unread.text}
-              </span>
-            ) : null}
-          </Link>
+          <div key={item.href} className="nav-destination">
+            <Link href={item.href} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
+              <Icon name={item.icon} size={18} className="nav-icon" />
+              <span className="flex-1">{item.label}</span>
+              {item.href === ROUTES.chat ? <MessageUnreadBadge /> : null}
+              {item.unread?.visible ? (
+                <span className="nav-count" aria-label={item.unread.aria}>
+                  {item.unread.text}
+                </span>
+              ) : null}
+            </Link>
+            <NavigationHelp topic={item.href} label={item.label} />
+          </div>
         ))}
 
         {canModerate || canAdmin ? <p className="nav-group-label mb-1.5 mt-3">Staff</p> : null}
 
         {canModerate ? (
-          <Link href={ROUTES.moderator} aria-current={active(ROUTES.moderator) ? 'page' : undefined} className="nav-item">
-            <Icon name="shield" size={18} className="nav-icon" />
-            Moderation
-          </Link>
+          <div className="nav-destination">
+            <Link href={ROUTES.moderator} aria-current={active(ROUTES.moderator) ? 'page' : undefined} className="nav-item">
+              <Icon name="shield" size={18} className="nav-icon" />
+              Moderation
+            </Link>
+            <NavigationHelp topic={ROUTES.moderator} label="Moderation" />
+          </div>
         ) : null}
 
         {canAdmin ? (
-          <Link href={ROUTES.admin} aria-current={active(ROUTES.admin) ? 'page' : undefined} className="nav-item">
-            <Icon name="eye" size={18} className="nav-icon" />
-            Admin
-          </Link>
+          <div className="nav-destination">
+            <Link href={ROUTES.admin} aria-current={active(ROUTES.admin) ? 'page' : undefined} className="nav-item">
+              <Icon name="eye" size={18} className="nav-icon" />
+              Admin
+            </Link>
+            <NavigationHelp topic={ROUTES.admin} label="Admin" />
+          </div>
         ) : null}
       </nav>
 

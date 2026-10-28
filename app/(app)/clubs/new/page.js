@@ -1,19 +1,13 @@
 import { requireUser } from '@/lib/auth/session';
 import { can, toActor } from '@/lib/permissions/authorization';
-import { ROUTES, LIMITS, CLUB_CATEGORIES } from '@/lib/constants';
-import { PageHeader, Notice } from '@/components/ui';
+import { ROUTES, LIMITS, CLUB_CATEGORIES, CLUB_ORGANIZATION_TYPES } from '@/lib/constants';
+import { PageHeader, Notice, LinkButton } from '@/components/ui';
 import { ActionForm } from '@/components/forms/ActionForm';
 import { createClub } from '@/lib/actions/communities';
 
 export const metadata = { title: 'Create a club' };
 
-/**
- * Create Club.
- *
- * Clubs are campus-run spaces, so this is gated by the existing `manage_clubs`
- * permission (the same rule the database enforces on insert). The form collects
- * the discovery category and recruitment note that the /clubs board filters by.
- */
+/** Staff-only direct creation, with the same active-owner guarantee as approval. */
 export default async function NewClubPage() {
   const user = await requireUser();
   const actor = toActor(user);
@@ -23,9 +17,12 @@ export default async function NewClubPage() {
       <div className="flex flex-col gap-4">
         <PageHeader title="Create a club" back={{ href: ROUTES.clubs, label: 'Clubs' }} />
         <Notice tone="warning" icon="lock">
-          Clubs are campus-run spaces. Your account cannot create one — ask an admin to set it up from the admin
-          console, or create a community or study group instead.
+          Official clubs are not created directly by student accounts. Submit a request for review, or create an ordinary community or study group instead.
         </Notice>
+        <div className="flex flex-wrap gap-2">
+          <LinkButton href={ROUTES.clubRequest} tone="accent" icon="plus">Request a club</LinkButton>
+          <LinkButton href="/communities/new" variant="secondary">Create a community</LinkButton>
+        </div>
       </div>
     );
   }
@@ -33,94 +30,58 @@ export default async function NewClubPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Create Club"
-        eyebrow="Campus life"
-        description="Set up a club page with its own feed, membership, join requests, chat and events."
-        back={{ href: ROUTES.clubs, label: 'Clubs' }}
+        title="Create with an initial administrator"
+        eyebrow="Campus+ club administration"
+        description="Create one official club and assign one active owner atomically. This does not grant that person a platform-wide role."
+        back={{ href: `${ROUTES.admin}?tab=clubs`, label: 'Club administration' }}
       />
-
       <ActionForm
         action={createClub}
-        submitLabel="Create club"
+        submitLabel="Create club & assign admin"
         pendingLabel="Creating…"
-        successMessage="Club created. You are its owner."
-        cancelHref={ROUTES.clubs}
+        successMessage="Club created and initial administrator assigned."
+        cancelHref={`${ROUTES.admin}?tab=clubs`}
         fields={[
           {
-            name: 'name',
-            label: 'Club name',
-            required: true,
-            maxLength: LIMITS.club.name.max,
-            placeholder: 'Robotics and Automation Club',
+            name: 'admin_username', label: 'Initial club administrator', required: true, maxLength: 24,
+            placeholder: 'Exact active Campus+ username',
+            hint: 'The account becomes this club’s owner. It receives no platform-wide administration or moderation permission.',
           },
+          { name: 'name', label: 'Club name', required: true, maxLength: LIMITS.club.name.max },
+          { name: 'slug', label: 'Link (optional)', maxLength: 60, hint: 'Generated from the name if left empty.' },
+          { name: 'description', label: 'Description', type: 'textarea', required: true, rows: 5, maxLength: LIMITS.club.description.max },
           {
-            name: 'slug',
-            label: 'Link (optional)',
-            maxLength: 60,
-            hint: 'Lowercase letters, numbers and dashes. Generated from the name if left empty.',
-          },
-          {
-            name: 'description',
-            label: 'Description',
-            type: 'textarea',
-            required: true,
-            rows: 5,
-            maxLength: LIMITS.club.description.max,
-            placeholder: 'What the club does, who it is for, and when it meets.',
-          },
-          {
-            name: 'club_category',
-            label: 'Category',
-            type: 'select',
-            required: true,
-            placeholder: 'Choose a category',
+            name: 'club_category', label: 'Discovery category', type: 'select', required: true, placeholder: 'Choose a category',
             options: CLUB_CATEGORIES.map((category) => ({ value: category.value, label: category.label })),
           },
           {
-            name: 'subject',
-            label: 'Interest / subject',
-            maxLength: 120,
-            placeholder: 'Robotics, embedded systems, drones',
-            hint: 'Used by search, so students can find the club by interest.',
+            name: 'organization_type', label: 'Organization type', type: 'select', required: true, placeholder: 'Choose a type',
+            options: CLUB_ORGANIZATION_TYPES.map((type) => ({ value: type.value, label: type.label })),
           },
+          { name: 'subject', label: 'Interest / subject', maxLength: 120 },
+          { name: 'recruitment_info', label: 'Recruitment details (optional)', type: 'textarea', maxLength: 1000 },
+          { name: 'meeting_info', label: 'Meeting info (optional)', maxLength: 200 },
+          { name: 'contact_info', label: 'Public contact (optional)', maxLength: 200 },
+          { name: 'external_url', label: 'Club website (optional)', placeholder: 'https://…' },
+          { name: 'source_label', label: 'Directory source name (optional)', maxLength: 160 },
+          { name: 'source_url', label: 'Directory source link (optional)', placeholder: 'https://…' },
           {
-            name: 'recruitment_info',
-            label: 'Recruiting?',
-            maxLength: 400,
-            placeholder: 'Open to first and second year students; auditions in August.',
-          },
-          {
-            name: 'meeting_info',
-            label: 'Meeting info',
-            maxLength: 200,
-            placeholder: 'Saturdays, 4 pm, Robotics Lab',
-          },
-          {
-            name: 'contact_info',
-            label: 'Contact',
-            maxLength: 200,
-            hint: 'Text only — no links to personal chats.',
-          },
-          {
-            name: 'external_url',
-            label: 'Website',
-            placeholder: 'https://…',
-          },
-          {
-            name: 'join_policy',
-            label: 'How people join',
-            type: 'select',
-            defaultValue: 'open',
+            name: 'verification_status', label: 'Source state', type: 'select', defaultValue: 'pending',
             options: [
-              { value: 'open', label: 'Anyone can join' },
-              { value: 'request', label: 'They request, an admin approves' },
+              { value: 'pending', label: 'Details / source pending' },
+              { value: 'source_checked', label: 'I checked the cited source' },
+            ],
+            hint: 'Source checked is not an institutional endorsement of the page.',
+          },
+          {
+            name: 'join_policy', label: 'How people join', type: 'select', defaultValue: 'request',
+            options: [
+              { value: 'open', label: 'Anyone can join immediately' },
+              { value: 'request', label: 'They request and a club manager approves' },
             ],
           },
           {
-            name: 'visibility',
-            label: 'Who can see it',
-            type: 'select',
-            defaultValue: 'campus',
+            name: 'visibility', label: 'Who can see it', type: 'select', defaultValue: 'campus',
             options: [
               { value: 'public', label: 'Everyone on Campus+' },
               { value: 'campus', label: 'Campus members' },

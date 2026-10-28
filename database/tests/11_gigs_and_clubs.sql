@@ -278,6 +278,13 @@ begin
          values ('club', 'Unauthorised Club', 'unauthorised-club', 'A club a student tried to create.', 'Technical', public.current_profile_id())$sql$,
     '4. only staff with manage_clubs may create a club'
   );
+  perform public.test_assert_denied(
+    $sql$select public.create_club_with_admin('gig_owner', jsonb_build_object(
+      'name', 'Unauthorised RPC Club', 'slug', 'unauthorised-rpc-club',
+      'description', 'A student cannot call the protected club creation function.',
+      'club_category', 'Technical', 'organization_type', 'technical_club'))$sql$,
+    '4. the protected creation RPC must also reject a student'
+  );
 end;
 $$;
 
@@ -298,20 +305,30 @@ do $$
 declare
   v_club uuid;
   v_approved_by uuid;
+  v_result jsonb;
 begin
-  insert into public.communities
-    (kind, name, slug, description, club_category, subject, recruitment_info, is_official, created_by)
-  values
-    ('club', 'Robotics and Automation Club', 'robotics-and-automation-club',
-     'Builds competition robots and runs weekly workshops in the robotics lab.',
-     'Technical', 'Robotics, embedded systems', 'Open to first and second year students.', true,
-     public.current_profile_id())
-  returning id, approved_by into v_club, v_approved_by;
+  -- Direct INSERT is no longer the staff creation path either. The protected
+  -- RPC validates an exact active username and creates the owner atomically.
+  v_result := public.create_club_with_admin('gig_owner', jsonb_build_object(
+    'name', 'Robotics and Automation Club',
+    'slug', 'robotics-and-automation-club',
+    'description', 'Builds competition robots and runs weekly workshops in the robotics lab.',
+    'club_category', 'Technical',
+    'organization_type', 'technical_club',
+    'subject', 'Robotics, embedded systems',
+    'recruitment_info', 'Open to first and second year students.'
+  ));
+  v_club := (v_result->>'id')::uuid;
+  select approved_by into v_approved_by from public.communities where id = v_club;
 
-  perform public.test_assert(v_club is not null, '4. staff with manage_clubs must be able to create a club');
+  perform public.test_assert(v_club is not null, '4. staff with manage_clubs must be able to create a club through the protected workflow');
   perform public.test_assert(
     v_approved_by = public.current_profile_id(),
     '4. an official club must record who approved it'
+  );
+  perform public.test_assert(
+    (select admin_assigned from public.communities where id = v_club),
+    '4. the selected active administrator must become the initial owner'
   );
   perform public.test_assert(
     (select club_category from public.communities where id = v_club) = 'Technical',
@@ -341,6 +358,7 @@ $$;
 -- ---------------------------------------------------------------------------
 -- 5. Club edits: managers only, category included
 -- ---------------------------------------------------------------------------
+select set_config('request.jwt.claim.sub', '96000000-0000-4000-a000-000000000001', false);
 do $$
 declare
   v_club uuid := current_setting('campus.test.club')::uuid;

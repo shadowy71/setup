@@ -14,7 +14,7 @@ import { IdentityLine } from '@/components/identity/IdentityLine';
 import { useFormAction } from '@/lib/forms';
 import { removeCommunityMember, setCommunityMemberRole } from '@/lib/actions/communities';
 
-export function ClubMembersPanel({ clubId, members = [], isOwner = false, currentUserId = null }) {
+export function ClubMembersPanel({ clubId, members = [], isOwner = false, canChangeRoles = isOwner, currentUserId = null }) {
   const role = useFormAction(setCommunityMemberRole, { resetOnSuccess: false });
   const remove = useFormAction(removeCommunityMember, { resetOnSuccess: false });
   const [confirmRemove, setConfirmRemove] = useState(null);
@@ -58,7 +58,7 @@ export function ClubMembersPanel({ clubId, members = [], isOwner = false, curren
 
               {!isSelf && !isOwnerRow ? (
                 <span className="flex flex-wrap items-center gap-2">
-                  {isOwner ? (
+                  {canChangeRoles ? (
                     member.role === 'moderator' ? (
                       <Button type="button" size="sm" variant="ghost" disabled={role.pending} onClick={() => changeRole(member, 'member')}>
                         Make member
@@ -95,9 +95,9 @@ export function ClubMembersPanel({ clubId, members = [], isOwner = false, curren
       {role.error ? <Notice tone="danger">{role.error}</Notice> : null}
       {remove.error ? <Notice tone="danger">{remove.error}</Notice> : null}
       <p className="text-2xs text-muted">
-        {isOwner
-          ? 'As the owner you can promote members to moderator, step them back down, or remove them.'
-          : 'Moderators can remove members. Only the owner can change roles.'}
+        {canChangeRoles
+          ? 'Owners and authorized Campus+ club staff can promote members or step moderators down. Managers can remove non-owner members.'
+          : 'Moderators can remove non-owner members. Only the owner or authorized Campus+ club staff can change roles.'}
       </p>
     </div>
   );

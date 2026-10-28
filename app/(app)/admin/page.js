@@ -15,7 +15,7 @@ import {
   getAdminOverview,
 } from '@/lib/data/admin';
 import { listReports } from '@/lib/data/moderation';
-import { ROUTES, PAGE_SIZE, ROLE_ORDER } from '@/lib/constants';
+import { ROUTES, PAGE_SIZE, ROLE_ORDER, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
 import { Badge, Button, Card, EmptyState, LinkButton, Notice, PageHeader } from '@/components/ui';
 import { ActionForm } from '@/components/forms/ActionForm';
 import { saveNotice, saveEvent, saveCampusContent } from '@/lib/actions/campus';
@@ -31,6 +31,9 @@ import { formatDateTime, relativeTime } from '@/lib/utils';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { getBackupStatus, getBackupConfiguration } from '@/lib/data/backup';
 import { BackupActionButtons, RetryBackupButton } from '@/components/admin/BackupPanels';
+import { listClubCreationRequests, listUnassignedClubs } from '@/lib/data/clubs';
+import { AssignClubAdminForm, ClubRequestReview } from '@/components/clubs/ClubRequestPanels';
+import { ExternalLink } from '@/components/content/ExternalLink';
 import { DISASTER_RECOVERY_NOTICE, PRODUCTION_DRIVE_REDIRECT_URI } from '@/lib/backup/constants.js';
 
 export const metadata = { title: 'Administration' };
@@ -52,6 +55,7 @@ const TABS = [
   { key: 'permissions', label: 'Permissions', permission: 'manage_permissions' },
   { key: 'reports', label: 'Reports', permission: 'review_reports' },
   { key: 'content', label: 'Official content', permission: 'manage_official_content' },
+  { key: 'clubs', label: 'Clubs', permission: 'manage_clubs' },
   { key: 'marketplace', label: 'Marketplace', permission: 'moderate_marketplace' },
   { key: 'events', label: 'Events', permission: 'manage_events' },
   { key: 'settings', label: 'Settings', permission: 'manage_platform_settings' },
@@ -149,6 +153,13 @@ export default async function AdminPage({ searchParams }) {
   const counts = activeTab === 'counts' ? await getOperationalCounts(supabase) : null;
   const backups = activeTab === 'backups' ? await getBackupStatus(supabase) : null;
   const backupConfig = activeTab === 'backups' ? getBackupConfiguration() : [];
+  const [pendingClubRequests, clubRequestHistory, unassignedClubs] = activeTab === 'clubs'
+    ? await Promise.all([
+        listClubCreationRequests(supabase, { status: 'pending', limit: 60 }),
+        listClubCreationRequests(supabase, { limit: 30 }),
+        listUnassignedClubs(supabase),
+      ])
+    : [null, null, null];
 
   const settingsByGroup = new Map();
   for (const setting of settings) {
@@ -474,6 +485,94 @@ export default async function AdminPage({ searchParams }) {
               docs/DEPLOYMENT.md instead of a button that would silently fail.
             </Notice>
           ) : null}
+        </section>
+      ) : null}
+
+      {/* ----------------------------------------------------------------- clubs */}
+      {activeTab === 'clubs' ? (
+        <section aria-label="Club requests and administrator assignments" className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold">Club governance</h2>
+              <p className="mt-1 text-[0.8125rem] text-muted">Review requests, assign real initial administrators, and preserve club-scoped ownership.</p>
+            </div>
+            <LinkButton href={ROUTES.clubNew} size="sm" variant="secondary" icon="plus">Create with an administrator</LinkButton>
+          </div>
+          <Notice tone="neutral" icon="lock">
+            Approval is atomic and retry-safe. A club owner or moderator manages only that club; no platform role is granted here.
+          </Notice>
+
+          <section className="flex flex-col gap-3" aria-labelledby="pending-club-requests">
+            <h3 id="pending-club-requests" className="text-sm font-semibold">Pending club requests ({pendingClubRequests.items.length})</h3>
+            {pendingClubRequests.unavailable || clubRequestHistory.unavailable || unassignedClubs.unavailable ? (
+              <Notice tone="warning">Some club governance records could not be loaded. Refresh before making a decision.</Notice>
+            ) : null}
+            {!pendingClubRequests.items.length ? (
+              <EmptyState icon="checkCircle" title="No pending club requests" description="New student requests will appear here for review." />
+            ) : null}
+            {pendingClubRequests.items.map((request) => (
+              <Card key={request.id} className="flex flex-col gap-3 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="text-[0.9375rem] font-semibold">{request.name}</h4>
+                    <p className="mt-1 text-2xs text-muted">
+                      Requested by {request.requester_display_name || 'Student'}
+                      {request.requester_username ? ` (@${request.requester_username})` : ''} · {formatDateTime(request.created_at)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge>{request.club_category}</Badge>
+                    <Badge>{CLUB_ORGANIZATION_TYPE_LABELS[request.organization_type] || request.organization_type}</Badge>
+                    <Badge tone="warning">pending</Badge>
+                  </div>
+                </div>
+                <p className="user-text text-[0.8125rem] leading-relaxed text-muted"><LinkifiedText text={request.description} /></p>
+                <p className="text-2xs text-muted">Preferred link: <code>{request.slug}</code></p>
+                {request.source_url ? (
+                  <ExternalLink url={request.source_url} className="text-2xs underline">
+                    Source: {request.source_label || request.source_url}
+                  </ExternalLink>
+                ) : <p className="text-2xs text-muted">No public source supplied. Verification remains pending.</p>}
+                <ClubRequestReview request={request} />
+              </Card>
+            ))}
+          </section>
+
+          <section className="flex flex-col gap-3" aria-labelledby="unassigned-clubs">
+            <h3 id="unassigned-clubs" className="text-sm font-semibold">Administrator assignment needed ({unassignedClubs.items.length})</h3>
+            <p className="text-[0.8125rem] text-muted">These real catalogue pages cannot accept join requests until an active owner is assigned.</p>
+            {!unassignedClubs.items.length ? (
+              <EmptyState icon="users" title="Every visible club has an administrator" description="No imported club is waiting for an initial owner." />
+            ) : null}
+            {unassignedClubs.items.map((club) => (
+              <details key={club.id} className="card p-4">
+                <summary className="cursor-pointer text-[0.875rem] font-medium">
+                  {club.name} <span className="font-normal text-muted">· {club.club_category || 'Club'} · assign initial admin</span>
+                </summary>
+                <div className="mt-3 flex flex-col gap-3">
+                  <p className="text-2xs text-muted">
+                    {club.source_label ? `Source: ${club.source_label}` : 'Public source pending'} · {club.verification_status === 'source_checked' ? 'Source checked' : 'Verification pending'}
+                  </p>
+                  <AssignClubAdminForm club={club} />
+                </div>
+              </details>
+            ))}
+          </section>
+
+          <section className="flex flex-col gap-3" aria-labelledby="club-request-history">
+            <h3 id="club-request-history" className="text-sm font-semibold">Recent request history</h3>
+            {clubRequestHistory.items.filter((request) => request.status !== 'pending').slice(0, 15).map((request) => (
+              <Card key={request.id} className="flex flex-wrap items-center justify-between gap-2 p-3">
+                <span className="text-[0.8125rem] font-medium">{request.name}</span>
+                <Badge tone={request.status === 'approved' ? 'success' : request.status === 'rejected' ? 'danger' : 'neutral'}>{request.status}</Badge>
+                <span className="w-full text-2xs text-muted">
+                  {request.reviewed_at ? formatDateTime(request.reviewed_at) : formatDateTime(request.updated_at)}
+                  {request.reviewer_username ? ` · reviewed by @${request.reviewer_username}` : ''}
+                  {request.community_id ? <> · <Link href={ROUTES.club(request.community_id)} className="underline">Open club</Link></> : null}
+                </span>
+              </Card>
+            ))}
+          </section>
         </section>
       ) : null}
 

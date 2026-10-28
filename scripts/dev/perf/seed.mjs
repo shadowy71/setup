@@ -76,10 +76,21 @@ export async function seedFixtures(client) {
     await client.query(`select public.grant_role($1, $2)`, [user.profileId, role]);
   }
   const me = users[0];
+  const admin = users.find((u) => u.email === ADMIN_EMAIL);
   const authorIds = users.filter((u) => !u.username.startsWith('perf_')).map((u) => u.profileId);
 
   /* --------------------------------------------------------- communities */
-  const { rows: communityRows } = await client.query(
+  const communitySlugs = [
+    'computer-engineering',
+    'campus-general',
+    'hostel-life',
+    'placements-2027',
+    'data-structures-study-group',
+    'dbms-study-group',
+    'coding-club',
+    'team-automatons',
+  ];
+  await client.query(
     `insert into public.communities (kind, name, slug, description, subject, club_category, recruitment_info, visibility, join_policy, status, is_official, created_by, created_at)
      select kind::public.community_kind, name, slug, description, subject, club_category, recruitment_info,
             'public'::public.visibility_level, 'open', 'published'::public.content_status, is_official,
@@ -92,10 +103,18 @@ export async function seedFixtures(client) {
        ('study_group', 'Data Structures Study Group', 'data-structures-study-group', 'Weekly DS sessions before the lab exam.', 'Data Structures', null, null, false, 5, 25),
        ('study_group', 'DBMS Study Group', 'dbms-study-group', 'Normalisation, transactions and past papers.', 'DBMS', null, null, false, 6, 22),
        ('club', 'Coding Club', 'coding-club', 'Hackathons, competitive programming and open source.', 'Competitive programming', 'Technical', 'Recruiting first and second year coders.', true, 7, 90),
-       ('club', 'Robotics Club', 'robotics-club', 'Embedded, drones and the annual robotics meet.', 'Embedded systems', 'Technical', 'Open auditions in August.', true, 8, 80)
+       ('club', 'Team Automatons', 'team-automatons', 'Robotics and automation collegiate team.', 'Robotics and automation', 'Technical', null, true, 8, 80)
      ) as c(kind, name, slug, description, subject, club_category, recruitment_info, is_official, creator_idx, age_days)
-     returning id, kind, name, slug`,
+     on conflict (slug) do nothing`,
     [authorIds.slice(0, 8)],
+  );
+  // Migration 032 already owns the catalogue rows. Reuse them without
+  // overwriting their curated profiles, sources or verification state.
+  const { rows: communityRows } = await client.query(
+    `select id, kind, name, slug from public.communities
+     where slug = any($1::text[])
+     order by array_position($1::text[], slug)`,
+    [communitySlugs],
   );
   for (const [index, community] of communityRows.entries()) {
     await client.query(
@@ -110,6 +129,11 @@ export async function seedFixtures(client) {
       [community.id],
     );
   }
+  // Exercise the real protected assignment path so the signed-in preview
+  // student can open club management with an actual owner membership.
+  const codingClub = communityRows.find((community) => community.slug === 'coding-club');
+  await asUser(client, admin.authId, `select public.assign_club_admin($1, $2)`, [codingClub.id, me.username]);
+
   await client.query(
     `insert into public.community_join_requests (community_id, user_id, message, status, created_at)
      select $1, $2, 'I would like to join this community.', 'pending', now() - interval '3 days'`,
