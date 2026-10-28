@@ -49,7 +49,7 @@ export default async function HomePage() {
         currentUserId={userId}
         canPost={can(actor, 'create_posts')}
         canModerate={can(actor, 'remove_posts')}
-        beforeFeed={<HomeFeatureTiles />}
+        heroFeatures={<HomeFeatureTiles />}
         afterFeed={<HomeAreas />}
         quickLinks={QUICK_LINKS}
       />

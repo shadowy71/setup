@@ -5,25 +5,8 @@ import { Icon } from '@/components/ui/icons';
 import { SearchEntry } from '@/components/search/SearchEntry';
 
 /**
- * The threshold — the first thing a student sees on Home.
- *
- * Deliberately *not* a card: this is the environment, and the greeting is set
- * as editorial display type directly over it. The band carries:
- *
- *   - who you are and where you are (a small live marker, the greeting, one
- *     line of context),
- *   - the two ways in (Explore, and the search door),
- *   - a thin column of counts, each one a real length of something this page
- *     already loaded — never a fabricated metric.
- *
- * The band is followed immediately by the composer: a student who came to post
- * should not have to pass a deck of shortcuts first. The shortcuts themselves
- * still exist, one screen further down (`HomeAreas`, after the feed).
- *
- * The name is lit from the leading edge and settles into sand by the trailing
- * edge; that gradient is the one place on the page where the brand's three
- * colours meet. `@supports` keeps the plain token colour for anything without
- * text clipping, so the headline can never disappear.
+ * The threshold combines the personalized greeting with the real Clubs and
+ * Gigs navigation tiles. The counts remain sourced from the loaded feed.
  */
 
 /**
@@ -72,7 +55,7 @@ function HandWave() {
   );
 }
 
-export function HomePulse({ user, stats = [] }) {
+export function HomePulse({ user, stats = [], children }) {
   const name = (user.profile.display_name || user.profile.username).split(' ')[0];
   const context =
     user.profile.branch && user.profile.show_branch_year
@@ -107,21 +90,22 @@ export function HomePulse({ user, stats = [] }) {
             <div className="home-pulse__search">
               {/* Short enough to survive sharing a row with the Explore button on a
                 phone; Explore's own field carries the long form. */}
-            <SearchEntry hint="Search…" />
+              <SearchEntry hint="Search…" />
             </div>
           </div>
+          {stats.length ? (
+            <dl className="home-pulse__stats" aria-label="Campus right now">
+              {stats.map((stat) => (
+                <div className="home-pulse__stat" key={stat.label} data-empty={stat.value === 0 ? 'true' : undefined}>
+                  <dt>{stat.label}</dt>
+                  <dd>{stat.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>
 
-        {stats.length ? (
-          <dl className="home-pulse__stats" aria-label="Campus right now">
-            {stats.map((stat) => (
-              <div className="home-pulse__stat" key={stat.label} data-empty={stat.value === 0 ? 'true' : undefined}>
-                <dt>{stat.label}</dt>
-                <dd>{stat.value}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
+        {children}
       </div>
 
       <span className="home-pulse__horizon" aria-hidden="true" />
