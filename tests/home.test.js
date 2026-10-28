@@ -11,7 +11,7 @@ import { ROUTES } from '@/lib/constants';
  * right".
  *
  *   1. Clubs and Gigs must stay first-class on Home: real routes from the
- *      ROUTES catalogue, compact tiles between the composer and the feed, and
+ *      ROUTES catalogue, compact tiles in the hero before the composer and the feed, and
  *      no invented metrics to make them look busy.
  *   2. The Create dropdown must stay OUT of the sidebar's stacking/clipping
  *      trap: portalled to the body, viewport-clamped, scrollable, and
@@ -47,25 +47,21 @@ describe('home feature tiles (Clubs & Gigs)', () => {
     expect(tiles).not.toContain('₹');
   });
 
-  it('sits after the composer and before the feed', () => {
-    // The 2026 hierarchy is greeting → search → composer → doors → feed: a
-    // student who came to post must not scroll past navigation to do it. Since
-    // HomeFeedClient owns the column, the page wires the tiles into its
-    // `beforeFeed` slot and the client renders them in that position.
-    expect(page).toContain('beforeFeed={<HomeFeatureTiles />}');
+  it('places the existing tiles in the hero before the composer and feed', () => {
+    expect(page).toContain('heroFeatures={<HomeFeatureTiles />}');
     expect(page).toContain('afterFeed={<HomeAreas />}');
+    expect(page).not.toContain('beforeFeed={<HomeFeatureTiles />}');
+    const hero = feedClient.indexOf('<HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>');
     const composer = feedClient.indexOf('home-composer');
-    const doors = feedClient.indexOf('{beforeFeed}');
     const feed = feedClient.indexOf('id="home-stream-title"');
     const afterFeed = feedClient.indexOf('{afterFeed}');
-    expect(composer).toBeGreaterThan(-1);
-    expect(doors).toBeGreaterThan(composer);
-    expect(feed).toBeGreaterThan(doors);
+    expect(hero).toBeGreaterThan(-1);
+    expect(composer).toBeGreaterThan(hero);
+    expect(feed).toBeGreaterThan(composer);
     expect(afterFeed).toBeGreaterThan(feed);
-    // The rail comes after the whole main column in the DOM, so on a phone the
-    // feed is reachable before the contextual rail.
-    const rail = feedClient.indexOf('<HomeRail');
-    expect(rail).toBeGreaterThan(afterFeed);
+    expect(feedClient.indexOf('<HomeRail')).toBeGreaterThan(afterFeed);
+    expect(pulse.indexOf('{children}')).toBeGreaterThan(pulse.indexOf('home-pulse__actions'));
+    expect(pulse).toContain('aria-label="Campus right now"');
   });
 
   it('replaces — not duplicates — the Clubs and Gigs discovery chips', () => {
@@ -82,12 +78,11 @@ describe('home feature tiles (Clubs & Gigs)', () => {
   it('is responsive, focus-visible and reduced-motion safe', () => {
     const css = read('app/styles/home.css');
     expect(css).toMatch(/\.home-features__grid\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
-    // Two columns from the smallest common phone width; one column only on a
-    // 320px-wide screen.
-    expect(css).toMatch(/@media \(min-width: 360px\) \{[^}]*\.home-features__grid \{[^}]*repeat\(2, minmax\(0, 1fr\)\)/s);
-    // The phone shows the one-line version of each tile's copy.
-    expect(css).toMatch(/@media \(max-width: 767px\) \{[\s\S]*?\.feature-tile__copy--long \{\s*display: none/);
+    // The hero and the tiles react to available content width, including zoom.
+    expect(css).toContain('@container home-hero (min-width: 52rem)');
+    expect(css).toMatch(/@container home-features \(min-width: 21rem\) \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/);
     expect(css).toMatch(/\.feature-tile__copy--short \{\s*display: none/);
+    expect(css).toMatch(/@container home-features \(min-width: 21rem\) \{[\s\S]*?\.feature-tile__copy--short \{ display: block/);
     expect(css).toMatch(/\.feature-tile:focus-visible\s*\{[^}]*outline: 2px solid var\(--cp-focus\)/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.feature-tile:hover/);
     // Decorative layers never take the click.

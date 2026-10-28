@@ -104,7 +104,7 @@ export function HomeFeedClient({
   currentUserId,
   canPost,
   canModerate,
-  beforeFeed = null,
+  heroFeatures = null,
   afterFeed = null,
   quickLinks = [],
 }) {
@@ -374,7 +374,7 @@ export function HomeFeedClient({
 
   return (
     <>
-      <HomePulse user={user} stats={stats} />
+      <HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>
 
       <IslandMotion>
         <div className="home-body">
@@ -396,8 +396,6 @@ export function HomeFeedClient({
                 </Notice>
               )}
             </div>
-
-            {beforeFeed}
 
             {unavailable ? (
               <div className="flex flex-col items-start gap-2">
