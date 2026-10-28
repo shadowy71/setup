@@ -11,12 +11,8 @@ import { Icon } from '@/components/ui/icons';
  * link to the real destination (`ROUTES.clubs`, `ROUTES.gigs` — the same
  * values the sidebar and the discovery row use).
  *
- * Placement: directly under the composer. The greeting, the search door and
- * publishing come first; these are the next step, not a gate in front of it.
- *
- * Density: one line of heading, two short cards. On a phone the cards keep the
- * one-line pitch and drop the long description, so the feed still starts within
- * about a screen and a half of the top.
+ * Placement: in the Home hero, alongside the personalized greeting when
+ * there is room and after it on smaller screens.
  *
  * Material: tier-3 featured glass (`.glass-featured`, surfaces.css) — the same
  * sheet the composer is made of — with the tile's own light layered in
@@ -53,12 +49,9 @@ const TILES = [
 export function HomeFeatureTiles() {
   return (
     <section className="home-features" aria-labelledby="home-features-title">
-      <div className="home-features__head">
-        <h2 id="home-features-title" className="home-features__title">
-          Two ways into campus life
-        </h2>
-        <p className="home-features__note">Clubs to join, work to pick up.</p>
-      </div>
+      <h2 id="home-features-title" className="home-features__title">
+        Get involved
+      </h2>
       <div className="home-features__grid">
         {TILES.map((tile) => (
           <Link
@@ -74,8 +67,8 @@ export function HomeFeatureTiles() {
             <span className="feature-tile__body">
               <span className="feature-tile__eyebrow">{tile.name}</span>
               <span className="feature-tile__title">{tile.title}</span>
-              {/* Two lengths of the same claim: the full sentence on wide
-                  screens, the one-liner where the card is narrow. Only one is
+              {/* Two lengths of the same claim: the full sentence on a single
+                  card, the shorter version when paired. Only one is
                   rendered at a time (home.css), so a screen reader never hears
                   the copy twice. */}
               <span className="feature-tile__copy feature-tile__copy--long">{tile.copy}</span>
