@@ -82,8 +82,8 @@ never rendered.
 | --- | --- |
 | Public shell | `/`, `/setup`, `/login`, `/login/verify`, `/onboarding`, `/rules` |
 | Account state | `/account-status` |
-| Primary | `/home`, `/explore`, `/market`, `/gigs`, `/clubs`, `/communities`, `/campus`, `/chat`, `/random`, `/profile`, `/settings`, `/notifications` |
-| Deep links | `/user/[username]`, `/post/[id]`, `/communities/[slug]` (+ `/community/[slug]` alias), `/market/listing/[id]`, `/gigs/[id]`, `/clubs/[id]`, `/campus/events/[id]`, `/campus/noticeboard/[id]`, `/explore/{resources,opportunities,projects}/[id]`, `/chat/[id]` |
+| Primary | `/home`, `/explore`, `/market`, `/clubs`, `/communities`, `/campus`, `/chat`, `/random`, `/profile`, `/settings`, `/notifications` |
+| Deep links | `/user/[username]`, `/post/[id]`, `/communities/[slug]` (+ `/community/[slug]` alias), `/market/listing/[id]`, `/clubs/[id]`, `/campus/events/[id]`, `/campus/noticeboard/[id]`, `/explore/{resources,opportunities,projects}/[id]`, `/chat/[id]`, `/gigs/[id]` (retained for existing notifications, search results and bookmarks; not linked from navigation) |
 | Create/edit | `/market/new`, `/market/listing/[id]/edit`, `/gigs/new`, `/gigs/[id]/edit`, `/clubs/new`, `/clubs/[id]/edit`, `/communities/new`, `/explore/*/new`, `/campus/{lost-found,housing,rides,teams}/new` |
 | Staff | `/moderator`, `/admin` |
 | Public, no session | `/timetable`, `/timetable/[division]` (one per division letter), `/timetable/offline` (the offline shell), `/timetable/manifest/[division]` (one web app manifest per batch) |

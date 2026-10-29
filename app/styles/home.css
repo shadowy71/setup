@@ -4,9 +4,10 @@
    The page is composed in three movements:
 
      1. THE THRESHOLD (`.home-pulse`) — an open band of environment: a small
-        live marker, the greeting set as editorial display type, one primary
-        action, the search door, real campus counts, and two navigation tiles.
-        The greeting sits directly in the environment, not in a card.
+        live marker, the greeting set as editorial display type, the campus
+        section navigation (Clubs, Timetable, Events, Noticeboard) on the same
+        row, one primary action, the search door and real campus counts. The
+        greeting sits directly in the environment, not in a card.
      2. THE WORKS (`.home-body`) — the composer and the stream on the left, the
         rail of small destinations on the right. Every entry is an island with
         its own proportion, elevation and surface treatment, connected by the
@@ -140,22 +141,16 @@
   }
 }
 
+/* One column: the identity block carries the greeting on the left and the
+   section navigation on its right. The row/stack decision belongs to
+   `.home-pulse__header` below, which measures the hero's own content box. */
 .home-pulse__grid {
   position: relative;
   z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: clamp(1.5rem, 3vw, 2.5rem);
-  align-items: end;
-}
-
-/* The shell's navigation rail consumes space, so compose by actual content
-   width instead of assuming a desktop viewport always has room. */
-@container home-hero (min-width: 52rem) {
-  .home-pulse__grid {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
-  }
+  gap: clamp(1.25rem, 2.5vw, 2rem);
+  align-items: start;
 }
 
 .home-pulse__eyebrow {
@@ -484,249 +479,214 @@
 }
 
 /* --------------------------------------------------------------------------
-   THE TWO DOORS — Clubs and Gigs feature tiles (HomeFeatureTiles).
+   THE CAMPUS SECTIONS — the header's navigation row (CampusSectionNav).
 
-   Tier-3 featured glass (the composer's material, from surfaces.css) with
-   each destination's own light: Clubs is lit teal from the leading corner,
-   Gigs carries the restrained sand counter-glow from the trailing one. The
-   whole card is the link; the glow layer is decoration and never takes a
-   pointer event. Text sits on the backed part of the sheet, never inside a
-   fading reflection, and the two tiles keep equal weight side by side,
-   then stack with full-size touch targets on phones.
+   Four compact links, not four buttons: the greeting is still the loudest
+   thing in the band, and the navigation is one restrained sheet of tier-2
+   glass sitting on the same row, vertically centred against the identity
+   block. Each link carries the product's own icon, a label, a hover wash, a
+   visible focus ring and an active state that changes weight, border and
+   underline as well as colour — so "where am I" never rests on hue alone.
+
+   Composition: a two-column grid on a phone (label always readable, 44px
+   touch targets, page never scrolls sideways), collapsing to a single
+   horizontal row as soon as the hero's *own* content box has room — the query
+   is against `home-hero`, so the shell's rail does not have to be guessed.
+
+   The material switches off its blur at phone width and on coarse pointers,
+   the same trade the discovery chips make; the links stay legible on the
+   backed surface instead.
    -------------------------------------------------------------------------- */
 
-.home-features {
-  container: home-features / inline-size;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.campus-nav {
   min-width: 0;
 }
 
-.home-features__title {
-  font-family: var(--font-micro), ui-monospace, monospace;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--cp-text-secondary);
-}
-
-.home-features__grid {
+.campus-nav__list {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3125rem;
+  margin: 0;
+  padding: 0.3125rem;
+  list-style: none;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in oklab, var(--cp-glass-border) 86%, transparent);
+  background-color: color-mix(in oklab, var(--cp-bg-glass-soft) 64%, transparent);
+  background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 62%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--cp-edge-light) 88%, transparent),
+    0 14px 30px -28px var(--cp-glow-accent);
 }
 
-/* Cards become a pair only when their own container can accommodate them. */
-@container home-features (min-width: 21rem) {
-  .home-features__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .feature-tile {
-    flex-direction: column;
-  }
-}
-
-.feature-tile {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  min-height: 0;
+.campus-nav__item {
   min-width: 0;
-  padding: 0.875rem 0.9375rem;
-  color: var(--cp-text-primary);
+}
+
+.campus-nav__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  min-height: 2.75rem; /* 44px: a real touch target on a phone */
+  padding: 0.375rem 0.6875rem;
+  border-radius: calc(var(--radius-lg) - 0.25rem);
+  border: 1px solid transparent;
+  color: var(--cp-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    box-shadow var(--dur-base) ease,
+    transform var(--dur-fast) var(--ease-out-soft);
+}
+
+.campus-nav__icon {
+  flex: none;
+  color: var(--cp-icon-muted);
+  transition: color var(--dur-fast) ease;
+}
+
+.campus-nav__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campus-nav__link:hover {
+  border-color: color-mix(in oklab, var(--cp-glass-border) 92%, transparent);
+  background-color: color-mix(in oklab, var(--cp-hover-bg) 88%, transparent);
+  color: var(--cp-hover-text);
   text-decoration: none;
 }
 
-/* Long names and long words wrap instead of pushing the card wide. */
-.feature-tile__title,
-.feature-tile__copy {
-  overflow-wrap: anywhere;
+.campus-nav__link:hover .campus-nav__icon {
+  color: var(--cp-bg-accent);
 }
 
-/* The tile's own light. Under the content, inert to pointers. */
-.feature-tile > .feature-tile__glow {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+.campus-nav__link:active {
+  transform: scale(0.985);
 }
 
-.feature-tile--clubs > .feature-tile__glow {
-  background-image: radial-gradient(
-    72% 95% at 0% 0%,
-    color-mix(in oklab, var(--cp-bg-accent) 17%, transparent),
-    transparent 66%
-  );
+.campus-nav__link:focus-visible {
+  outline: 2px solid var(--cp-focus);
+  outline-offset: 2px;
 }
 
-.feature-tile--gigs {
-  border-color: color-mix(in oklab, var(--brand-sand) 30%, var(--cp-glass-border));
-}
-
-.feature-tile--gigs > .feature-tile__glow {
-  background-image:
-    radial-gradient(72% 95% at 100% 0%, color-mix(in oklab, var(--brand-sand) 11%, transparent), transparent 66%),
-    radial-gradient(55% 65% at 108% 112%, var(--cp-glass-warmth), transparent 72%);
-}
-
-.feature-tile__icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: var(--radius-md);
-  border: 1px solid;
-  box-shadow: var(--shadow-inset-top);
-}
-
-.feature-tile--clubs .feature-tile__icon {
-  color: var(--cp-accent-cyan);
-  border-color: color-mix(in oklab, var(--cp-bg-accent) 48%, var(--cp-glass-border));
-  background-image: linear-gradient(160deg, color-mix(in oklab, var(--cp-bg-accent) 20%, transparent), transparent 68%);
-  box-shadow:
-    var(--shadow-inset-top),
-    0 0 24px -10px var(--cp-glow-accent);
-}
-
-.feature-tile--gigs .feature-tile__icon {
-  color: var(--brand-sand);
-  border-color: color-mix(in oklab, var(--brand-sand) 42%, var(--cp-glass-border));
-  background-image: linear-gradient(160deg, color-mix(in oklab, var(--brand-sand) 14%, transparent), transparent 68%);
-  box-shadow:
-    var(--shadow-inset-top),
-    0 0 24px -10px var(--cp-glow-warm);
-}
-
-.feature-tile__body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-}
-
-.feature-tile__eyebrow {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.feature-tile--clubs .feature-tile__eyebrow {
-  color: var(--cp-accent-cyan);
-}
-
-.feature-tile--gigs .feature-tile__eyebrow {
-  color: var(--brand-sand);
-}
-
-.feature-tile__title {
-  display: block;
-  margin-top: 0.3rem;
-  font-size: clamp(1.0625rem, 1.2vw + 0.6rem, 1.25rem);
-  font-weight: 680;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.feature-tile__copy {
-  display: block;
-  margin-top: 0.35rem;
-  max-width: 42ch;
-  font-size: 0.8125rem;
-  line-height: 1.55;
-  color: var(--cp-text-secondary);
-}
-
-/* Paired cards use the shorter description; a single card has room for the
-   full sentence. Exactly one copy is displayed and available to readers. */
-.feature-tile__copy--short {
-  display: none;
-}
-
-@container home-features (min-width: 21rem) {
-  .feature-tile__copy--long { display: none; }
-  .feature-tile__copy--short { display: block; }
-}
-
-.feature-tile__cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin-top: auto;
-  padding-top: 0.625rem;
-  font-size: 0.8125rem;
-  font-weight: 650;
+/* Active: a wash, a ring, extra weight and an underline — four signals, so the
+   current section stays legible in monochrome. */
+.campus-nav__link[aria-current='page'] {
+  border-color: color-mix(in oklab, var(--cp-bg-accent) 40%, transparent);
+  background-color: color-mix(in oklab, var(--cp-bg-accent) 20%, transparent);
   color: var(--cp-text-primary);
+  font-weight: 680;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 20px -14px var(--cp-glow-accent);
 }
 
-.feature-tile__arrow {
-  transition: transform 0.2s var(--ease-out-soft);
+.campus-nav__link[aria-current='page'] .campus-nav__icon {
+  color: var(--cp-accent-highlight);
 }
 
-.feature-tile--clubs .feature-tile__arrow {
-  color: var(--cp-accent-cyan);
+.campus-nav__link[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.1875rem;
+  translate: -50% 0;
+  width: 0.9375rem;
+  height: 0.125rem;
+  border-radius: 999px;
+  background-color: var(--cp-accent-cyan);
 }
 
-.feature-tile--gigs .feature-tile__arrow {
-  color: var(--brand-sand);
+/* From tablet width up the same links become one horizontal row: tighter
+   gaps, shorter rows, all four labels still visible. */
+@container home-hero (min-width: 34rem) {
+  .campus-nav__list {
+    grid-template-columns: none;
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.25rem;
+    border-radius: 999px;
+  }
+
+  .campus-nav__link {
+    min-height: 2.125rem;
+    padding: 0.3125rem 0.625rem;
+    border-radius: 999px;
+  }
+}
+
+/* Between the tablet row and a full desktop the header has to share its width
+   with four labels: tighten the row rather than dropping a destination. */
+@container home-hero (min-width: 44rem) and (max-width: 56rem) {
+  .campus-nav__list {
+    gap: 0.0625rem;
+    padding: 0.1875rem;
+  }
+
+  .campus-nav__link {
+    gap: 0.3125rem;
+    padding: 0.3125rem 0.4375rem;
+    font-size: 0.75rem;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .feature-tile:hover {
-    transform: translateY(-3px);
-    border-color: color-mix(in oklab, var(--cp-bg-accent) 54%, var(--cp-glass-border));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.26),
-      0 34px 74px -42px var(--cp-scrim),
-      0 0 52px -26px var(--cp-glow-accent);
-  }
-
-  .feature-tile--gigs:hover {
-    border-color: color-mix(in oklab, var(--brand-sand) 52%, var(--cp-glass-border));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.26),
-      0 34px 74px -42px var(--cp-scrim),
-      0 0 52px -26px var(--cp-glow-warm);
-  }
-
-  .feature-tile:hover .feature-tile__arrow {
-    transform: translate(2px, -2px);
+  .campus-nav__link:hover {
+    transform: translateY(-1px);
   }
 }
 
-.feature-tile:active {
-  transform: translateY(-1px);
-}
-
-.feature-tile:focus-visible {
-  outline: 2px solid var(--cp-focus);
-  outline-offset: 3px;
-  border-color: var(--cp-focus);
-}
-
-.feature-tile:focus-visible .feature-tile__arrow {
-  transform: translate(2px, -2px);
+@media (pointer: coarse), (max-width: 767px) {
+  .campus-nav__list {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: color-mix(in oklab, var(--cp-bg-elevated) 92%, transparent);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .feature-tile,
-  .feature-tile__arrow {
+  .campus-nav__link {
     transition: none;
   }
 
-  .feature-tile:hover,
-  .feature-tile:active,
-  .feature-tile:hover .feature-tile__arrow,
-  .feature-tile:focus-visible .feature-tile__arrow {
+  .campus-nav__link:active,
+  .campus-nav__link:hover {
     transform: none;
   }
 }
 
+/* The identity block and the navigation share one row: centred against each
+   other, the greeting on the left, the four sections on the right. */
+.home-pulse__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@container home-hero (min-width: 44rem) {
+  .home-pulse__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(1rem, 2.4vw, 2rem);
+  }
+
+  .home-pulse__nav {
+    flex: 0 0 auto;
+  }
+}
 /* --------------------------------------------------------------------------
    2. THE WORKS
    -------------------------------------------------------------------------- */

@@ -18,7 +18,6 @@ const categoryLabel = (value) => OPPORTUNITY_CATEGORIES.find((option) => option.
 const SOURCES = [
   { href: ROUTES.teams, icon: 'users', label: 'Team finder', description: 'Project collaboration and teammate recruitment live here.' },
   { href: ROUTES.clubs, icon: 'star', label: 'Club recruitment', description: 'Clubs announce recruitment on their own pages.' },
-  { href: ROUTES.gigs, icon: 'briefcase', label: 'Student gigs', description: 'Paid and unpaid micro-work has its own board.' },
 ];
 
 function FilterBar({ current }) {

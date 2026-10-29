@@ -3,19 +3,21 @@ import { ROUTES } from '@/lib/constants';
 import { LinkButton } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { SearchEntry } from '@/components/search/SearchEntry';
+import { CampusSectionNav } from '@/components/navigation/CampusSectionNav';
 
 /**
- * The threshold combines the personalized greeting with the real Clubs and
- * Gigs navigation tiles. The counts remain sourced from the loaded feed.
+ * The threshold combines the personalized greeting with the campus section
+ * navigation (Clubs, Timetable, Events, Noticeboard) and the real counts the
+ * loaded feed supplied.
  */
 
 /**
  * The campus areas that exist as routes, offered *after* the feed as the page's
  * "keep going" row. No counts, no invented activity.
  *
- * Clubs and Gigs are deliberately absent: they are the two feature tiles above
- * the feed (`HomeFeatureTiles`), and a destination does not need to be
- * announced twice on the same screen.
+ * Clubs and the other sections in the header navigation are deliberately
+ * absent: a destination does not need to be announced twice on the same
+ * screen.
  */
 const DISCOVERY = [
   { href: ROUTES.explore, label: 'Explore', icon: 'search' },
@@ -55,7 +57,7 @@ function HandWave() {
   );
 }
 
-export function HomePulse({ user, stats = [], children }) {
+export function HomePulse({ user, stats = [] }) {
   const name = (user.profile.display_name || user.profile.username).split(' ')[0];
   const context =
     user.profile.branch && user.profile.show_branch_year
@@ -69,19 +71,27 @@ export function HomePulse({ user, stats = [], children }) {
       <span className="home-pulse__spark home-pulse__spark--warm" aria-hidden="true" />
 
       <div className="home-pulse__grid">
-        <div className="min-w-0">
-          <p className="home-pulse__eyebrow">
-            <span className="home-pulse__dot" aria-hidden="true" />
-            PCCOE · Campus feed
-          </p>
-          <h1 id="home-greeting" className="home-pulse__title">
-            <span className="home-pulse__greet">Hey,</span>
-            <span className="home-pulse__name">
-              {name}
-              <HandWave />
-            </span>
-          </h1>
-          <p className="home-pulse__lead">{context}</p>
+        <div className="home-pulse__identity min-w-0">
+          {/* Identity on the left, the four campus sections on the right. The
+              two sides share one row from tablet width up and stack on a
+              phone, so the greeting never collides with the navigation. */}
+          <div className="home-pulse__header">
+            <div className="home-pulse__intro min-w-0">
+              <p className="home-pulse__eyebrow">
+                <span className="home-pulse__dot" aria-hidden="true" />
+                PCCOE · Campus feed
+              </p>
+              <h1 id="home-greeting" className="home-pulse__title">
+                <span className="home-pulse__greet">Hey,</span>
+                <span className="home-pulse__name">
+                  {name}
+                  <HandWave />
+                </span>
+              </h1>
+              <p className="home-pulse__lead">{context}</p>
+            </div>
+            <CampusSectionNav division={user.profile.division} className="home-pulse__nav" />
+          </div>
 
           <div className="home-pulse__actions">
             <LinkButton href={ROUTES.explore} size="md" variant="sheen" icon="search">
@@ -104,8 +114,6 @@ export function HomePulse({ user, stats = [], children }) {
             </dl>
           ) : null}
         </div>
-
-        {children}
       </div>
 
       <span className="home-pulse__horizon" aria-hidden="true" />

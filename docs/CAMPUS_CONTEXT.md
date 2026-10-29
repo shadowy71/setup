@@ -64,7 +64,7 @@
 | Home | `/home` | Feed and composer. `app/(app)/home/layout.js` mounts the one-time launch intro |
 | Explore | `/explore` · `/explore/resources[/new, /[id]]` · `/explore/opportunities[/new, /[id]]` · `/explore/projects[/new, /[id]]` · `/explore/collections/[subject]` | Search hub, resources, opportunities, projects |
 | Market | `/market` · `/market/new` · `/market/listing/[id]` · `/market/listing/[id]/edit` | Listings only; gigs moved to `/gigs` |
-| Gigs | `/gigs` · `/gigs/new` · `/gigs/[id]` · `/gigs/[id]/edit` | Old `/market?tab=gigs`, `/market/new?type=gig` and `/market/gigs/[id]` redirect here |
+| Gigs | `/gigs` · `/gigs/new` · `/gigs/[id]` · `/gigs/[id]/edit` | Old `/market?tab=gigs`, `/market/new?type=gig` and `/market/gigs/[id]` redirect here. Retired from the primary navigation and from the campus feed header (Clubs, Timetable, Events, Noticeboard); the board, its data and its deep links are untouched |
 | Clubs | `/clubs` · `/clubs/new` · `/clubs/[id]` · `/clubs/[id]/edit` | Clubs are `communities` rows with `kind='club'`; old `/campus/clubs[/[id]]` redirect here |
 | Communities | `/communities` · `/communities/new` · `/communities/[slug]` · `/community/[slug]` (alias) | Study groups and general communities (clubs have their own section) |
 | Campus | `/campus` · `/campus/events[/new, /[id]]` · `/campus/noticeboard[/[id]]` · `/campus/lost-found[/new, /[id]]` · `/campus/housing[/new]` · `/campus/rides[/new]` · `/campus/teams[/new]` · `/campus/study[/new, /[id]]` · `/campus/utilities` | Team finder is `/campus/teams`; study finder is `/campus/study` |

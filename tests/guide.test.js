@@ -120,7 +120,10 @@ describe('the guide only names places that exist', () => {
     expect(hrefs).not.toContain('/campus/clubs');
     expect(hrefs.filter((href) => href.startsWith('/market/gigs'))).toEqual([]);
     expect(hrefs).toContain('/clubs');
-    expect(hrefs).toContain('/gigs');
+    // The gig board is no longer signposted from the guide: it left the primary
+    // navigation when the campus feed was reorganised. The route still exists,
+    // so this is a deliberate omission rather than a dead link.
+    expect(hrefs).not.toContain('/gigs');
   });
 
   it('groups the product instead of flattening it into equal cards', () => {
@@ -529,7 +532,7 @@ describe('the guide is reachable from where students already are', () => {
   });
 
   it('does not enlarge either navigation set', () => {
-    expect(PRIMARY_NAV).toHaveLength(8);
+    expect(PRIMARY_NAV).toHaveLength(7);
     expect(MOBILE_NAV).toHaveLength(5);
   });
 

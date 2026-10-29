@@ -105,9 +105,11 @@ describe('gig and club routes', () => {
 });
 
 describe('navigation', () => {
-  it('adds exactly one Gigs and one Clubs entry to the sidebar', () => {
+  it('keeps exactly one Clubs entry and no Gigs row in the sidebar', () => {
     const hrefs = PRIMARY_NAV.map((item) => item.href);
-    expect(hrefs.filter((href) => href === ROUTES.gigs)).toHaveLength(1);
+    // Gigs was retired from the primary rail (and from the campus feed header),
+    // so the rail must not offer a second, competing gig board entry.
+    expect(hrefs.filter((href) => href === ROUTES.gigs)).toHaveLength(0);
     expect(hrefs.filter((href) => href === ROUTES.clubs)).toHaveLength(1);
     expect(new Set(hrefs).size).toBe(hrefs.length);
   });
@@ -116,18 +118,19 @@ describe('navigation', () => {
     expect(MOBILE_NAV).toHaveLength(5);
     const hrefs = MOBILE_NAV.map((item) => item.href);
     expect(new Set(hrefs).size).toBe(hrefs.length);
-    // Phones reach the two sections from the "everything else" sheet instead
-    // of squeezing a sixth and seventh tab into the pill.
+    // Clubs is reachable from the "everything else" sheet; the sheet no longer
+    // carries a Gigs row.
     const menu = read('components/layout/MobileMenu.js');
-    expect(menu).toContain('href={ROUTES.gigs}');
+    expect(menu).not.toContain('href={ROUTES.gigs}');
     expect(menu).toContain('href={ROUTES.clubs}');
   });
 
-  it('describes each section once in the sidebar', () => {
-    const gigs = PRIMARY_NAV.filter((item) => item.href === ROUTES.gigs)[0];
+  it('describes each remaining section once in the sidebar', () => {
     const clubs = PRIMARY_NAV.filter((item) => item.href === ROUTES.clubs)[0];
-    expect(gigs).toMatchObject({ label: 'Gigs', icon: 'briefcase' });
     expect(clubs).toMatchObject({ label: 'Clubs', icon: 'star' });
+    // The gig board's own data and components are untouched — only its
+    // navigation promotion was removed.
+    expect(read('components/gigs/GigCard.js')).toContain('ROUTES.gig(gig.id)');
   });
 });
 

@@ -104,7 +104,6 @@ export function HomeFeedClient({
   currentUserId,
   canPost,
   canModerate,
-  heroFeatures = null,
   afterFeed = null,
   quickLinks = [],
 }) {
@@ -374,7 +373,7 @@ export function HomeFeedClient({
 
   return (
     <>
-      <HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>
+      <HomePulse user={user} stats={stats} />
 
       <IslandMotion>
         <div className="home-body">

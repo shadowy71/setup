@@ -4,7 +4,6 @@ import { ROUTES } from '@/lib/constants';
 import { DepthField } from '@/components/atmosphere/DepthField';
 import { HomeFeedClient } from '@/components/home/HomeFeedClient';
 import { HomeAreas, HomeCoda } from '@/components/home/HomePulse';
-import { HomeFeatureTiles } from '@/components/home/HomeFeatureTiles';
 
 export const metadata = { title: 'Home' };
 
@@ -16,7 +15,6 @@ const QUICK_LINKS = [
   { href: '/explore/resources', label: 'Resources', icon: 'book' },
   { href: '/explore/opportunities', label: 'Opportunities', icon: 'trend' },
   { href: ROUTES.clubs, label: 'Clubs', icon: 'star' },
-  { href: ROUTES.gigs, label: 'Gigs', icon: 'briefcase' },
 ];
 
 /**
@@ -35,6 +33,9 @@ export default async function HomePage() {
       display_name: profile.display_name,
       branch: profile.branch,
       show_branch_year: profile.show_branch_year,
+      // Only used to personalise the header's Timetable destination; the
+      // public selector is the fallback when nothing is saved.
+      division: profile.division,
     },
   };
 
@@ -49,7 +50,6 @@ export default async function HomePage() {
         currentUserId={userId}
         canPost={can(actor, 'create_posts')}
         canModerate={can(actor, 'remove_posts')}
-        heroFeatures={<HomeFeatureTiles />}
         afterFeed={<HomeAreas />}
         quickLinks={QUICK_LINKS}
       />

@@ -54,7 +54,6 @@ export default async function AppLayout({ children }) {
         ]
       : []),
     ...(can(actor, 'create_marketplace_listing') ? [{ href: '/market/new', label: 'Marketplace listing', icon: 'tag' }] : []),
-    ...(can(actor, 'create_gigs') ? [{ href: ROUTES.gigNew, label: 'Gig', icon: 'briefcase' }] : []),
     ...(can(actor, 'create_communities')
       ? [
           { href: '/communities/new', label: 'Community', icon: 'users' },
@@ -86,7 +85,6 @@ export default async function AppLayout({ children }) {
     { section: 'Navigation', label: 'Events', href: '/campus/events', icon: 'calendar' },
     { section: 'Navigation', label: 'Study partner finder', href: '/campus/study', icon: 'book' },
     { section: 'Navigation', label: 'Team finder', href: '/campus/teams', icon: 'users' },
-    { section: 'Navigation', label: 'Gigs', href: ROUTES.gigs, icon: 'briefcase' },
     { section: 'Navigation', label: 'Clubs', href: ROUTES.clubs, icon: 'star' },
     { section: 'Navigation', label: 'Noticeboard', href: '/campus/noticeboard', icon: 'megaphone' },
     // Timetable is public; the saved profile division only personalises

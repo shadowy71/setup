@@ -55,16 +55,18 @@ describe('resolveActiveHref', () => {
     }
   });
 
-  it('keeps Gigs and Clubs first-class in both navigation surfaces', () => {
+  it('keeps Clubs first-class and Gigs out of the primary rail', () => {
     const primaryHrefs = PRIMARY_NAV.map((item) => item.href);
-    expect(primaryHrefs).toContain(ROUTES.gigs);
+    // The student gig board lost its top-level row when the campus feed header
+    // took over those destinations; its route and deep links still resolve.
+    expect(primaryHrefs).not.toContain(ROUTES.gigs);
     expect(primaryHrefs).toContain(ROUTES.clubs);
-    // The dock stays five destinations; Gigs/Clubs remain reachable from the
-    // rail and the "everything else" sheet.
+    // The dock stays five destinations.
     expect(MOBILE_NAV).toHaveLength(5);
     expect(MOBILE_NAV.map((item) => item.href)).toEqual(['/home', '/explore', '/market', '/chat', '/profile']);
-    // Deep links for a gig and a club resolve to their own sections.
-    expect(resolveActiveHref(ROUTES.gig('abc'), primaryHrefs)).toBe(ROUTES.gigs);
+    // A club deep link lights its own section; a gig deep link lights nothing,
+    // because no primary row claims it any more.
+    expect(resolveActiveHref(ROUTES.gig('abc'), primaryHrefs)).toBeNull();
     expect(resolveActiveHref(ROUTES.club('abc'), primaryHrefs)).toBe(ROUTES.clubs);
   });
 

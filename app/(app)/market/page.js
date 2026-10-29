@@ -71,9 +71,6 @@ export default async function MarketPage({ searchParams }) {
         description="Buy, sell, give away and hire — text first, meet on campus."
         action={
           <div className="flex items-center gap-2">
-            <LinkButton href={ROUTES.gigs} size="sm" variant="secondary" icon="briefcase">
-              Student gigs
-            </LinkButton>
             {canSell ? <LinkButton href="/market/new" size="sm" icon="plus">Sell something</LinkButton> : null}
           </div>
         }

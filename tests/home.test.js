@@ -4,16 +4,20 @@ import { describe, expect, it } from 'vitest';
 import { ROUTES } from '@/lib/constants';
 
 /**
- * Home feature tiles + the shared Dropdown contract.
+ * The campus feed header and its section navigation, plus the shared Dropdown
+ * contract.
  *
- * Two behaviours are pinned here because both regressed the same way once:
- * quietly, at the surface layer, while every individual file still "looked
- * right".
+ * These behaviours are pinned here because each regressed quietly, at the
+ * surface layer, while every individual file still "looked right":
  *
- *   1. Clubs and Gigs must stay first-class on Home: real routes from the
- *      ROUTES catalogue, compact tiles in the hero before the composer and the feed, and
- *      no invented metrics to make them look busy.
- *   2. The Create dropdown must stay OUT of the sidebar's stacking/clipping
+ *   1. The header keeps its identity: `PCCOE · Campus feed`, the greeting with
+ *      the signed-in student's name, and the department line underneath.
+ *   2. Clubs, Timetable, Events and Noticeboard sit beside that identity — one
+ *      compact, real destination each, in that order, with decorative icons and
+ *      an accessible current-section signal.
+ *   3. The legacy Gigs promotion is gone from Home: no feature tile, no rail
+ *      shortcut, no large promotional card.
+ *   4. The Create dropdown must stay OUT of the sidebar's stacking/clipping
  *      trap: portalled to the body, viewport-clamped, scrollable, and
  *      keyboard-operable — an anchored menu inside `.side-panel` paints
  *      behind the nav rows that follow it in the DOM.
@@ -21,75 +25,128 @@ import { ROUTES } from '@/lib/constants';
 
 const read = (file) => fs.readFileSync(file, 'utf8');
 
-describe('home feature tiles (Clubs & Gigs)', () => {
-  const tiles = read('components/home/HomeFeatureTiles.js');
+describe('campus feed header', () => {
   const page = read('app/(app)/home/page.js');
   const feedClient = read('components/home/HomeFeedClient.js');
   const pulse = read('components/home/HomePulse.js');
+  const nav = read('components/navigation/CampusSectionNav.js');
+  const css = read('app/styles/home.css');
 
-  it('links whole tiles to the real destinations from the route catalogue', () => {
+  it('keeps the identity, the greeting and the department line', () => {
+    expect(pulse).toContain('PCCOE · Campus feed');
+    expect(pulse).toContain('home-pulse__greet');
+    expect(pulse).toContain('Hey,');
+    // The name comes from the authenticated profile, never a literal.
+    expect(pulse).toContain('(user.profile.display_name || user.profile.username)');
+    expect(pulse).toContain('everything happening on campus, right now');
+    expect(pulse).toContain('${user.profile.branch}');
+    expect(page).toContain('homeUser');
+    expect(page).toContain('display_name: profile.display_name');
+    expect(page).toContain('branch: profile.branch');
+  });
+
+  it('renders the section navigation beside the identity, on the same row', () => {
+    const header = pulse.indexOf('home-pulse__header');
+    const identity = pulse.indexOf('home-pulse__eyebrow');
+    const navMount = pulse.indexOf('<CampusSectionNav');
+    const actions = pulse.indexOf('home-pulse__actions');
+    expect(header).toBeGreaterThan(-1);
+    expect(identity).toBeGreaterThan(header);
+    expect(navMount).toBeGreaterThan(identity);
+    expect(actions).toBeGreaterThan(navMount);
+    // Personalised the same way the rail's Timetable row is — saved division or
+    // the public selector, never a guess.
+    expect(pulse).toContain('division={user.profile.division}');
+    expect(page).toContain('division: profile.division');
+    // One hero, one HomePulse mount: no promoted tile is passed into it.
+    expect(feedClient).toContain('<HomePulse user={user} stats={stats} />');
+    expect(feedClient).not.toContain('heroFeatures');
+  });
+
+  it('navigates to the four real destinations, in order, with product icons', () => {
     expect(ROUTES.clubs).toBe('/clubs');
-    expect(ROUTES.gigs).toBe('/gigs');
-    expect(tiles).toContain('href: ROUTES.clubs');
-    expect(tiles).toContain('href: ROUTES.gigs');
-    expect(tiles).not.toMatch(/href:\s*['"]\//);
-    // The entire card is the link.
-    expect(tiles).toMatch(/<Link[\s\S]*?feature-tile/);
+    expect(ROUTES.timetable).toBe('/timetable');
+    const order = ['label: \'Clubs\'', 'label: \'Timetable\'', 'label: \'Events\'', 'label: \'Noticeboard\''];
+    let cursor = -1;
+    for (const entry of order) {
+      const at = nav.indexOf(entry);
+      expect(at, entry).toBeGreaterThan(cursor);
+      cursor = at;
+    }
+    expect(nav).toContain('href: ROUTES.clubs');
+    expect(nav).toContain('href: getTimetableHref(division)');
+    expect(nav).toContain("href: '/campus/events'");
+    expect(nav).toContain("href: '/campus/noticeboard'");
+    // Icons from the project's own glyph set: decorative, so aria-hidden.
+    expect(nav).toContain("icon: 'users'");
+    expect(nav).toContain("icon: 'clock'");
+    expect(nav).toContain("icon: 'calendar'");
+    expect(nav).toContain("icon: 'megaphone'");
+    expect(nav).toContain('components/ui/icons');
+    expect(nav).not.toMatch(/from 'lucide-react'|from 'react-icons|from '@heroicons/);
+    // Nothing points at the retired gig board.
+    expect(nav).not.toContain('gigs');
   });
 
-  it('carries the discovery copy with no invented metrics', () => {
-    expect(tiles).toContain('Find your people.');
-    expect(tiles).toContain('Put your skills to work.');
-    expect(tiles).toContain('technical, cultural, sports, arts, entrepreneurship and social clubs');
-    expect(tiles).toContain('paid and unpaid student gigs');
-    // No fake counts, earnings, members or "live" numbers anywhere in the tile.
-    expect(tiles).not.toMatch(/\d+\s*(\+|members|students|clubs|gigs|active|live)/i);
-    expect(tiles).not.toContain('₹');
+  it('resolves each destination from the route catalogue, in the required order', async () => {
+    const { campusSectionLinks } = await import('@/components/navigation/CampusSectionNav');
+    // Without a saved division the Timetable door is the public selector; a
+    // saved division opens that division's week directly.
+    expect(campusSectionLinks(null).map((link) => link.label)).toEqual(['Clubs', 'Timetable', 'Events', 'Noticeboard']);
+    expect(campusSectionLinks(null).map((link) => link.href)).toEqual([
+      '/clubs',
+      '/timetable',
+      '/campus/events',
+      '/campus/noticeboard',
+    ]);
+    expect(campusSectionLinks(null).map((link) => link.icon)).toEqual(['users', 'clock', 'calendar', 'megaphone']);
+    expect(campusSectionLinks('o')[1].href).toBe('/timetable/o');
   });
 
-  it('places the existing tiles in the hero before the composer and feed', () => {
-    expect(page).toContain('heroFeatures={<HomeFeatureTiles />}');
-    expect(page).toContain('afterFeed={<HomeAreas />}');
-    expect(page).not.toContain('beforeFeed={<HomeFeatureTiles />}');
-    const hero = feedClient.indexOf('<HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>');
-    const composer = feedClient.indexOf('home-composer');
-    const feed = feedClient.indexOf('id="home-stream-title"');
-    const afterFeed = feedClient.indexOf('{afterFeed}');
-    expect(hero).toBeGreaterThan(-1);
-    expect(composer).toBeGreaterThan(hero);
-    expect(feed).toBeGreaterThan(composer);
-    expect(afterFeed).toBeGreaterThan(feed);
-    expect(feedClient.indexOf('<HomeRail')).toBeGreaterThan(afterFeed);
-    expect(pulse.indexOf('{children}')).toBeGreaterThan(pulse.indexOf('home-pulse__actions'));
-    expect(pulse).toContain('aria-label="Campus right now"');
+  it('is semantic, link-based and announces the current section', () => {
+    expect(nav).toContain('<nav');
+    expect(nav).toContain('aria-label="Campus sections"');
+    expect(nav).toContain('<ul');
+    expect(nav).toContain('<Link');
+    expect(nav).toContain("aria-current={active ? 'page' : undefined}");
+    expect(nav).toContain('resolveActiveHref');
+    expect(nav).toContain('usePathname');
   });
 
-  it('replaces — not duplicates — the Clubs and Gigs discovery chips', () => {
-    for (const kept of ["label: 'Explore'", "label: 'Events'", "label: 'Communities'", "label: 'Projects'", "label: 'Marketplace'"]) {
+  it('removes the legacy Gigs promotion from Home', () => {
+    expect(fs.existsSync('components/home/HomeFeatureTiles.js')).toBe(false);
+    expect(page).not.toContain('HomeFeatureTiles');
+    expect(page).not.toContain("label: 'Gigs'");
+    expect(page).not.toContain('ROUTES.gigs');
+    expect(pulse).not.toContain("label: 'Gigs'");
+    expect(css).not.toContain('.feature-tile');
+    expect(css).not.toContain('.home-features');
+  });
+
+  it('does not duplicate the header destinations in the "keep exploring" row', () => {
+    for (const kept of ["label: 'Explore'", "label: 'Communities'", "label: 'Projects'", "label: 'Marketplace'"]) {
       expect(pulse).toContain(kept);
     }
     expect(pulse).not.toContain("label: 'Clubs'");
-    expect(pulse).not.toContain("label: 'Gigs'");
-    // The rail keypad covers both destinations as secondary shortcuts.
-    expect(page).toContain("href: ROUTES.clubs, label: 'Clubs'");
-    expect(page).toContain("href: ROUTES.gigs, label: 'Gigs'");
   });
 
   it('is responsive, focus-visible and reduced-motion safe', () => {
-    const css = read('app/styles/home.css');
-    expect(css).toMatch(/\.home-features__grid\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
-    // The hero and the tiles react to available content width, including zoom.
-    expect(css).toContain('@container home-hero (min-width: 52rem)');
-    expect(css).toMatch(/@container home-features \(min-width: 21rem\) \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/);
-    expect(css).toMatch(/\.feature-tile__copy--short \{\s*display: none/);
-    expect(css).toMatch(/@container home-features \(min-width: 21rem\) \{[\s\S]*?\.feature-tile__copy--short \{ display: block/);
-    expect(css).toMatch(/\.feature-tile:focus-visible\s*\{[^}]*outline: 2px solid var\(--cp-focus\)/);
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.feature-tile:hover/);
-    // Decorative layers never take the click.
-    expect(css).toMatch(/\.feature-tile__glow \{[^}]*pointer-events: none/);
-    // Hover lift is pointer-only; touch keeps a pressed response.
-    expect(css).toMatch(/@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\.feature-tile:hover/);
-    expect(css).toMatch(/\.feature-tile:active\s*\{/);
+    // Phone-first: two equal columns, 44px touch targets, no sideways scroll.
+    expect(css).toMatch(/\.campus-nav__list\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+    expect(css).toMatch(/\.campus-nav__link\s*\{[^}]*min-height: 2\.75rem/);
+    // One row from tablet width up, inside the hero's own container.
+    expect(css).toMatch(/@container home-hero \(min-width: 34rem\) \{[^}]*\.campus-nav__list[\s\S]*?display: flex/);
+    // Identity left, navigation right, vertically centred, from 44rem of hero.
+    expect(css).toMatch(/@container home-hero \(min-width: 44rem\) \{[^}]*\.home-pulse__header[\s\S]*?flex-direction: row[\s\S]*?align-items: center/);
+    expect(css).toMatch(/\.campus-nav__link:focus-visible\s*\{[^}]*outline: 2px solid var\(--cp-focus\)/);
+    expect(css).toMatch(/\.campus-nav__link\[aria-current='page'\]\s*\{/);
+    // Active state is more than colour: weight and an underline as well.
+    expect(css).toMatch(/\.campus-nav__link\[aria-current='page'\]\s*\{[^}]*font-weight: 680/);
+    expect(css).toMatch(/\.campus-nav__link\[aria-current='page'\]::after\s*\{/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[^}]*\.campus-nav__link\s*\{[^}]*transition: none/);
+    // Hover lift stays pointer-only; touch keeps the pressed response.
+    expect(css).toMatch(/@media \(hover: hover\) and \(pointer: fine\) \{[^}]*\.campus-nav__link:hover/);
+    expect(css).toMatch(/\.campus-nav__link:active\s*\{/);
   });
 });
 

@@ -40,7 +40,6 @@ const DESTINATIONS = [
   { href: '/explore/resources', label: 'Resources', icon: 'book', description: 'Notes, papers and study material shared by students.' },
   { href: ROUTES.campus, label: 'Campus', icon: 'building', description: 'Noticeboard, events, lost and found, teams and study partners.' },
   { href: ROUTES.market, label: 'Market', icon: 'tag', description: 'Listings and deals from students on campus.' },
-  { href: ROUTES.gigs, label: 'Gigs', icon: 'briefcase', description: 'Paid and unpaid work offered by other students.' },
 ];
 
 /** Scope shortcuts are search links — they set `?q=`'s scope, not a filter. */
