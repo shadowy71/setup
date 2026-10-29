@@ -1,0 +1,462 @@
+{
+ "label": "2026-10-29-mobile-404-diagnostic-r1",
+ "base": "http://127.0.0.1:3100",
+ "measuredAt": "2026-10-29T16:35:53.767Z",
+ "runs": 1,
+ "profiles": [
+  {
+   "key": "fast",
+   "throttle": false,
+   "cpu": 1,
+   "label": "Unthrottled"
+  }
+ ],
+ "viewports": [
+  {
+   "key": "phone",
+   "label": "Modern phone",
+   "width": 390,
+   "height": 844,
+   "dpr": 3,
+   "mobile": true
+  }
+ ],
+ "results": [
+  {
+   "route": "Home",
+   "routeKey": "home",
+   "href": "/home",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 316,
+   "lcp": 316,
+   "cls": 0,
+   "domContentLoaded": 253,
+   "loadEvent": 263,
+   "jsTransfer": 411409,
+   "cssTransfer": 37312,
+   "documentTransfer": 17694,
+   "fontTransfer": 192168,
+   "totalTransfer": 671605,
+   "requestCount": 31,
+   "longTaskCount": 2,
+   "totalTaskTime": 3804,
+   "horizontalOverflow": 0,
+   "introShown": true,
+   "docHeight": 2318,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": {
+    "top": 807,
+    "viewportsDown": 0.96
+   },
+   "firstFeedCard": {
+    "top": 1267,
+    "viewportsDown": 1.5
+   },
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css",
+    "2e0zj4nx3858n.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/speed-insights/script.js",
+     "resourceType": "script"
+    },
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/insights/script.js",
+     "resourceType": "script"
+    }
+   ],
+   "lcpSpread": null
+  },
+  {
+   "route": "Explore",
+   "routeKey": "explore",
+   "href": "/explore",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 108,
+   "lcp": 108,
+   "cls": 0,
+   "domContentLoaded": 220,
+   "loadEvent": 220,
+   "jsTransfer": 263356,
+   "cssTransfer": 33044,
+   "documentTransfer": 18833,
+   "fontTransfer": 50276,
+   "totalTransfer": 371602,
+   "requestCount": 39,
+   "longTaskCount": 0,
+   "totalTaskTime": 0,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 2197,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/insights/script.js",
+     "resourceType": "script"
+    },
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/speed-insights/script.js",
+     "resourceType": "script"
+    }
+   ],
+   "lcpSpread": null
+  },
+  {
+   "route": "Login",
+   "routeKey": "login",
+   "href": "/login",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 288,
+   "lcp": 288,
+   "cls": 0,
+   "domContentLoaded": 65,
+   "loadEvent": 166,
+   "jsTransfer": 297218,
+   "cssTransfer": 32141,
+   "documentTransfer": 21760,
+   "fontTransfer": 89768,
+   "totalTransfer": 462278,
+   "requestCount": 25,
+   "longTaskCount": 2,
+   "totalTaskTime": 1202,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 936,
+   "headerHeight": 0,
+   "dockHeight": 0,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "3i7g0lgpbmuu1.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Refused to execute script from 'http://127.0.0.1:3100/login?next=%2F_vercel%2Finsights%2Fscript.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/login?next=%2F_vercel%2Fspeed-insights%2Fscript.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enable"
+   ],
+   "failedResponses": [],
+   "lcpSpread": null
+  },
+  {
+   "route": "Notifications",
+   "routeKey": "notifications",
+   "href": "/notifications",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 68,
+   "lcp": 68,
+   "cls": 0,
+   "domContentLoaded": 174,
+   "loadEvent": 175,
+   "jsTransfer": 262309,
+   "cssTransfer": 33044,
+   "documentTransfer": 15613,
+   "fontTransfer": 50276,
+   "totalTransfer": 367335,
+   "requestCount": 35,
+   "longTaskCount": 0,
+   "totalTaskTime": 0,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 3972,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/insights/script.js",
+     "resourceType": "script"
+    },
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/speed-insights/script.js",
+     "resourceType": "script"
+    }
+   ],
+   "lcpSpread": null
+  },
+  {
+   "route": "Profile",
+   "routeKey": "profile",
+   "href": "/profile",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 88,
+   "lcp": 88,
+   "cls": 0,
+   "domContentLoaded": 274,
+   "loadEvent": 275,
+   "jsTransfer": 274256,
+   "cssTransfer": 31369,
+   "documentTransfer": 21405,
+   "fontTransfer": 50276,
+   "totalTransfer": 388374,
+   "requestCount": 42,
+   "longTaskCount": 1,
+   "totalTaskTime": 76,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 7789,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/insights/script.js",
+     "resourceType": "script"
+    },
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/speed-insights/script.js",
+     "resourceType": "script"
+    }
+   ],
+   "lcpSpread": null
+  },
+  {
+   "route": "Marketplace",
+   "routeKey": "market",
+   "href": "/market",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 116,
+   "lcp": 116,
+   "cls": 0,
+   "domContentLoaded": 294,
+   "loadEvent": 294,
+   "jsTransfer": 260910,
+   "cssTransfer": 33044,
+   "documentTransfer": 21185,
+   "fontTransfer": 50276,
+   "totalTransfer": 375195,
+   "requestCount": 46,
+   "longTaskCount": 1,
+   "totalTaskTime": 77,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 4757,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/insights/script.js",
+     "resourceType": "script"
+    },
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/speed-insights/script.js",
+     "resourceType": "script"
+    }
+   ],
+   "lcpSpread": null
+  },
+  {
+   "route": "Clubs",
+   "routeKey": "clubs",
+   "href": "/clubs",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 128,
+   "lcp": 128,
+   "cls": 0,
+   "domContentLoaded": 209,
+   "loadEvent": 210,
+   "jsTransfer": 259950,
+   "cssTransfer": 33044,
+   "documentTransfer": 27485,
+   "fontTransfer": 50276,
+   "totalTransfer": 376848,
+   "requestCount": 41,
+   "longTaskCount": 1,
+   "totalTaskTime": 55,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 10315,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css",
+    "0ikdp8ot5kgp9.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/speed-insights/script.js",
+     "resourceType": "script"
+    },
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/insights/script.js",
+     "resourceType": "script"
+    }
+   ],
+   "lcpSpread": null
+  },
+  {
+   "route": "Gigs",
+   "routeKey": "gigs",
+   "href": "/gigs",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 1,
+   "fcp": 104,
+   "lcp": 104,
+   "cls": 0,
+   "domContentLoaded": 257,
+   "loadEvent": 265,
+   "jsTransfer": 259950,
+   "cssTransfer": 33044,
+   "documentTransfer": 22252,
+   "fontTransfer": 50276,
+   "totalTransfer": 371615,
+   "requestCount": 41,
+   "longTaskCount": 1,
+   "totalTaskTime": 65,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 4137,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css",
+    "0ikdp8ot5kgp9.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/_vercel/speed-insights/script.js' because its MIME type ('text/plain') is not executable, and strict MIME type checking is enabled.",
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/insights/script.js",
+     "resourceType": "script"
+    },
+    {
+     "status": 404,
+     "url": "http://127.0.0.1:3100/_vercel/speed-insights/script.js",
+     "resourceType": "script"
+    }
+   ],
+   "lcpSpread": null
+  }
+ ]
+}

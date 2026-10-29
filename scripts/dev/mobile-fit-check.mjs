@@ -107,6 +107,7 @@ const NOISE =
   /(favicon|va\.vercel-scripts|_vercel\/insights|ERR_ABORTED|_rsc=|realtime\/v1\/websocket|Failed to fetch|net::ERR_CONNECTION_CLOSED|flushComponentPerformance|cannot have a negative time stamp|unique "key" prop|Check the render method of|Download the React DevTools|MIME type)/i;
 
 const results = [];
+const responseFailures = [];
 const check = (label, ok, detail = '') => {
   results.push({ label, ok: Boolean(ok), detail });
   console.log(`  ${ok ? '\u001b[32mok\u001b[39m  ' : '\u001b[31mFAIL\u001b[39m'} ${label}${detail ? ` — ${detail}` : ''}`);
@@ -147,8 +148,17 @@ async function openPage(viewport, { signedIn = false } = {}) {
   }
   const page = await context.newPage();
   const problems = [];
+  const failedResponses = [];
   let noise = 0;
   const isNoise = (text, url) => NOISE.test(String(text)) || (url && NOISE.test(String(url)));
+  page.on('response', (response) => {
+    if (response.status() < 400) return;
+    failedResponses.push({
+      status: response.status(),
+      url: response.url(),
+      resourceType: response.request().resourceType(),
+    });
+  });
   page.on('pageerror', (error) => {
     const message = String(error?.message ?? error);
     if (isNoise(message)) noise += 1;
@@ -165,7 +175,7 @@ async function openPage(viewport, { signedIn = false } = {}) {
     if (isNoise(message.text(), url)) noise += 1;
     else problems.push(`console: ${message.text().slice(0, 180)}`);
   });
-  return { context, page, problems, noiseCount: () => noise };
+  return { context, page, problems, noiseCount: () => noise, failedResponses };
 }
 
 /**
@@ -312,7 +322,7 @@ for (const [name, contextOptions] of Object.entries(VIEWPORTS)) {
   console.log(`\n\u001b[1m${name} · ${width}px\u001b[22m`);
   for (const { path, signedIn } of ROUTES) {
     const label = `${path}${signedIn ? ' (signed in)' : ''}`;
-    const { context, page, problems, noiseCount } = await openPage(contextOptions, { signedIn });
+    const { context, page, problems, noiseCount, failedResponses } = await openPage(contextOptions, { signedIn });
     try {
       const response = await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
       await page.waitForTimeout(900);
@@ -332,10 +342,12 @@ for (const [name, contextOptions] of Object.entries(VIEWPORTS)) {
 
       const scroller = await readScroller(page);
       const noise = noiseCount();
+      responseFailures.push(...failedResponses.map((failure) => ({ ...failure, route: path, signedIn, viewport: name })));
       const detail =
         `viewport ${expanded.innerWidth}/${expanded.deviceWidth}px · doc ${expanded.docScrollWidth} vs ${expanded.docClientWidth}` +
         ` · scale ${expanded.scale} · disclosures ${total}` +
         (problems.length ? ` · ${problems.length} console error(s): ${problems[0]}` : '') +
+        (failedResponses.length ? ` · responses: ${failedResponses.slice(0, 3).map((failure) => `${failure.status} ${failure.url}`).join(' | ')}` : '') +
         (noise ? ` · noise: ${noise}` : '');
 
       check(`${label} · served page fits ${width}px`, !fitFailed(asServed), `scrollW ${asServed.docScrollWidth}${asServed.offenders.length ? ` · out: ${asServed.offenders.join(', ')}` : ''}`);
@@ -379,6 +391,7 @@ await browser.close();
 
 mkdirSync(OUT, { recursive: true });
 writeFileSync(`${OUT}/report.json`, JSON.stringify(results, null, 2));
+writeFileSync(`${OUT}/resource-failures.json`, JSON.stringify(responseFailures, null, 2));
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed · report: ${OUT}/report.json`);
 if (failed.length) {

@@ -86,6 +86,29 @@ describe('Realtime authentication and user-channel wiring', () => {
     expect(onMessage).toHaveBeenCalledTimes(1);
     expect(onStatus).toHaveBeenCalledTimes(1);
   });
+
+  it('stops a rejected user channel without retrying or duplicate cleanup', () => {
+    const { client, subscribed } = fakeClient();
+    const onStatus = vi.fn();
+    const cleanup = subscribeToUserMessaging(client, 'profile-a', { onStatus });
+
+    subscribed[0].statusCallback('CHANNEL_ERROR', new Error('Unauthorized'));
+    subscribed[0].statusCallback('CHANNEL_ERROR', new Error('Unauthorized'));
+    cleanup();
+
+    expect(client.removeChannel).toHaveBeenCalledTimes(1);
+    expect(client.removeChannel).toHaveBeenCalledWith(subscribed[0]);
+    expect(onStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not tear down the user channel for a transient timeout', () => {
+    const { client, subscribed } = fakeClient();
+    const cleanup = subscribeToUserMessaging(client, 'profile-a', {});
+
+    subscribed[0].statusCallback('TIMED_OUT');
+    expect(client.removeChannel).not.toHaveBeenCalled();
+    cleanup();
+  });
 });
 
 describe('active conversation receipt subscriptions', () => {
@@ -110,5 +133,16 @@ describe('active conversation receipt subscriptions', () => {
     expect(firstRead).not.toHaveBeenCalled();
     expect(secondRead).toHaveBeenCalledTimes(1);
     expect(client.removeChannel).toHaveBeenCalledWith(first);
+  });
+
+  it('applies the same permanent-authorization teardown to receipt channels', () => {
+    const { client, subscribed } = fakeClient();
+    const cleanup = subscribeToConversationReads(client, 'c1', {});
+
+    subscribed[0].statusCallback('CHANNEL_ERROR', new Error('42501 permission denied'));
+    cleanup();
+
+    expect(client.removeChannel).toHaveBeenCalledTimes(1);
+    expect(client.removeChannel).toHaveBeenCalledWith(subscribed[0]);
   });
 });

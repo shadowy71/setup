@@ -1,0 +1,2560 @@
+{
+  "label": "2026-10-29-followup-explore-prefetch-r3",
+  "base": "http://127.0.0.1:3100",
+  "measuredAt": "2026-10-29T16:51:57.810Z",
+  "sourceRevision": "dca3351fdf77aaa65a344302ab4525bf65ea927f",
+  "nodeVersion": "v22.22.3",
+  "runs": 3,
+  "viewport": {
+    "key": "phone",
+    "width": 390,
+    "height": 844,
+    "dpr": 3,
+    "mobile": true
+  },
+  "profile": {
+    "key": "fast",
+    "latency": 150,
+    "downloadThroughput": 209715.2,
+    "uploadThroughput": 96000,
+    "cpu": 1
+  },
+  "settleMs": 4000,
+  "publicPaths": [
+    "/login"
+  ],
+  "results": [
+    {
+      "href": "/explore",
+      "cold": {
+        "samples": 3,
+        "fcp": 132,
+        "lcp": 132,
+        "cls": 0,
+        "ttfb": 13,
+        "domContentLoaded": 255,
+        "loadEvent": 255,
+        "transferTotal": 374464,
+        "fontTransfer": 50276,
+        "longTaskCount": 1,
+        "totalTaskTime": 74,
+        "horizontalOverflow": 0,
+        "spreads": {
+          "fcp": [
+            80,
+            208
+          ],
+          "lcp": [
+            80,
+            208
+          ],
+          "transferTotal": [
+            372280,
+            374464
+          ],
+          "totalTaskTime": [
+            67,
+            76
+          ]
+        }
+      },
+      "repeat": {
+        "samples": 3,
+        "fcp": 88,
+        "lcp": 88,
+        "cls": 0,
+        "ttfb": 15,
+        "domContentLoaded": 218,
+        "loadEvent": 219,
+        "transferTotal": 24636,
+        "fontTransfer": 0,
+        "longTaskCount": 0,
+        "totalTaskTime": 0,
+        "horizontalOverflow": 0,
+        "spreads": {
+          "fcp": [
+            76,
+            88
+          ],
+          "lcp": [
+            76,
+            88
+          ],
+          "transferTotal": [
+            21559,
+            27367
+          ],
+          "totalTaskTime": [
+            0,
+            52
+          ]
+        }
+      },
+      "errors": []
+    }
+  ],
+  "rawRuns": [
+    {
+      "href": "/explore",
+      "run": 1,
+      "cold": {
+        "fcp": 208,
+        "lcp": 208,
+        "lcpElement": {
+          "tag": "SPAN",
+          "className": "inline-flex items-center gap-2.5 text-[0.8125rem] text-muted",
+          "text": "Loading Campus+…",
+          "url": null
+        },
+        "cls": 0,
+        "longTasks": [
+          {
+            "start": 175,
+            "duration": 74
+          }
+        ],
+        "domContentLoaded": 323,
+        "loadEvent": 323,
+        "ttfb": 19,
+        "horizontalOverflow": 0,
+        "visit": "cold",
+        "introShown": false,
+        "wallClockMs": 4363,
+        "transfer": {
+          "document": 18785,
+          "script": 263356,
+          "stylesheet": 33044,
+          "font": 50276,
+          "image": 6093,
+          "other": 726
+        },
+        "transferTotal": 372280,
+        "longTaskCount": 1,
+        "totalTaskTime": 74,
+        "consoleErrors": [
+          "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+        ],
+        "requests": [
+          {
+            "url": "http://127.0.0.1:3100/explore",
+            "status": 200,
+            "mime": "text/html",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 18785,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/067vgrk7xgxef.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 27453,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-mjo4le6rrym.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2691,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Regular-s.p.00kmgyrwf8rdn.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 25047,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Medium-s.p.1_fagkhdc28kq.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 25229,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2k90conyp36_x.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1225,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3s6nzrbk-8mnv.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2593,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0e132rp4s3prs.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9279,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/turbopack-0o6gy1muemybi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 4869,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1yf2xi5tb-fut.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1244,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/36hei7oa9r0rt.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 44496,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3g4px251sg85e.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 72184,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/244no_wyc4vdc.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 12157,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1_9v0jc76r_gq.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 7856,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3w6gclm3eekoi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 6618,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2n2tke2c861fx.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 11525,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3kk3o4g896dkf.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9281,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/27buut852658k.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 3406,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-z2r56tgfa4x.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9435,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/campus-mark.1e-vk48tz6xrw.webp",
+            "status": 200,
+            "mime": "image/webp",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 6093,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3gtwt0vb0tbnj.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 68413,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 726,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore?_rsc=-ZlQGheqjI7_E2Fu",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=zljkLEdQm8pt2xHn",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=AqgvcZ6My7h5n0K7",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=isNgtMEXFzTriusG",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=ymXhA4JN8Xox73sd",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=ELI98og0KnenuzPJ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=Hy1XM3m-WC3X5-ZQ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=PsmsMeBHmNpTIu0c",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0ikdp8ot5kgp9.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1675,
+            "failed": null
+          }
+        ]
+      },
+      "repeat": {
+        "fcp": 88,
+        "lcp": 88,
+        "lcpElement": {
+          "tag": "SPAN",
+          "className": "inline-flex items-center gap-2.5 text-[0.8125rem] text-muted",
+          "text": "Loading Campus+…",
+          "url": null
+        },
+        "cls": 0,
+        "longTasks": [],
+        "domContentLoaded": 223,
+        "loadEvent": 223,
+        "ttfb": 16,
+        "horizontalOverflow": 0,
+        "visit": "repeat",
+        "introShown": false,
+        "wallClockMs": 4257,
+        "transfer": {
+          "document": 18785,
+          "script": 0,
+          "stylesheet": 0,
+          "font": 0,
+          "image": 0,
+          "other": 2774
+        },
+        "transferTotal": 21559,
+        "longTaskCount": 0,
+        "totalTaskTime": 0,
+        "consoleErrors": [
+          "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+        ],
+        "requests": [
+          {
+            "url": "http://127.0.0.1:3100/explore",
+            "status": 200,
+            "mime": "text/html",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 18785,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Medium-s.p.1_fagkhdc28kq.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Regular-s.p.00kmgyrwf8rdn.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/067vgrk7xgxef.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-mjo4le6rrym.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2k90conyp36_x.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0e132rp4s3prs.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3s6nzrbk-8mnv.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/36hei7oa9r0rt.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/turbopack-0o6gy1muemybi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1_9v0jc76r_gq.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1yf2xi5tb-fut.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/244no_wyc4vdc.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3w6gclm3eekoi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3kk3o4g896dkf.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/27buut852658k.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-z2r56tgfa4x.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2n2tke2c861fx.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3g4px251sg85e.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/campus-mark.1e-vk48tz6xrw.webp",
+            "status": 200,
+            "mime": "image/webp",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3gtwt0vb0tbnj.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 732,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore?_rsc=-ZlQGheqjI7_E2Fu",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=zljkLEdQm8pt2xHn",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=AqgvcZ6My7h5n0K7",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=isNgtMEXFzTriusG",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=ymXhA4JN8Xox73sd",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2042,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=ELI98og0KnenuzPJ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=Hy1XM3m-WC3X5-ZQ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=PsmsMeBHmNpTIu0c",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0ikdp8ot5kgp9.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          }
+        ]
+      }
+    },
+    {
+      "href": "/explore",
+      "run": 2,
+      "cold": {
+        "fcp": 132,
+        "lcp": 132,
+        "lcpElement": {
+          "tag": "SPAN",
+          "className": "inline-flex items-center gap-2.5 text-[0.8125rem] text-muted",
+          "text": "Loading Campus+…",
+          "url": null
+        },
+        "cls": 0,
+        "longTasks": [
+          {
+            "start": 551,
+            "duration": 67
+          }
+        ],
+        "domContentLoaded": 255,
+        "loadEvent": 255,
+        "ttfb": 10,
+        "horizontalOverflow": 0,
+        "visit": "cold",
+        "introShown": false,
+        "wallClockMs": 4292,
+        "transfer": {
+          "document": 18785,
+          "script": 263356,
+          "stylesheet": 33044,
+          "font": 50276,
+          "image": 6093,
+          "other": 2910
+        },
+        "transferTotal": 374464,
+        "longTaskCount": 1,
+        "totalTaskTime": 67,
+        "consoleErrors": [
+          "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+        ],
+        "requests": [
+          {
+            "url": "http://127.0.0.1:3100/explore",
+            "status": 200,
+            "mime": "text/html",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 18785,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Medium-s.p.1_fagkhdc28kq.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 25229,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Regular-s.p.00kmgyrwf8rdn.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 25047,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/067vgrk7xgxef.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 27453,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-mjo4le6rrym.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2691,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2k90conyp36_x.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1225,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3s6nzrbk-8mnv.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2593,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0e132rp4s3prs.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9279,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/turbopack-0o6gy1muemybi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 4869,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1_9v0jc76r_gq.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 7856,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1yf2xi5tb-fut.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1244,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/36hei7oa9r0rt.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 44496,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/244no_wyc4vdc.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 12157,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3w6gclm3eekoi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 6618,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3kk3o4g896dkf.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9281,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2n2tke2c861fx.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 11525,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3g4px251sg85e.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 72184,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-z2r56tgfa4x.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9435,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/27buut852658k.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 3406,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/campus-mark.1e-vk48tz6xrw.webp",
+            "status": 200,
+            "mime": "image/webp",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 6093,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3gtwt0vb0tbnj.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 68413,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 732,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 727,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 725,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 726,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore?_rsc=-ZlQGheqjI7_E2Fu",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=zljkLEdQm8pt2xHn",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=AqgvcZ6My7h5n0K7",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=isNgtMEXFzTriusG",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=ymXhA4JN8Xox73sd",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=ELI98og0KnenuzPJ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=Hy1XM3m-WC3X5-ZQ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=PsmsMeBHmNpTIu0c",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0ikdp8ot5kgp9.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1675,
+            "failed": null
+          }
+        ]
+      },
+      "repeat": {
+        "fcp": 88,
+        "lcp": 88,
+        "lcpElement": {
+          "tag": "SPAN",
+          "className": "inline-flex items-center gap-2.5 text-[0.8125rem] text-muted",
+          "text": "Loading Campus+…",
+          "url": null
+        },
+        "cls": 0,
+        "longTasks": [
+          {
+            "start": 87,
+            "duration": 52
+          }
+        ],
+        "domContentLoaded": 218,
+        "loadEvent": 219,
+        "ttfb": 14,
+        "horizontalOverflow": 0,
+        "visit": "repeat",
+        "introShown": false,
+        "wallClockMs": 4255,
+        "transfer": {
+          "document": 18785,
+          "script": 0,
+          "stylesheet": 0,
+          "font": 0,
+          "image": 0,
+          "other": 5851
+        },
+        "transferTotal": 24636,
+        "longTaskCount": 1,
+        "totalTaskTime": 52,
+        "consoleErrors": [
+          "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+        ],
+        "requests": [
+          {
+            "url": "http://127.0.0.1:3100/explore",
+            "status": 200,
+            "mime": "text/html",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 18785,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Medium-s.p.1_fagkhdc28kq.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Regular-s.p.00kmgyrwf8rdn.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/067vgrk7xgxef.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-mjo4le6rrym.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2k90conyp36_x.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0e132rp4s3prs.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3s6nzrbk-8mnv.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/36hei7oa9r0rt.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/turbopack-0o6gy1muemybi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/244no_wyc4vdc.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1yf2xi5tb-fut.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3kk3o4g896dkf.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3w6gclm3eekoi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2n2tke2c861fx.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1_9v0jc76r_gq.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-z2r56tgfa4x.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/27buut852658k.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3g4px251sg85e.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/campus-mark.1e-vk48tz6xrw.webp",
+            "status": 200,
+            "mime": "image/webp",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3gtwt0vb0tbnj.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 732,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 727,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 725,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 726,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore?_rsc=-ZlQGheqjI7_E2Fu",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1484,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 731,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 726,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=zljkLEdQm8pt2xHn",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=ELI98og0KnenuzPJ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=Hy1XM3m-WC3X5-ZQ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=PsmsMeBHmNpTIu0c",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=AqgvcZ6My7h5n0K7",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0ikdp8ot5kgp9.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=isNgtMEXFzTriusG",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=ymXhA4JN8Xox73sd",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          }
+        ]
+      }
+    },
+    {
+      "href": "/explore",
+      "run": 3,
+      "cold": {
+        "fcp": 80,
+        "lcp": 80,
+        "lcpElement": {
+          "tag": "SPAN",
+          "className": "inline-flex items-center gap-2.5 text-[0.8125rem] text-muted",
+          "text": "Loading Campus+…",
+          "url": null
+        },
+        "cls": 0,
+        "longTasks": [
+          {
+            "start": 99,
+            "duration": 76
+          }
+        ],
+        "domContentLoaded": 250,
+        "loadEvent": 250,
+        "ttfb": 13,
+        "horizontalOverflow": 0,
+        "visit": "cold",
+        "introShown": false,
+        "wallClockMs": 4285,
+        "transfer": {
+          "document": 18785,
+          "script": 263356,
+          "stylesheet": 33044,
+          "font": 50276,
+          "image": 6093,
+          "other": 2910
+        },
+        "transferTotal": 374464,
+        "longTaskCount": 1,
+        "totalTaskTime": 76,
+        "consoleErrors": [
+          "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+        ],
+        "requests": [
+          {
+            "url": "http://127.0.0.1:3100/explore",
+            "status": 200,
+            "mime": "text/html",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 18785,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Medium-s.p.1_fagkhdc28kq.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 25229,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Regular-s.p.00kmgyrwf8rdn.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 25047,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/067vgrk7xgxef.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 27453,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-mjo4le6rrym.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2691,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2k90conyp36_x.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1225,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3s6nzrbk-8mnv.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2593,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0e132rp4s3prs.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9279,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/turbopack-0o6gy1muemybi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 4869,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/36hei7oa9r0rt.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 44496,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3g4px251sg85e.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 72184,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1yf2xi5tb-fut.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1244,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1_9v0jc76r_gq.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 7856,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/244no_wyc4vdc.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 12157,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3w6gclm3eekoi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 6618,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3kk3o4g896dkf.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9281,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2n2tke2c861fx.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 11525,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/27buut852658k.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 3406,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-z2r56tgfa4x.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 9435,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/campus-mark.1e-vk48tz6xrw.webp",
+            "status": 200,
+            "mime": "image/webp",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 6093,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3gtwt0vb0tbnj.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 68413,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 732,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 727,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 725,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 726,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore?_rsc=-ZlQGheqjI7_E2Fu",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=zljkLEdQm8pt2xHn",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=AqgvcZ6My7h5n0K7",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=ELI98og0KnenuzPJ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=isNgtMEXFzTriusG",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=Hy1XM3m-WC3X5-ZQ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=PsmsMeBHmNpTIu0c",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=ymXhA4JN8Xox73sd",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0ikdp8ot5kgp9.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1675,
+            "failed": null
+          }
+        ]
+      },
+      "repeat": {
+        "fcp": 76,
+        "lcp": 76,
+        "lcpElement": {
+          "tag": "SPAN",
+          "className": "inline-flex items-center gap-2.5 text-[0.8125rem] text-muted",
+          "text": "Loading Campus+…",
+          "url": null
+        },
+        "cls": 0,
+        "longTasks": [],
+        "domContentLoaded": 202,
+        "loadEvent": 202,
+        "ttfb": 15,
+        "horizontalOverflow": 0,
+        "visit": "repeat",
+        "introShown": false,
+        "wallClockMs": 4235,
+        "transfer": {
+          "document": 18785,
+          "script": 0,
+          "stylesheet": 0,
+          "font": 0,
+          "image": 0,
+          "other": 8582
+        },
+        "transferTotal": 27367,
+        "longTaskCount": 0,
+        "totalTaskTime": 0,
+        "consoleErrors": [
+          "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+        ],
+        "requests": [
+          {
+            "url": "http://127.0.0.1:3100/explore",
+            "status": 200,
+            "mime": "text/html",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 18785,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Medium-s.p.1_fagkhdc28kq.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/DMMono_Regular-s.p.00kmgyrwf8rdn.ttf",
+            "status": 200,
+            "mime": "font/ttf",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/067vgrk7xgxef.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-mjo4le6rrym.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2k90conyp36_x.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3s6nzrbk-8mnv.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0e132rp4s3prs.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/36hei7oa9r0rt.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/turbopack-0o6gy1muemybi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1yf2xi5tb-fut.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/244no_wyc4vdc.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3w6gclm3eekoi.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3kk3o4g896dkf.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3g4px251sg85e.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/27buut852658k.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/2n2tke2c861fx.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3-z2r56tgfa4x.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/1_9v0jc76r_gq.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/media/campus-mark.1e-vk48tz6xrw.webp",
+            "status": 200,
+            "mime": "image/webp",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/3gtwt0vb0tbnj.js",
+            "status": 200,
+            "mime": "application/javascript",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 732,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 727,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 725,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 726,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore?_rsc=-ZlQGheqjI7_E2Fu",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 1482,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/notifications?_rsc=zljkLEdQm8pt2xHn",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/market?_rsc=AqgvcZ6My7h5n0K7",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/chat?_rsc=isNgtMEXFzTriusG",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=TLJ23gVnbrIc7BPU",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/communities?_rsc=ELI98og0KnenuzPJ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/profile?_rsc=ymXhA4JN8Xox73sd",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": null,
+            "failed": "cancelled"
+          },
+          {
+            "url": "http://127.0.0.1:3100/clubs?_rsc=Hy1XM3m-WC3X5-ZQ",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2136,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/explore/projects?_rsc=PsmsMeBHmNpTIu0c",
+            "status": 200,
+            "mime": "text/x-component",
+            "fromDiskCache": false,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 2054,
+            "failed": null
+          },
+          {
+            "url": "http://127.0.0.1:3100/_next/static/chunks/0ikdp8ot5kgp9.css",
+            "status": 200,
+            "mime": "text/css",
+            "fromDiskCache": true,
+            "fromServiceWorker": false,
+            "fromPrefetchCache": false,
+            "encodedBytes": 0,
+            "failed": null
+          }
+        ]
+      }
+    }
+  ]
+}

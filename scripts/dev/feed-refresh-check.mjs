@@ -173,6 +173,8 @@ async function publish(page, text) {
 /** A body the 240 seeded posts cannot contain, so a match is unambiguous. */
 const probe = (name) => `feed-refresh-check ${runId} ${name}`;
 const campusProbe = probe('campus');
+const olderHiddenProbe = probe('older-hidden');
+const olderValidProbe = probe('older-valid');
 const communityProbe = probe('community');
 const failedProbe = probe('failed');
 
@@ -267,6 +269,61 @@ await check('viewer: one copy survives repeated invalidation', async () => {
 });
 
 /* 3 · moderation states are respected by an open feed */
+if (!values.quick) {
+  await check('moderation: an older loaded page reconciles without losing valid entries', async () => {
+    const created = await withDb(async (client) => {
+      const { rows } = await client.query(
+        `insert into public.posts (author_id, kind, body, visibility, status, created_at, updated_at)
+         select id, 'post', body, 'public', 'published', stamp, stamp
+           from public.profiles
+           cross join (values
+             ($1::text, now() - interval '4 hours'),
+             ($2::text, now() - interval '4 hours 1 minute')
+           ) as probes(body, stamp)
+          where username = $3
+         returning id, body`,
+        [olderHiddenProbe, olderValidProbe, harness.student.username],
+      );
+      return rows;
+    });
+    expect(created.length === 2, 'the older-page probe rows could not be inserted');
+
+    // Page until both adjacent probes are genuinely in the browser's older-page
+    // cache. Four hours places them around the seeded second page, while the
+    // bounded loop proves the run cannot pretend an unloaded row was reconciled.
+    for (let tap = 0; tap < 5 && (await cardsWith(viewerHome, olderValidProbe)) === 0; tap += 1) {
+      const more = viewerHome.getByRole('button', { name: /Show \d+ more entries/ });
+      expect((await more.count()) === 1, 'the older-page probe never became loadable');
+      await more.click();
+      await viewerHome.waitForTimeout(1_500);
+    }
+    await waitForCard(viewerHome, olderValidProbe, SAME_TAB_MS, 'viewer older page');
+    expect((await cardsWith(viewerHome, olderHiddenProbe)) === 1, 'the older hidden probe was not loaded');
+
+    await viewerHome.evaluate(() => window.scrollTo(0, 0));
+    await viewerHome.waitForTimeout(300);
+    const scrollBefore = await viewerHome.evaluate(() => window.scrollY);
+    const readsBefore = viewerHome.__counters.feedReads;
+    const hidden = created.find((row) => row.body === olderHiddenProbe);
+    await setStatus(hidden.id, 'hidden');
+    const seconds = await waitForCardGone(viewerHome, olderHiddenProbe, CROSS_USER_MS, 'viewer older page');
+
+    // A valid neighbor and the accepted new head post must survive the same and
+    // subsequent reconciliations; absence from page one is not their tombstone.
+    for (let i = 0; i < 2; i += 1) {
+      await viewerHome.evaluate(() => window.dispatchEvent(new Event('focus')));
+      await viewerHome.waitForTimeout(1_500);
+      expect((await cardsWith(viewerHome, olderValidProbe)) === 1, 'a valid older post was discarded or duplicated');
+      expect((await cardsWith(viewerHome, campusProbe)) === 1, 'the accepted new post did not survive reconciliation');
+    }
+    expect(await notReloaded(viewerHome), 'the older-page reconciliation reloaded the document');
+    expect((await viewerHome.evaluate(() => window.scrollY)) === scrollBefore, 'older-page reconciliation moved the viewport');
+    const reads = viewerHome.__counters.feedReads - readsBefore;
+    expect(reads >= 1 && reads <= 6, `${reads} feed requests during older-page reconciliation`);
+    return `older hidden row gone in ${seconds}s · valid older + accepted head retained · ${reads} bounded read(s)`;
+  });
+}
+
 await check('moderation: a hidden post leaves both open feeds', async () => {
   const created = await findProbe(campusProbe);
   expect(created, 'the published probe row was not found in the database');

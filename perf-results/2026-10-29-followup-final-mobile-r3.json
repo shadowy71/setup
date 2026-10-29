@@ -1,0 +1,385 @@
+{
+ "label": "2026-10-29-followup-final-mobile-r3",
+ "base": "http://127.0.0.1:3100",
+ "measuredAt": "2026-10-29T16:53:02.704Z",
+ "runs": 3,
+ "profiles": [
+  {
+   "key": "fast",
+   "throttle": false,
+   "cpu": 1,
+   "label": "Unthrottled"
+  }
+ ],
+ "viewports": [
+  {
+   "key": "phone",
+   "label": "Modern phone",
+   "width": 390,
+   "height": 844,
+   "dpr": 3,
+   "mobile": true
+  }
+ ],
+ "results": [
+  {
+   "route": "Home",
+   "routeKey": "home",
+   "href": "/home",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 140,
+   "lcp": 296,
+   "cls": 0,
+   "domContentLoaded": 198,
+   "loadEvent": 242,
+   "jsTransfer": 411409,
+   "cssTransfer": 38987,
+   "documentTransfer": 17638,
+   "fontTransfer": 192168,
+   "totalTransfer": 674096,
+   "requestCount": 40,
+   "longTaskCount": 2,
+   "totalTaskTime": 2799,
+   "horizontalOverflow": 0,
+   "introShown": true,
+   "docHeight": 2318,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": {
+    "top": 807,
+    "viewportsDown": 0.96
+   },
+   "firstFeedCard": {
+    "top": 1267,
+    "viewportsDown": 1.5
+   },
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css",
+    "2e0zj4nx3858n.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [],
+   "lcpSpread": [
+    120,
+    308
+   ]
+  },
+  {
+   "route": "Explore",
+   "routeKey": "explore",
+   "href": "/explore",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 112,
+   "lcp": 112,
+   "cls": 0,
+   "domContentLoaded": 207,
+   "loadEvent": 208,
+   "jsTransfer": 263356,
+   "cssTransfer": 33044,
+   "documentTransfer": 18785,
+   "fontTransfer": 50276,
+   "totalTransfer": 377255,
+   "requestCount": 37,
+   "longTaskCount": 1,
+   "totalTaskTime": 58,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 2197,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [],
+   "lcpSpread": [
+    92,
+    116
+   ]
+  },
+  {
+   "route": "Login",
+   "routeKey": "login",
+   "href": "/login",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 140,
+   "lcp": 140,
+   "cls": 0,
+   "domContentLoaded": 107,
+   "loadEvent": 154,
+   "jsTransfer": 297218,
+   "cssTransfer": 32141,
+   "documentTransfer": 7159,
+   "fontTransfer": 89768,
+   "totalTransfer": 465217,
+   "requestCount": 27,
+   "longTaskCount": 2,
+   "totalTaskTime": 857,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 936,
+   "headerHeight": 0,
+   "dockHeight": 0,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "3i7g0lgpbmuu1.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [],
+   "failedResponses": [],
+   "lcpSpread": [
+    132,
+    256
+   ]
+  },
+  {
+   "route": "Notifications",
+   "routeKey": "notifications",
+   "href": "/notifications",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 108,
+   "lcp": 108,
+   "cls": 0,
+   "domContentLoaded": 183,
+   "loadEvent": 184,
+   "jsTransfer": 262309,
+   "cssTransfer": 33044,
+   "documentTransfer": 15462,
+   "fontTransfer": 50276,
+   "totalTransfer": 370762,
+   "requestCount": 33,
+   "longTaskCount": 0,
+   "totalTaskTime": 0,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 3972,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [],
+   "lcpSpread": [
+    104,
+    124
+   ]
+  },
+  {
+   "route": "Profile",
+   "routeKey": "profile",
+   "href": "/profile",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 104,
+   "lcp": 104,
+   "cls": 0,
+   "domContentLoaded": 256,
+   "loadEvent": 256,
+   "jsTransfer": 274256,
+   "cssTransfer": 31369,
+   "documentTransfer": 21273,
+   "fontTransfer": 50276,
+   "totalTransfer": 387518,
+   "requestCount": 40,
+   "longTaskCount": 2,
+   "totalTaskTime": 162,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 7824,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [],
+   "lcpSpread": [
+    100,
+    132
+   ]
+  },
+  {
+   "route": "Marketplace",
+   "routeKey": "market",
+   "href": "/market",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 92,
+   "lcp": 92,
+   "cls": 0,
+   "domContentLoaded": 215,
+   "loadEvent": 215,
+   "jsTransfer": 260910,
+   "cssTransfer": 33044,
+   "documentTransfer": 21127,
+   "fontTransfer": 50276,
+   "totalTransfer": 378470,
+   "requestCount": 43,
+   "longTaskCount": 1,
+   "totalTaskTime": 65,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 4757,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [],
+   "lcpSpread": [
+    84,
+    132
+   ]
+  },
+  {
+   "route": "Clubs",
+   "routeKey": "clubs",
+   "href": "/clubs",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 96,
+   "lcp": 96,
+   "cls": 0,
+   "domContentLoaded": 183,
+   "loadEvent": 184,
+   "jsTransfer": 259950,
+   "cssTransfer": 33044,
+   "documentTransfer": 26311,
+   "fontTransfer": 50276,
+   "totalTransfer": 378304,
+   "requestCount": 39,
+   "longTaskCount": 1,
+   "totalTaskTime": 58,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 10315,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css",
+    "0ikdp8ot5kgp9.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [],
+   "lcpSpread": [
+    88,
+    112
+   ]
+  },
+  {
+   "route": "Gigs",
+   "routeKey": "gigs",
+   "href": "/gigs",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 128,
+   "lcp": 128,
+   "cls": 0,
+   "domContentLoaded": 223,
+   "loadEvent": 223,
+   "jsTransfer": 259950,
+   "cssTransfer": 33044,
+   "documentTransfer": 22187,
+   "fontTransfer": 50276,
+   "totalTransfer": 375187,
+   "requestCount": 39,
+   "longTaskCount": 0,
+   "totalTaskTime": 0,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 4137,
+   "headerHeight": 58,
+   "dockHeight": 68,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "067vgrk7xgxef.css",
+    "3-mjo4le6rrym.css",
+    "2k90conyp36_x.css",
+    "0ikdp8ot5kgp9.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "WebSocket connection to 'ws://127.0.0.1:3111/realtime/v1/websocket?apikey=sb_publishable_perf_harness_key&vsn=2.0.0' failed: Error during WebSocket handshake: Unexpected response code: 404"
+   ],
+   "failedResponses": [],
+   "lcpSpread": [
+    116,
+    132
+   ]
+  }
+ ]
+}

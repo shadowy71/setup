@@ -1,0 +1,55 @@
+{
+  "status": 200,
+  "cardsInOriginalOrder": [
+    [
+      "Students",
+      "12"
+    ],
+    [
+      "Posts",
+      "241"
+    ],
+    [
+      "Comments",
+      "720"
+    ],
+    [
+      "Reactions",
+      "200"
+    ],
+    [
+      "Communities & groups",
+      "41"
+    ],
+    [
+      "Marketplace listings",
+      "90"
+    ],
+    [
+      "Gigs",
+      "12"
+    ],
+    [
+      "Events",
+      "6"
+    ],
+    [
+      "Notices",
+      "60"
+    ],
+    [
+      "Reports",
+      "14"
+    ],
+    [
+      "Messages",
+      "0"
+    ],
+    [
+      "Random sessions",
+      "0"
+    ]
+  ],
+  "queueHealth": "Queue health4 pending reports · 13 listings awaiting approval · 0 suspended accounts · 1 disabled feature flagsDaily active users are not tracked: Campus+ stores no analytics or presence data.",
+  "pageErrors": []
+}

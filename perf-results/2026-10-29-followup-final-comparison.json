@@ -1,0 +1,2132 @@
+{
+  "measuredAt": "2026-10-29T16:59:40.069Z",
+  "conditions": "Production Next server; deterministic disposable seed; 25ms simulated Supabase RTT for server routes; browser Slow-4G uses 150ms latency/4x CPU. Synthetic lab only.",
+  "server": [
+    {
+      "group": "student",
+      "label": "Home",
+      "baselineMs": 142.955,
+      "historicalFinalMs": 119.568,
+      "followupMs": 109.201,
+      "baselineToFollowupDeltaMs": -33.754,
+      "baselineToFollowupPct": -23.61,
+      "followupSpreadMs": [
+        106.214,
+        119.214
+      ],
+      "requests": [
+        4,
+        4,
+        4
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Campus hub",
+      "baselineMs": 154.797,
+      "historicalFinalMs": 136.698,
+      "followupMs": 131.997,
+      "baselineToFollowupDeltaMs": -22.8,
+      "baselineToFollowupPct": -14.73,
+      "followupSpreadMs": [
+        128.22,
+        164.481
+      ],
+      "requests": [
+        10,
+        10,
+        10
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Noticeboard",
+      "baselineMs": 142.012,
+      "historicalFinalMs": 111.773,
+      "followupMs": 110.009,
+      "baselineToFollowupDeltaMs": -32.003,
+      "baselineToFollowupPct": -22.54,
+      "followupSpreadMs": [
+        106.2,
+        116.601
+      ],
+      "requests": [
+        4,
+        4,
+        4
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Explore",
+      "baselineMs": 202.795,
+      "historicalFinalMs": 171.245,
+      "followupMs": 181.569,
+      "baselineToFollowupDeltaMs": -21.226,
+      "baselineToFollowupPct": -10.47,
+      "followupSpreadMs": [
+        165.115,
+        212.682
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-explore-confirm-r15",
+      "samples": 15
+    },
+    {
+      "group": "student",
+      "label": "Communities",
+      "baselineMs": 138.344,
+      "historicalFinalMs": 114.612,
+      "followupMs": 108.486,
+      "baselineToFollowupDeltaMs": -29.858,
+      "baselineToFollowupPct": -21.58,
+      "followupSpreadMs": [
+        106.807,
+        110.342
+      ],
+      "requests": [
+        6,
+        6,
+        6
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Marketplace",
+      "baselineMs": 185.891,
+      "historicalFinalMs": 169.005,
+      "followupMs": 172.516,
+      "baselineToFollowupDeltaMs": -13.376,
+      "baselineToFollowupPct": -7.2,
+      "followupSpreadMs": [
+        164.669,
+        193.988
+      ],
+      "requests": [
+        11,
+        11,
+        11
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Notifications",
+      "baselineMs": 145.117,
+      "historicalFinalMs": 112.219,
+      "followupMs": 108.268,
+      "baselineToFollowupDeltaMs": -36.849,
+      "baselineToFollowupPct": -25.39,
+      "followupSpreadMs": [
+        105.301,
+        117.386
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Chat list",
+      "baselineMs": 201.957,
+      "historicalFinalMs": 166.5,
+      "followupMs": 169.542,
+      "baselineToFollowupDeltaMs": -32.415,
+      "baselineToFollowupPct": -16.05,
+      "followupSpreadMs": [
+        162.281,
+        172.316
+      ],
+      "requests": [
+        8,
+        8,
+        8
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Chat thread",
+      "baselineMs": 242.632,
+      "historicalFinalMs": 215.742,
+      "followupMs": 225.981,
+      "baselineToFollowupDeltaMs": -16.651,
+      "baselineToFollowupPct": -6.86,
+      "followupSpreadMs": [
+        209.621,
+        239.219
+      ],
+      "requests": [
+        10,
+        10,
+        10
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Profile (own)",
+      "baselineMs": 199.748,
+      "historicalFinalMs": 176.99,
+      "followupMs": 159.465,
+      "baselineToFollowupDeltaMs": -40.283,
+      "baselineToFollowupPct": -20.17,
+      "followupSpreadMs": [
+        153.125,
+        161.429
+      ],
+      "requests": [
+        12,
+        12,
+        12
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Settings",
+      "baselineMs": 132.488,
+      "historicalFinalMs": 105.961,
+      "followupMs": 105.058,
+      "baselineToFollowupDeltaMs": -27.429,
+      "baselineToFollowupPct": -20.7,
+      "followupSpreadMs": [
+        104.149,
+        119.946
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Public profile",
+      "baselineMs": 206.318,
+      "historicalFinalMs": 178.627,
+      "followupMs": 159.408,
+      "baselineToFollowupDeltaMs": -46.91,
+      "baselineToFollowupPct": -22.74,
+      "followupSpreadMs": [
+        154.214,
+        162.587
+      ],
+      "requests": [
+        14,
+        14,
+        14
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Post detail",
+      "baselineMs": 160.922,
+      "historicalFinalMs": 138.213,
+      "followupMs": 138.781,
+      "baselineToFollowupDeltaMs": -22.141,
+      "baselineToFollowupPct": -13.76,
+      "followupSpreadMs": [
+        134.307,
+        148.091
+      ],
+      "requests": [
+        8,
+        8,
+        8
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Home feed API",
+      "baselineMs": 206.447,
+      "historicalFinalMs": 199.285,
+      "followupMs": 179.434,
+      "baselineToFollowupDeltaMs": -27.013,
+      "baselineToFollowupPct": -13.08,
+      "followupSpreadMs": [
+        178.961,
+        182.229
+      ],
+      "requests": [
+        8,
+        8,
+        8
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Gigs",
+      "baselineMs": 174.235,
+      "historicalFinalMs": 155.951,
+      "followupMs": 154.975,
+      "baselineToFollowupDeltaMs": -19.26,
+      "baselineToFollowupPct": -11.05,
+      "followupSpreadMs": [
+        150.017,
+        156.332
+      ],
+      "requests": [
+        12,
+        12,
+        12
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Clubs",
+      "baselineMs": 165.345,
+      "historicalFinalMs": 125.059,
+      "followupMs": 132.335,
+      "baselineToFollowupDeltaMs": -33.01,
+      "baselineToFollowupPct": -19.96,
+      "followupSpreadMs": [
+        120.033,
+        134.759
+      ],
+      "requests": [
+        8,
+        8,
+        8
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Campus events",
+      "baselineMs": 172.003,
+      "historicalFinalMs": 164.176,
+      "followupMs": 166.424,
+      "baselineToFollowupDeltaMs": -5.579,
+      "baselineToFollowupPct": -3.24,
+      "followupSpreadMs": [
+        162.775,
+        172.92
+      ],
+      "requests": [
+        7,
+        7,
+        7
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Explore resources",
+      "baselineMs": 142.781,
+      "historicalFinalMs": 117.324,
+      "followupMs": 120.989,
+      "baselineToFollowupDeltaMs": -21.792,
+      "baselineToFollowupPct": -15.26,
+      "followupSpreadMs": [
+        115.848,
+        139.12
+      ],
+      "requests": [
+        6,
+        6,
+        6
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Explore opportunities",
+      "baselineMs": 134.075,
+      "historicalFinalMs": 109.372,
+      "followupMs": 109.599,
+      "baselineToFollowupDeltaMs": -24.476,
+      "baselineToFollowupPct": -18.26,
+      "followupSpreadMs": [
+        107.847,
+        115.259
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Explore projects",
+      "baselineMs": 138.903,
+      "historicalFinalMs": 135.225,
+      "followupMs": 135.032,
+      "baselineToFollowupDeltaMs": -3.87,
+      "baselineToFollowupPct": -2.79,
+      "followupSpreadMs": [
+        130.058,
+        139.481
+      ],
+      "requests": [
+        6,
+        6,
+        6
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Timetable division",
+      "baselineMs": 26.266,
+      "historicalFinalMs": 17.539,
+      "followupMs": 22.765,
+      "baselineToFollowupDeltaMs": -3.501,
+      "baselineToFollowupPct": -13.33,
+      "followupSpreadMs": [
+        14.373,
+        34.365
+      ],
+      "requests": [
+        0,
+        0,
+        0
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Timetable offline",
+      "baselineMs": 6.017,
+      "historicalFinalMs": 6.052,
+      "followupMs": 5.019,
+      "baselineToFollowupDeltaMs": -0.998,
+      "baselineToFollowupPct": -16.59,
+      "followupSpreadMs": [
+        4.657,
+        10.166
+      ],
+      "requests": [
+        0,
+        0,
+        0
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Gig detail",
+      "baselineMs": 143.593,
+      "historicalFinalMs": 108.316,
+      "followupMs": 109.769,
+      "baselineToFollowupDeltaMs": -33.824,
+      "baselineToFollowupPct": -23.56,
+      "followupSpreadMs": [
+        106.69,
+        111.578
+      ],
+      "requests": [
+        7,
+        7,
+        7
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Club detail",
+      "baselineMs": 203.598,
+      "historicalFinalMs": 176.55,
+      "followupMs": 185.222,
+      "baselineToFollowupDeltaMs": -18.376,
+      "baselineToFollowupPct": -9.03,
+      "followupSpreadMs": [
+        169.233,
+        193.572
+      ],
+      "requests": [
+        13,
+        13,
+        13
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Community detail",
+      "baselineMs": 186.533,
+      "historicalFinalMs": 173.942,
+      "followupMs": 170.538,
+      "baselineToFollowupDeltaMs": -15.995,
+      "baselineToFollowupPct": -8.57,
+      "followupSpreadMs": [
+        162.612,
+        178.951
+      ],
+      "requests": [
+        10,
+        10,
+        10
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Listing detail",
+      "baselineMs": 144.439,
+      "historicalFinalMs": 106.54,
+      "followupMs": 107.67,
+      "baselineToFollowupDeltaMs": -36.769,
+      "baselineToFollowupPct": -25.46,
+      "followupSpreadMs": [
+        105.519,
+        109.881
+      ],
+      "requests": [
+        8,
+        8,
+        8
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "student",
+      "label": "Event detail",
+      "baselineMs": 188.678,
+      "historicalFinalMs": 179.617,
+      "followupMs": 166.079,
+      "baselineToFollowupDeltaMs": -22.599,
+      "baselineToFollowupPct": -11.98,
+      "followupSpreadMs": [
+        159.956,
+        176.318
+      ],
+      "requests": [
+        9,
+        9,
+        9
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-student-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · users",
+      "baselineMs": 187.628,
+      "historicalFinalMs": 172.977,
+      "followupMs": 173.886,
+      "baselineToFollowupDeltaMs": -13.741,
+      "baselineToFollowupPct": -7.32,
+      "followupSpreadMs": [
+        169.839,
+        183.979
+      ],
+      "requests": [
+        8,
+        8,
+        8
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · roles",
+      "baselineMs": 135.539,
+      "historicalFinalMs": 139.934,
+      "followupMs": 140.165,
+      "baselineToFollowupDeltaMs": 4.625,
+      "baselineToFollowupPct": 3.41,
+      "followupSpreadMs": [
+        137.632,
+        142.321
+      ],
+      "requests": [
+        6,
+        6,
+        6
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · permissions",
+      "baselineMs": 147.394,
+      "historicalFinalMs": 136.454,
+      "followupMs": 136.811,
+      "baselineToFollowupDeltaMs": -10.583,
+      "baselineToFollowupPct": -7.18,
+      "followupSpreadMs": [
+        130.982,
+        148.175
+      ],
+      "requests": [
+        6,
+        6,
+        6
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · reports",
+      "baselineMs": 177.557,
+      "historicalFinalMs": 166.972,
+      "followupMs": 169.494,
+      "baselineToFollowupDeltaMs": -8.062,
+      "baselineToFollowupPct": -4.54,
+      "followupSpreadMs": [
+        165.04,
+        175.878
+      ],
+      "requests": [
+        7,
+        7,
+        7
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · content",
+      "baselineMs": 118.093,
+      "historicalFinalMs": 114.846,
+      "followupMs": 121.816,
+      "baselineToFollowupDeltaMs": 3.723,
+      "baselineToFollowupPct": 3.15,
+      "followupSpreadMs": [
+        112.756,
+        139.171
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · marketplace",
+      "baselineMs": 112.306,
+      "historicalFinalMs": 114.526,
+      "followupMs": 107.572,
+      "baselineToFollowupDeltaMs": -4.734,
+      "baselineToFollowupPct": -4.22,
+      "followupSpreadMs": [
+        104.918,
+        113.411
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · events",
+      "baselineMs": 111.841,
+      "historicalFinalMs": 108.958,
+      "followupMs": 100.61,
+      "baselineToFollowupDeltaMs": -11.231,
+      "baselineToFollowupPct": -10.04,
+      "followupSpreadMs": [
+        100.412,
+        105.478
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · settings",
+      "baselineMs": 114.847,
+      "historicalFinalMs": 108.443,
+      "followupMs": 105.918,
+      "baselineToFollowupDeltaMs": -8.929,
+      "baselineToFollowupPct": -7.77,
+      "followupSpreadMs": [
+        102.538,
+        115.477
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · flags",
+      "baselineMs": 114.43,
+      "historicalFinalMs": 108.679,
+      "followupMs": 115.891,
+      "baselineToFollowupDeltaMs": 1.461,
+      "baselineToFollowupPct": 1.28,
+      "followupSpreadMs": [
+        102.006,
+        135.521
+      ],
+      "requests": [
+        5,
+        5,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · audit",
+      "baselineMs": 157.585,
+      "historicalFinalMs": 157.879,
+      "followupMs": 142.349,
+      "baselineToFollowupDeltaMs": -15.235,
+      "baselineToFollowupPct": -9.67,
+      "followupSpreadMs": [
+        141.166,
+        148.355
+      ],
+      "requests": [
+        6,
+        6,
+        6
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · counts",
+      "baselineMs": 384.372,
+      "historicalFinalMs": 300.339,
+      "followupMs": 217.539,
+      "baselineToFollowupDeltaMs": -166.833,
+      "baselineToFollowupPct": -43.4,
+      "followupSpreadMs": [
+        210.292,
+        222.15
+      ],
+      "requests": [
+        20,
+        20,
+        5
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Moderation",
+      "baselineMs": 234.75,
+      "historicalFinalMs": 202.206,
+      "followupMs": 222.824,
+      "baselineToFollowupDeltaMs": -11.926,
+      "baselineToFollowupPct": -5.08,
+      "followupSpreadMs": [
+        208.801,
+        233.873
+      ],
+      "requests": [
+        11,
+        11,
+        11
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · clubs",
+      "baselineMs": 127.432,
+      "historicalFinalMs": 116.549,
+      "followupMs": 118.994,
+      "baselineToFollowupDeltaMs": -8.438,
+      "baselineToFollowupPct": -6.62,
+      "followupSpreadMs": [
+        107.231,
+        146.635
+      ],
+      "requests": [
+        7,
+        7,
+        7
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Admin · backups",
+      "baselineMs": 145.994,
+      "historicalFinalMs": 136.948,
+      "followupMs": 141.361,
+      "baselineToFollowupDeltaMs": -4.633,
+      "baselineToFollowupPct": -3.17,
+      "followupSpreadMs": [
+        133.55,
+        144.185
+      ],
+      "requests": [
+        6,
+        6,
+        6
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    },
+    {
+      "group": "admin",
+      "label": "Club management",
+      "baselineMs": 223.666,
+      "historicalFinalMs": 214.402,
+      "followupMs": 201.833,
+      "baselineToFollowupDeltaMs": -21.833,
+      "baselineToFollowupPct": -9.76,
+      "followupSpreadMs": [
+        196.962,
+        211.799
+      ],
+      "requests": [
+        20,
+        20,
+        20
+      ],
+      "status": 200,
+      "source": "2026-10-29-followup-final-admin-extended-r5",
+      "samples": 5
+    }
+  ],
+  "adminDirectSameFixture": {
+    "before": {
+      "source": "2026-10-29-admin-before-batch-r7",
+      "runs": 7,
+      "totalMs": 286.8440730000002,
+      "requests": 20,
+      "spreadMs": [
+        275.7878010000002,
+        322.42704700000013
+      ]
+    },
+    "after": {
+      "source": "2026-10-29-admin-final-batch-r15",
+      "runs": 15,
+      "totalMs": 224.59398199999987,
+      "requests": 5,
+      "spreadMs": [
+        215.20034699999997,
+        250.15302499999996
+      ]
+    },
+    "deltaMs": -62.25009100000034,
+    "deltaPct": -21.7,
+    "countRpcRequests": "16 to 1; whole page 20 to 5",
+    "htmlBytes": [
+      64007,
+      64007
+    ]
+  },
+  "browserColdRepeat": {
+    "login": {
+      "baseline": {
+        "lcpMs": 2540,
+        "lcpSpreadMs": [
+          2384,
+          3632
+        ],
+        "transferBytes": 580456,
+        "fontBytes": 89768
+      },
+      "historicalFinal": {
+        "lcpMs": 1296,
+        "lcpSpreadMs": [
+          1196,
+          2200
+        ],
+        "transferBytes": 481551,
+        "fontBytes": 89768
+      },
+      "followup": {
+        "lcpMs": 1556,
+        "lcpSpreadMs": [
+          1184,
+          1560
+        ],
+        "transferBytes": 464395,
+        "fontBytes": 89768
+      },
+      "baselineToFollowupTransferDeltaBytes": -116061,
+      "baselineToFollowupTransferPct": -19.99
+    },
+    "explore": {
+      "baseline": {
+        "lcpMs": 136,
+        "lcpSpreadMs": [
+          136,
+          236
+        ],
+        "transferBytes": 620000,
+        "fontBytes": 192168
+      },
+      "historicalFinal": {
+        "lcpMs": 104,
+        "lcpSpreadMs": [
+          96,
+          336
+        ],
+        "transferBytes": 370370,
+        "fontBytes": 50276
+      },
+      "followup": {
+        "lcpMs": 132,
+        "lcpSpreadMs": [
+          80,
+          208
+        ],
+        "transferBytes": 374464,
+        "fontBytes": 50276
+      },
+      "baselineToFollowupTransferDeltaBytes": -245536,
+      "baselineToFollowupTransferPct": -39.6
+    }
+  },
+  "mobile": [
+    {
+      "route": "Home",
+      "profile": "fast",
+      "baselineLcpMs": 352,
+      "historicalFinalLcpMs": 392,
+      "followupLcpMs": 280,
+      "followupLcpSpreadMs": [
+        148,
+        324
+      ],
+      "baselineTransferBytes": 781247,
+      "historicalFinalTransferBytes": 680775,
+      "followupTransferBytes": 674823,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Explore",
+      "profile": "fast",
+      "baselineLcpMs": 112,
+      "historicalFinalLcpMs": 96,
+      "followupLcpMs": 104,
+      "followupLcpSpreadMs": [
+        104,
+        112
+      ],
+      "baselineTransferBytes": 621510,
+      "historicalFinalTransferBytes": 373238,
+      "followupTransferBytes": 375200,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Login",
+      "profile": "fast",
+      "baselineLcpMs": 288,
+      "historicalFinalLcpMs": 140,
+      "followupLcpMs": 140,
+      "followupLcpSpreadMs": [
+        140,
+        256
+      ],
+      "baselineTransferBytes": 788006,
+      "historicalFinalTransferBytes": 478696,
+      "followupTransferBytes": 463683,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Notifications",
+      "profile": "fast",
+      "baselineLcpMs": 136,
+      "historicalFinalLcpMs": 120,
+      "followupLcpMs": 108,
+      "followupLcpSpreadMs": [
+        96,
+        144
+      ],
+      "baselineTransferBytes": 615003,
+      "historicalFinalTransferBytes": 368961,
+      "followupTransferBytes": 372812,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Profile",
+      "profile": "fast",
+      "baselineLcpMs": 140,
+      "historicalFinalLcpMs": 116,
+      "followupLcpMs": 104,
+      "followupLcpSpreadMs": [
+        96,
+        112
+      ],
+      "baselineTransferBytes": 632091,
+      "historicalFinalTransferBytes": 386168,
+      "followupTransferBytes": 386178,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Marketplace",
+      "profile": "fast",
+      "baselineLcpMs": 96,
+      "historicalFinalLcpMs": 124,
+      "followupLcpMs": 104,
+      "followupLcpSpreadMs": [
+        80,
+        136
+      ],
+      "baselineTransferBytes": 622363,
+      "historicalFinalTransferBytes": 375517,
+      "followupTransferBytes": 374360,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Clubs",
+      "profile": "fast",
+      "baselineLcpMs": 116,
+      "historicalFinalLcpMs": 104,
+      "followupLcpMs": 100,
+      "followupLcpSpreadMs": [
+        84,
+        124
+      ],
+      "baselineTransferBytes": 626206,
+      "historicalFinalTransferBytes": 377493,
+      "followupTransferBytes": 377206,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Gigs",
+      "profile": "fast",
+      "baselineLcpMs": 108,
+      "historicalFinalLcpMs": 104,
+      "followupLcpMs": 88,
+      "followupLcpSpreadMs": [
+        80,
+        92
+      ],
+      "baselineTransferBytes": 628429,
+      "historicalFinalTransferBytes": 374149,
+      "followupTransferBytes": 379533,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Home",
+      "profile": "slow4g",
+      "baselineLcpMs": 1400,
+      "historicalFinalLcpMs": 1448,
+      "followupLcpMs": 1388,
+      "followupLcpSpreadMs": [
+        1372,
+        1396
+      ],
+      "baselineTransferBytes": 802420,
+      "historicalFinalTransferBytes": 702697,
+      "followupTransferBytes": 687579,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Explore",
+      "profile": "slow4g",
+      "baselineLcpMs": 1028,
+      "historicalFinalLcpMs": 984,
+      "followupLcpMs": 1008,
+      "followupLcpSpreadMs": [
+        1000,
+        1088
+      ],
+      "baselineTransferBytes": 628227,
+      "historicalFinalTransferBytes": 384338,
+      "followupTransferBytes": 382333,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Login",
+      "profile": "slow4g",
+      "baselineLcpMs": 1600,
+      "historicalFinalLcpMs": 1176,
+      "followupLcpMs": 1208,
+      "followupLcpSpreadMs": [
+        1204,
+        1368
+      ],
+      "baselineTransferBytes": 803831,
+      "historicalFinalTransferBytes": 479418,
+      "followupTransferBytes": 464395,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Notifications",
+      "profile": "slow4g",
+      "baselineLcpMs": 1092,
+      "historicalFinalLcpMs": 1008,
+      "followupLcpMs": 1020,
+      "followupLcpSpreadMs": [
+        1000,
+        1100
+      ],
+      "baselineTransferBytes": 624789,
+      "historicalFinalTransferBytes": 374161,
+      "followupTransferBytes": 380840,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Profile",
+      "profile": "slow4g",
+      "baselineLcpMs": 1016,
+      "historicalFinalLcpMs": 992,
+      "followupLcpMs": 1044,
+      "followupLcpSpreadMs": [
+        996,
+        1076
+      ],
+      "baselineTransferBytes": 638266,
+      "historicalFinalTransferBytes": 395115,
+      "followupTransferBytes": 397327,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Marketplace",
+      "profile": "slow4g",
+      "baselineLcpMs": 1028,
+      "historicalFinalLcpMs": 996,
+      "followupLcpMs": 980,
+      "followupLcpSpreadMs": [
+        976,
+        1108
+      ],
+      "baselineTransferBytes": 633106,
+      "historicalFinalTransferBytes": 384764,
+      "followupTransferBytes": 387072,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Clubs",
+      "profile": "slow4g",
+      "baselineLcpMs": 992,
+      "historicalFinalLcpMs": 956,
+      "followupLcpMs": 976,
+      "followupLcpSpreadMs": [
+        936,
+        976
+      ],
+      "baselineTransferBytes": 640439,
+      "historicalFinalTransferBytes": 395230,
+      "followupTransferBytes": 388060,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    },
+    {
+      "route": "Gigs",
+      "profile": "slow4g",
+      "baselineLcpMs": 980,
+      "historicalFinalLcpMs": 988,
+      "followupLcpMs": 988,
+      "followupLcpSpreadMs": [
+        956,
+        996
+      ],
+      "baselineTransferBytes": 657437,
+      "historicalFinalTransferBytes": 409147,
+      "followupTransferBytes": 394488,
+      "followupHorizontalOverflow": 0,
+      "failedResponses": []
+    }
+  ],
+  "assets": [
+    {
+      "label": "Login",
+      "baselineJsGzip": 161377,
+      "historicalFinalJsGzip": 161377,
+      "followupJsGzip": 161029,
+      "followupMinusHistoricalJsGzip": -348,
+      "baselineCssGzip": 30240,
+      "historicalFinalCssGzip": 30240,
+      "followupCssGzip": 30482
+    },
+    {
+      "label": "Legal",
+      "baselineJsGzip": 159160,
+      "historicalFinalJsGzip": 159160,
+      "followupJsGzip": 158797,
+      "followupMinusHistoricalJsGzip": -363,
+      "baselineCssGzip": 28813,
+      "historicalFinalCssGzip": 28813,
+      "followupCssGzip": 29034
+    },
+    {
+      "label": "Timetable",
+      "baselineJsGzip": 162466,
+      "historicalFinalJsGzip": 162466,
+      "followupJsGzip": 162403,
+      "followupMinusHistoricalJsGzip": -63,
+      "baselineCssGzip": 32868,
+      "historicalFinalCssGzip": 32868,
+      "followupCssGzip": 33120
+    },
+    {
+      "label": "Home",
+      "baselineJsGzip": 206298,
+      "historicalFinalJsGzip": 205888,
+      "followupJsGzip": 207980,
+      "followupMinusHistoricalJsGzip": 2092,
+      "baselineCssGzip": 34845,
+      "historicalFinalCssGzip": 34845,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Campus hub",
+      "baselineJsGzip": 183807,
+      "historicalFinalJsGzip": 183397,
+      "followupJsGzip": 184845,
+      "followupMinusHistoricalJsGzip": 1448,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Noticeboard",
+      "baselineJsGzip": 183807,
+      "historicalFinalJsGzip": 183397,
+      "followupJsGzip": 184845,
+      "followupMinusHistoricalJsGzip": 1448,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Explore",
+      "baselineJsGzip": 186254,
+      "historicalFinalJsGzip": 185844,
+      "followupJsGzip": 187368,
+      "followupMinusHistoricalJsGzip": 1524,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Communities",
+      "baselineJsGzip": 183807,
+      "historicalFinalJsGzip": 183397,
+      "followupJsGzip": 184845,
+      "followupMinusHistoricalJsGzip": 1448,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Marketplace",
+      "baselineJsGzip": 183807,
+      "historicalFinalJsGzip": 183397,
+      "followupJsGzip": 184845,
+      "followupMinusHistoricalJsGzip": 1448,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Gigs",
+      "baselineJsGzip": 183488,
+      "historicalFinalJsGzip": 183078,
+      "followupJsGzip": 184526,
+      "followupMinusHistoricalJsGzip": 1448,
+      "baselineCssGzip": 30609,
+      "historicalFinalCssGzip": 30609,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Clubs",
+      "baselineJsGzip": 183488,
+      "historicalFinalJsGzip": 183078,
+      "followupJsGzip": 184526,
+      "followupMinusHistoricalJsGzip": 1448,
+      "baselineCssGzip": 30609,
+      "historicalFinalCssGzip": 30609,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Notifications",
+      "baselineJsGzip": 185264,
+      "historicalFinalJsGzip": 184854,
+      "followupJsGzip": 186321,
+      "followupMinusHistoricalJsGzip": 1467,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Chat list",
+      "baselineJsGzip": 186313,
+      "historicalFinalJsGzip": 185903,
+      "followupJsGzip": 187426,
+      "followupMinusHistoricalJsGzip": 1523,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Profile (own)",
+      "baselineJsGzip": 193948,
+      "historicalFinalJsGzip": 193538,
+      "followupJsGzip": 195162,
+      "followupMinusHistoricalJsGzip": 1624,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    },
+    {
+      "label": "Settings",
+      "baselineJsGzip": 193572,
+      "historicalFinalJsGzip": 193162,
+      "followupJsGzip": 194764,
+      "followupMinusHistoricalJsGzip": 1602,
+      "baselineCssGzip": 29488,
+      "historicalFinalCssGzip": 29488,
+      "followupCssGzip": 29710
+    }
+  ],
+  "messagingSql": {
+    "measuredAt": "2026-10-29T16:59:15.396Z",
+    "fixture": "deterministic 12-account/420-message seed, 25ms HTTP RTT not included in SQL execution",
+    "runs": 30,
+    "unread": {
+      "equalRows": true,
+      "rowCount": 7,
+      "samples": [
+        {
+          "name": "before",
+          "run": 1,
+          "planningMs": 0.013,
+          "executionMs": 16.725
+        },
+        {
+          "name": "current",
+          "run": 2,
+          "planningMs": 0.02,
+          "executionMs": 1.035
+        },
+        {
+          "name": "before",
+          "run": 2,
+          "planningMs": 0.011,
+          "executionMs": 16.459
+        },
+        {
+          "name": "current",
+          "run": 2,
+          "planningMs": 0.017,
+          "executionMs": 1.064
+        },
+        {
+          "name": "current",
+          "run": 3,
+          "planningMs": 0.012,
+          "executionMs": 0.967
+        },
+        {
+          "name": "before",
+          "run": 3,
+          "planningMs": 0.011,
+          "executionMs": 18.054
+        },
+        {
+          "name": "before",
+          "run": 4,
+          "planningMs": 0.017,
+          "executionMs": 17.232
+        },
+        {
+          "name": "current",
+          "run": 4,
+          "planningMs": 0.018,
+          "executionMs": 1.061
+        },
+        {
+          "name": "current",
+          "run": 5,
+          "planningMs": 0.011,
+          "executionMs": 0.964
+        },
+        {
+          "name": "before",
+          "run": 5,
+          "planningMs": 0.01,
+          "executionMs": 16.215
+        },
+        {
+          "name": "before",
+          "run": 6,
+          "planningMs": 0.015,
+          "executionMs": 16.226
+        },
+        {
+          "name": "current",
+          "run": 6,
+          "planningMs": 0.015,
+          "executionMs": 1.029
+        },
+        {
+          "name": "current",
+          "run": 7,
+          "planningMs": 0.01,
+          "executionMs": 0.96
+        },
+        {
+          "name": "before",
+          "run": 7,
+          "planningMs": 0.01,
+          "executionMs": 16.025
+        },
+        {
+          "name": "before",
+          "run": 8,
+          "planningMs": 0.013,
+          "executionMs": 17.035
+        },
+        {
+          "name": "current",
+          "run": 8,
+          "planningMs": 0.016,
+          "executionMs": 1.046
+        },
+        {
+          "name": "current",
+          "run": 9,
+          "planningMs": 0.012,
+          "executionMs": 1.029
+        },
+        {
+          "name": "before",
+          "run": 9,
+          "planningMs": 0.014,
+          "executionMs": 17.192
+        },
+        {
+          "name": "before",
+          "run": 10,
+          "planningMs": 0.016,
+          "executionMs": 16.01
+        },
+        {
+          "name": "current",
+          "run": 10,
+          "planningMs": 0.018,
+          "executionMs": 0.978
+        },
+        {
+          "name": "current",
+          "run": 11,
+          "planningMs": 0.011,
+          "executionMs": 0.913
+        },
+        {
+          "name": "before",
+          "run": 11,
+          "planningMs": 0.011,
+          "executionMs": 18.949
+        },
+        {
+          "name": "before",
+          "run": 12,
+          "planningMs": 0.02,
+          "executionMs": 18.147
+        },
+        {
+          "name": "current",
+          "run": 12,
+          "planningMs": 0.02,
+          "executionMs": 1.008
+        },
+        {
+          "name": "current",
+          "run": 13,
+          "planningMs": 0.012,
+          "executionMs": 1.016
+        },
+        {
+          "name": "before",
+          "run": 13,
+          "planningMs": 0.011,
+          "executionMs": 16.001
+        },
+        {
+          "name": "before",
+          "run": 14,
+          "planningMs": 0.012,
+          "executionMs": 16.132
+        },
+        {
+          "name": "current",
+          "run": 14,
+          "planningMs": 0.014,
+          "executionMs": 0.964
+        },
+        {
+          "name": "current",
+          "run": 15,
+          "planningMs": 0.01,
+          "executionMs": 0.947
+        },
+        {
+          "name": "before",
+          "run": 15,
+          "planningMs": 0.01,
+          "executionMs": 16.437
+        },
+        {
+          "name": "before",
+          "run": 16,
+          "planningMs": 0.015,
+          "executionMs": 16.321
+        },
+        {
+          "name": "current",
+          "run": 16,
+          "planningMs": 0.018,
+          "executionMs": 0.981
+        },
+        {
+          "name": "current",
+          "run": 17,
+          "planningMs": 0.011,
+          "executionMs": 1.015
+        },
+        {
+          "name": "before",
+          "run": 17,
+          "planningMs": 0.011,
+          "executionMs": 15.995
+        },
+        {
+          "name": "before",
+          "run": 18,
+          "planningMs": 0.015,
+          "executionMs": 16.19
+        },
+        {
+          "name": "current",
+          "run": 18,
+          "planningMs": 0.015,
+          "executionMs": 0.955
+        },
+        {
+          "name": "current",
+          "run": 19,
+          "planningMs": 0.01,
+          "executionMs": 0.995
+        },
+        {
+          "name": "before",
+          "run": 19,
+          "planningMs": 0.01,
+          "executionMs": 16.495
+        },
+        {
+          "name": "before",
+          "run": 20,
+          "planningMs": 0.017,
+          "executionMs": 19.771
+        },
+        {
+          "name": "current",
+          "run": 20,
+          "planningMs": 0.017,
+          "executionMs": 1.014
+        },
+        {
+          "name": "current",
+          "run": 21,
+          "planningMs": 0.013,
+          "executionMs": 1.034
+        },
+        {
+          "name": "before",
+          "run": 21,
+          "planningMs": 0.012,
+          "executionMs": 16.312
+        },
+        {
+          "name": "before",
+          "run": 22,
+          "planningMs": 0.022,
+          "executionMs": 17.016
+        },
+        {
+          "name": "current",
+          "run": 22,
+          "planningMs": 0.022,
+          "executionMs": 1.237
+        },
+        {
+          "name": "current",
+          "run": 23,
+          "planningMs": 0.012,
+          "executionMs": 1.101
+        },
+        {
+          "name": "before",
+          "run": 23,
+          "planningMs": 0.013,
+          "executionMs": 17.801
+        },
+        {
+          "name": "before",
+          "run": 24,
+          "planningMs": 0.014,
+          "executionMs": 17.541
+        },
+        {
+          "name": "current",
+          "run": 24,
+          "planningMs": 0.022,
+          "executionMs": 1.202
+        },
+        {
+          "name": "current",
+          "run": 25,
+          "planningMs": 0.015,
+          "executionMs": 1.084
+        },
+        {
+          "name": "before",
+          "run": 25,
+          "planningMs": 0.013,
+          "executionMs": 17.875
+        },
+        {
+          "name": "before",
+          "run": 26,
+          "planningMs": 0.014,
+          "executionMs": 20.171
+        },
+        {
+          "name": "current",
+          "run": 26,
+          "planningMs": 0.016,
+          "executionMs": 0.977
+        },
+        {
+          "name": "current",
+          "run": 27,
+          "planningMs": 0.012,
+          "executionMs": 0.965
+        },
+        {
+          "name": "before",
+          "run": 27,
+          "planningMs": 0.011,
+          "executionMs": 16.309
+        },
+        {
+          "name": "before",
+          "run": 28,
+          "planningMs": 0.013,
+          "executionMs": 17.254
+        },
+        {
+          "name": "current",
+          "run": 28,
+          "planningMs": 0.016,
+          "executionMs": 1.12
+        },
+        {
+          "name": "current",
+          "run": 29,
+          "planningMs": 0.012,
+          "executionMs": 0.948
+        },
+        {
+          "name": "before",
+          "run": 29,
+          "planningMs": 0.011,
+          "executionMs": 18.662
+        },
+        {
+          "name": "before",
+          "run": 30,
+          "planningMs": 0.018,
+          "executionMs": 23.184
+        },
+        {
+          "name": "current",
+          "run": 30,
+          "planningMs": 0.024,
+          "executionMs": 0.995
+        }
+      ],
+      "beforeExecutionMedian": 16.8705,
+      "currentExecutionMedian": 1.0110000000000001
+    },
+    "inbox": {
+      "equalRows": true,
+      "rowCount": 7,
+      "samples": [
+        {
+          "name": "before",
+          "run": 1,
+          "planningMs": 0.017,
+          "executionMs": 18.274
+        },
+        {
+          "name": "current",
+          "run": 2,
+          "planningMs": 0.019,
+          "executionMs": 1.318
+        },
+        {
+          "name": "before",
+          "run": 2,
+          "planningMs": 0.016,
+          "executionMs": 18.67
+        },
+        {
+          "name": "current",
+          "run": 2,
+          "planningMs": 0.039,
+          "executionMs": 1.338
+        },
+        {
+          "name": "current",
+          "run": 3,
+          "planningMs": 0.016,
+          "executionMs": 1.397
+        },
+        {
+          "name": "before",
+          "run": 3,
+          "planningMs": 0.015,
+          "executionMs": 18.107
+        },
+        {
+          "name": "before",
+          "run": 4,
+          "planningMs": 0.02,
+          "executionMs": 18.272
+        },
+        {
+          "name": "current",
+          "run": 4,
+          "planningMs": 0.019,
+          "executionMs": 1.338
+        },
+        {
+          "name": "current",
+          "run": 5,
+          "planningMs": 0.015,
+          "executionMs": 1.595
+        },
+        {
+          "name": "before",
+          "run": 5,
+          "planningMs": 0.016,
+          "executionMs": 18.875
+        },
+        {
+          "name": "before",
+          "run": 6,
+          "planningMs": 0.018,
+          "executionMs": 17.459
+        },
+        {
+          "name": "current",
+          "run": 6,
+          "planningMs": 0.018,
+          "executionMs": 1.091
+        },
+        {
+          "name": "current",
+          "run": 7,
+          "planningMs": 0.015,
+          "executionMs": 1.026
+        },
+        {
+          "name": "before",
+          "run": 7,
+          "planningMs": 0.015,
+          "executionMs": 17.893
+        },
+        {
+          "name": "before",
+          "run": 8,
+          "planningMs": 0.021,
+          "executionMs": 18.054
+        },
+        {
+          "name": "current",
+          "run": 8,
+          "planningMs": 0.022,
+          "executionMs": 1.097
+        },
+        {
+          "name": "current",
+          "run": 9,
+          "planningMs": 0.015,
+          "executionMs": 1.025
+        },
+        {
+          "name": "before",
+          "run": 9,
+          "planningMs": 0.018,
+          "executionMs": 18.598
+        },
+        {
+          "name": "before",
+          "run": 10,
+          "planningMs": 0.025,
+          "executionMs": 17.697
+        },
+        {
+          "name": "current",
+          "run": 10,
+          "planningMs": 0.019,
+          "executionMs": 1.039
+        },
+        {
+          "name": "current",
+          "run": 11,
+          "planningMs": 0.015,
+          "executionMs": 1.008
+        },
+        {
+          "name": "before",
+          "run": 11,
+          "planningMs": 0.015,
+          "executionMs": 17.104
+        },
+        {
+          "name": "before",
+          "run": 12,
+          "planningMs": 0.018,
+          "executionMs": 17.55
+        },
+        {
+          "name": "current",
+          "run": 12,
+          "planningMs": 0.02,
+          "executionMs": 1.031
+        },
+        {
+          "name": "current",
+          "run": 13,
+          "planningMs": 0.015,
+          "executionMs": 1.058
+        },
+        {
+          "name": "before",
+          "run": 13,
+          "planningMs": 0.014,
+          "executionMs": 18.68
+        },
+        {
+          "name": "before",
+          "run": 14,
+          "planningMs": 0.021,
+          "executionMs": 17.488
+        },
+        {
+          "name": "current",
+          "run": 14,
+          "planningMs": 0.019,
+          "executionMs": 1.035
+        },
+        {
+          "name": "current",
+          "run": 15,
+          "planningMs": 0.016,
+          "executionMs": 1.031
+        },
+        {
+          "name": "before",
+          "run": 15,
+          "planningMs": 0.015,
+          "executionMs": 17.483
+        },
+        {
+          "name": "before",
+          "run": 16,
+          "planningMs": 0.017,
+          "executionMs": 17.389
+        },
+        {
+          "name": "current",
+          "run": 16,
+          "planningMs": 0.023,
+          "executionMs": 1.037
+        },
+        {
+          "name": "current",
+          "run": 17,
+          "planningMs": 0.016,
+          "executionMs": 1.119
+        },
+        {
+          "name": "before",
+          "run": 17,
+          "planningMs": 0.015,
+          "executionMs": 17.965
+        },
+        {
+          "name": "before",
+          "run": 18,
+          "planningMs": 0.023,
+          "executionMs": 17.077
+        },
+        {
+          "name": "current",
+          "run": 18,
+          "planningMs": 0.018,
+          "executionMs": 1.114
+        },
+        {
+          "name": "current",
+          "run": 19,
+          "planningMs": 0.016,
+          "executionMs": 1.087
+        },
+        {
+          "name": "before",
+          "run": 19,
+          "planningMs": 0.015,
+          "executionMs": 17.668
+        },
+        {
+          "name": "before",
+          "run": 20,
+          "planningMs": 0.017,
+          "executionMs": 17.938
+        },
+        {
+          "name": "current",
+          "run": 20,
+          "planningMs": 0.038,
+          "executionMs": 1.361
+        },
+        {
+          "name": "current",
+          "run": 21,
+          "planningMs": 0.026,
+          "executionMs": 1.374
+        },
+        {
+          "name": "before",
+          "run": 21,
+          "planningMs": 0.02,
+          "executionMs": 17.987
+        },
+        {
+          "name": "before",
+          "run": 22,
+          "planningMs": 0.026,
+          "executionMs": 17.539
+        },
+        {
+          "name": "current",
+          "run": 22,
+          "planningMs": 0.037,
+          "executionMs": 1.809
+        },
+        {
+          "name": "current",
+          "run": 23,
+          "planningMs": 0.018,
+          "executionMs": 1.249
+        },
+        {
+          "name": "before",
+          "run": 23,
+          "planningMs": 0.017,
+          "executionMs": 23.467
+        },
+        {
+          "name": "before",
+          "run": 24,
+          "planningMs": 0.027,
+          "executionMs": 23.846
+        },
+        {
+          "name": "current",
+          "run": 24,
+          "planningMs": 0.027,
+          "executionMs": 1.894
+        },
+        {
+          "name": "current",
+          "run": 25,
+          "planningMs": 0.05,
+          "executionMs": 1.616
+        },
+        {
+          "name": "before",
+          "run": 25,
+          "planningMs": 0.024,
+          "executionMs": 28.111
+        },
+        {
+          "name": "before",
+          "run": 26,
+          "planningMs": 0.032,
+          "executionMs": 29.3
+        },
+        {
+          "name": "current",
+          "run": 26,
+          "planningMs": 0.04,
+          "executionMs": 1.737
+        },
+        {
+          "name": "current",
+          "run": 27,
+          "planningMs": 0.029,
+          "executionMs": 1.776
+        },
+        {
+          "name": "before",
+          "run": 27,
+          "planningMs": 0.019,
+          "executionMs": 19.437
+        },
+        {
+          "name": "before",
+          "run": 28,
+          "planningMs": 0.025,
+          "executionMs": 19.889
+        },
+        {
+          "name": "current",
+          "run": 28,
+          "planningMs": 0.029,
+          "executionMs": 1.156
+        },
+        {
+          "name": "current",
+          "run": 29,
+          "planningMs": 0.019,
+          "executionMs": 1.123
+        },
+        {
+          "name": "before",
+          "run": 29,
+          "planningMs": 0.016,
+          "executionMs": 17.617
+        },
+        {
+          "name": "before",
+          "run": 30,
+          "planningMs": 0.027,
+          "executionMs": 17.3
+        },
+        {
+          "name": "current",
+          "run": 30,
+          "planningMs": 0.027,
+          "executionMs": 1.099
+        }
+      ],
+      "beforeExecutionMedian": 17.976,
+      "currentExecutionMedian": 1.121
+    }
+  }
+}

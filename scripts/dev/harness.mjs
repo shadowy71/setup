@@ -114,6 +114,15 @@ alter default privileges in schema public grant execute on functions to authenti
 export const REALTIME_STUB_SQL = `
 create schema if not exists realtime;
 
+-- Supabase's optional channel-execution role. Keeping the same no-login role in
+-- the disposable cluster exercises the guarded least-privilege grants instead
+-- of silently skipping them on every local run.
+do $$ begin
+  if to_regrole('supabase_realtime') is null then
+    execute 'create role supabase_realtime nologin';
+  end if;
+end $$;
+
 do $$ begin
   if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
     create publication supabase_realtime;

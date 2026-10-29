@@ -23,6 +23,7 @@ const read = (relative) => readFile(path.join(root, relative), 'utf8');
 
 const MIGRATION_030 = 'supabase/migrations/20261027000001_030_random_channel_authorization.sql';
 const MIGRATION_029 = 'supabase/migrations/20261026000001_029_feed_realtime_delivery.sql';
+const MIGRATION_037 = 'supabase/migrations/20261029000005_037_realtime_authorization_grants.sql';
 
 /** Strips comments so an explanatory "we do not do X" note cannot satisfy a regex. */
 function code(source) {
@@ -109,6 +110,24 @@ describe('migration 030: random channel authorization', () => {
     expect(sql).toContain('can_access_random_session');
     expect(sql).toMatch(/oracle/i);
     expect(sql).toMatch(/left_at is null|current-user-only/i);
+  });
+});
+
+describe('migration 037: idempotent least-privilege grant repair', () => {
+  it('reasserts the narrow grant and closes the old oracle without changing schema or policies', async () => {
+    const sql = await read(MIGRATION_037);
+    const executable = sql.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*--.*$/gm, '');
+
+    expect(executable).toMatch(/grant execute on function public\.can_access_own_random_session\(uuid\) to authenticated, service_role/i);
+    expect(executable).toMatch(/revoke all on function public\.can_access_random_session\(uuid, uuid\) from public, anon, authenticated/i);
+    expect(executable).toMatch(/revoke all on function public\.can_access_random_session\(uuid, uuid\) from supabase_realtime/i);
+    expect(executable).toMatch(/grant execute on function public\.can_access_own_random_session\(uuid\) to supabase_realtime/i);
+    expect(executable).not.toMatch(/grant execute on function public\.can_access_random_session[^;]*to (?:public|anon|authenticated|supabase_realtime)/i);
+
+    // Only GRANT/REVOKE and their guarded DO block are replay-safe here. The
+    // function/policy definitions belong to 030 and the club column to 031.
+    expect(executable).not.toMatch(/\b(?:create|alter|drop|insert|update|delete)\b/i);
+    expect(executable).toMatch(/to_regrole\('supabase_realtime'\)/i);
   });
 });
 

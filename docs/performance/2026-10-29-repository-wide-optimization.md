@@ -161,3 +161,123 @@ The first author-scroll failure was a probe error: Playwright scrolled the off-s
 4. **Validate outside the lab:** run real Supabase Realtime, production, and physical-device/RUM measurements before extrapolating these results.
 
 Home prefetch removal intentionally shifts Home's unique assets to navigation time. The new SQL functions are privileged code and therefore keep pinned `search_path`, explicit JWT/membership/published-conversation predicates, anonymous/PUBLIC revocation, and exact authorization/read-receipt tests. The display derivative adds a small versioned asset while avoiding transfer of the much larger source image at every visible brand placement.
+
+---
+
+## Follow-up — 2026-10-29: feed correctness, resource 404s, and exact Admin batching
+
+This follow-up supersedes the unresolved feed/mobile findings and the Admin “next work” item above. Historical evidence and the original report remain unchanged. Work was done in the required order: correctness first, URL-level 404 diagnosis second, and only then further optimization and comparable reruns. The follow-up preview is the same Arena port-3100 URL above, running the final production build while the sandbox process remains alive.
+
+### Outcome and changed contracts
+
+| Area | Resolution | Evidence |
+|---|---|---|
+| Home moderation/cache reconciliation | **Fixed in migration 035 and the Home route/client.** A fresh head page no longer blindly reinserts an ineligible cached row, while absence from one page is still not treated as deletion. | `2026-10-29-followup-final-feed.log`; `2026-10-29-followup-final-home-depth.log` |
+| Mobile resource 404 assertions | **Fully diagnosed and fixed at the product boundary.** Only the two Vercel-hosted telemetry scripts were missing on the non-Vercel server. No console/resource class was suppressed. | `2026-10-29-mobile-404-fit-resource-failures.json`; `2026-10-29-followup-final-viewport.log` |
+| Exact Admin counts | **Batched in migration 036.** One authorized, security-invoker RPC replaces sixteen count requests; the whole page falls from twenty upstream requests to five. | `2026-10-29-admin-final-batch-r15.json`; `2026-10-29-admin-counts-browser-contract-r2.json` |
+| Prior optimizations | **Rerun under controlled conditions.** Headline server, SQL, transfer, and mobile gains survive. Smaller bundle deltas and run-to-run variance are reported below rather than hidden. | [`2026-10-29-followup-final-comparison.json`](../../perf-results/2026-10-29-followup-final-comparison.json) |
+
+### 1. Feed correctness closure
+
+**Cause.** The newest-page refresh was merged with the complete cached tail. A post that had become hidden, deleted, blocked, community-scoped, or otherwise ineligible could therefore be reintroduced from cache even though the server had correctly omitted it from page one. Deleting every row absent from page one would have been equally wrong: legitimate older pages and accepted writes are not tombstones.
+
+**Server-authoritative fix.** `campus_feed_post_visibility(uuid[])` is a security-invoker, IDs-only visibility oracle. It accepts at most 510 canonical post IDs, retains caller RLS, and independently requires campus/non-community, published, not-deleted, feed-enabled rows. PUBLIC/anon execution is revoked. It returns no body, author-private record, or moderation-status detail. The Home POST route returns the normal newest page plus `checkedPostIds`, `visiblePostIds`, and `unavailable`; a failed visibility check checks nothing rather than implying deletion.
+
+**Client guarantees.** Only the difference between requested/checked and visible IDs is removed. Removals apply to the fresh head, cached older pages, and matching accepted-write holds. Unchecked or visible older rows survive, deduplication and ordering are retained, and request-version guards prevent stale overlapping responses from winning. The existing 450 ms event batch and disconnected-only 20-second fallback remain; no frequent polling was added.
+
+The bound is explicit: reconciliation covers the **newest 510 loaded post IDs per pass**. Accepted writes sort into that window. IDs beyond the bound are unchecked and retained; they are neither inferred deleted nor claimed reconciled by that pass. This is bounded coverage, not an assumption that accepted writes cannot grow the cache.
+
+**Observed verification.** The final full workflow passed all 14 functional checks plus harness validation. An already-loaded older-page hidden row disappeared in 24.1 seconds with one bounded feed read; its valid older neighbor and the accepted new head survived exactly once. A separate hidden head left both author and viewer feeds, pending content stayed invisible, retry preserved the draft, and an idle feed did not poll. The separate depth probe passed all 11 checks through 10 → 20 → 30 entries and a fresh 31st entry without tail eviction. Earlier targeted coverage also passed seven files/102 tests, and the final complete unit run includes those tests.
+
+The harness has no Realtime websocket. These browser results prove disconnected fallback convergence, **not** healthy realtime delivery. Realtime publication/channel predicates and healthy-event client behavior remain covered by SQL suite 15 and unit tests; no real-Realtime measurement is claimed.
+
+### 2. The 39 mobile console assertions, by URL
+
+Instrumentation now records response URL, status, and resource type in both browser tools. The diagnostic run found **78 HTTP 404 responses** producing the original **39 unclassified assertions**:
+
+| URL | Count | Disposition |
+|---|---:|---|
+| `/_vercel/insights/script.js` | 39 = 13 signed-in routes × 3 viewports | Optional Vercel Analytics host endpoint requested on a non-Vercel production server. |
+| `/_vercel/speed-insights/script.js` | 39 = 13 signed-in routes × 3 viewports | Optional Vercel Speed Insights host endpoint requested on the same server. |
+
+The other 39 responses appeared as already-classified script/MIME noise. On Login, authentication rewrites turned the same missing script paths into HTML script responses. There were **no** Campus+ chunk, CSS, font, image, favicon, source-map, or API 404s in this matrix.
+
+`app/layout.js` now renders both telemetry components only when Vercel reports `VERCEL=1`; hosted Vercel telemetry remains configured, while local/container/self-hosted servers no longer make two guaranteed missing-script requests per page. Console collection remains enabled, response failures remain visible, and no broad 404 exclusion was added. Final results: **366/366 viewport checks**, **zero HTTP resource failures**, and zero horizontal overflow. The only remaining mobile-console item is the explicitly unavailable harness websocket.
+
+### 3. Exact, authorized Admin batching
+
+The counts tab formerly made twelve operational and four overview exact-count requests after the existing auth/shell reads. Migration 036 adds `campus_admin_dashboard_counts()` with these constraints:
+
+- explicit `view_admin_overview` permission check inside the database function as well as the existing page gate;
+- **security invoker**, so every count remains under caller RLS and no unauthorized aggregate is exposed;
+- the same sixteen `count(*)` definitions and predicates, not estimates or `reltuples`;
+- `activeUsers24h` remains an explicit null because Campus+ has no presence/analytics source;
+- the adapter restores the original twelve-card order regardless of JSON/JSONB key serialization;
+- the original exact queries remain a no-throw compatibility fallback if the additive RPC is unavailable.
+
+SQL suite 18 compares the RPC with all sixteen original queries in the same admin/RLS context, verifies the null and key counts, checks invoker/execute privileges, and denies a signed-in student. A live client check also matched every value and returned `42501` to the student. Chromium showed the same twelve labels/order and exact queue-health values with no page errors.
+
+The directly comparable same-fixture A/B is:
+
+| Admin counts page | Before | After | Result |
+|---|---:|---:|---:|
+| Median total | 286.844 ms (7 runs) | 224.594 ms (15 runs) | **−62.250 ms / −21.7%** |
+| Upstream requests | 20 | 5 | **16 count reads → 1 RPC** |
+| HTML bytes | 64,007 | 64,007 | Unchanged after restoring counter order |
+
+An intermediate run against the stub's stale function catalog returned RPC 404, exercised the fallback, and made 21 requests; it is preserved as compatibility evidence, not presented as candidate performance. The final deterministic full-route comparison also improves Admin counts from the original 384.372 ms/20 requests to 217.539 ms/5 requests.
+
+### 4. Comparable performance reruns
+
+The final production build used Next 16.3.8, PostgreSQL 18.4, the deterministic 12-account/240-post/420-message seed, and 25 ms simulated upstream RTT. Server figures below are original-baseline → follow-up medians. Except for Explore's noted 15-run confirmation, route medians use five warmed runs. Full traces and spreads are in the derived comparison.
+
+| Route | Original baseline | Follow-up | Delta | Requests |
+|---|---:|---:|---:|---:|
+| Home | 142.955 ms | 109.201 ms | −23.61% | 4 → 4 |
+| Explore | 202.795 ms | 181.569 ms | −10.47% | 5 → 5 |
+| Home feed API | 206.447 ms | 179.434 ms | −13.08% | 8 → 8 |
+| Chat list | 201.957 ms | 169.542 ms | −16.05% | 8 → 8 |
+| Chat thread | 242.632 ms | 225.981 ms | −6.86% | 10 → 10 |
+| Marketplace | 185.891 ms | 172.516 ms | −7.20% | 11 → 11 |
+| Gigs | 174.235 ms | 154.975 ms | −11.05% | 12 → 12 |
+| Clubs | 165.345 ms | 132.335 ms | −19.96% | 8 → 8 |
+| Admin counts | 384.372 ms | 217.539 ms | −43.40% | 20 → 5 |
+
+Explore's first follow-up five-run window was 232.188 ms and is retained in the raw artifact. A separate 15-run confirmation produced 181.569 ms; that confirmation is used above rather than calling the first window meaningless. Campus, community, detail, resource, opportunity, project, timetable, moderation, club-management, and backup routes were also rerun and remain in the raw extended reports. High-fan-out surfaces such as club management were not rewritten speculatively.
+
+**SQL A/B, thirty alternating samples per function on the same fixture:** temporary copies of the pre-033/034 invoker functions were compared with the current functions and dropped afterward. Outputs matched exactly (seven rows each):
+
+- unread counts: **16.8705 → 1.0110 ms** median execution;
+- inbox/latest preview: **17.9760 → 1.1210 ms** median execution.
+
+**Cold browser transfer:** Login remained **580,456 → 464,395 bytes** from the original baseline; Slow-4G LCP was **2540 → 1556 ms** (follow-up spread 1184–1560 ms), so the direction survives without claiming the earlier 1296 ms sample as a new record. Explore remained **620,000 → 374,464 bytes**, with fonts **192,168 → 50,276 bytes**. The final 16-result fast/Slow-4G mobile matrix has zero overflow; Slow-4G medians include Login LCP 1208 ms and Explore 1008 ms. Home CLS was 0.088 in that matrix and is not claimed eliminated.
+
+The corrected static inventory excludes Next's `noModule` legacy polyfill, which modern Chromium does not fetch. Signed-in static JS is about **1.4–1.6 KB gzip above** the earlier final build because of shared corrective code; the earlier exact 410-byte graph delta is therefore not claimed to survive verbatim. Live browser transfer and the large font/image/prefetch wins remain intact. The first over-counting asset artifact and all diagnostic iterations are preserved.
+
+### 5. Final verification and hands-on preview
+
+| Check | Final result |
+|---|---|
+| ESLint / service worker / production build | Passed; `sw:check` current at 15.2 KB. |
+| Unit tests | **75 files, 922 tests passed.** |
+| Fresh database | **36 migrations, 18/18 SQL suites passed.** |
+| SQL bundle | Regenerated: **36 migrations, 567.8 KB**. |
+| Feed / depth | **14 functional checks + harness passed; 11/11 depth checks passed.** |
+| Viewport / mobile browser | **366/366; zero HTTP resource failures. Sixteen fast/Slow-4G results; zero overflow.** |
+| Desktop and phone moderation preview | Real PostgreSQL `published → hidden` transition passed without reload or focus nudge. Desktop converged in **14.1 s**/two bounded reads; phone in **23.1 s**/one bounded read. Each retained nine existing neighbors exactly once and backfilled one eligible post, staying at ten entries; zero overflow, failed HTTP resources, or page errors. |
+| Evidence for the hands-on transition | `2026-10-29-followup-final-preview-moderation-r4.json`; screenshots under `perf-results/screens/final-preview-r4/`. Earlier probe-assertion mistakes are retained, not deleted. |
+| Smoke | All checks passed except the known Home SSR-marker assertion for client-hydrated cards. The real-browser feed/depth checks pass. The fixture still cannot run the foreign-thread HTTP privacy probe; SQL non-member tests pass. |
+| Database audit | **67 passes, three pre-existing failures**, classified below. |
+| Security verification | All anonymous probes and the browser-bundle secret scan passed; only the deliberate harness-placeholder hygiene grep remains red. |
+
+### 6. Residual findings and blockers
+
+| Finding | Evidence-based severity and disposition |
+|---|---|
+| Five club trigger functions retain PUBLIC execute grants | **Low-severity hardening debt; no anonymous write demonstrated.** All five return `trigger`; direct anonymous calls fail with PostgreSQL `0A000` before the body. A dedicated follow-up should revoke PUBLIC/anon and retain only required trigger execution semantics, with SQL regression tests. It was not folded into this performance/correctness patch. |
+| `club_creation_requests` omitted from backup catalogue and change capture | **Medium data-durability follow-up.** The table is absent from both mechanisms, so this is not dismissed as a grep artifact. It predates migrations 033–036 and needs an additive backup migration plus snapshot/restore verification, not an untested drive-by change here. |
+| `sb_secret_perf_harness_key` hygiene grep | **Informational/deliberate harness placeholder, not a leaked credential.** All live anonymous probes and the built-browser secret scan pass. The assertion was not disabled. |
+| Realtime and deployment coverage | The stub still has no websocket. No production Supabase, live deployment, real-user/RUM, physical phone, low-end physical device, or healthy-realtime measurement was available or fabricated. |
+| Smoke/foreign-thread coverage | Home SSR markers remain a known client-hydration limitation, not evidence of missing hydrated cards. The HTTP foreign-thread case remains unrun on this fixture and is not claimed. |
+
+Primary follow-up evidence is indexed in [`2026-10-29-followup-final-comparison.json`](../../perf-results/2026-10-29-followup-final-comparison.json). Raw logs, failed diagnostic iterations, response traces, SQL samples, and screenshots remain under `perf-results/`; none were reset or overwritten to produce this report.

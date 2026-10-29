@@ -168,14 +168,17 @@ values ('15fe0000-0000-4000-b000-000000000001',
 
 -- One awaiting review, one hidden by a moderator: states that must never be
 -- presented as "on the feed" to anybody, the author's own feed included.
-insert into public.posts (id, author_id, kind, body, visibility, status)
+insert into public.posts (id, author_id, kind, body, visibility, status, deleted_at)
 values
   ('15fe0000-0000-4000-b000-000000000002',
    (select value from public.__test_scratch where key = 'feed_asha_profile'),
-   'post', 'Live feed probe: awaiting review.', 'campus', 'pending'),
+   'post', 'Live feed probe: awaiting review.', 'campus', 'pending', null),
   ('15fe0000-0000-4000-b000-000000000003',
    (select value from public.__test_scratch where key = 'feed_asha_profile'),
-   'post', 'Live feed probe: hidden after a report.', 'campus', 'hidden');
+   'post', 'Live feed probe: hidden after a report.', 'campus', 'hidden', null),
+  ('15fe0000-0000-4000-b000-000000000005',
+   (select value from public.__test_scratch where key = 'feed_asha_profile'),
+   'post', 'Live feed probe: softly deleted.', 'campus', 'published', now());
 
 insert into public.communities (name, slug, description, visibility, join_policy, created_by, status)
 values ('Feed Only Circle', 'feed-only-circle', 'Members-only circle used by the feed probe.',
@@ -225,6 +228,20 @@ select public.test_assert(
   'a non-member cannot read a members-only community post'
 );
 
+-- The bounded reconciliation lookup answers only which already-loaded IDs are
+-- still eligible. It must match campus_feed rather than posts_select_author:
+-- pending, hidden, deleted and community-scoped rows return no visible ID.
+select public.test_assert(
+  (select array_agg(id order by id) from public.campus_feed_post_visibility(array[
+    '15fe0000-0000-4000-b000-000000000001'::uuid,
+    '15fe0000-0000-4000-b000-000000000002'::uuid,
+    '15fe0000-0000-4000-b000-000000000003'::uuid,
+    '15fe0000-0000-4000-b000-000000000004'::uuid,
+    '15fe0000-0000-4000-b000-000000000005'::uuid
+  ])) = array['15fe0000-0000-4000-b000-000000000001'::uuid],
+  'another student reconciles only the published campus post as visible'
+);
+
 -- Asha's own view: she can read the states that are not published — that is what
 -- makes an honest "sent for review" possible — and her own feed still excludes them.
 select set_config('request.jwt.claim.sub', '15fe0000-0000-4000-a000-000000000001', false);
@@ -240,6 +257,16 @@ select public.test_assert(
     where id in ('15fe0000-0000-4000-b000-000000000002',
                  '15fe0000-0000-4000-b000-000000000003')) = 0,
   'an author''s own feed must not show their unapproved or hidden post'
+);
+select public.test_assert(
+  (select array_agg(id order by id) from public.campus_feed_post_visibility(array[
+    '15fe0000-0000-4000-b000-000000000001'::uuid,
+    '15fe0000-0000-4000-b000-000000000002'::uuid,
+    '15fe0000-0000-4000-b000-000000000003'::uuid,
+    '15fe0000-0000-4000-b000-000000000004'::uuid,
+    '15fe0000-0000-4000-b000-000000000005'::uuid
+  ])) = array['15fe0000-0000-4000-b000-000000000001'::uuid],
+  'author read access elsewhere must not retain hidden or pending posts in shared Home reconciliation'
 );
 
 -- A block removes a published post from the blocker's feed without touching the row:
@@ -267,6 +294,12 @@ select public.test_assert(
     where id = '15fe0000-0000-4000-b000-000000000001') = 0,
   'a blocked author''s post must not be selectable by the blocker'
 );
+select public.test_assert(
+  (select count(*) from public.campus_feed_post_visibility(array[
+    '15fe0000-0000-4000-b000-000000000001'::uuid
+  ])) = 0,
+  'a blocked author''s post must reconcile out of the blocker''s loaded feed'
+);
 
 -- Chaya blocked nobody, so she still sees it.
 select set_config('request.jwt.claim.sub', '15fe0000-0000-4000-a000-000000000003', false);
@@ -274,6 +307,24 @@ select public.test_assert(
   (select count(*) from public.campus_feed(50, 0, 'newest')
     where id = '15fe0000-0000-4000-b000-000000000001') = 1,
   'blocking one student must not hide a post from the rest of campus'
+);
+select public.test_assert(
+  (select count(*) from public.campus_feed_post_visibility(array[
+    '15fe0000-0000-4000-b000-000000000001'::uuid
+  ])) = 1,
+  'a valid loaded post remains visible to a student who has not blocked its author'
+);
+
+-- The lookup itself enforces the bound, not only the HTTP caller. A valid ID at
+-- position 511 is unchecked rather than reported as hidden or as visible.
+select public.test_assert(
+  (select count(*) from public.campus_feed_post_visibility(
+    array_cat(
+      (select array_agg(gen_random_uuid()) from generate_series(1, 510)),
+      array['15fe0000-0000-4000-b000-000000000001'::uuid]
+    )
+  )) = 0,
+  'visibility reconciliation must not inspect IDs beyond its 510-ID bound'
 );
 
 -- ---------------------------------------------------------------------------

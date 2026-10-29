@@ -56,6 +56,37 @@ async function main() {
     process.exit(1);
   }
 
+  // Migration 037 is deliberately safe to replay after live grant drift. Remove
+  // only the narrow predicate's grants (never re-open the cross-user oracle),
+  // then execute the actual migration twice. Suites 15/16 subsequently prove
+  // own-channel access and cross-user denial against this repaired state.
+  const authorizationRepair = '20261029000005_037_realtime_authorization_grants.sql';
+  if (files.includes(authorizationRepair)) {
+    banner('Replaying the Realtime grant repair after deliberate drift…');
+    try {
+      await client.query(`
+        revoke all on function public.can_access_own_random_session(uuid) from authenticated;
+        revoke all on function public.can_access_own_random_session(uuid) from supabase_realtime;
+      `);
+      const repairSql = await readFile(path.join(migrationsDir, authorizationRepair), 'utf8');
+      await client.query(repairSql);
+      await client.query(repairSql);
+      const repaired = await client.query(`
+        select
+          has_function_privilege('authenticated', 'public.can_access_own_random_session(uuid)', 'execute') as api_role,
+          has_function_privilege('supabase_realtime', 'public.can_access_own_random_session(uuid)', 'execute') as realtime_role
+      `);
+      if (!repaired.rows[0].api_role || !repaired.rows[0].realtime_role) {
+        throw new Error('Migration 037 replay did not restore both narrow-predicate grants.');
+      }
+      console.log('  \x1b[32m✓\x1b[0m missing grants repaired; idempotent second replay passed.');
+    } catch (error) {
+      console.error(`  \x1b[31m✗\x1b[0m ${error.message}`);
+      await shutdown(pg, client);
+      process.exit(1);
+    }
+  }
+
   banner('Installing test helpers…');
   const { TEST_HELPER_SQL } = await import('./harness.mjs');
   await client.query(TEST_HELPER_SQL);

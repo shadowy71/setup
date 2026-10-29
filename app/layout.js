@@ -5,6 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import localFont from 'next/font/local';
 import { PLATFORM } from '@/lib/constants';
+import { shouldUseVercelTelemetry } from '@/lib/vercel-telemetry';
 
 /* The Campus+ After Dark typefaces, self-hosted from the reference
    repository's assets (aminotkartik/loginpage). They are loaded once, here,
@@ -82,8 +83,12 @@ export default function RootLayout({ children }) {
     <html lang="en" data-theme="dark">
       <body className={`${microFont.variable} min-h-dvh bg-canvas text-ink antialiased`}>
         <LandingIntro>{children}</LandingIntro>
-        <Analytics />
-        <SpeedInsights />
+        {shouldUseVercelTelemetry() ? (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        ) : null}
       </body>
     </html>
   );
