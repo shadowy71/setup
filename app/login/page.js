@@ -56,7 +56,7 @@ export default async function LoginPage({ searchParams }) {
         <span className="login-cta-scrim" aria-hidden="true" />
         {/* Brand area: the logo carries the identity before a single word is read. */}
         <div className="login-intro login-sky flex flex-col items-start">
-          <BrandLockup href="/" size="lg" className="login-halo w-fit" wordClass="text-[1.3125rem]" />
+          <BrandLockup href="/" size="lg" className="login-halo w-fit" wordClass="text-[1.3125rem]" markPriority />
           {/* The independence label stays with the brand; the crest itself
               appears once, beside the full disclosure by the controls below. */}
           <p className="t-label mt-6">Unofficial student project</p>

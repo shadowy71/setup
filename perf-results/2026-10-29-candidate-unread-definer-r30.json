@@ -1,0 +1,489 @@
+{
+  "measuredAt": "2026-10-29T03:31:22.854Z",
+  "samples": [
+    {
+      "name": "current",
+      "run": 1,
+      "planningMs": 0.042,
+      "executionMs": 18.627
+    },
+    {
+      "name": "candidate",
+      "run": 1,
+      "planningMs": 0.039,
+      "executionMs": 2.042
+    },
+    {
+      "name": "candidate",
+      "run": 2,
+      "planningMs": 0.025,
+      "executionMs": 2.256
+    },
+    {
+      "name": "current",
+      "run": 2,
+      "planningMs": 0.016,
+      "executionMs": 17.939
+    },
+    {
+      "name": "current",
+      "run": 3,
+      "planningMs": 0.034,
+      "executionMs": 17.47
+    },
+    {
+      "name": "candidate",
+      "run": 3,
+      "planningMs": 0.031,
+      "executionMs": 1.306
+    },
+    {
+      "name": "candidate",
+      "run": 4,
+      "planningMs": 0.015,
+      "executionMs": 1.25
+    },
+    {
+      "name": "current",
+      "run": 4,
+      "planningMs": 0.012,
+      "executionMs": 17.15
+    },
+    {
+      "name": "current",
+      "run": 5,
+      "planningMs": 0.029,
+      "executionMs": 17.057
+    },
+    {
+      "name": "candidate",
+      "run": 5,
+      "planningMs": 0.028,
+      "executionMs": 1.395
+    },
+    {
+      "name": "candidate",
+      "run": 6,
+      "planningMs": 0.014,
+      "executionMs": 1.316
+    },
+    {
+      "name": "current",
+      "run": 6,
+      "planningMs": 0.012,
+      "executionMs": 17.189
+    },
+    {
+      "name": "current",
+      "run": 7,
+      "planningMs": 0.034,
+      "executionMs": 18.234
+    },
+    {
+      "name": "candidate",
+      "run": 7,
+      "planningMs": 0.071,
+      "executionMs": 1.38
+    },
+    {
+      "name": "candidate",
+      "run": 8,
+      "planningMs": 0.016,
+      "executionMs": 1.251
+    },
+    {
+      "name": "current",
+      "run": 8,
+      "planningMs": 0.012,
+      "executionMs": 17.153
+    },
+    {
+      "name": "current",
+      "run": 9,
+      "planningMs": 0.028,
+      "executionMs": 18.577
+    },
+    {
+      "name": "candidate",
+      "run": 9,
+      "planningMs": 0.032,
+      "executionMs": 1.436
+    },
+    {
+      "name": "candidate",
+      "run": 10,
+      "planningMs": 0.031,
+      "executionMs": 2.218
+    },
+    {
+      "name": "current",
+      "run": 10,
+      "planningMs": 0.016,
+      "executionMs": 21.042
+    },
+    {
+      "name": "current",
+      "run": 11,
+      "planningMs": 0.044,
+      "executionMs": 20.314
+    },
+    {
+      "name": "candidate",
+      "run": 11,
+      "planningMs": 0.05,
+      "executionMs": 1.586
+    },
+    {
+      "name": "candidate",
+      "run": 12,
+      "planningMs": 0.018,
+      "executionMs": 1.28
+    },
+    {
+      "name": "current",
+      "run": 12,
+      "planningMs": 0.013,
+      "executionMs": 18.152
+    },
+    {
+      "name": "current",
+      "run": 13,
+      "planningMs": 0.031,
+      "executionMs": 17.43
+    },
+    {
+      "name": "candidate",
+      "run": 13,
+      "planningMs": 0.03,
+      "executionMs": 1.371
+    },
+    {
+      "name": "candidate",
+      "run": 14,
+      "planningMs": 0.018,
+      "executionMs": 1.446
+    },
+    {
+      "name": "current",
+      "run": 14,
+      "planningMs": 0.013,
+      "executionMs": 18.362
+    },
+    {
+      "name": "current",
+      "run": 15,
+      "planningMs": 0.03,
+      "executionMs": 17.681
+    },
+    {
+      "name": "candidate",
+      "run": 15,
+      "planningMs": 0.031,
+      "executionMs": 1.515
+    },
+    {
+      "name": "candidate",
+      "run": 16,
+      "planningMs": 0.014,
+      "executionMs": 1.555
+    },
+    {
+      "name": "current",
+      "run": 16,
+      "planningMs": 0.014,
+      "executionMs": 17.901
+    },
+    {
+      "name": "current",
+      "run": 17,
+      "planningMs": 0.03,
+      "executionMs": 18.259
+    },
+    {
+      "name": "candidate",
+      "run": 17,
+      "planningMs": 0.031,
+      "executionMs": 1.337
+    },
+    {
+      "name": "candidate",
+      "run": 18,
+      "planningMs": 0.015,
+      "executionMs": 1.268
+    },
+    {
+      "name": "current",
+      "run": 18,
+      "planningMs": 0.013,
+      "executionMs": 17.257
+    },
+    {
+      "name": "current",
+      "run": 19,
+      "planningMs": 0.031,
+      "executionMs": 17.434
+    },
+    {
+      "name": "candidate",
+      "run": 19,
+      "planningMs": 0.046,
+      "executionMs": 1.756
+    },
+    {
+      "name": "candidate",
+      "run": 20,
+      "planningMs": 0.03,
+      "executionMs": 2.269
+    },
+    {
+      "name": "current",
+      "run": 20,
+      "planningMs": 0.022,
+      "executionMs": 18.342
+    },
+    {
+      "name": "current",
+      "run": 21,
+      "planningMs": 0.033,
+      "executionMs": 17.671
+    },
+    {
+      "name": "candidate",
+      "run": 21,
+      "planningMs": 0.032,
+      "executionMs": 1.399
+    },
+    {
+      "name": "candidate",
+      "run": 22,
+      "planningMs": 0.016,
+      "executionMs": 1.441
+    },
+    {
+      "name": "current",
+      "run": 22,
+      "planningMs": 0.015,
+      "executionMs": 17.439
+    },
+    {
+      "name": "current",
+      "run": 23,
+      "planningMs": 0.032,
+      "executionMs": 17.952
+    },
+    {
+      "name": "candidate",
+      "run": 23,
+      "planningMs": 0.04,
+      "executionMs": 1.35
+    },
+    {
+      "name": "candidate",
+      "run": 24,
+      "planningMs": 0.023,
+      "executionMs": 1.314
+    },
+    {
+      "name": "current",
+      "run": 24,
+      "planningMs": 0.018,
+      "executionMs": 19.063
+    },
+    {
+      "name": "current",
+      "run": 25,
+      "planningMs": 0.043,
+      "executionMs": 17.807
+    },
+    {
+      "name": "candidate",
+      "run": 25,
+      "planningMs": 0.081,
+      "executionMs": 1.456
+    },
+    {
+      "name": "candidate",
+      "run": 26,
+      "planningMs": 0.016,
+      "executionMs": 1.466
+    },
+    {
+      "name": "current",
+      "run": 26,
+      "planningMs": 0.016,
+      "executionMs": 18.452
+    },
+    {
+      "name": "current",
+      "run": 27,
+      "planningMs": 0.033,
+      "executionMs": 18.871
+    },
+    {
+      "name": "candidate",
+      "run": 27,
+      "planningMs": 0.045,
+      "executionMs": 2.538
+    },
+    {
+      "name": "candidate",
+      "run": 28,
+      "planningMs": 0.033,
+      "executionMs": 2.648
+    },
+    {
+      "name": "current",
+      "run": 28,
+      "planningMs": 0.026,
+      "executionMs": 34.938
+    },
+    {
+      "name": "current",
+      "run": 29,
+      "planningMs": 0.043,
+      "executionMs": 31.136
+    },
+    {
+      "name": "candidate",
+      "run": 29,
+      "planningMs": 0.101,
+      "executionMs": 1.893
+    },
+    {
+      "name": "candidate",
+      "run": 30,
+      "planningMs": 0.02,
+      "executionMs": 1.614
+    },
+    {
+      "name": "current",
+      "run": 30,
+      "planningMs": 0.016,
+      "executionMs": 23.606
+    }
+  ],
+  "equalRows": true,
+  "rows": [
+    {
+      "conversation_id": "2152c04a-6000-433f-9096-db340c5d90ca",
+      "last_read_at": "2026-10-28T23:56:46.968Z",
+      "unread_count": 8
+    },
+    {
+      "conversation_id": "27004beb-6883-46bd-aeaa-5b2acaecb885",
+      "last_read_at": "2026-10-28T23:56:46.992Z",
+      "unread_count": 8
+    },
+    {
+      "conversation_id": "275fec89-98b2-4cce-acdb-17ea38f0b806",
+      "last_read_at": "2026-10-28T23:56:46.943Z",
+      "unread_count": 8
+    },
+    {
+      "conversation_id": "510dd7a9-e31a-48ea-8092-c1ac8d074e83",
+      "last_read_at": "2026-10-28T23:56:46.873Z",
+      "unread_count": 8
+    },
+    {
+      "conversation_id": "77af0fa8-c4fb-4c73-a11e-4bceb602b2c7",
+      "last_read_at": "2026-10-28T23:56:46.841Z",
+      "unread_count": 8
+    },
+    {
+      "conversation_id": "b9b11449-e0b9-4a17-af92-1446500d4042",
+      "last_read_at": "2026-10-28T23:56:46.904Z",
+      "unread_count": 8
+    },
+    {
+      "conversation_id": "c612bca3-7c12-4f90-a12f-cb790bf799dd",
+      "last_read_at": "2026-10-28T23:56:46.799Z",
+      "unread_count": 8
+    }
+  ],
+  "candidateExplain": {
+    "Plan": {
+      "Node Type": "Function Scan",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Function Name": "messaging_unread_counts",
+      "Alias": "messaging_unread_counts",
+      "Startup Cost": 0.25,
+      "Total Cost": 10.25,
+      "Plan Rows": 1000,
+      "Plan Width": 28,
+      "Actual Startup Time": 1.328,
+      "Actual Total Time": 1.329,
+      "Actual Rows": 7,
+      "Actual Loops": 1,
+      "Disabled": false,
+      "Shared Hit Blocks": 274,
+      "Shared Read Blocks": 0,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0,
+      "Local Hit Blocks": 0,
+      "Local Read Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Temp Written Blocks": 0
+    },
+    "Planning": {
+      "Shared Hit Blocks": 0,
+      "Shared Read Blocks": 0,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0,
+      "Local Hit Blocks": 0,
+      "Local Read Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Temp Written Blocks": 0
+    },
+    "Planning Time": 0.014,
+    "Triggers": [],
+    "Execution Time": 1.336
+  },
+  "currentExplain": {
+    "Plan": {
+      "Node Type": "Function Scan",
+      "Parallel Aware": false,
+      "Async Capable": false,
+      "Function Name": "messaging_unread_counts",
+      "Alias": "messaging_unread_counts",
+      "Startup Cost": 0.25,
+      "Total Cost": 10.25,
+      "Plan Rows": 1000,
+      "Plan Width": 28,
+      "Actual Startup Time": 24.951,
+      "Actual Total Time": 24.954,
+      "Actual Rows": 7,
+      "Actual Loops": 1,
+      "Disabled": false,
+      "Shared Hit Blocks": 3622,
+      "Shared Read Blocks": 0,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0,
+      "Local Hit Blocks": 0,
+      "Local Read Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Temp Written Blocks": 0
+    },
+    "Planning": {
+      "Shared Hit Blocks": 0,
+      "Shared Read Blocks": 0,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0,
+      "Local Hit Blocks": 0,
+      "Local Read Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Temp Written Blocks": 0
+    },
+    "Planning Time": 0.022,
+    "Triggers": [],
+    "Execution Time": 24.976
+  }
+}

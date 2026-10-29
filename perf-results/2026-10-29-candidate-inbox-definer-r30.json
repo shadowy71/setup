@@ -1,0 +1,487 @@
+{
+  "measuredAt": "2026-10-29T03:32:37.077Z",
+  "samples": [
+    {
+      "name": "current",
+      "run": 1,
+      "planningMs": 0.049,
+      "executionMs": 23.111
+    },
+    {
+      "name": "candidate",
+      "run": 1,
+      "planningMs": 0.036,
+      "executionMs": 1.744
+    },
+    {
+      "name": "candidate",
+      "run": 2,
+      "planningMs": 0.024,
+      "executionMs": 1.554
+    },
+    {
+      "name": "current",
+      "run": 2,
+      "planningMs": 0.018,
+      "executionMs": 20.32
+    },
+    {
+      "name": "current",
+      "run": 3,
+      "planningMs": 0.053,
+      "executionMs": 37.487
+    },
+    {
+      "name": "candidate",
+      "run": 3,
+      "planningMs": 0.052,
+      "executionMs": 3.033
+    },
+    {
+      "name": "candidate",
+      "run": 4,
+      "planningMs": 0.047,
+      "executionMs": 2.916
+    },
+    {
+      "name": "current",
+      "run": 4,
+      "planningMs": 0.046,
+      "executionMs": 38.144
+    },
+    {
+      "name": "current",
+      "run": 5,
+      "planningMs": 0.051,
+      "executionMs": 31.844
+    },
+    {
+      "name": "candidate",
+      "run": 5,
+      "planningMs": 0.035,
+      "executionMs": 1.887
+    },
+    {
+      "name": "candidate",
+      "run": 6,
+      "planningMs": 0.031,
+      "executionMs": 2.908
+    },
+    {
+      "name": "current",
+      "run": 6,
+      "planningMs": 0.043,
+      "executionMs": 36.669
+    },
+    {
+      "name": "current",
+      "run": 7,
+      "planningMs": 0.063,
+      "executionMs": 25.594
+    },
+    {
+      "name": "candidate",
+      "run": 7,
+      "planningMs": 0.037,
+      "executionMs": 1.619
+    },
+    {
+      "name": "candidate",
+      "run": 8,
+      "planningMs": 0.026,
+      "executionMs": 1.511
+    },
+    {
+      "name": "current",
+      "run": 8,
+      "planningMs": 0.019,
+      "executionMs": 18.467
+    },
+    {
+      "name": "current",
+      "run": 9,
+      "planningMs": 0.077,
+      "executionMs": 20.292
+    },
+    {
+      "name": "candidate",
+      "run": 9,
+      "planningMs": 0.037,
+      "executionMs": 1.582
+    },
+    {
+      "name": "candidate",
+      "run": 10,
+      "planningMs": 0.023,
+      "executionMs": 1.749
+    },
+    {
+      "name": "current",
+      "run": 10,
+      "planningMs": 0.023,
+      "executionMs": 19.96
+    },
+    {
+      "name": "current",
+      "run": 11,
+      "planningMs": 0.036,
+      "executionMs": 22.269
+    },
+    {
+      "name": "candidate",
+      "run": 11,
+      "planningMs": 0.034,
+      "executionMs": 1.565
+    },
+    {
+      "name": "candidate",
+      "run": 12,
+      "planningMs": 0.021,
+      "executionMs": 1.518
+    },
+    {
+      "name": "current",
+      "run": 12,
+      "planningMs": 0.018,
+      "executionMs": 18.743
+    },
+    {
+      "name": "current",
+      "run": 13,
+      "planningMs": 0.035,
+      "executionMs": 18.976
+    },
+    {
+      "name": "candidate",
+      "run": 13,
+      "planningMs": 0.058,
+      "executionMs": 1.533
+    },
+    {
+      "name": "candidate",
+      "run": 14,
+      "planningMs": 0.034,
+      "executionMs": 2.732
+    },
+    {
+      "name": "current",
+      "run": 14,
+      "planningMs": 0.032,
+      "executionMs": 28.162
+    },
+    {
+      "name": "current",
+      "run": 15,
+      "planningMs": 0.034,
+      "executionMs": 28.8
+    },
+    {
+      "name": "candidate",
+      "run": 15,
+      "planningMs": 0.037,
+      "executionMs": 2.018
+    },
+    {
+      "name": "candidate",
+      "run": 16,
+      "planningMs": 0.035,
+      "executionMs": 2.335
+    },
+    {
+      "name": "current",
+      "run": 16,
+      "planningMs": 0.053,
+      "executionMs": 27.231
+    },
+    {
+      "name": "current",
+      "run": 17,
+      "planningMs": 0.05,
+      "executionMs": 25.956
+    },
+    {
+      "name": "candidate",
+      "run": 17,
+      "planningMs": 0.038,
+      "executionMs": 1.953
+    },
+    {
+      "name": "candidate",
+      "run": 18,
+      "planningMs": 0.025,
+      "executionMs": 1.863
+    },
+    {
+      "name": "current",
+      "run": 18,
+      "planningMs": 0.026,
+      "executionMs": 25.717
+    },
+    {
+      "name": "current",
+      "run": 19,
+      "planningMs": 0.037,
+      "executionMs": 24.602
+    },
+    {
+      "name": "candidate",
+      "run": 19,
+      "planningMs": 0.049,
+      "executionMs": 1.964
+    },
+    {
+      "name": "candidate",
+      "run": 20,
+      "planningMs": 0.032,
+      "executionMs": 1.882
+    },
+    {
+      "name": "current",
+      "run": 20,
+      "planningMs": 0.022,
+      "executionMs": 26.774
+    },
+    {
+      "name": "current",
+      "run": 21,
+      "planningMs": 0.051,
+      "executionMs": 27.885
+    },
+    {
+      "name": "candidate",
+      "run": 21,
+      "planningMs": 0.05,
+      "executionMs": 2.329
+    },
+    {
+      "name": "candidate",
+      "run": 22,
+      "planningMs": 0.022,
+      "executionMs": 1.909
+    },
+    {
+      "name": "current",
+      "run": 22,
+      "planningMs": 0.023,
+      "executionMs": 26.336
+    },
+    {
+      "name": "current",
+      "run": 23,
+      "planningMs": 0.038,
+      "executionMs": 28.059
+    },
+    {
+      "name": "candidate",
+      "run": 23,
+      "planningMs": 0.036,
+      "executionMs": 2.44
+    },
+    {
+      "name": "candidate",
+      "run": 24,
+      "planningMs": 0.026,
+      "executionMs": 1.694
+    },
+    {
+      "name": "current",
+      "run": 24,
+      "planningMs": 0.021,
+      "executionMs": 18.509
+    },
+    {
+      "name": "current",
+      "run": 25,
+      "planningMs": 0.035,
+      "executionMs": 18.399
+    },
+    {
+      "name": "candidate",
+      "run": 25,
+      "planningMs": 0.04,
+      "executionMs": 1.603
+    },
+    {
+      "name": "candidate",
+      "run": 26,
+      "planningMs": 0.026,
+      "executionMs": 1.483
+    },
+    {
+      "name": "current",
+      "run": 26,
+      "planningMs": 0.022,
+      "executionMs": 18.636
+    },
+    {
+      "name": "current",
+      "run": 27,
+      "planningMs": 0.034,
+      "executionMs": 18.638
+    },
+    {
+      "name": "candidate",
+      "run": 27,
+      "planningMs": 0.056,
+      "executionMs": 1.544
+    },
+    {
+      "name": "candidate",
+      "run": 28,
+      "planningMs": 0.021,
+      "executionMs": 1.478
+    },
+    {
+      "name": "current",
+      "run": 28,
+      "planningMs": 0.018,
+      "executionMs": 18.449
+    },
+    {
+      "name": "current",
+      "run": 29,
+      "planningMs": 0.036,
+      "executionMs": 18.488
+    },
+    {
+      "name": "candidate",
+      "run": 29,
+      "planningMs": 0.035,
+      "executionMs": 1.583
+    },
+    {
+      "name": "candidate",
+      "run": 30,
+      "planningMs": 0.022,
+      "executionMs": 1.621
+    },
+    {
+      "name": "current",
+      "run": 30,
+      "planningMs": 0.048,
+      "executionMs": 19.053
+    }
+  ],
+  "equalRows": true,
+  "rows": [
+    {
+      "id": "27004beb-6883-46bd-aeaa-5b2acaecb885",
+      "kind": "group",
+      "title": "Computer Engineering",
+      "community_id": "45e25a9e-44e6-4ba5-9c19-170b4743fd74",
+      "status": "published",
+      "last_message_at": "2026-10-29T02:56:46.993Z",
+      "created_at": "2026-09-29T02:56:46.798Z",
+      "is_muted": false,
+      "last_read_at": "2026-10-28T23:56:46.992Z",
+      "unread": 8,
+      "last_message_id": "7a2df8f7-10e1-4b37-85ad-ea3e8e5ce177",
+      "last_message_sender_id": "20df3c36-e03a-4dca-a59b-2c7e9dc32024",
+      "last_message_body": "Message 60 in this thread — are you coming to the lab?",
+      "last_message_gif": null,
+      "last_message_created_at": "2026-10-29T02:56:46.993Z"
+    },
+    {
+      "id": "2152c04a-6000-433f-9096-db340c5d90ca",
+      "kind": "direct",
+      "title": null,
+      "community_id": null,
+      "status": "published",
+      "last_message_at": "2026-10-29T02:56:46.969Z",
+      "created_at": "2026-10-09T02:56:46.797Z",
+      "is_muted": false,
+      "last_read_at": "2026-10-28T23:56:46.968Z",
+      "unread": 8,
+      "last_message_id": "e73ce5a3-09f6-4b74-8081-52f461137fe9",
+      "last_message_sender_id": "20df3c36-e03a-4dca-a59b-2c7e9dc32024",
+      "last_message_body": "Message 60 in this thread — are you coming to the lab?",
+      "last_message_gif": null,
+      "last_message_created_at": "2026-10-29T02:56:46.969Z"
+    },
+    {
+      "id": "275fec89-98b2-4cce-acdb-17ea38f0b806",
+      "kind": "direct",
+      "title": null,
+      "community_id": null,
+      "status": "published",
+      "last_message_at": "2026-10-29T02:56:46.944Z",
+      "created_at": "2026-10-09T02:56:46.795Z",
+      "is_muted": false,
+      "last_read_at": "2026-10-28T23:56:46.943Z",
+      "unread": 8,
+      "last_message_id": "c483fb80-e9d8-4a03-9c79-49ceeadcd12f",
+      "last_message_sender_id": "20df3c36-e03a-4dca-a59b-2c7e9dc32024",
+      "last_message_body": "Message 60 in this thread — are you coming to the lab?",
+      "last_message_gif": null,
+      "last_message_created_at": "2026-10-29T02:56:46.944Z"
+    },
+    {
+      "id": "b9b11449-e0b9-4a17-af92-1446500d4042",
+      "kind": "direct",
+      "title": null,
+      "community_id": null,
+      "status": "published",
+      "last_message_at": "2026-10-29T02:56:46.906Z",
+      "created_at": "2026-10-09T02:56:46.794Z",
+      "is_muted": false,
+      "last_read_at": "2026-10-28T23:56:46.904Z",
+      "unread": 8,
+      "last_message_id": "5d716dfc-f593-4b6a-bb05-90290f0049c4",
+      "last_message_sender_id": "20df3c36-e03a-4dca-a59b-2c7e9dc32024",
+      "last_message_body": "Message 60 in this thread — are you coming to the lab?",
+      "last_message_gif": null,
+      "last_message_created_at": "2026-10-29T02:56:46.906Z"
+    },
+    {
+      "id": "510dd7a9-e31a-48ea-8092-c1ac8d074e83",
+      "kind": "direct",
+      "title": null,
+      "community_id": null,
+      "status": "published",
+      "last_message_at": "2026-10-29T02:56:46.876Z",
+      "created_at": "2026-10-09T02:56:46.793Z",
+      "is_muted": false,
+      "last_read_at": "2026-10-28T23:56:46.873Z",
+      "unread": 8,
+      "last_message_id": "b020ab2a-3a0e-4787-a34f-146ac3cf73c2",
+      "last_message_sender_id": "20df3c36-e03a-4dca-a59b-2c7e9dc32024",
+      "last_message_body": "Message 60 in this thread — are you coming to the lab?",
+      "last_message_gif": null,
+      "last_message_created_at": "2026-10-29T02:56:46.876Z"
+    },
+    {
+      "id": "77af0fa8-c4fb-4c73-a11e-4bceb602b2c7",
+      "kind": "direct",
+      "title": null,
+      "community_id": null,
+      "status": "published",
+      "last_message_at": "2026-10-29T02:56:46.843Z",
+      "created_at": "2026-10-09T02:56:46.791Z",
+      "is_muted": false,
+      "last_read_at": "2026-10-28T23:56:46.841Z",
+      "unread": 8,
+      "last_message_id": "a0f84910-e375-4597-8174-cae38bd28f0b",
+      "last_message_sender_id": "20df3c36-e03a-4dca-a59b-2c7e9dc32024",
+      "last_message_body": "Message 60 in this thread — are you coming to the lab?",
+      "last_message_gif": null,
+      "last_message_created_at": "2026-10-29T02:56:46.843Z"
+    },
+    {
+      "id": "c612bca3-7c12-4f90-a12f-cb790bf799dd",
+      "kind": "direct",
+      "title": null,
+      "community_id": null,
+      "status": "published",
+      "last_message_at": "2026-10-29T02:56:46.803Z",
+      "created_at": "2026-10-09T02:56:46.788Z",
+      "is_muted": false,
+      "last_read_at": "2026-10-28T23:56:46.799Z",
+      "unread": 8,
+      "last_message_id": "b794aa62-0aee-4f7e-8746-fad8bf8a57a4",
+      "last_message_sender_id": "20df3c36-e03a-4dca-a59b-2c7e9dc32024",
+      "last_message_body": "Message 60 in this thread — are you coming to the lab?",
+      "last_message_gif": null,
+      "last_message_created_at": "2026-10-29T02:56:46.803Z"
+    }
+  ]
+}

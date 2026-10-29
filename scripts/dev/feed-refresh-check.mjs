@@ -214,8 +214,13 @@ await check('harness: two signed-in feeds are open', async () => {
 
 /* 1 · the author sees their own post immediately */
 await check('author: post appears with no reload or navigation', async () => {
+  // Establish the reader position *after* the test has brought the composer and
+  // its submit control on screen. Otherwise Playwright's own scroll-to-click is
+  // misreported as a feed update jumping the viewport.
+  await composerBody(authorHome).fill(campusProbe);
+  await submitButton(authorHome).scrollIntoViewIfNeeded();
   const scrollBefore = await authorHome.evaluate(() => window.scrollY);
-  await publish(authorHome, campusProbe);
+  await submitButton(authorHome).click();
   const { count, seconds } = await waitForCard(authorHome, campusProbe, SAME_TAB_MS, 'author Home');
   expect(count === 1, `expected exactly one card, saw ${count}`);
   expect(await notReloaded(authorHome), 'the page reloaded');

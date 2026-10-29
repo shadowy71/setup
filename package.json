@@ -38,6 +38,7 @@
     "backup:disconnect": "node scripts/backup/disconnect.mjs",
     "test:contrast": "node scripts/dev/contrast/audit.mjs",
     "brand:icons": "node scripts/dev/brand-icons.mjs",
+    "brand:mark": "node scripts/dev/brand-mark.mjs",
     "brand:timetable-icons": "node scripts/dev/timetable-icons.mjs",
     "sw:bundle": "node scripts/build-sw.mjs",
     "sw:check": "node scripts/build-sw.mjs --check",

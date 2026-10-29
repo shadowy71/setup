@@ -189,10 +189,14 @@ async function measureOnce(route, viewport, profile) {
     reducedMotion: 'no-preference',
   });
 
-  for (const cookie of studentSession.cookies) {
-    await context.addCookies([
-      { name: cookie.name, value: cookie.value, url: values.base, sameSite: 'Lax' },
-    ]);
+  // A public route must really be signed out. Sending the student session to
+  // /login redirects to /home and silently measures the wrong page.
+  if (!route.public) {
+    for (const cookie of studentSession.cookies) {
+      await context.addCookies([
+        { name: cookie.name, value: cookie.value, url: values.base, sameSite: 'Lax' },
+      ]);
+    }
   }
 
   const page = await context.newPage();

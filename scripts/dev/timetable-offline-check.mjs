@@ -266,6 +266,11 @@ check(
 check('the page labels its copy as saved, with a time', /Saved copy|Offline copy ready/.test(offline.pill ?? ''), offline.pill);
 check('an offline load never throws inside the page', pageErrors.length === 0, pageErrors.slice(0, 2).join(' | '));
 
+// Remember the actual captured weekday. Hard-coding Monday here made the
+// online comparison invalid on every other teaching day.
+const offlineDay = await evaluate(() =>
+  [...document.querySelectorAll('.tt-tabs .tt-tab')].findIndex((node) => node.getAttribute('aria-pressed') === 'true'),
+);
 const walked = [];
 for (const index of [0, 1, 2, 3, 4]) {
   await page.locator('.tt-tabs .tt-tab').nth(index).click();
@@ -279,7 +284,7 @@ check('every weekday can be switched offline, and the choice is announced', walk
 
 // Back to the day the offline capture was taken on, so the two views describe
 // the same weekday and the comparison below means something.
-await page.locator('.tt-tabs .tt-tab').nth(0).click();
+await page.locator('.tt-tabs .tt-tab').nth(offlineDay).click();
 await settle(300);
 await context.setOffline(false);
 await settle(1500);

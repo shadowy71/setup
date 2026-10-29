@@ -1,0 +1,925 @@
+{
+  "measuredAt": "2026-10-29T03:29:25.573Z",
+  "fixture": {
+    "posts": 240,
+    "comments": 720,
+    "recent_posts": 214
+  },
+  "equal": true,
+  "currentRows": [
+    {
+      "id": "2e5225a1-a54d-4f4a-9945-9bf24a815fd7",
+      "author_id": "fcb7bd56-adc9-4bde-8b10-0742fc44c5f7",
+      "username": "meera_j",
+      "display_name": "Meera Joshi",
+      "title": null,
+      "body": "The lab machines were updated today. If you were waiting on the slow build, it is much better now.",
+      "kind": "post",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T02:36:45.728Z",
+      "score": 5.325965
+    },
+    {
+      "id": "c390d459-5a17-4618-b564-9b8a41cbce47",
+      "author_id": "7e97037d-0679-4df1-b443-871b02b84387",
+      "username": "kabir_s",
+      "display_name": "Kabir Shah",
+      "title": "Campus update #2",
+      "body": "Anyone else stuck on question 3 of the assignment? Posting what I have so far.",
+      "kind": "discussion",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T02:16:45.728Z",
+      "score": 4.51856
+    },
+    {
+      "id": "2c33527e-24f8-4265-88c6-d84eff3c4353",
+      "author_id": "72fc06a3-1384-4513-8ebb-d4ca231865d6",
+      "username": "isha_r",
+      "display_name": "Isha Rao",
+      "title": "Campus update #3",
+      "body": "Lost my ID card near the canteen. If you find it, please reply here instead of DMing me.",
+      "kind": "post",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T01:56:45.728Z",
+      "score": 3.896367
+    },
+    {
+      "id": "5a5c414d-3d4a-4aaa-b1da-87f71b23b7d8",
+      "author_id": "42021284-3c3d-4c3b-bdc1-4cb4d36c606c",
+      "username": "rohan_d",
+      "display_name": "Rohan Desai",
+      "title": "Campus update #4",
+      "body": "Which elective should we pick this semester? Vote below.",
+      "kind": "poll",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T01:36:45.728Z",
+      "score": 3.4049208
+    },
+    {
+      "id": "940fbda9-0409-4f95-88a0-bcb0907ed8dd",
+      "author_id": "8c207f60-4f6b-4931-b474-625c831f9718",
+      "username": "neha_k",
+      "display_name": "Neha Kulkarni",
+      "title": null,
+      "body": "Sharing my notes for unit 1. Hope it helps someone before the internals. Ask questions in the comments and I will answer.",
+      "kind": "post",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T01:16:45.728Z",
+      "score": 3.008747
+    }
+  ],
+  "candidateRows": [
+    {
+      "id": "2e5225a1-a54d-4f4a-9945-9bf24a815fd7",
+      "author_id": "fcb7bd56-adc9-4bde-8b10-0742fc44c5f7",
+      "username": "meera_j",
+      "display_name": "Meera Joshi",
+      "title": null,
+      "body": "The lab machines were updated today. If you were waiting on the slow build, it is much better now.",
+      "kind": "post",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T02:36:45.728Z",
+      "score": 5.325965
+    },
+    {
+      "id": "c390d459-5a17-4618-b564-9b8a41cbce47",
+      "author_id": "7e97037d-0679-4df1-b443-871b02b84387",
+      "username": "kabir_s",
+      "display_name": "Kabir Shah",
+      "title": "Campus update #2",
+      "body": "Anyone else stuck on question 3 of the assignment? Posting what I have so far.",
+      "kind": "discussion",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T02:16:45.728Z",
+      "score": 4.51856
+    },
+    {
+      "id": "2c33527e-24f8-4265-88c6-d84eff3c4353",
+      "author_id": "72fc06a3-1384-4513-8ebb-d4ca231865d6",
+      "username": "isha_r",
+      "display_name": "Isha Rao",
+      "title": "Campus update #3",
+      "body": "Lost my ID card near the canteen. If you find it, please reply here instead of DMing me.",
+      "kind": "post",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T01:56:45.728Z",
+      "score": 3.896367
+    },
+    {
+      "id": "5a5c414d-3d4a-4aaa-b1da-87f71b23b7d8",
+      "author_id": "42021284-3c3d-4c3b-bdc1-4cb4d36c606c",
+      "username": "rohan_d",
+      "display_name": "Rohan Desai",
+      "title": "Campus update #4",
+      "body": "Which elective should we pick this semester? Vote below.",
+      "kind": "poll",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T01:36:45.728Z",
+      "score": 3.4049208
+    },
+    {
+      "id": "940fbda9-0409-4f95-88a0-bcb0907ed8dd",
+      "author_id": "8c207f60-4f6b-4931-b474-625c831f9718",
+      "username": "neha_k",
+      "display_name": "Neha Kulkarni",
+      "title": null,
+      "body": "Sharing my notes for unit 1. Hope it helps someone before the internals. Ask questions in the comments and I will answer.",
+      "kind": "post",
+      "gif": null,
+      "reaction_count": 1,
+      "comment_count": 6,
+      "participant_count": 6,
+      "created_at": "2026-10-29T01:16:45.728Z",
+      "score": 3.008747
+    }
+  ],
+  "samples": [
+    {
+      "name": "current",
+      "run": 1,
+      "planningMs": 0.017,
+      "executionMs": 4.383
+    },
+    {
+      "name": "candidate",
+      "run": 1,
+      "planningMs": 0.25,
+      "executionMs": 5.132
+    },
+    {
+      "name": "candidate",
+      "run": 2,
+      "planningMs": 0.227,
+      "executionMs": 5.032
+    },
+    {
+      "name": "current",
+      "run": 2,
+      "planningMs": 0.021,
+      "executionMs": 4.377
+    },
+    {
+      "name": "current",
+      "run": 3,
+      "planningMs": 0.021,
+      "executionMs": 4.296
+    },
+    {
+      "name": "candidate",
+      "run": 3,
+      "planningMs": 0.307,
+      "executionMs": 5.106
+    },
+    {
+      "name": "candidate",
+      "run": 4,
+      "planningMs": 0.281,
+      "executionMs": 5.178
+    },
+    {
+      "name": "current",
+      "run": 4,
+      "planningMs": 0.029,
+      "executionMs": 5.079
+    },
+    {
+      "name": "current",
+      "run": 5,
+      "planningMs": 0.029,
+      "executionMs": 5.404
+    },
+    {
+      "name": "candidate",
+      "run": 5,
+      "planningMs": 0.394,
+      "executionMs": 6.025
+    },
+    {
+      "name": "candidate",
+      "run": 6,
+      "planningMs": 0.291,
+      "executionMs": 5.217
+    },
+    {
+      "name": "current",
+      "run": 6,
+      "planningMs": 0.028,
+      "executionMs": 4.197
+    },
+    {
+      "name": "current",
+      "run": 7,
+      "planningMs": 0.024,
+      "executionMs": 4.19
+    },
+    {
+      "name": "candidate",
+      "run": 7,
+      "planningMs": 0.391,
+      "executionMs": 5.072
+    },
+    {
+      "name": "candidate",
+      "run": 8,
+      "planningMs": 0.276,
+      "executionMs": 5.603
+    },
+    {
+      "name": "current",
+      "run": 8,
+      "planningMs": 0.025,
+      "executionMs": 3.994
+    },
+    {
+      "name": "current",
+      "run": 9,
+      "planningMs": 0.018,
+      "executionMs": 3.994
+    },
+    {
+      "name": "candidate",
+      "run": 9,
+      "planningMs": 0.267,
+      "executionMs": 4.979
+    },
+    {
+      "name": "candidate",
+      "run": 10,
+      "planningMs": 0.26,
+      "executionMs": 4.967
+    },
+    {
+      "name": "current",
+      "run": 10,
+      "planningMs": 0.017,
+      "executionMs": 3.965
+    },
+    {
+      "name": "current",
+      "run": 11,
+      "planningMs": 0.018,
+      "executionMs": 4.151
+    },
+    {
+      "name": "candidate",
+      "run": 11,
+      "planningMs": 0.33,
+      "executionMs": 5.086
+    },
+    {
+      "name": "candidate",
+      "run": 12,
+      "planningMs": 0.3,
+      "executionMs": 4.981
+    },
+    {
+      "name": "current",
+      "run": 12,
+      "planningMs": 0.018,
+      "executionMs": 3.982
+    },
+    {
+      "name": "current",
+      "run": 13,
+      "planningMs": 0.017,
+      "executionMs": 3.913
+    },
+    {
+      "name": "candidate",
+      "run": 13,
+      "planningMs": 0.299,
+      "executionMs": 5.304
+    },
+    {
+      "name": "candidate",
+      "run": 14,
+      "planningMs": 0.27,
+      "executionMs": 5.403
+    },
+    {
+      "name": "current",
+      "run": 14,
+      "planningMs": 0.021,
+      "executionMs": 4.01
+    },
+    {
+      "name": "current",
+      "run": 15,
+      "planningMs": 0.018,
+      "executionMs": 4.468
+    },
+    {
+      "name": "candidate",
+      "run": 15,
+      "planningMs": 0.473,
+      "executionMs": 6.467
+    },
+    {
+      "name": "candidate",
+      "run": 16,
+      "planningMs": 0.323,
+      "executionMs": 5.079
+    },
+    {
+      "name": "current",
+      "run": 16,
+      "planningMs": 0.019,
+      "executionMs": 4.38
+    },
+    {
+      "name": "current",
+      "run": 17,
+      "planningMs": 0.018,
+      "executionMs": 3.953
+    },
+    {
+      "name": "candidate",
+      "run": 17,
+      "planningMs": 0.305,
+      "executionMs": 5.044
+    },
+    {
+      "name": "candidate",
+      "run": 18,
+      "planningMs": 0.257,
+      "executionMs": 4.972
+    },
+    {
+      "name": "current",
+      "run": 18,
+      "planningMs": 0.017,
+      "executionMs": 3.955
+    },
+    {
+      "name": "current",
+      "run": 19,
+      "planningMs": 0.017,
+      "executionMs": 4.108
+    },
+    {
+      "name": "candidate",
+      "run": 19,
+      "planningMs": 0.297,
+      "executionMs": 5.075
+    },
+    {
+      "name": "candidate",
+      "run": 20,
+      "planningMs": 0.285,
+      "executionMs": 5.061
+    },
+    {
+      "name": "current",
+      "run": 20,
+      "planningMs": 0.021,
+      "executionMs": 3.98
+    },
+    {
+      "name": "current",
+      "run": 21,
+      "planningMs": 0.018,
+      "executionMs": 3.916
+    },
+    {
+      "name": "candidate",
+      "run": 21,
+      "planningMs": 0.269,
+      "executionMs": 5.02
+    },
+    {
+      "name": "candidate",
+      "run": 22,
+      "planningMs": 0.305,
+      "executionMs": 4.967
+    },
+    {
+      "name": "current",
+      "run": 22,
+      "planningMs": 0.021,
+      "executionMs": 3.987
+    },
+    {
+      "name": "current",
+      "run": 23,
+      "planningMs": 0.021,
+      "executionMs": 4.041
+    },
+    {
+      "name": "candidate",
+      "run": 23,
+      "planningMs": 0.46,
+      "executionMs": 5.468
+    },
+    {
+      "name": "candidate",
+      "run": 24,
+      "planningMs": 0.286,
+      "executionMs": 5.097
+    },
+    {
+      "name": "current",
+      "run": 24,
+      "planningMs": 0.028,
+      "executionMs": 4.229
+    },
+    {
+      "name": "current",
+      "run": 25,
+      "planningMs": 0.048,
+      "executionMs": 4.055
+    },
+    {
+      "name": "candidate",
+      "run": 25,
+      "planningMs": 0.319,
+      "executionMs": 5.233
+    },
+    {
+      "name": "candidate",
+      "run": 26,
+      "planningMs": 0.288,
+      "executionMs": 5.116
+    },
+    {
+      "name": "current",
+      "run": 26,
+      "planningMs": 0.024,
+      "executionMs": 4.522
+    },
+    {
+      "name": "current",
+      "run": 27,
+      "planningMs": 0.033,
+      "executionMs": 4.225
+    },
+    {
+      "name": "candidate",
+      "run": 27,
+      "planningMs": 0.278,
+      "executionMs": 5.128
+    },
+    {
+      "name": "candidate",
+      "run": 28,
+      "planningMs": 0.407,
+      "executionMs": 6.523
+    },
+    {
+      "name": "current",
+      "run": 28,
+      "planningMs": 0.028,
+      "executionMs": 5.125
+    },
+    {
+      "name": "current",
+      "run": 29,
+      "planningMs": 0.028,
+      "executionMs": 5.14
+    },
+    {
+      "name": "candidate",
+      "run": 29,
+      "planningMs": 0.5,
+      "executionMs": 7.345
+    },
+    {
+      "name": "candidate",
+      "run": 30,
+      "planningMs": 0.287,
+      "executionMs": 5.1
+    },
+    {
+      "name": "current",
+      "run": 30,
+      "planningMs": 0.024,
+      "executionMs": 4.013
+    }
+  ],
+  "explain": {
+    "current": {
+      "Plan": {
+        "Node Type": "Function Scan",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Function Name": "trending_posts",
+        "Alias": "trending_posts",
+        "Startup Cost": 0.25,
+        "Total Cost": 10.25,
+        "Plan Rows": 1000,
+        "Plan Width": 220,
+        "Actual Startup Time": 3.97,
+        "Actual Total Time": 3.97,
+        "Actual Rows": 5,
+        "Actual Loops": 1,
+        "Disabled": false,
+        "Shared Hit Blocks": 95,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning": {
+        "Shared Hit Blocks": 0,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.019,
+      "Triggers": [],
+      "Execution Time": 3.98
+    },
+    "candidate": {
+      "Plan": {
+        "Node Type": "Limit",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 3348.56,
+        "Total Cost": 3348.57,
+        "Plan Rows": 5,
+        "Plan Width": 262,
+        "Actual Startup Time": 5.038,
+        "Actual Total Time": 5.041,
+        "Actual Rows": 5,
+        "Actual Loops": 1,
+        "Disabled": false,
+        "Shared Hit Blocks": 1230,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 3348.56,
+            "Total Cost": 3349.1,
+            "Plan Rows": 214,
+            "Plan Width": 262,
+            "Actual Startup Time": 5.038,
+            "Actual Total Time": 5.04,
+            "Actual Rows": 5,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Sort Key": [
+              "(((((((p.reaction_count * 2) + (p.comment_count * 3)) + COALESCE((count(DISTINCT cm.author_id)), '0'::bigint)))::numeric / power((GREATEST((EXTRACT(epoch FROM (now() - p.created_at)) / 3600.0), '0'::numeric) + '2'::numeric), 1.5)))::real) DESC",
+              "p.created_at DESC"
+            ],
+            "Sort Method": "top-N heapsort",
+            "Sort Space Used": 26,
+            "Sort Space Type": "Memory",
+            "Shared Hit Blocks": 1230,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Nested Loop",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Join Type": "Left",
+                "Startup Cost": 15.37,
+                "Total Cost": 3345.01,
+                "Plan Rows": 214,
+                "Plan Width": 262,
+                "Actual Startup Time": 0.055,
+                "Actual Total Time": 4.947,
+                "Actual Rows": 214,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Inner Unique": false,
+                "Shared Hit Blocks": 1230,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Nested Loop",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Join Type": "Inner",
+                    "Startup Cost": 0.16,
+                    "Total Cost": 76.38,
+                    "Plan Rows": 214,
+                    "Plan Width": 254,
+                    "Actual Startup Time": 0.018,
+                    "Actual Total Time": 0.244,
+                    "Actual Rows": 214,
+                    "Actual Loops": 1,
+                    "Disabled": false,
+                    "Inner Unique": true,
+                    "Shared Hit Blocks": 82,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Seq Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Relation Name": "posts",
+                        "Alias": "p",
+                        "Startup Cost": 0,
+                        "Total Cost": 66.8,
+                        "Plan Rows": 214,
+                        "Plan Width": 190,
+                        "Actual Startup Time": 0.009,
+                        "Actual Total Time": 0.114,
+                        "Actual Rows": 214,
+                        "Actual Loops": 1,
+                        "Disabled": false,
+                        "Filter": "((deleted_at IS NULL) AND (status = 'published'::content_status) AND (created_at > (now() - '72:00:00'::interval)))",
+                        "Rows Removed by Filter": 26,
+                        "Shared Hit Blocks": 62,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      },
+                      {
+                        "Node Type": "Memoize",
+                        "Parent Relationship": "Inner",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 0.16,
+                        "Total Cost": 0.4,
+                        "Plan Rows": 1,
+                        "Plan Width": 80,
+                        "Actual Startup Time": 0,
+                        "Actual Total Time": 0,
+                        "Actual Rows": 1,
+                        "Actual Loops": 214,
+                        "Disabled": false,
+                        "Cache Key": "p.author_id",
+                        "Cache Mode": "logical",
+                        "Cache Hits": 204,
+                        "Cache Misses": 10,
+                        "Cache Evictions": 0,
+                        "Cache Overflows": 0,
+                        "Peak Memory Usage": 2,
+                        "Shared Hit Blocks": 20,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Scan Direction": "Forward",
+                            "Index Name": "profiles_pkey",
+                            "Relation Name": "profiles",
+                            "Alias": "pr",
+                            "Startup Cost": 0.15,
+                            "Total Cost": 0.39,
+                            "Plan Rows": 1,
+                            "Plan Width": 80,
+                            "Actual Startup Time": 0.002,
+                            "Actual Total Time": 0.002,
+                            "Actual Rows": 1,
+                            "Actual Loops": 10,
+                            "Disabled": false,
+                            "Index Cond": "(id = p.author_id)",
+                            "Rows Removed by Index Recheck": 0,
+                            "Index Searches": 10,
+                            "Shared Hit Blocks": 20,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Node Type": "Aggregate",
+                    "Strategy": "Plain",
+                    "Partial Mode": "Simple",
+                    "Parent Relationship": "Inner",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 15.22,
+                    "Total Cost": 15.23,
+                    "Plan Rows": 1,
+                    "Plan Width": 8,
+                    "Actual Startup Time": 0.006,
+                    "Actual Total Time": 0.006,
+                    "Actual Rows": 1,
+                    "Actual Loops": 214,
+                    "Disabled": false,
+                    "Shared Hit Blocks": 1148,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Sort",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Startup Cost": 15.19,
+                        "Total Cost": 15.2,
+                        "Plan Rows": 6,
+                        "Plan Width": 16,
+                        "Actual Startup Time": 0.005,
+                        "Actual Total Time": 0.005,
+                        "Actual Rows": 3.36,
+                        "Actual Loops": 214,
+                        "Disabled": false,
+                        "Sort Key": [
+                          "cm.author_id"
+                        ],
+                        "Sort Method": "quicksort",
+                        "Sort Space Used": 25,
+                        "Sort Space Type": "Memory",
+                        "Shared Hit Blocks": 1148,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Bitmap Heap Scan",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Relation Name": "comments",
+                            "Alias": "cm",
+                            "Startup Cost": 4.32,
+                            "Total Cost": 15.11,
+                            "Plan Rows": 6,
+                            "Plan Width": 16,
+                            "Actual Startup Time": 0.003,
+                            "Actual Total Time": 0.004,
+                            "Actual Rows": 3.36,
+                            "Actual Loops": 214,
+                            "Disabled": false,
+                            "Recheck Cond": "(post_id = p.id)",
+                            "Rows Removed by Index Recheck": 0,
+                            "Filter": "((deleted_at IS NULL) AND (status = 'published'::content_status))",
+                            "Rows Removed by Filter": 0,
+                            "Exact Heap Blocks": 720,
+                            "Lossy Heap Blocks": 0,
+                            "Shared Hit Blocks": 1148,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0,
+                            "Plans": [
+                              {
+                                "Node Type": "Bitmap Index Scan",
+                                "Parent Relationship": "Outer",
+                                "Parallel Aware": false,
+                                "Async Capable": false,
+                                "Index Name": "comments_post_idx",
+                                "Startup Cost": 0,
+                                "Total Cost": 4.32,
+                                "Plan Rows": 6,
+                                "Plan Width": 0,
+                                "Actual Startup Time": 0.001,
+                                "Actual Total Time": 0.001,
+                                "Actual Rows": 3.36,
+                                "Actual Loops": 214,
+                                "Disabled": false,
+                                "Index Cond": "(post_id = p.id)",
+                                "Index Searches": 214,
+                                "Shared Hit Blocks": 428,
+                                "Shared Read Blocks": 0,
+                                "Shared Dirtied Blocks": 0,
+                                "Shared Written Blocks": 0,
+                                "Local Hit Blocks": 0,
+                                "Local Read Blocks": 0,
+                                "Local Dirtied Blocks": 0,
+                                "Local Written Blocks": 0,
+                                "Temp Read Blocks": 0,
+                                "Temp Written Blocks": 0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 0,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.28,
+      "Triggers": [],
+      "Execution Time": 5.082
+    }
+  }
+}
