@@ -5,21 +5,20 @@ import { Icon } from '@/components/ui/icons';
 import { SearchEntry } from '@/components/search/SearchEntry';
 
 /**
- * The threshold combines the personalized greeting with the real Clubs and
- * Gigs navigation tiles. The counts remain sourced from the loaded feed.
+ * The threshold combines the personalized greeting with campus shortcuts.
+ * The counts remain sourced from the loaded feed.
  */
 
 /**
  * The campus areas that exist as routes, offered *after* the feed as the page's
  * "keep going" row. No counts, no invented activity.
  *
- * Clubs and Gigs are deliberately absent: they are the two feature tiles above
- * the feed (`HomeFeatureTiles`), and a destination does not need to be
- * announced twice on the same screen.
+ * Gigs remains here after moving out of the hero; the four primary shortcuts
+ * are offered above the feed instead.
  */
 const DISCOVERY = [
   { href: ROUTES.explore, label: 'Explore', icon: 'search' },
-  { href: '/campus/events', label: 'Events', icon: 'calendar' },
+  { href: ROUTES.gigs, label: 'Gigs', icon: 'briefcase' },
   { href: ROUTES.communities, label: 'Communities', icon: 'users' },
   { href: '/explore/projects', label: 'Projects', icon: 'grid' },
   { href: ROUTES.market, label: 'Marketplace', icon: 'tag' },
