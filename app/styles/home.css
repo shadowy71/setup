@@ -5,7 +5,7 @@
 
      1. THE THRESHOLD (`.home-pulse`) — an open band of environment: a small
         live marker, the greeting set as editorial display type, one primary
-        action, the search door, real campus counts, and two navigation tiles.
+        action, the search door, real campus counts, and four navigation tiles.
         The greeting sits directly in the environment, not in a card.
      2. THE WORKS (`.home-body`) — the composer and the stream on the left, the
         rail of small destinations on the right. Every entry is an island with
@@ -153,7 +153,7 @@
    width instead of assuming a desktop viewport always has room. */
 @container home-hero (min-width: 52rem) {
   .home-pulse__grid {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(0, 3fr) minmax(21rem, 2fr);
     align-items: start;
   }
 }
@@ -484,26 +484,17 @@
 }
 
 /* --------------------------------------------------------------------------
-   THE TWO DOORS — Clubs and Gigs feature tiles (HomeFeatureTiles).
-
-   Tier-3 featured glass (the composer's material, from surfaces.css) with
-   each destination's own light: Clubs is lit teal from the leading corner,
-   Gigs carries the restrained sand counter-glow from the trailing one. The
-   whole card is the link; the glow layer is decoration and never takes a
-   pointer event. Text sits on the backed part of the sheet, never inside a
-   fading reflection, and the two tiles keep equal weight side by side,
-   then stack with full-size touch targets on phones.
+   CAMPUS AT A GLANCE — compact, equal navigation tiles in the hero.
+   The cards use dark, opaque-enough surfaces in both themes so the ambient
+   artwork stays visible around them without compromising their text.
    -------------------------------------------------------------------------- */
-
 .home-features {
   container: home-features / inline-size;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
   min-width: 0;
 }
 
 .home-features__title {
+  margin-bottom: 0.875rem;
   font-family: var(--font-micro), ui-monospace, monospace;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -515,216 +506,109 @@
 .home-features__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.75rem;
+  grid-auto-rows: 1fr;
+  gap: 0.875rem;
 }
 
-/* Cards become a pair only when their own container can accommodate them. */
-@container home-features (min-width: 21rem) {
+@container home-features (min-width: 19rem) {
   .home-features__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .feature-tile {
-    flex-direction: column;
   }
 }
 
 .feature-tile {
+  --tile-accent: #8bdde9;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid rgba(174, 220, 232, 0.19);
+  border-radius: 1.125rem;
+  color: #f3f8fa;
+  text-decoration: none;
+  background: radial-gradient(circle at 0% 0%, rgba(59, 177, 195, 0.15), transparent 65%),
+    linear-gradient(145deg, #152e46, #0d1c31);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 30px -22px rgba(0, 0, 0, 0.65);
+  transition: border-color 200ms ease, box-shadow 200ms ease, filter 200ms ease;
+}
+
+.feature-tile--events {
+  --tile-accent: #e7bb92;
+  background: radial-gradient(circle at 100% 0%, rgba(203, 153, 112, 0.13), transparent 65%),
+    linear-gradient(145deg, #202c49, #171b35);
+}
+
+.feature-tile--timetable {
+  --tile-accent: #8ddedb;
+  background: radial-gradient(circle at 0% 0%, rgba(69, 191, 181, 0.14), transparent 65%),
+    linear-gradient(145deg, #123941, #102335);
+}
+
+.feature-tile--clubs {
+  --tile-accent: #c7d99a;
+  background: radial-gradient(circle at 100% 0%, rgba(170, 190, 111, 0.13), transparent 65%),
+    linear-gradient(145deg, #183a39, #102332);
+}
+
+.feature-tile__top {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  min-height: 0;
-  min-width: 0;
-  padding: 0.875rem 0.9375rem;
-  color: var(--cp-text-primary);
-  text-decoration: none;
-}
-
-/* Long names and long words wrap instead of pushing the card wide. */
-.feature-tile__title,
-.feature-tile__copy {
-  overflow-wrap: anywhere;
-}
-
-/* The tile's own light. Under the content, inert to pointers. */
-.feature-tile > .feature-tile__glow {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.feature-tile--clubs > .feature-tile__glow {
-  background-image: radial-gradient(
-    72% 95% at 0% 0%,
-    color-mix(in oklab, var(--cp-bg-accent) 17%, transparent),
-    transparent 66%
-  );
-}
-
-.feature-tile--gigs {
-  border-color: color-mix(in oklab, var(--brand-sand) 30%, var(--cp-glass-border));
-}
-
-.feature-tile--gigs > .feature-tile__glow {
-  background-image:
-    radial-gradient(72% 95% at 100% 0%, color-mix(in oklab, var(--brand-sand) 11%, transparent), transparent 66%),
-    radial-gradient(55% 65% at 108% 112%, var(--cp-glass-warmth), transparent 72%);
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--tile-accent);
 }
 
 .feature-tile__icon {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: var(--radius-md);
-  border: 1px solid;
-  box-shadow: var(--shadow-inset-top);
-}
-
-.feature-tile--clubs .feature-tile__icon {
-  color: var(--cp-accent-cyan);
-  border-color: color-mix(in oklab, var(--cp-bg-accent) 48%, var(--cp-glass-border));
-  background-image: linear-gradient(160deg, color-mix(in oklab, var(--cp-bg-accent) 20%, transparent), transparent 68%);
-  box-shadow:
-    var(--shadow-inset-top),
-    0 0 24px -10px var(--cp-glow-accent);
-}
-
-.feature-tile--gigs .feature-tile__icon {
-  color: var(--brand-sand);
-  border-color: color-mix(in oklab, var(--brand-sand) 42%, var(--cp-glass-border));
-  background-image: linear-gradient(160deg, color-mix(in oklab, var(--brand-sand) 14%, transparent), transparent 68%);
-  box-shadow:
-    var(--shadow-inset-top),
-    0 0 24px -10px var(--cp-glow-warm);
-}
-
-.feature-tile__body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-}
-
-.feature-tile__eyebrow {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.feature-tile--clubs .feature-tile__eyebrow {
-  color: var(--cp-accent-cyan);
-}
-
-.feature-tile--gigs .feature-tile__eyebrow {
-  color: var(--brand-sand);
-}
-
-.feature-tile__title {
-  display: block;
-  margin-top: 0.3rem;
-  font-size: clamp(1.0625rem, 1.2vw + 0.6rem, 1.25rem);
-  font-weight: 680;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.feature-tile__copy {
-  display: block;
-  margin-top: 0.35rem;
-  max-width: 42ch;
-  font-size: 0.8125rem;
-  line-height: 1.55;
-  color: var(--cp-text-secondary);
-}
-
-/* Paired cards use the shorter description; a single card has room for the
-   full sentence. Exactly one copy is displayed and available to readers. */
-.feature-tile__copy--short {
-  display: none;
-}
-
-@container home-features (min-width: 21rem) {
-  .feature-tile__copy--long { display: none; }
-  .feature-tile__copy--short { display: block; }
-}
-
-.feature-tile__cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin-top: auto;
-  padding-top: 0.625rem;
-  font-size: 0.8125rem;
-  font-weight: 650;
-  color: var(--cp-text-primary);
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid color-mix(in oklab, var(--tile-accent) 30%, transparent);
+  border-radius: 0.7rem;
+  background: color-mix(in oklab, var(--tile-accent) 10%, transparent);
 }
 
 .feature-tile__arrow {
-  transition: transform 0.2s var(--ease-out-soft);
+  opacity: 0.75;
+  transition: transform 200ms ease;
 }
 
-.feature-tile--clubs .feature-tile__arrow {
-  color: var(--cp-accent-cyan);
+.feature-tile__title {
+  margin-top: 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 680;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
-.feature-tile--gigs .feature-tile__arrow {
-  color: var(--brand-sand);
+.feature-tile__copy {
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #c3d2db;
+  overflow-wrap: anywhere;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .feature-tile:hover {
-    transform: translateY(-3px);
-    border-color: color-mix(in oklab, var(--cp-bg-accent) 54%, var(--cp-glass-border));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.26),
-      0 34px 74px -42px var(--cp-scrim),
-      0 0 52px -26px var(--cp-glow-accent);
+    color: #fff;
+    text-decoration: none;
+    border-color: color-mix(in oklab, var(--tile-accent) 55%, transparent);
+    filter: brightness(1.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 16px 32px -22px rgba(0, 0, 0, 0.8);
   }
-
-  .feature-tile--gigs:hover {
-    border-color: color-mix(in oklab, var(--brand-sand) 52%, var(--cp-glass-border));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.26),
-      0 34px 74px -42px var(--cp-scrim),
-      0 0 52px -26px var(--cp-glow-warm);
-  }
-
-  .feature-tile:hover .feature-tile__arrow {
-    transform: translate(2px, -2px);
-  }
-}
-
-.feature-tile:active {
-  transform: translateY(-1px);
+  .feature-tile:hover .feature-tile__arrow { transform: translate(2px, -2px); }
 }
 
 .feature-tile:focus-visible {
   outline: 2px solid var(--cp-focus);
   outline-offset: 3px;
-  border-color: var(--cp-focus);
-}
-
-.feature-tile:focus-visible .feature-tile__arrow {
-  transform: translate(2px, -2px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .feature-tile,
-  .feature-tile__arrow {
-    transition: none;
-  }
-
-  .feature-tile:hover,
-  .feature-tile:active,
-  .feature-tile:hover .feature-tile__arrow,
-  .feature-tile:focus-visible .feature-tile__arrow {
-    transform: none;
-  }
+  .feature-tile, .feature-tile__arrow { transition: none; }
+  .feature-tile:hover .feature-tile__arrow { transform: none; }
 }
 
 /* --------------------------------------------------------------------------
