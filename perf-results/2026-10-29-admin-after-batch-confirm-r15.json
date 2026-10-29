@@ -1,0 +1,1058 @@
+{
+  "label": "2026-10-29-admin-after-batch-confirm-r15",
+  "base": "http://127.0.0.1:3100",
+  "rtt": 25,
+  "user": "admin",
+  "extended": false,
+  "requestedRuns": 15,
+  "sourceRevision": "dca3351fdf77aaa65a344302ab4525bf65ea927f",
+  "nodeVersion": "v22.22.3",
+  "platform": "linux-x64",
+  "measuredAt": "2026-10-29T16:46:54.489Z",
+  "pages": [
+    {
+      "label": "Admin · counts",
+      "href": "/admin?tab=counts",
+      "pageStart": 1793292414254,
+      "ttfb": 11.599359999999933,
+      "total": 223.35011199999963,
+      "bytes": 63994,
+      "status": 200,
+      "requests": 5,
+      "supabaseMs": 260,
+      "slowestMs": 150,
+      "slowest": {
+        "t0": 1793292414321,
+        "t1": 1793292414471,
+        "ms": 150,
+        "method": "POST",
+        "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+        "query": "",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 299
+      },
+      "broken": false,
+      "requestBytes": 5186,
+      "spreads": {
+        "ttfb": [
+          9.568387999999686,
+          17.807945000000018
+        ],
+        "total": [
+          214.56800599999997,
+          248.35240900000008
+        ],
+        "requests": [
+          5,
+          5
+        ],
+        "supabaseMs": [
+          251,
+          282
+        ]
+      },
+      "sampleRuns": [
+        {
+          "run": 1,
+          "status": 200,
+          "ttfb": 11.679667999999992,
+          "total": 231.568938,
+          "bytes": 63994,
+          "epochStart": 1793292410983,
+          "requests": 5,
+          "supabaseMs": 272,
+          "slowestMs": 157,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292410990,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292411019,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292411053,
+              "ms": 29,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292411053,
+              "ms": 29,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292411053,
+              "ms": 157,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 2,
+          "status": 200,
+          "ttfb": 10.88114900000005,
+          "total": 223.41152499999998,
+          "bytes": 63994,
+          "epochStart": 1793292411224,
+          "requests": 5,
+          "supabaseMs": 260,
+          "slowestMs": 145,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292411235,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292411264,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292411297,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292411297,
+              "ms": 30,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292411297,
+              "ms": 145,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 3,
+          "status": 200,
+          "ttfb": 11.523382000000083,
+          "total": 237.06908599999997,
+          "bytes": 63994,
+          "epochStart": 1793292411456,
+          "requests": 5,
+          "supabaseMs": 276,
+          "slowestMs": 163,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292411464,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292411492,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292411525,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292411525,
+              "ms": 29,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292411525,
+              "ms": 163,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 4,
+          "status": 200,
+          "ttfb": 17.082832000000053,
+          "total": 248.35240900000008,
+          "bytes": 63994,
+          "epochStart": 1793292411702,
+          "requests": 5,
+          "supabaseMs": 277,
+          "slowestMs": 165,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292411717,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292411745,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292411779,
+              "ms": 27,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292411778,
+              "ms": 29,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292411778,
+              "ms": 165,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 5,
+          "status": 200,
+          "ttfb": 13.004905999999892,
+          "total": 220.81505399999992,
+          "bytes": 63994,
+          "epochStart": 1793292411959,
+          "requests": 5,
+          "supabaseMs": 256,
+          "slowestMs": 145,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292411968,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292411996,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292412029,
+              "ms": 27,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292412031,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292412029,
+              "ms": 145,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 6,
+          "status": 200,
+          "ttfb": 11.599359999999933,
+          "total": 229.31833600000004,
+          "bytes": 63994,
+          "epochStart": 1793292412189,
+          "requests": 5,
+          "supabaseMs": 272,
+          "slowestMs": 157,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292412195,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292412224,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292412257,
+              "ms": 28,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292412257,
+              "ms": 30,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292412257,
+              "ms": 157,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 7,
+          "status": 200,
+          "ttfb": 17.807945000000018,
+          "total": 232.88270999999986,
+          "bytes": 63994,
+          "epochStart": 1793292412428,
+          "requests": 5,
+          "supabaseMs": 271,
+          "slowestMs": 159,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292412436,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292412464,
+              "ms": 29,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292412496,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292412496,
+              "ms": 29,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292412496,
+              "ms": 159,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 8,
+          "status": 200,
+          "ttfb": 12.574317000000065,
+          "total": 214.56800599999997,
+          "bytes": 63994,
+          "epochStart": 1793292412668,
+          "requests": 5,
+          "supabaseMs": 254,
+          "slowestMs": 142,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292412675,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292412704,
+              "ms": 29,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292412736,
+              "ms": 28,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292412737,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292412736,
+              "ms": 142,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 9,
+          "status": 200,
+          "ttfb": 11.5220589999999,
+          "total": 223.35011199999963,
+          "bytes": 63994,
+          "epochStart": 1793292412890,
+          "requests": 5,
+          "supabaseMs": 282,
+          "slowestMs": 151,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292412897,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292412926,
+              "ms": 29,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292412959,
+              "ms": 36,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292412958,
+              "ms": 39,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292412959,
+              "ms": 151,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 10,
+          "status": 200,
+          "ttfb": 11.65221100000008,
+          "total": 231.390218,
+          "bytes": 63994,
+          "epochStart": 1793292413121,
+          "requests": 5,
+          "supabaseMs": 251,
+          "slowestMs": 140,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292413129,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292413157,
+              "ms": 29,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292413189,
+              "ms": 28,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292413190,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292413189,
+              "ms": 140,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 11,
+          "status": 200,
+          "ttfb": 15.485443999999916,
+          "total": 219.58033699999987,
+          "bytes": 63994,
+          "epochStart": 1793292413359,
+          "requests": 5,
+          "supabaseMs": 257,
+          "slowestMs": 146,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292413367,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292413395,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292413429,
+              "ms": 27,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292413428,
+              "ms": 28,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292413428,
+              "ms": 146,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 12,
+          "status": 200,
+          "ttfb": 9.708618999999999,
+          "total": 216.51516700000002,
+          "bytes": 63994,
+          "epochStart": 1793292413586,
+          "requests": 5,
+          "supabaseMs": 256,
+          "slowestMs": 143,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292413592,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292413621,
+              "ms": 31,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292413655,
+              "ms": 27,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292413656,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292413655,
+              "ms": 143,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 13,
+          "status": 200,
+          "ttfb": 10.888543000000027,
+          "total": 214.86906499999986,
+          "bytes": 63994,
+          "epochStart": 1793292413809,
+          "requests": 5,
+          "supabaseMs": 254,
+          "slowestMs": 142,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292413817,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292413845,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292413877,
+              "ms": 28,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292413878,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292413878,
+              "ms": 142,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 14,
+          "status": 200,
+          "ttfb": 9.864198999999644,
+          "total": 215.17638899999974,
+          "bytes": 63994,
+          "epochStart": 1793292414031,
+          "requests": 5,
+          "supabaseMs": 255,
+          "slowestMs": 141,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292414038,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292414066,
+              "ms": 31,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292414101,
+              "ms": 28,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292414102,
+              "ms": 29,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292414101,
+              "ms": 141,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        },
+        {
+          "run": 15,
+          "status": 200,
+          "ttfb": 9.568387999999686,
+          "total": 221.21278399999983,
+          "bytes": 63994,
+          "epochStart": 1793292414254,
+          "requests": 5,
+          "supabaseMs": 261,
+          "slowestMs": 150,
+          "requestBytes": 5186,
+          "entries": [
+            {
+              "t0": 1793292414261,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 428
+            },
+            {
+              "t0": 1793292414289,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 4457
+            },
+            {
+              "t0": 1793292414321,
+              "ms": 28,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 2
+            },
+            {
+              "t0": 1793292414322,
+              "ms": 27,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793292414321,
+              "ms": 150,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 299
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "waterfalls": {
+    "/admin?tab=counts": [
+      {
+        "ms": 26,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 428
+      },
+      {
+        "ms": 30,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 4457
+      },
+      {
+        "ms": 28,
+        "method": "POST",
+        "path": "/rest/v1/rpc/messaging_unread_counts",
+        "status": 200,
+        "bytes": 2
+      },
+      {
+        "ms": 27,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 150,
+        "method": "POST",
+        "path": "/rest/v1/rpc/campus_admin_dashboard_counts",
+        "status": 200,
+        "bytes": 299
+      }
+    ]
+  }
+}

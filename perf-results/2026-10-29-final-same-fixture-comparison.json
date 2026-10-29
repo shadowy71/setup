@@ -1,0 +1,1256 @@
+{
+  "label": "2026-10-29-final-same-fixture-comparison",
+  "method": "Five-run medians from identical seeded fixture, 25 ms harness RTT, production next start; all runs and exact upstream traces remain in source artifacts.",
+  "caution": "Synthetic lab timings, not production or real-user metrics. Working-tree sourceRevision remains the base commit hash.",
+  "users": {
+    "student": {
+      "beforeArtifact": "perf-results/2026-10-29-baseline-v2-student-extended-r5.json",
+      "afterArtifact": "perf-results/2026-10-29-optimized-final-v2-student-extended-r5.json",
+      "rttMs": 25,
+      "runs": 5,
+      "routes": [
+        {
+          "label": "Home",
+          "href": "/home",
+          "before": {
+            "totalMs": 142.95453499999996,
+            "spreadMs": [
+              129.45449799999994,
+              156.38971300000003
+            ],
+            "supabaseMs": 142,
+            "requests": 4,
+            "bytes": 75932
+          },
+          "after": {
+            "totalMs": 119.56798800000001,
+            "spreadMs": [
+              108.45565799999997,
+              135.41512499999993
+            ],
+            "supabaseMs": 112,
+            "requests": 4,
+            "bytes": 75946
+          },
+          "deltaMs": -23.38654699999995,
+          "deltaPercent": -16.359429940435227
+        },
+        {
+          "label": "Campus hub",
+          "href": "/campus",
+          "before": {
+            "totalMs": 154.79651599999988,
+            "spreadMs": [
+              151.3614600000003,
+              187.53048899999976
+            ],
+            "supabaseMs": 483,
+            "requests": 10,
+            "bytes": 96717
+          },
+          "after": {
+            "totalMs": 136.6982109999999,
+            "spreadMs": [
+              129.05465300000014,
+              157.77312000000006
+            ],
+            "supabaseMs": 349,
+            "requests": 10,
+            "bytes": 97781
+          },
+          "deltaMs": -18.098304999999982,
+          "deltaPercent": -11.691674636914952
+        },
+        {
+          "label": "Noticeboard",
+          "href": "/campus/noticeboard",
+          "before": {
+            "totalMs": 142.01181099999985,
+            "spreadMs": [
+              127.13738000000012,
+              149.29274399999986
+            ],
+            "supabaseMs": 141,
+            "requests": 4,
+            "bytes": 124723
+          },
+          "after": {
+            "totalMs": 111.77259400000003,
+            "spreadMs": [
+              108.52017599999999,
+              114.67331100000001
+            ],
+            "supabaseMs": 112,
+            "requests": 4,
+            "bytes": 124737
+          },
+          "deltaMs": -30.239216999999826,
+          "deltaPercent": -21.293452134062186
+        },
+        {
+          "label": "Explore",
+          "href": "/explore",
+          "before": {
+            "totalMs": 202.79496900000004,
+            "spreadMs": [
+              190.81214200000022,
+              220.2878700000001
+            ],
+            "supabaseMs": 268,
+            "requests": 5,
+            "bytes": 88027
+          },
+          "after": {
+            "totalMs": 171.24521499999992,
+            "spreadMs": [
+              166.9590860000003,
+              184.13031899999987
+            ],
+            "supabaseMs": 212,
+            "requests": 5,
+            "bytes": 88041
+          },
+          "deltaMs": -31.54975400000012,
+          "deltaPercent": -15.557463854046652
+        },
+        {
+          "label": "Communities",
+          "href": "/communities",
+          "before": {
+            "totalMs": 138.34424299999955,
+            "spreadMs": [
+              137.307589,
+              144.40449400000034
+            ],
+            "supabaseMs": 210,
+            "requests": 6,
+            "bytes": 80339
+          },
+          "after": {
+            "totalMs": 114.61175300000014,
+            "spreadMs": [
+              110.78733399999965,
+              119.03019700000004
+            ],
+            "supabaseMs": 179,
+            "requests": 6,
+            "bytes": 80353
+          },
+          "deltaMs": -23.732489999999416,
+          "deltaPercent": -17.15466396386259
+        },
+        {
+          "label": "Marketplace",
+          "href": "/market",
+          "before": {
+            "totalMs": 185.89145700000063,
+            "spreadMs": [
+              180.2503569999999,
+              206.31656699999985
+            ],
+            "supabaseMs": 541,
+            "requests": 11,
+            "bytes": 135866
+          },
+          "after": {
+            "totalMs": 169.0045540000001,
+            "spreadMs": [
+              167.2772960000002,
+              202.2160189999995
+            ],
+            "supabaseMs": 446,
+            "requests": 11,
+            "bytes": 135880
+          },
+          "deltaMs": -16.88690300000053,
+          "deltaPercent": -9.084281371790244
+        },
+        {
+          "label": "Notifications",
+          "href": "/notifications",
+          "before": {
+            "totalMs": 145.11742400000003,
+            "spreadMs": [
+              131.55434700000023,
+              156.61853900000006
+            ],
+            "supabaseMs": 177,
+            "requests": 5,
+            "bytes": 108281
+          },
+          "after": {
+            "totalMs": 112.21915600000011,
+            "spreadMs": [
+              107.93880999999965,
+              122.33706600000005
+            ],
+            "supabaseMs": 145,
+            "requests": 5,
+            "bytes": 108252
+          },
+          "deltaMs": -32.898267999999916,
+          "deltaPercent": -22.67010197204156
+        },
+        {
+          "label": "Chat list",
+          "href": "/chat",
+          "before": {
+            "totalMs": 201.95687200000066,
+            "spreadMs": [
+              187.42258800000036,
+              209.97128900000098
+            ],
+            "supabaseMs": 307,
+            "requests": 8,
+            "bytes": 68618
+          },
+          "after": {
+            "totalMs": 166.50020099999983,
+            "spreadMs": [
+              165.17849699999988,
+              177.11868500000037
+            ],
+            "supabaseMs": 235,
+            "requests": 8,
+            "bytes": 68632
+          },
+          "deltaMs": -35.456671000000824,
+          "deltaPercent": -17.556555837327835
+        },
+        {
+          "label": "Chat thread",
+          "href": "/chat/27004beb-6883-46bd-aeaa-5b2acaecb885",
+          "before": {
+            "totalMs": 242.63193900000078,
+            "spreadMs": [
+              239.99178799999936,
+              247.19025699999838
+            ],
+            "supabaseMs": 373,
+            "requests": 10,
+            "bytes": 113623
+          },
+          "after": {
+            "totalMs": 215.74222200000077,
+            "spreadMs": [
+              214.53256599999986,
+              248.5223220000007
+            ],
+            "supabaseMs": 302,
+            "requests": 10,
+            "bytes": 113635
+          },
+          "deltaMs": -26.88971700000002,
+          "deltaPercent": -11.082513337207404
+        },
+        {
+          "label": "Profile (own)",
+          "href": "/profile",
+          "before": {
+            "totalMs": 199.747648999999,
+            "spreadMs": [
+              182.75147600000128,
+              256.86275299999943
+            ],
+            "supabaseMs": 572,
+            "requests": 12,
+            "bytes": 205928
+          },
+          "after": {
+            "totalMs": 176.9901059999993,
+            "spreadMs": [
+              165.71047999999973,
+              180.94688900000074
+            ],
+            "supabaseMs": 455,
+            "requests": 12,
+            "bytes": 205942
+          },
+          "deltaMs": -22.757542999999714,
+          "deltaPercent": -11.393146860016273
+        },
+        {
+          "label": "Settings",
+          "href": "/settings",
+          "before": {
+            "totalMs": 132.48754499999995,
+            "spreadMs": [
+              120.7312409999995,
+              139.74261600000136
+            ],
+            "supabaseMs": 172,
+            "requests": 5,
+            "bytes": 59431
+          },
+          "after": {
+            "totalMs": 105.96060500000021,
+            "spreadMs": [
+              104.06493600000067,
+              106.52379099999962
+            ],
+            "supabaseMs": 144,
+            "requests": 5,
+            "bytes": 59445
+          },
+          "deltaMs": -26.52693999999974,
+          "deltaPercent": -20.02221416360289
+        },
+        {
+          "label": "Public profile",
+          "href": "/user/aarav_p",
+          "before": {
+            "totalMs": 206.3180080000002,
+            "spreadMs": [
+              180.7051760000013,
+              234.27896499999952
+            ],
+            "supabaseMs": 622,
+            "requests": 14,
+            "bytes": 205445
+          },
+          "after": {
+            "totalMs": 178.62731899999926,
+            "spreadMs": [
+              169.71287200000006,
+              201.95250900000065
+            ],
+            "supabaseMs": 501,
+            "requests": 14,
+            "bytes": 205459
+          },
+          "deltaMs": -27.69068900000093,
+          "deltaPercent": -13.421363102730666
+        },
+        {
+          "label": "Post detail",
+          "href": "/post/2e5225a1-a54d-4f4a-9945-9bf24a815fd7",
+          "before": {
+            "totalMs": 160.9220949999999,
+            "spreadMs": [
+              155.56808099999944,
+              179.70402100000138
+            ],
+            "supabaseMs": 278,
+            "requests": 8,
+            "bytes": 89527
+          },
+          "after": {
+            "totalMs": 138.2127760000003,
+            "spreadMs": [
+              135.19611200000145,
+              147.3284309999999
+            ],
+            "supabaseMs": 235,
+            "requests": 8,
+            "bytes": 89541
+          },
+          "deltaMs": -22.709318999999596,
+          "deltaPercent": -14.11199562123499
+        },
+        {
+          "label": "Home feed API",
+          "href": "/api/home/feed",
+          "before": {
+            "totalMs": 206.44724999999926,
+            "spreadMs": [
+              196.86929800000144,
+              218.62511500000073
+            ],
+            "supabaseMs": 300,
+            "requests": 8,
+            "bytes": 6586
+          },
+          "after": {
+            "totalMs": 199.28545499999927,
+            "spreadMs": [
+              181.75473500000044,
+              205.10727399999996
+            ],
+            "supabaseMs": 283,
+            "requests": 8,
+            "bytes": 6586
+          },
+          "deltaMs": -7.161794999999984,
+          "deltaPercent": -3.4690677642836167
+        },
+        {
+          "label": "Gigs",
+          "href": "/gigs",
+          "before": {
+            "totalMs": 174.2354869999981,
+            "spreadMs": [
+              160.65740800000094,
+              247.98913200000243
+            ],
+            "supabaseMs": 474,
+            "requests": 12,
+            "bytes": 128856
+          },
+          "after": {
+            "totalMs": 155.95146399999976,
+            "spreadMs": [
+              146.39924299999984,
+              172.62896799999908
+            ],
+            "supabaseMs": 396,
+            "requests": 12,
+            "bytes": 128870
+          },
+          "deltaMs": -18.284022999998342,
+          "deltaPercent": -10.493857086644203
+        },
+        {
+          "label": "Clubs",
+          "href": "/clubs",
+          "before": {
+            "totalMs": 165.34479400000055,
+            "spreadMs": [
+              140.457276000001,
+              167.2142160000003
+            ],
+            "supabaseMs": 311,
+            "requests": 8,
+            "bytes": 259607
+          },
+          "after": {
+            "totalMs": 125.05933299999924,
+            "spreadMs": [
+              123.22948299999916,
+              143.91255399999864
+            ],
+            "supabaseMs": 259,
+            "requests": 8,
+            "bytes": 259535
+          },
+          "deltaMs": -40.285461000001305,
+          "deltaPercent": -24.364517337026754
+        },
+        {
+          "label": "Campus events",
+          "href": "/campus/events",
+          "before": {
+            "totalMs": 172.00289200000043,
+            "spreadMs": [
+              169.58457799999815,
+              178.3417389999995
+            ],
+            "supabaseMs": 234,
+            "requests": 7,
+            "bytes": 91760
+          },
+          "after": {
+            "totalMs": 164.1757460000008,
+            "spreadMs": [
+              163.41546800000287,
+              164.92539899999974
+            ],
+            "supabaseMs": 199,
+            "requests": 7,
+            "bytes": 91774
+          },
+          "deltaMs": -7.82714599999963,
+          "deltaPercent": -4.550589765664876
+        },
+        {
+          "label": "Explore resources",
+          "href": "/explore/resources",
+          "before": {
+            "totalMs": 142.78106499999922,
+            "spreadMs": [
+              130.26133299999856,
+              154.18188599999849
+            ],
+            "supabaseMs": 200,
+            "requests": 6,
+            "bytes": 173610
+          },
+          "after": {
+            "totalMs": 117.32366999999795,
+            "spreadMs": [
+              114.92942799999946,
+              125.09130500000174
+            ],
+            "supabaseMs": 175,
+            "requests": 6,
+            "bytes": 173538
+          },
+          "deltaMs": -25.45739500000127,
+          "deltaPercent": -17.829671602464522
+        },
+        {
+          "label": "Explore opportunities",
+          "href": "/explore/opportunities",
+          "before": {
+            "totalMs": 134.07494099999894,
+            "spreadMs": [
+              130.71074300000328,
+              167.9362080000028
+            ],
+            "supabaseMs": 175,
+            "requests": 5,
+            "bytes": 129087
+          },
+          "after": {
+            "totalMs": 109.37226599999849,
+            "spreadMs": [
+              108.36095000000205,
+              119.35909700000047
+            ],
+            "supabaseMs": 142,
+            "requests": 5,
+            "bytes": 129015
+          },
+          "deltaMs": -24.702675000000454,
+          "deltaPercent": -18.424527966042998
+        },
+        {
+          "label": "Explore projects",
+          "href": "/explore/projects",
+          "before": {
+            "totalMs": 138.90260800000033,
+            "spreadMs": [
+              137.6952999999994,
+              144.04564100000061
+            ],
+            "supabaseMs": 201,
+            "requests": 6,
+            "bytes": 108623
+          },
+          "after": {
+            "totalMs": 135.22526699999798,
+            "spreadMs": [
+              131.50553299999956,
+              141.28721600000063
+            ],
+            "supabaseMs": 169,
+            "requests": 6,
+            "bytes": 108637
+          },
+          "deltaMs": -3.677341000002343,
+          "deltaPercent": -2.6474240138114142
+        },
+        {
+          "label": "Timetable division",
+          "href": "/timetable/a",
+          "before": {
+            "totalMs": 26.26622199999838,
+            "spreadMs": [
+              22.58427500000107,
+              28.78338000000076
+            ],
+            "supabaseMs": 0,
+            "requests": 0,
+            "bytes": 71371
+          },
+          "after": {
+            "totalMs": 17.538629999999102,
+            "spreadMs": [
+              16.920999000001757,
+              19.09920400000192
+            ],
+            "supabaseMs": 0,
+            "requests": 0,
+            "bytes": 71508
+          },
+          "deltaMs": -8.727591999999277,
+          "deltaPercent": -33.22743560151062
+        },
+        {
+          "label": "Timetable offline",
+          "href": "/timetable/offline",
+          "before": {
+            "totalMs": 6.016848000002938,
+            "spreadMs": [
+              5.643524999999499,
+              7.058297000003222
+            ],
+            "supabaseMs": 0,
+            "requests": 0,
+            "bytes": 17264
+          },
+          "after": {
+            "totalMs": 6.051504999999452,
+            "spreadMs": [
+              5.712470999998914,
+              7.888481999998476
+            ],
+            "supabaseMs": 0,
+            "requests": 0,
+            "bytes": 17297
+          },
+          "deltaMs": 0.03465699999651406,
+          "deltaPercent": 0.5759992606842842
+        },
+        {
+          "label": "Gig detail",
+          "href": "/gigs/da485bda-65e7-4b43-b523-d1de2a05ccac",
+          "before": {
+            "totalMs": 143.5927269999993,
+            "spreadMs": [
+              130.41376200000013,
+              151.55184999999983
+            ],
+            "supabaseMs": 240,
+            "requests": 7,
+            "bytes": 66987
+          },
+          "after": {
+            "totalMs": 108.31619800000044,
+            "spreadMs": [
+              105.38989100000254,
+              111.75079199999891
+            ],
+            "supabaseMs": 201,
+            "requests": 7,
+            "bytes": 67287
+          },
+          "deltaMs": -35.276528999998845,
+          "deltaPercent": -24.567072258471015
+        },
+        {
+          "label": "Club detail",
+          "href": "/clubs/4ae9f435-653d-442e-8d73-b6f534b9cd6a",
+          "before": {
+            "totalMs": 203.59805799999958,
+            "spreadMs": [
+              189.36758499999996,
+              226.98214200000075
+            ],
+            "supabaseMs": 539,
+            "requests": 13,
+            "bytes": 84684
+          },
+          "after": {
+            "totalMs": 176.54963700000008,
+            "spreadMs": [
+              173.46576500000083,
+              185.14832099999694
+            ],
+            "supabaseMs": 408,
+            "requests": 13,
+            "bytes": 84698
+          },
+          "deltaMs": -27.048420999999507,
+          "deltaPercent": -13.285205795037378
+        },
+        {
+          "label": "Community detail",
+          "href": "/communities/placements-2027",
+          "before": {
+            "totalMs": 186.53310000000056,
+            "spreadMs": [
+              175.66223900000114,
+              204.9131039999993
+            ],
+            "supabaseMs": 359,
+            "requests": 10,
+            "bytes": 77521
+          },
+          "after": {
+            "totalMs": 173.94233600000007,
+            "spreadMs": [
+              172.46802500000194,
+              179.2501050000028
+            ],
+            "supabaseMs": 304,
+            "requests": 10,
+            "bytes": 77535
+          },
+          "deltaMs": -12.59076400000049,
+          "deltaPercent": -6.749881924441535
+        },
+        {
+          "label": "Listing detail",
+          "href": "/market/listing/aaf4471b-6b91-4e07-9f2f-9c33574e9e8c",
+          "before": {
+            "totalMs": 144.43919499999902,
+            "spreadMs": [
+              136.1779650000026,
+              158.68114200000127
+            ],
+            "supabaseMs": 274,
+            "requests": 8,
+            "bytes": 61698
+          },
+          "after": {
+            "totalMs": 106.53979399999662,
+            "spreadMs": [
+              106.00416300000143,
+              115.77749200000108
+            ],
+            "supabaseMs": 230,
+            "requests": 8,
+            "bytes": 61669
+          },
+          "deltaMs": -37.8994010000024,
+          "deltaPercent": -26.239000431982923
+        },
+        {
+          "label": "Event detail",
+          "href": "/campus/events/f51165bc-9f9d-4344-8c20-41e3c6c3fa2a",
+          "before": {
+            "totalMs": 188.67815300000075,
+            "spreadMs": [
+              182.70030199999746,
+              196.00904499999888
+            ],
+            "supabaseMs": 320,
+            "requests": 9,
+            "bytes": 65723
+          },
+          "after": {
+            "totalMs": 179.61697500000082,
+            "spreadMs": [
+              170.11162999999942,
+              196.72787900000185
+            ],
+            "supabaseMs": 271,
+            "requests": 9,
+            "bytes": 65737
+          },
+          "deltaMs": -9.061177999999927,
+          "deltaPercent": -4.802452141875637
+        }
+      ]
+    },
+    "admin": {
+      "beforeArtifact": "perf-results/2026-10-29-baseline-v2-admin-extended-r5.json",
+      "afterArtifact": "perf-results/2026-10-29-optimized-final-v2-admin-extended-r5.json",
+      "rttMs": 25,
+      "runs": 5,
+      "routes": [
+        {
+          "label": "Admin · users",
+          "href": "/admin?tab=users",
+          "before": {
+            "totalMs": 187.62754099999995,
+            "spreadMs": [
+              179.805921,
+              199.83017300000006
+            ],
+            "supabaseMs": 243,
+            "requests": 8,
+            "bytes": 88569
+          },
+          "after": {
+            "totalMs": 172.97720400000003,
+            "spreadMs": [
+              169.90790900000002,
+              185.07202399999983
+            ],
+            "supabaseMs": 233,
+            "requests": 8,
+            "bytes": 88583
+          },
+          "deltaMs": -14.650336999999922,
+          "deltaPercent": -7.808201782061369
+        },
+        {
+          "label": "Admin · roles",
+          "href": "/admin?tab=roles",
+          "before": {
+            "totalMs": 135.53948100000002,
+            "spreadMs": [
+              132.23226799999998,
+              142.1137510000001
+            ],
+            "supabaseMs": 173,
+            "requests": 6,
+            "bytes": 62282
+          },
+          "after": {
+            "totalMs": 139.93446800000015,
+            "spreadMs": [
+              134.32088899999985,
+              145.45986700000026
+            ],
+            "supabaseMs": 172,
+            "requests": 6,
+            "bytes": 62296
+          },
+          "deltaMs": 4.394987000000128,
+          "deltaPercent": 3.242588039716728
+        },
+        {
+          "label": "Admin · permissions",
+          "href": "/admin?tab=permissions",
+          "before": {
+            "totalMs": 147.3941880000002,
+            "spreadMs": [
+              141.30825000000004,
+              151.30095299999994
+            ],
+            "supabaseMs": 175,
+            "requests": 6,
+            "bytes": 124869
+          },
+          "after": {
+            "totalMs": 136.45401600000014,
+            "spreadMs": [
+              131.7602780000002,
+              143.89377700000023
+            ],
+            "supabaseMs": 171,
+            "requests": 6,
+            "bytes": 124883
+          },
+          "deltaMs": -10.940172000000075,
+          "deltaPercent": -7.4223903591097224
+        },
+        {
+          "label": "Admin · reports",
+          "href": "/admin?tab=reports",
+          "before": {
+            "totalMs": 177.5567659999997,
+            "spreadMs": [
+              172.8435129999998,
+              183.07722999999987
+            ],
+            "supabaseMs": 207,
+            "requests": 7,
+            "bytes": 101457
+          },
+          "after": {
+            "totalMs": 166.97195899999997,
+            "spreadMs": [
+              165.42887800000017,
+              169.98233400000026
+            ],
+            "supabaseMs": 202,
+            "requests": 7,
+            "bytes": 101471
+          },
+          "deltaMs": -10.584806999999728,
+          "deltaPercent": -5.96136505437351
+        },
+        {
+          "label": "Admin · content",
+          "href": "/admin?tab=content",
+          "before": {
+            "totalMs": 118.0931300000002,
+            "spreadMs": [
+              114.2460659999997,
+              124.69472799999949
+            ],
+            "supabaseMs": 156,
+            "requests": 5,
+            "bytes": 88019
+          },
+          "after": {
+            "totalMs": 114.84583100000054,
+            "spreadMs": [
+              110.3846309999999,
+              116.03455499999927
+            ],
+            "supabaseMs": 151,
+            "requests": 5,
+            "bytes": 88033
+          },
+          "deltaMs": -3.247298999999657,
+          "deltaPercent": -2.7497780776914387
+        },
+        {
+          "label": "Admin · marketplace",
+          "href": "/admin?tab=marketplace",
+          "before": {
+            "totalMs": 112.30584799999997,
+            "spreadMs": [
+              107.65728000000036,
+              117.57544899999994
+            ],
+            "supabaseMs": 154,
+            "requests": 5,
+            "bytes": 75214
+          },
+          "after": {
+            "totalMs": 114.5257700000002,
+            "spreadMs": [
+              111.30752399999983,
+              115.52656999999999
+            ],
+            "supabaseMs": 156,
+            "requests": 5,
+            "bytes": 75230
+          },
+          "deltaMs": 2.219922000000224,
+          "deltaPercent": 1.976675337512455
+        },
+        {
+          "label": "Admin · events",
+          "href": "/admin?tab=events",
+          "before": {
+            "totalMs": 111.84132399999999,
+            "spreadMs": [
+              108.8013689999998,
+              116.60559000000012
+            ],
+            "supabaseMs": 147,
+            "requests": 5,
+            "bytes": 68325
+          },
+          "after": {
+            "totalMs": 108.95800500000041,
+            "spreadMs": [
+              106.67041999999947,
+              136.5149849999998
+            ],
+            "supabaseMs": 143,
+            "requests": 5,
+            "bytes": 68339
+          },
+          "deltaMs": -2.883318999999574,
+          "deltaPercent": -2.578044408701362
+        },
+        {
+          "label": "Admin · settings",
+          "href": "/admin?tab=settings",
+          "before": {
+            "totalMs": 114.84667699999954,
+            "spreadMs": [
+              112.28258499999993,
+              119.4789579999997
+            ],
+            "supabaseMs": 149,
+            "requests": 5,
+            "bytes": 75410
+          },
+          "after": {
+            "totalMs": 108.44323900000018,
+            "spreadMs": [
+              103.91554300000007,
+              114.58420899999965
+            ],
+            "supabaseMs": 144,
+            "requests": 5,
+            "bytes": 75424
+          },
+          "deltaMs": -6.403437999999369,
+          "deltaPercent": -5.57564064304568
+        },
+        {
+          "label": "Admin · flags",
+          "href": "/admin?tab=flags",
+          "before": {
+            "totalMs": 114.43021500000032,
+            "spreadMs": [
+              111.5705480000006,
+              132.30040800000006
+            ],
+            "supabaseMs": 145,
+            "requests": 5,
+            "bytes": 98902
+          },
+          "after": {
+            "totalMs": 108.67875300000014,
+            "spreadMs": [
+              103.42228799999975,
+              121.22278800000004
+            ],
+            "supabaseMs": 139,
+            "requests": 5,
+            "bytes": 98916
+          },
+          "deltaMs": -5.751462000000174,
+          "deltaPercent": -5.026174249519813
+        },
+        {
+          "label": "Admin · audit",
+          "href": "/admin?tab=audit",
+          "before": {
+            "totalMs": 157.58454700000038,
+            "spreadMs": [
+              152.7938239999985,
+              178.9662389999994
+            ],
+            "supabaseMs": 189,
+            "requests": 6,
+            "bytes": 87323
+          },
+          "after": {
+            "totalMs": 157.87851899999987,
+            "spreadMs": [
+              152.22558199999912,
+              167.74776999999995
+            ],
+            "supabaseMs": 190,
+            "requests": 6,
+            "bytes": 87337
+          },
+          "deltaMs": 0.293971999999485,
+          "deltaPercent": 0.18654874833601817
+        },
+        {
+          "label": "Admin · counts",
+          "href": "/admin?tab=counts",
+          "before": {
+            "totalMs": 384.37163500000133,
+            "spreadMs": [
+              326.00822700000026,
+              405.3909910000002
+            ],
+            "supabaseMs": 1591,
+            "requests": 20,
+            "bytes": 62711
+          },
+          "after": {
+            "totalMs": 300.33861100000104,
+            "spreadMs": [
+              283.6163629999992,
+              328.33230399999957
+            ],
+            "supabaseMs": 1319,
+            "requests": 20,
+            "bytes": 62725
+          },
+          "deltaMs": -84.0330240000003,
+          "deltaPercent": -21.862441540463827
+        },
+        {
+          "label": "Moderation",
+          "href": "/moderator",
+          "before": {
+            "totalMs": 234.75030900000093,
+            "spreadMs": [
+              224.9152559999984,
+              249.06693300000006
+            ],
+            "supabaseMs": 369,
+            "requests": 11,
+            "bytes": 100868
+          },
+          "after": {
+            "totalMs": 202.20597499999894,
+            "spreadMs": [
+              198.6797119999992,
+              205.14419799999996
+            ],
+            "supabaseMs": 335,
+            "requests": 11,
+            "bytes": 100882
+          },
+          "deltaMs": -32.54433400000198,
+          "deltaPercent": -13.86338281667687
+        },
+        {
+          "label": "Admin · clubs",
+          "href": "/admin?tab=clubs",
+          "before": {
+            "totalMs": 127.43183099999987,
+            "spreadMs": [
+              123.82380100000046,
+              136.67832799999996
+            ],
+            "supabaseMs": 222,
+            "requests": 7,
+            "bytes": 145324
+          },
+          "after": {
+            "totalMs": 116.54934899999898,
+            "spreadMs": [
+              113.69581199999993,
+              135.58810500000072
+            ],
+            "supabaseMs": 215,
+            "requests": 7,
+            "bytes": 145201
+          },
+          "deltaMs": -10.882482000000891,
+          "deltaPercent": -8.539845903964844
+        },
+        {
+          "label": "Admin · backups",
+          "href": "/admin?tab=backups",
+          "before": {
+            "totalMs": 145.99408399999993,
+            "spreadMs": [
+              139.9181439999993,
+              154.7189330000001
+            ],
+            "supabaseMs": 178,
+            "requests": 6,
+            "bytes": 75501
+          },
+          "after": {
+            "totalMs": 136.94759199999862,
+            "spreadMs": [
+              132.51774699999987,
+              142.83653700000104
+            ],
+            "supabaseMs": 177,
+            "requests": 6,
+            "bytes": 75515
+          },
+          "deltaMs": -9.046492000001308,
+          "deltaPercent": -6.196478481964593
+        },
+        {
+          "label": "Club management",
+          "href": "/clubs/4ae9f435-653d-442e-8d73-b6f534b9cd6a/manage",
+          "before": {
+            "totalMs": 223.66631299999972,
+            "spreadMs": [
+              214.9532309999995,
+              235.03383500000018
+            ],
+            "supabaseMs": 700,
+            "requests": 20,
+            "bytes": 97282
+          },
+          "after": {
+            "totalMs": 214.40195800000038,
+            "spreadMs": [
+              211.15782099999888,
+              225.8670920000004
+            ],
+            "supabaseMs": 685,
+            "requests": 20,
+            "bytes": 97296
+          },
+          "deltaMs": -9.264354999999341,
+          "deltaPercent": -4.142043062157221
+        }
+      ]
+    }
+  },
+  "assetGraph": {
+    "beforeArtifact": "perf-results/2026-10-29-baseline-assets.json",
+    "afterArtifact": "perf-results/2026-10-29-optimized-final-assets.json",
+    "routes": [
+      {
+        "label": "Login",
+        "href": "/login",
+        "jsGzipBefore": 161377,
+        "jsGzipAfter": 161377,
+        "jsGzipDelta": 0,
+        "cssGzipBefore": 30240,
+        "cssGzipAfter": 30240
+      },
+      {
+        "label": "Legal",
+        "href": "/legal",
+        "jsGzipBefore": 159160,
+        "jsGzipAfter": 159160,
+        "jsGzipDelta": 0,
+        "cssGzipBefore": 28813,
+        "cssGzipAfter": 28813
+      },
+      {
+        "label": "Timetable",
+        "href": "/timetable",
+        "jsGzipBefore": 162466,
+        "jsGzipAfter": 162466,
+        "jsGzipDelta": 0,
+        "cssGzipBefore": 32868,
+        "cssGzipAfter": 32868
+      },
+      {
+        "label": "Home",
+        "href": "/home",
+        "jsGzipBefore": 206298,
+        "jsGzipAfter": 205888,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 34845,
+        "cssGzipAfter": 34845
+      },
+      {
+        "label": "Campus hub",
+        "href": "/campus",
+        "jsGzipBefore": 183807,
+        "jsGzipAfter": 183397,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      },
+      {
+        "label": "Noticeboard",
+        "href": "/campus/noticeboard",
+        "jsGzipBefore": 183807,
+        "jsGzipAfter": 183397,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      },
+      {
+        "label": "Explore",
+        "href": "/explore",
+        "jsGzipBefore": 186254,
+        "jsGzipAfter": 185844,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      },
+      {
+        "label": "Communities",
+        "href": "/communities",
+        "jsGzipBefore": 183807,
+        "jsGzipAfter": 183397,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      },
+      {
+        "label": "Marketplace",
+        "href": "/market",
+        "jsGzipBefore": 183807,
+        "jsGzipAfter": 183397,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      },
+      {
+        "label": "Gigs",
+        "href": "/gigs",
+        "jsGzipBefore": 183488,
+        "jsGzipAfter": 183078,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 30609,
+        "cssGzipAfter": 30609
+      },
+      {
+        "label": "Clubs",
+        "href": "/clubs",
+        "jsGzipBefore": 183488,
+        "jsGzipAfter": 183078,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 30609,
+        "cssGzipAfter": 30609
+      },
+      {
+        "label": "Notifications",
+        "href": "/notifications",
+        "jsGzipBefore": 185264,
+        "jsGzipAfter": 184854,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      },
+      {
+        "label": "Chat list",
+        "href": "/chat",
+        "jsGzipBefore": 186313,
+        "jsGzipAfter": 185903,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      },
+      {
+        "label": "Profile (own)",
+        "href": "/profile",
+        "jsGzipBefore": 193948,
+        "jsGzipAfter": 193538,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      },
+      {
+        "label": "Settings",
+        "href": "/settings",
+        "jsGzipBefore": 193572,
+        "jsGzipAfter": 193162,
+        "jsGzipDelta": -410,
+        "cssGzipBefore": 29488,
+        "cssGzipAfter": 29488
+      }
+    ]
+  }
+}

@@ -49,6 +49,16 @@ banner(`Starting the Supabase stub on http://127.0.0.1:${port} (${rtt}ms RTT per
 const stub = createStub({ connectionString: DATABASE_URL, latencyMs: rtt });
 await stub.listen(port);
 
+// Stable representative ids let the extended route audit exercise detail and
+// management surfaces with exactly the same fixtures on every run.
+const conversationId = (await client.query(`select id from public.conversations order by last_message_at desc limit 1`)).rows[0]?.id;
+const postId = (await client.query(`select id from public.posts order by created_at desc limit 1`)).rows[0]?.id;
+const gigId = (await client.query(`select id from public.gigs where status = 'published' order by created_at desc limit 1`)).rows[0]?.id;
+const clubId = (await client.query(`select id from public.communities where kind = 'club' and status = 'published' and admin_assigned order by created_at desc limit 1`)).rows[0]?.id;
+const communitySlug = (await client.query(`select slug from public.communities where kind = 'community' and status = 'published' order by created_at desc limit 1`)).rows[0]?.slug;
+const listingId = (await client.query(`select id from public.marketplace_listings where status = 'active' order by created_at desc limit 1`)).rows[0]?.id;
+const eventId = (await client.query(`select id from public.events where status = 'published' order by created_at desc limit 1`)).rows[0]?.id;
+
 // Handy for the measurement script and for shell use.
 await writeFile(
   path.join(process.cwd(), 'node_modules/.cache/perf/harness.json'),
@@ -60,8 +70,13 @@ await writeFile(
       student: { email: seed.me.email, username: seed.me.username, profileId: seed.me.profileId },
       admin: { email: seed.admin.email, username: seed.admin.username, profileId: seed.admin.profileId },
       moderator: { email: seed.moderator.email, username: seed.moderator.username },
-      conversationId: (await client.query(`select id from public.conversations order by last_message_at desc limit 1`)).rows[0].id,
-      postId: (await client.query(`select id from public.posts order by created_at desc limit 1`)).rows[0].id,
+      conversationId,
+      postId,
+      gigId,
+      clubId,
+      communitySlug,
+      listingId,
+      eventId,
     },
     null,
     2,

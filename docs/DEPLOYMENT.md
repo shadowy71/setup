@@ -52,13 +52,15 @@ fabricates credentials.
 
 ## 3. Migrations
 
-The schema lives in `supabase/migrations/` (30 ordered files: extensions and
+The schema lives in `supabase/migrations/` (37 ordered files: extensions and
 enums, identity/roles, blocks, communities, social, moderation core, messaging,
 marketplace, campus, Random, platform, auth hooks, reference data, realtime and
 grants, column privileges, staff actions, marketplace hardening, function grants,
 staff visibility, chat inbox, messaging live read model, the transactional backup
-outbox and Drive worker state (027–028), live feed delivery (029) and the Realtime
-channel-authorization fix (030)). Run `public.backup_sync_triggers()` (or re-run
+outbox and Drive worker state (027–028), live feed delivery (029), Realtime
+channel-authorization hardening (030), club governance and its directory column
+(031–032), bounded messaging/feed/Admin lookups (033–036), and the idempotent
+Realtime grant repair (037)). Run `public.backup_sync_triggers()` (or re-run
 migration 027) after adding new public application tables so every table stays covered
 by change capture.
 
@@ -69,10 +71,17 @@ supabase link --project-ref <your-project-ref>
 supabase db push
 ```
 
+For an existing deployment, apply **every pending migration in filename order**.
+In particular, 037 only reasserts function grants: it does not replace 030's
+private-channel policy predicates or 031's real `communities.organization_type`
+column and constraints. Running 037 alone cannot repair a database that is still
+on 029, and the complete bundle below is for a new empty project, not an in-place
+production upgrade.
+
 **Option B — SQL editor (one script)**
 
 The whole schema is committed as a single script at
-**`supabase/bundle/campus-plus-schema.sql`** (~493 KB, 30 migrations). Open it on
+**`supabase/bundle/campus-plus-schema.sql`** (~570 KB, 37 migrations). Open it on
 GitHub (Raw → copy all), then Supabase → **SQL Editor → New query**, paste, Run.
 No CLI, no database password, no local tooling — this is the Dashboard-only path.
 
@@ -108,8 +117,8 @@ Reference data included in the migrations, ready to use:
 After migrating, confirm the schema is intact:
 
 ```bash
-npm run verify:db     # throwaway Postgres: applies 30 migrations + 16 suites
-npm run audit:db      # 70 static assertions: RLS, policies, grants, columns
+npm run verify:db     # throwaway Postgres: applies 37 migrations + 18 suites
+npm run audit:db      # static assertions: RLS, policies, grants, columns
 ```
 
 ## 4. Authentication configuration

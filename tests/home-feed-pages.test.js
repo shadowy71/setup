@@ -184,12 +184,13 @@ describe('the Home surface around those pages', () => {
   const read = (file) => fs.readFileSync(file, 'utf8');
   const home = read('components/home/HomeFeedClient.js');
 
-  it('merges a re-read with what is loaded instead of replacing the list', () => {
+  it('merges a re-read with what is loaded and applies only authoritative removals', () => {
     // The refresh is the dangerous one: a live change landing while the reader is three
-    // pages deep used to reset the stream to the newest ten.
-    expect(home).toMatch(
-      /const feedWindow = mergeFeedPages\(\s*reconcileFeed\(payload\.feed, heldEntries\(held, payload\.feed\)\),\s*readHomeFeedCache\(userId\)\?\.payload\?\.feed \|\| \[\],?\s*\);/,
-    );
+    // pages deep must neither reset the stream nor carry a newly hidden cached row forward.
+    expect(home).toContain('feedPostIds(');
+    expect(home).toContain('findRemovedFeedPostIds(');
+    expect(home).toMatch(/for \(const id of removedPostIds\) held\.delete\(id\);/);
+    expect(home).toMatch(/const feedWindow = mergeFeedPages\([\s\S]*?\{ removedPostIds \},?\s*\);/);
     expect(home).not.toMatch(/HOME_FEED_LIMIT/);
   });
 

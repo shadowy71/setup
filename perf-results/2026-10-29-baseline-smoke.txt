@@ -1,0 +1,29 @@
+ok    gate: /home anonymous      
+FAIL  home                       missing "Campus update"; missing "Events ahead"; missing "aria-label=\"Post\""
+ok    campus hub                 
+ok    noticeboard                
+ok    explore                    
+ok    communities                
+ok    marketplace                
+ok    gigs board                 
+ok    gig detail                 
+ok    legacy gig redirect        
+ok    clubs board                
+ok    club detail                
+ok    legacy clubs redirect      
+ok    notifications              
+ok    chat list                  
+ok    chat thread                
+ok    profile                    
+ok    settings                   
+ok    public profile             
+ok    post detail                
+ok    random stays retired       
+ok    admin: counts tab          
+ok    admin: users tab           
+ok    admin: reports tab         
+ok    moderation                 
+ok    admin gate (student)       
+note  no foreign conversation to probe (single-pair fixture)
+
+1 check(s) failed

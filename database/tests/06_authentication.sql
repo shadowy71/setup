@@ -36,10 +36,33 @@ begin
 end;
 $$;
 
-select public.test_assert_denied(
-  $sql$insert into auth.users (id, email) values ('f0000000-0000-4000-a000-0000000000f1', 'outsider@gmail.com')$sql$,
-  'a personal email address must not be able to create an account'
-);
+-- Expected domain rejection is SQLSTATE 42501, not an arbitrary trigger error.
+-- The inner PL/pgSQL block is a subtransaction: catching that expected error
+-- rolls back only the rejected insert. The following SELECT runs in the same
+-- outer transaction and would fail with 25P02 if recovery were incorrect. An
+-- uncaught rejection still requires the Auth caller to roll back its own
+-- transaction; the trigger must never return NULL and pretend signup succeeded.
+do $$
+begin
+  begin
+    insert into auth.users (id, email)
+    values ('f0000000-0000-4000-a000-0000000000f1', 'outsider@gmail.com');
+    raise exception 'ASSERTION FAILED (operation was allowed): a personal email address must not create an account';
+  exception
+    when sqlstate '42501' then
+      perform public.test_assert(
+        sqlerrm like 'Campus+ is limited to approved institutional email addresses%',
+        'the expected rejection must come from the institutional-domain trigger, not an unrelated permission error'
+      );
+      perform public.test_assert(
+        public.allowed_email_domain('recovery@pccoepune.org'),
+        'SQL after an expected domain rejection must run cleanly after subtransaction rollback'
+      );
+    when others then
+      raise;
+  end;
+end;
+$$;
 
 select public.test_assert_denied(
   $sql$insert into auth.users (id, email) values ('f0000000-0000-4000-a000-0000000000f2', 'outsider@pccoepune.org.evil.com')$sql$,

@@ -150,6 +150,36 @@ describe('the feed channel', () => {
     expect(onStatus.mock.calls[1][0]).toBe('CHANNEL_ERROR');
   });
 
+  it('removes a permanently unauthorized channel once instead of allowing a rejoin loop', () => {
+    const client = fakeClient();
+    const onStatus = vi.fn();
+    const cleanup = subscribeToFeedPosts(client, PROFILE_ID, { onStatus });
+    const error = new Error('Unauthorized', { cause: { reason: 'RlsPolicyError' } });
+
+    client.channels[0].subscribed('CHANNEL_ERROR', error);
+    client.channels[0].subscribed('CHANNEL_ERROR', error);
+    cleanup();
+
+    expect(client.removeChannel).toHaveBeenCalledTimes(1);
+    expect(client.removeChannel).toHaveBeenCalledWith(client.channels[0]);
+    expect(onStatus).toHaveBeenCalledTimes(1);
+    expect(onStatus).toHaveBeenCalledWith('CHANNEL_ERROR', error);
+  });
+
+  it('leaves transient channel failures on the normal backoff path', () => {
+    const client = fakeClient();
+    const onStatus = vi.fn();
+    const cleanup = subscribeToFeedPosts(client, PROFILE_ID, { onStatus });
+
+    client.channels[0].subscribed('CHANNEL_ERROR', new Error('channel error: transport failure'));
+    client.channels[0].subscribed('TIMED_OUT');
+    expect(client.removeChannel).not.toHaveBeenCalled();
+    expect(onStatus).toHaveBeenCalledTimes(2);
+
+    cleanup();
+    expect(client.removeChannel).toHaveBeenCalledTimes(1);
+  });
+
   it('tears the channel down once, and stops calling back after teardown', () => {
     const client = fakeClient();
     const onPostChange = vi.fn();

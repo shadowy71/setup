@@ -189,18 +189,31 @@ async function measureOnce(route, viewport, profile) {
     reducedMotion: 'no-preference',
   });
 
-  for (const cookie of studentSession.cookies) {
-    await context.addCookies([
-      { name: cookie.name, value: cookie.value, url: values.base, sameSite: 'Lax' },
-    ]);
+  // A public route must really be signed out. Sending the student session to
+  // /login redirects to /home and silently measures the wrong page.
+  if (!route.public) {
+    for (const cookie of studentSession.cookies) {
+      await context.addCookies([
+        { name: cookie.name, value: cookie.value, url: values.base, sameSite: 'Lax' },
+      ]);
+    }
   }
 
   const page = await context.newPage();
   const consoleErrors = [];
+  const failedResponses = [];
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text().slice(0, 200));
   });
   page.on('pageerror', (error) => consoleErrors.push(`pageerror: ${String(error.message).slice(0, 200)}`));
+  page.on('response', (response) => {
+    if (response.status() < 400) return;
+    failedResponses.push({
+      status: response.status(),
+      url: response.url(),
+      resourceType: response.request().resourceType(),
+    });
+  });
 
   await page.addInitScript(INIT_SCRIPT);
 
@@ -329,6 +342,7 @@ async function measureOnce(route, viewport, profile) {
     totalTaskTime: metrics.longTasks.reduce((total, task) => total + task.duration, 0),
     longTaskCount: metrics.longTasks.length,
     consoleErrors: [...new Set(consoleErrors)].slice(0, 5),
+    failedResponses: [...new Map(failedResponses.map((item) => [`${item.status}:${item.url}`, item])).values()].slice(0, 30),
   };
 }
 
@@ -403,6 +417,9 @@ for (const profile of profiles) {
         stylesheets: good[0].stylesheets,
         shifts: good[0].shifts,
         consoleErrors: good[0].consoleErrors,
+        failedResponses: [...new Map(
+          good.flatMap((sample) => sample.failedResponses || []).map((item) => [`${item.status}:${item.url}`, item]),
+        ).values()],
         // Spread of the headline metric, so a noisy run is visible.
         lcpSpread: good.length > 1 ? [Math.min(...good.map((s) => s.lcp || Infinity)), Math.max(...good.map((s) => s.lcp || 0))] : null,
       });
@@ -440,6 +457,15 @@ if (overflowed.length) {
 if (errored.length) {
   console.log(`\n\x1b[33mConsole errors:\x1b[0m`);
   for (const row of errored) console.log(`  ${row.route}@${row.width}px: ${row.consoleErrors.join(' | ')}`);
+}
+const failedResources = results.flatMap((row) =>
+  (row.failedResponses || []).map((failure) => ({ ...failure, route: row.route, viewport: row.width })),
+);
+if (failedResources.length) {
+  console.log(`\n\x1b[33mFailed response URLs:\x1b[0m`);
+  for (const failure of failedResources) {
+    console.log(`  ${failure.route}@${failure.viewport}px · ${failure.status} · ${failure.resourceType} · ${failure.url}`);
+  }
 }
 
 const outFile = values.json || path.join(root, `perf-results/mobile-${values.label}.json`);

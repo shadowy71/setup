@@ -1,0 +1,418 @@
+{
+  "label": "2026-10-29-optimized-unread-explore-r5",
+  "base": "http://127.0.0.1:3100",
+  "rtt": 25,
+  "user": "student",
+  "extended": false,
+  "requestedRuns": 5,
+  "sourceRevision": "dca3351fdf77aaa65a344302ab4525bf65ea927f",
+  "nodeVersion": "v22.22.3",
+  "platform": "linux-x64",
+  "measuredAt": "2026-10-29T03:32:11.073Z",
+  "pages": [
+    {
+      "label": "Explore",
+      "href": "/explore",
+      "pageStart": 1793244730874,
+      "ttfb": 14.816422000000102,
+      "total": 189.1211850000002,
+      "bytes": 88041,
+      "status": 200,
+      "requests": 5,
+      "supabaseMs": 225,
+      "slowestMs": 95,
+      "slowest": {
+        "t0": 1793244730955,
+        "t1": 1793244731050,
+        "ms": 95,
+        "method": "POST",
+        "path": "/rest/v1/rpc/trending_posts",
+        "query": "",
+        "kind": "rest",
+        "status": 200,
+        "bytes": 2084
+      },
+      "broken": false,
+      "requestBytes": 5361,
+      "spreads": {
+        "ttfb": [
+          12.443430999999919,
+          16.709066000000007
+        ],
+        "total": [
+          179.7666220000001,
+          204.60643700000003
+        ],
+        "requests": [
+          5,
+          5
+        ],
+        "supabaseMs": [
+          218,
+          236
+        ]
+      },
+      "sampleRuns": [
+        {
+          "run": 1,
+          "status": 200,
+          "ttfb": 15.724899999999991,
+          "total": 196.436353,
+          "bytes": 88041,
+          "epochStart": 1793244730041,
+          "requests": 5,
+          "supabaseMs": 236,
+          "slowestMs": 117,
+          "requestBytes": 5359,
+          "entries": [
+            {
+              "t0": 1793244730050,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 422
+            },
+            {
+              "t0": 1793244730079,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 1972
+            },
+            {
+              "t0": 1793244730112,
+              "ms": 29,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793244730112,
+              "ms": 33,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 883
+            },
+            {
+              "t0": 1793244730112,
+              "ms": 117,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/trending_posts",
+              "query": "",
+              "status": 200,
+              "bytes": 2082
+            }
+          ]
+        },
+        {
+          "run": 2,
+          "status": 200,
+          "ttfb": 16.709066000000007,
+          "total": 204.60643700000003,
+          "bytes": 88041,
+          "epochStart": 1793244730263,
+          "requests": 5,
+          "supabaseMs": 235,
+          "slowestMs": 118,
+          "requestBytes": 5362,
+          "entries": [
+            {
+              "t0": 1793244730274,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 422
+            },
+            {
+              "t0": 1793244730303,
+              "ms": 32,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 1972
+            },
+            {
+              "t0": 1793244730340,
+              "ms": 27,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793244730339,
+              "ms": 31,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 883
+            },
+            {
+              "t0": 1793244730340,
+              "ms": 118,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/trending_posts",
+              "query": "",
+              "status": 200,
+              "bytes": 2085
+            }
+          ]
+        },
+        {
+          "run": 3,
+          "status": 200,
+          "ttfb": 12.900243000000046,
+          "total": 179.7666220000001,
+          "bytes": 88041,
+          "epochStart": 1793244730482,
+          "requests": 5,
+          "supabaseMs": 218,
+          "slowestMs": 102,
+          "requestBytes": 5362,
+          "entries": [
+            {
+              "t0": 1793244730491,
+              "ms": 27,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 422
+            },
+            {
+              "t0": 1793244730520,
+              "ms": 29,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 1972
+            },
+            {
+              "t0": 1793244730554,
+              "ms": 27,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793244730552,
+              "ms": 33,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 883
+            },
+            {
+              "t0": 1793244730552,
+              "ms": 102,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/trending_posts",
+              "query": "",
+              "status": 200,
+              "bytes": 2085
+            }
+          ]
+        },
+        {
+          "run": 4,
+          "status": 200,
+          "ttfb": 14.816422000000102,
+          "total": 189.1211850000002,
+          "bytes": 88041,
+          "epochStart": 1793244730672,
+          "requests": 5,
+          "supabaseMs": 225,
+          "slowestMs": 111,
+          "requestBytes": 5362,
+          "entries": [
+            {
+              "t0": 1793244730681,
+              "ms": 26,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 422
+            },
+            {
+              "t0": 1793244730709,
+              "ms": 30,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 1972
+            },
+            {
+              "t0": 1793244730744,
+              "ms": 28,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793244730743,
+              "ms": 30,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 883
+            },
+            {
+              "t0": 1793244730743,
+              "ms": 111,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/trending_posts",
+              "query": "",
+              "status": 200,
+              "bytes": 2085
+            }
+          ]
+        },
+        {
+          "run": 5,
+          "status": 200,
+          "ttfb": 12.443430999999919,
+          "total": 183.265261,
+          "bytes": 88041,
+          "epochStart": 1793244730874,
+          "requests": 5,
+          "supabaseMs": 221,
+          "slowestMs": 95,
+          "requestBytes": 5361,
+          "entries": [
+            {
+              "t0": 1793244730882,
+              "ms": 36,
+              "kind": "auth",
+              "method": "GET",
+              "path": "/auth/v1/user",
+              "query": "",
+              "status": 200,
+              "bytes": 422
+            },
+            {
+              "t0": 1793244730921,
+              "ms": 29,
+              "kind": "rest",
+              "method": "GET",
+              "path": "/rest/v1/profile_private",
+              "query": "select=profile_id,auth_user_id,college_id,account_status,status_reason,suspended_until,profile_completed,username_changed_at,last_seen,profiles(id,username,display_name,bio,branch,year,division,show_branch_year,allow_dms_from_everyone,reputation_score,reputation_count,marketplace_completed_count,created_at,updated_at,user_roles!user_roles_user_id_fkey(roles(key,label,rank,role_permissions(permissions(key)))))",
+              "status": 200,
+              "bytes": 1972
+            },
+            {
+              "t0": 1793244730954,
+              "ms": 31,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/messaging_unread_counts",
+              "query": "",
+              "status": 200,
+              "bytes": 883
+            },
+            {
+              "t0": 1793244730955,
+              "ms": 30,
+              "kind": "rest",
+              "method": "HEAD",
+              "path": "/rest/v1/notifications",
+              "query": "select=id",
+              "status": 200,
+              "bytes": 0
+            },
+            {
+              "t0": 1793244730955,
+              "ms": 95,
+              "kind": "rest",
+              "method": "POST",
+              "path": "/rest/v1/rpc/trending_posts",
+              "query": "",
+              "status": 200,
+              "bytes": 2084
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "waterfalls": {
+    "/explore": [
+      {
+        "ms": 36,
+        "method": "GET",
+        "path": "/auth/v1/user",
+        "status": 200,
+        "bytes": 422
+      },
+      {
+        "ms": 29,
+        "method": "GET",
+        "path": "/rest/v1/profile_private",
+        "status": 200,
+        "bytes": 1972
+      },
+      {
+        "ms": 31,
+        "method": "POST",
+        "path": "/rest/v1/rpc/messaging_unread_counts",
+        "status": 200,
+        "bytes": 883
+      },
+      {
+        "ms": 30,
+        "method": "HEAD",
+        "path": "/rest/v1/notifications",
+        "status": 200,
+        "bytes": 0
+      },
+      {
+        "ms": 95,
+        "method": "POST",
+        "path": "/rest/v1/rpc/trending_posts",
+        "status": 200,
+        "bytes": 2084
+      }
+    ]
+  }
+}

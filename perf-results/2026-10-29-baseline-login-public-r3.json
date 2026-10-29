@@ -1,0 +1,120 @@
+{
+ "label": "2026-10-29-baseline-login-public-r3",
+ "base": "http://127.0.0.1:3100",
+ "measuredAt": "2026-10-29T03:16:59.795Z",
+ "runs": 3,
+ "profiles": [
+  {
+   "key": "fast",
+   "throttle": false,
+   "cpu": 1,
+   "label": "Unthrottled"
+  },
+  {
+   "key": "slow4g",
+   "throttle": true,
+   "cpu": 4,
+   "label": "Slow 4G + 4× CPU"
+  }
+ ],
+ "viewports": [
+  {
+   "key": "phone",
+   "label": "Modern phone",
+   "width": 390,
+   "height": 844,
+   "dpr": 3,
+   "mobile": true
+  }
+ ],
+ "results": [
+  {
+   "route": "Login",
+   "routeKey": "login",
+   "href": "/login",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "fast",
+   "runs": 3,
+   "fcp": 204,
+   "lcp": 204,
+   "cls": 0,
+   "domContentLoaded": 116,
+   "loadEvent": 237,
+   "jsTransfer": 297460,
+   "cssTransfer": 32061,
+   "documentTransfer": 21570,
+   "fontTransfer": 89768,
+   "totalTransfer": 579095,
+   "requestCount": 28,
+   "longTaskCount": 3,
+   "totalTaskTime": 1583,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 936,
+   "headerHeight": 0,
+   "dockHeight": 0,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "1094wglqb4f2w.css",
+    "0fqosr2wunwxz.css",
+    "2wqy36ps0-lsn.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Refused to execute script from 'http://127.0.0.1:3100/login?next=%2F_vercel%2Finsights%2Fscript.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/login?next=%2F_vercel%2Fspeed-insights%2Fscript.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enable"
+   ],
+   "lcpSpread": [
+    152,
+    868
+   ]
+  },
+  {
+   "route": "Login",
+   "routeKey": "login",
+   "href": "/login",
+   "viewport": "phone",
+   "width": 390,
+   "height": 844,
+   "profile": "slow4g",
+   "runs": 3,
+   "fcp": 1236,
+   "lcp": 2408,
+   "cls": 0,
+   "domContentLoaded": 1013,
+   "loadEvent": 2422,
+   "jsTransfer": 297460,
+   "cssTransfer": 32061,
+   "documentTransfer": 21570,
+   "fontTransfer": 89768,
+   "totalTransfer": 580455,
+   "requestCount": 31,
+   "longTaskCount": 6,
+   "totalTaskTime": 1349,
+   "horizontalOverflow": 0,
+   "introShown": false,
+   "docHeight": 936,
+   "headerHeight": 0,
+   "dockHeight": 0,
+   "composerPosition": null,
+   "firstFeedCard": null,
+   "stylesheets": [
+    "1094wglqb4f2w.css",
+    "0fqosr2wunwxz.css",
+    "2wqy36ps0-lsn.css"
+   ],
+   "shifts": [],
+   "consoleErrors": [
+    "Refused to execute script from 'http://127.0.0.1:3100/login?next=%2F_vercel%2Finsights%2Fscript.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.",
+    "Refused to execute script from 'http://127.0.0.1:3100/login?next=%2F_vercel%2Fspeed-insights%2Fscript.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enable"
+   ],
+   "lcpSpread": [
+    2396,
+    2628
+   ]
+  }
+ ]
+}

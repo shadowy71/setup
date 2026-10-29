@@ -11,8 +11,7 @@ import {
   listFeatureFlags,
   listAuditLogs,
   listOfficialContent,
-  getOperationalCounts,
-  getAdminOverview,
+  getAdminDashboardCounts,
 } from '@/lib/data/admin';
 import { listReports } from '@/lib/data/moderation';
 import { ROUTES, PAGE_SIZE, ROLE_ORDER, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
@@ -130,10 +129,11 @@ export default async function AdminPage({ searchParams }) {
   const offset = Number.isFinite(Number(params?.offset)) && Number(params.offset) > 0 ? Number(params.offset) : 0;
   const contentTable = CONTENT_TABLES.some((item) => item.key === params?.table) ? params.table : 'notices';
 
-  const overview =
+  const dashboardCounts =
     activeTab === 'counts' && isTabAllowed(actor, TABS.find((tab) => tab.key === 'counts'))
-      ? await getAdminOverview(supabase)
+      ? await getAdminDashboardCounts(supabase)
       : null;
+  const overview = dashboardCounts?.overview || null;
 
   const users =
     activeTab === 'users' ? await listUsers(supabase, { q, limit: PAGE_SIZE.admin, offset }) : null;
@@ -150,7 +150,7 @@ export default async function AdminPage({ searchParams }) {
   const settings = activeTab === 'settings' ? await listPlatformSettings(supabase) : [];
   const flags = activeTab === 'flags' ? await listFeatureFlags(supabase) : [];
   const audit = activeTab === 'audit' ? await listAuditLogs(supabase, { limit: 40, offset }) : [];
-  const counts = activeTab === 'counts' ? await getOperationalCounts(supabase) : null;
+  const counts = dashboardCounts;
   const backups = activeTab === 'backups' ? await getBackupStatus(supabase) : null;
   const backupConfig = activeTab === 'backups' ? getBackupConfiguration() : [];
   const [pendingClubRequests, clubRequestHistory, unassignedClubs] = activeTab === 'clubs'

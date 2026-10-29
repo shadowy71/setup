@@ -1,0 +1,46 @@
+{
+  "measuredAt": "2026-10-29T04:11:11.314Z",
+  "checks": [
+    {
+      "name": "desktop brand decodes the 256px derivative",
+      "ok": true,
+      "detail": {
+        "naturalWidth": 256,
+        "naturalHeight": 256,
+        "complete": true,
+        "src": "http://127.0.0.1:3100/_next/static/media/campus-mark.1e-vk48tz6xrw.webp"
+      }
+    },
+    {
+      "name": "desktop Explore does not prefetch Home intro assets",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "desktop Chat renders inbox after migration",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "phone dock retains five destinations",
+      "ok": true,
+      "detail": 5
+    },
+    {
+      "name": "cold click to Home works with Home prefetch disabled",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "signed-out Login remains public",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "no uncaught page errors in hands-on pass",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "pageErrors": []
+}

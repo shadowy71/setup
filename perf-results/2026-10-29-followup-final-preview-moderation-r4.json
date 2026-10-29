@@ -1,0 +1,43 @@
+{
+  "body": "final-preview-moderation-r4-mvtt0j90",
+  "realtime": "unavailable in harness; disconnected fallback measured",
+  "viewports": {
+    "desktop": {
+      "hiddenAfterSeconds": 14.1,
+      "streamSlotsBefore": 10,
+      "streamSlotsAfter": 10,
+      "existingNeighborsRetainedExactlyOnce": 9,
+      "backfilledEligibleEntries": 1,
+      "feedReadsDuringHide": 2,
+      "documentReload": false,
+      "horizontalOverflow": 0,
+      "failedResponses": [],
+      "pageErrors": [],
+      "screenshots": [
+        "perf-results/screens/final-preview-r4/desktop-before.png",
+        "perf-results/screens/final-preview-r4/desktop-after.png"
+      ]
+    },
+    "phone": {
+      "hiddenAfterSeconds": 23.1,
+      "streamSlotsBefore": 10,
+      "streamSlotsAfter": 10,
+      "existingNeighborsRetainedExactlyOnce": 9,
+      "backfilledEligibleEntries": 1,
+      "feedReadsDuringHide": 1,
+      "documentReload": false,
+      "horizontalOverflow": 0,
+      "failedResponses": [],
+      "pageErrors": [],
+      "screenshots": [
+        "perf-results/screens/final-preview-r4/phone-before.png",
+        "perf-results/screens/final-preview-r4/phone-after.png"
+      ]
+    }
+  },
+  "postId": "59ff283b-1489-4132-8a0d-7117054dc293",
+  "initialStatus": "published",
+  "moderatedStatus": "hidden",
+  "hiddenAt": "2026-10-29T17:16:04.073Z",
+  "ok": true
+}

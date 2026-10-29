@@ -1,0 +1,40 @@
+{
+  "adminRpcEqualsSixteenOriginalQueries": true,
+  "operationalKeys": [
+    "gigs",
+    "posts",
+    "events",
+    "notices",
+    "reports",
+    "comments",
+    "messages",
+    "profiles",
+    "reactions",
+    "communities",
+    "random_sessions",
+    "marketplace_listings"
+  ],
+  "activeUsers24h": null,
+  "studentDenied": true,
+  "studentErrorCode": "42501",
+  "counts": {
+    "gigs": 12,
+    "posts": 241,
+    "events": 6,
+    "notices": 60,
+    "reports": 14,
+    "comments": 720,
+    "messages": 0,
+    "profiles": 12,
+    "reactions": 200,
+    "communities": 41,
+    "random_sessions": 0,
+    "marketplace_listings": 90
+  },
+  "overview": {
+    "suspended": 0,
+    "disabledFlags": 1,
+    "pendingReports": 4,
+    "pendingListings": 13
+  }
+}

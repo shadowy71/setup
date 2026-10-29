@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { HOME_FEED_PAGE_SIZE, ROUTES } from '@/lib/constants';
+import { HOME_FEED_PAGE_SIZE, HOME_FEED_RECONCILE_LIMIT, ROUTES } from '@/lib/constants';
 import { Button, EmptyState, Notice } from '@/components/ui';
 import { PostComposer } from '@/components/posts/PostComposer';
 import { IslandMotion } from '@/components/home/IslandMotion';
@@ -18,6 +18,8 @@ import {
 } from '@/components/home/homeFeedCache';
 import { useLiveFeed } from '@/components/layout/LiveFeedProvider';
 import {
+  feedPostIds,
+  findRemovedFeedPostIds,
   isCampusFeedEligible,
   mergeFeedPages,
   placePostInFeed,
@@ -119,6 +121,9 @@ export function HomeFeedClient({
   const [loadMoreError, setLoadMoreError] = useState(false);
   const [error, setError] = useState(false);
   const requestRef = useRef(null);
+  // Only the newest refresh may write. Forced signals can otherwise complete
+  // out of order and put an older, less-authoritative snapshot back on screen.
+  const requestVersionRef = useRef(0);
   // Rows this tab confirmed to the author that the authoritative page has not
   // returned yet. Held for a bounded moment so the post cannot flicker out of the
   // feed between the write and the re-read, then dropped so the server always wins.
@@ -148,13 +153,26 @@ export function HomeFeedClient({
       await requestRef.current.catch(() => {});
     }
 
+    // Only canonical IDs for post cards are reconciled — never cached bodies,
+    // rail data or the whole browser payload. GET remains the empty-cache path.
+    const requestedPostIds = feedPostIds(
+      readHomeFeedCache(userId)?.payload?.feed || [],
+      HOME_FEED_RECONCILE_LIMIT,
+    );
+    const requestVersion = ++requestVersionRef.current;
     const task = (async () => {
       try {
         const response = await fetch('/api/home/feed', {
+          method: requestedPostIds.length ? 'POST' : 'GET',
           cache: 'no-store',
-          headers: { Accept: 'application/json' },
+          headers: {
+            Accept: 'application/json',
+            ...(requestedPostIds.length ? { 'Content-Type': 'application/json' } : {}),
+          },
+          ...(requestedPostIds.length ? { body: JSON.stringify({ postIds: requestedPostIds }) } : {}),
         });
 
+        if (requestVersion !== requestVersionRef.current) return null;
         if (response.status === 401) {
           clearHomeFeedCache(userId);
           setSnapshot(null);
@@ -172,6 +190,7 @@ export function HomeFeedClient({
         if (!response.ok) throw new Error('Home feed request failed.');
 
         const payload = await response.json();
+        if (requestVersion !== requestVersionRef.current) return null;
         if (!payload?.ok) throw new Error('Home feed response was invalid.');
 
         if (payload.unavailable) {
@@ -183,30 +202,43 @@ export function HomeFeedClient({
           return null;
         }
 
-        // The server returns a page, newest-first. It replaces the head of the list —
-        // that is the reconciliation, and the held entries are what stop the author's own
-        // row from disappearing if this page was composed a beat before the write became
-        // visible — while any older page this reader already pulled stays underneath.
-        // Truncating here is what used to make "the newest ten" the whole of Home.
+        // Page absence is not a deletion signal. Only IDs the visibility lookup
+        // explicitly checked and did not return are removed, across the fresh head,
+        // held writes and every older page. Unchecked/valid older rows stay loaded.
+        const reconciliation = payload.reconciliation;
+        const removedPostIds = reconciliation?.unavailable === false
+          ? findRemovedFeedPostIds(
+              requestedPostIds,
+              reconciliation.checkedPostIds,
+              reconciliation.visiblePostIds,
+            )
+          : [];
+        for (const id of removedPostIds) held.delete(id);
+
+        // Held entries still cover an accepted published write that is visible by
+        // ID but has not reached this newest page yet. The next server copy dedupes it.
         const feedWindow = mergeFeedPages(
           reconcileFeed(payload.feed, heldEntries(held, payload.feed)),
           readHomeFeedCache(userId)?.payload?.feed || [],
+          { removedPostIds },
         );
         const next = writeHomeFeedCache(userId, { ...payload, feed: feedWindow }, feedRevision());
         setSnapshot(next);
         setError(false);
         return next;
       } catch {
-        const previous = readHomeFeedCache(userId);
-        if (previous?.payload) {
-          setSnapshot(previous.payload);
-          setError(false);
-        } else {
-          setError(true);
+        if (requestVersion === requestVersionRef.current) {
+          const previous = readHomeFeedCache(userId);
+          if (previous?.payload) {
+            setSnapshot(previous.payload);
+            setError(false);
+          } else {
+            setError(true);
+          }
         }
         return null;
       } finally {
-        setLoading(false);
+        if (requestVersion === requestVersionRef.current) setLoading(false);
       }
     })();
 

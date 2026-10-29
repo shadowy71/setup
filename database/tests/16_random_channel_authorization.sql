@@ -164,6 +164,24 @@ select public.test_assert(
   has_function_privilege('service_role', 'public.can_access_random_session(uuid, uuid)', 'execute'),
   'the internal cross-user check must stay available to the service role and the SECURITY DEFINER Random RPCs'
 );
+
+-- The hosted Realtime role is conditional in the migrations and present in the
+-- compatibility harness. It gets the narrow predicate only; migration 037 also
+-- removes any direct legacy-oracle grant left by a manual production workaround.
+do $$
+begin
+  if to_regrole('supabase_realtime') is not null then
+    perform public.test_assert(
+      has_function_privilege('supabase_realtime', 'public.can_access_own_random_session(uuid)', 'execute'),
+      'the hosted Realtime role must execute the current-user-only channel predicate'
+    );
+    perform public.test_assert(
+      not has_function_privilege('supabase_realtime', 'public.can_access_random_session(uuid, uuid)', 'execute'),
+      'the hosted Realtime role must not inherit a direct grant on the cross-user oracle'
+    );
+  end if;
+end $$;
+
 -- Migration 018 grants execute on every public function through a loop, so the shape
 -- of this function is what keeps it safe to hand to a client role at all: definer (the
 -- base random tables have no participant policies), a pinned search_path, and one
@@ -171,6 +189,22 @@ select public.test_assert(
 select public.test_assert(
   (select prosecdef from pg_proc where oid = 'public.can_access_own_random_session(uuid)'::regprocedure),
   'the channel predicate has to run as its owner, since a student cannot select from the random base tables'
+);
+select public.test_assert(
+  (select p.proowner = o.proowner
+     from pg_proc p, pg_proc o
+    where p.oid = 'public.can_access_own_random_session(uuid)'::regprocedure
+      and o.oid = 'public.can_access_random_session(uuid, uuid)'::regprocedure),
+  'the narrow predicate must retain the migration owner used by the established internal Random functions'
+);
+select public.test_assert(
+  (select o.prosecdef and exists (
+       select 1 from unnest(o.proconfig) as c
+        where replace(c, ' ', '') = 'search_path=public,pg_temp'
+     )
+     from pg_proc o
+    where o.oid = 'public.can_access_random_session(uuid, uuid)'::regprocedure),
+  'the retained internal oracle must stay SECURITY DEFINER with its exact pinned search_path'
 );
 select public.test_assert(
   (select exists (select 1 from unnest(proconfig) as c

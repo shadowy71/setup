@@ -43,6 +43,9 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                // Home owns the intro's unique route CSS and two display fonts.
+                // Keep the other dock warmups; do not fetch those assets here.
+                prefetch={item.href === ROUTES.home ? false : undefined}
                 aria-current={active ? 'page' : undefined}
                 className="tab-item rounded-2xl"
               >
