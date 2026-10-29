@@ -26,9 +26,14 @@ const nextConfig = {
   // list is read in development only; production builds never consult it.
   allowedDevOrigins: ['*.e2b.app', '127.0.0.1'],
   // Opt-in sandbox fixture backend; never expose this route in production.
+  // The backend defaults to the documented harness port (3111). When the
+  // preview proxy owns that port instead — the browser then talks to the app on
+  // 3111 and the stub lives elsewhere — PREVIEW_BACKEND_ORIGIN moves it without
+  // touching the default workflow.
   async rewrites() {
     if (process.env.NODE_ENV !== 'development' || process.env.NEXT_PUBLIC_LOCAL_PREVIEW !== '1') return [];
-    return [{ source: '/api/preview-supabase/:path*', destination: 'http://127.0.0.1:3111/:path*' }];
+    const backend = process.env.PREVIEW_BACKEND_ORIGIN || 'http://127.0.0.1:3111';
+    return [{ source: '/api/preview-supabase/:path*', destination: `${backend}/:path*` }];
   },
   // Local tooling (the sandbox preview proxy) frames the dev server, so the
   // clickjacking guard is only sent by real deployments — `next dev` runs with
