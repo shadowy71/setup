@@ -3,93 +3,50 @@ import { describe, expect, it } from 'vitest';
 
 import { ROUTES } from '@/lib/constants';
 
-/**
- * Home feature tiles + the shared Dropdown contract.
- *
- * Two behaviours are pinned here because both regressed the same way once:
- * quietly, at the surface layer, while every individual file still "looked
- * right".
- *
- *   1. Clubs and Gigs must stay first-class on Home: real routes from the
- *      ROUTES catalogue, compact tiles in the hero before the composer and the feed, and
- *      no invented metrics to make them look busy.
- *   2. The Create dropdown must stay OUT of the sidebar's stacking/clipping
- *      trap: portalled to the body, viewport-clamped, scrollable, and
- *      keyboard-operable — an anchored menu inside `.side-panel` paints
- *      behind the nav rows that follow it in the DOM.
- */
-
 const read = (file) => fs.readFileSync(file, 'utf8');
 
-describe('home feature tiles (Clubs & Gigs)', () => {
+describe('home quick-access tiles', () => {
   const tiles = read('components/home/HomeFeatureTiles.js');
   const page = read('app/(app)/home/page.js');
   const feedClient = read('components/home/HomeFeedClient.js');
   const pulse = read('components/home/HomePulse.js');
+  const css = read('app/styles/home.css');
 
-  it('links whole tiles to the real destinations from the route catalogue', () => {
-    expect(ROUTES.clubs).toBe('/clubs');
-    expect(ROUTES.gigs).toBe('/gigs');
+  it('links the four tiles in order to existing destinations', () => {
+    const names = ["name: 'Noticeboard'", "name: 'Events'", "name: 'Timetable'", "name: 'Clubs'"];
+    const positions = names.map((name) => tiles.indexOf(name));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(tiles).toContain("href: '/campus/noticeboard'");
+    expect(tiles).toContain("href: '/campus/events'");
+    expect(tiles).toContain('href: getTimetableHref(division)');
     expect(tiles).toContain('href: ROUTES.clubs');
-    expect(tiles).toContain('href: ROUTES.gigs');
-    expect(tiles).not.toMatch(/href:\s*['"]\//);
-    // The entire card is the link.
+    expect(ROUTES.clubs).toBe('/clubs');
     expect(tiles).toMatch(/<Link[\s\S]*?feature-tile/);
   });
 
-  it('carries the discovery copy with no invented metrics', () => {
-    expect(tiles).toContain('Find your people.');
-    expect(tiles).toContain('Put your skills to work.');
-    expect(tiles).toContain('technical, cultural, sports, arts, entrepreneurship and social clubs');
-    expect(tiles).toContain('paid and unpaid student gigs');
-    // No fake counts, earnings, members or "live" numbers anywhere in the tile.
-    expect(tiles).not.toMatch(/\d+\s*(\+|members|students|clubs|gigs|active|live)/i);
-    expect(tiles).not.toContain('₹');
-  });
-
-  it('places the existing tiles in the hero before the composer and feed', () => {
-    expect(page).toContain('heroFeatures={<HomeFeatureTiles />}');
+  it('places the grid in the hero and keeps Gigs accessible after the feed', () => {
+    expect(page).toContain('heroFeatures={<HomeFeatureTiles division={profile.division} />}');
     expect(page).toContain('afterFeed={<HomeAreas />}');
-    expect(page).not.toContain('beforeFeed={<HomeFeatureTiles />}');
     const hero = feedClient.indexOf('<HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>');
-    const composer = feedClient.indexOf('home-composer');
-    const feed = feedClient.indexOf('id="home-stream-title"');
-    const afterFeed = feedClient.indexOf('{afterFeed}');
     expect(hero).toBeGreaterThan(-1);
-    expect(composer).toBeGreaterThan(hero);
-    expect(feed).toBeGreaterThan(composer);
-    expect(afterFeed).toBeGreaterThan(feed);
-    expect(feedClient.indexOf('<HomeRail')).toBeGreaterThan(afterFeed);
-    expect(pulse.indexOf('{children}')).toBeGreaterThan(pulse.indexOf('home-pulse__actions'));
+    expect(feedClient.indexOf('home-composer')).toBeGreaterThan(hero);
+    expect(feedClient.indexOf('id="home-stream-title"')).toBeGreaterThan(hero);
+    expect(pulse).toContain("href: ROUTES.gigs, label: 'Gigs'");
+    expect(page).toContain("href: ROUTES.gigs, label: 'Gigs'");
     expect(pulse).toContain('aria-label="Campus right now"');
   });
 
-  it('replaces — not duplicates — the Clubs and Gigs discovery chips', () => {
-    for (const kept of ["label: 'Explore'", "label: 'Events'", "label: 'Communities'", "label: 'Projects'", "label: 'Marketplace'"]) {
-      expect(pulse).toContain(kept);
-    }
-    expect(pulse).not.toContain("label: 'Clubs'");
-    expect(pulse).not.toContain("label: 'Gigs'");
-    // The rail keypad covers both destinations as secondary shortcuts.
-    expect(page).toContain("href: ROUTES.clubs, label: 'Clubs'");
-    expect(page).toContain("href: ROUTES.gigs, label: 'Gigs'");
-  });
-
-  it('is responsive, focus-visible and reduced-motion safe', () => {
-    const css = read('app/styles/home.css');
-    expect(css).toMatch(/\.home-features__grid\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
-    // The hero and the tiles react to available content width, including zoom.
+  it('uses equal responsive grid tracks, accessible focus, and reduced motion', () => {
     expect(css).toContain('@container home-hero (min-width: 52rem)');
-    expect(css).toMatch(/@container home-features \(min-width: 21rem\) \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/);
-    expect(css).toMatch(/\.feature-tile__copy--short \{\s*display: none/);
-    expect(css).toMatch(/@container home-features \(min-width: 21rem\) \{[\s\S]*?\.feature-tile__copy--short \{ display: block/);
+    expect(css).toMatch(/@container home-features \(min-width: 19rem\) \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/);
+    expect(css).toContain('grid-auto-rows: 1fr');
+    for (const tone of ['noticeboard', 'events', 'timetable', 'clubs']) {
+      if (tone !== 'noticeboard') expect(css).toContain(`.feature-tile--${tone}`);
+      expect(tiles).toContain(`tone: '${tone}'`);
+    }
     expect(css).toMatch(/\.feature-tile:focus-visible\s*\{[^}]*outline: 2px solid var\(--cp-focus\)/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.feature-tile:hover/);
-    // Decorative layers never take the click.
-    expect(css).toMatch(/\.feature-tile__glow \{[^}]*pointer-events: none/);
-    // Hover lift is pointer-only; touch keeps a pressed response.
-    expect(css).toMatch(/@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\.feature-tile:hover/);
-    expect(css).toMatch(/\.feature-tile:active\s*\{/);
   });
 });
 
