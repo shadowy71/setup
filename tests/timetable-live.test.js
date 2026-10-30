@@ -17,6 +17,7 @@ import {
   timetableDayFor,
 } from '@/lib/timetable/clock';
 import { getDayStatus, isAcademicEvent } from '@/lib/timetable/schedule';
+import { resolveAutoDay } from '@/lib/timetable/auto-day';
 import { isFullyVisible, sessionScrollBehavior, shouldScrollToSession } from '@/lib/timetable/scroll';
 import { NEUTRAL_ACCENT, subjectAccent, subjectRoot } from '@/lib/timetable/meta';
 
@@ -91,14 +92,23 @@ describe('campus clock (Asia/Kolkata)', () => {
   it('reads the day from the page through the same normaliser', () => {
     const page = read('app/timetable/[division]/page.js');
     expect(page).toContain('normalizeTimetableDay(query.day)');
-    // Naming today is not a preference; only a different weekday pins.
-    expect(page).toContain('const initialPinned = Boolean(requestedDay && requestedDay !== today);');
+    // Naming the automatic day is not a preference; only another day pins.
+    expect(page).toContain('const initialPinned = Boolean(requestedDay && requestedDay !== auto.day);');
   });
 
   it('keeps a manual choice, and otherwise follows the real weekday', () => {
     expect(resolveDaySelection({ selected: 'Monday', pinned: true, today: 'Tuesday' })).toBe('Monday');
     expect(resolveDaySelection({ selected: 'Monday', pinned: false, today: 'Tuesday' })).toBe('Tuesday');
     expect(resolveDaySelection({ selected: null, pinned: true, today: 'Monday' })).toBeNull();
+  });
+
+  it('follows the schedule-aware day when one is resolved, and never when pinned', () => {
+    // Friday evening: the schedule has already moved on to Monday, and the
+    // selection follows it — a manual choice still wins.
+    expect(resolveDaySelection({ selected: 'Friday', pinned: false, today: 'Friday', autoDay: 'Monday' })).toBe('Monday');
+    expect(resolveDaySelection({ selected: 'Friday', pinned: true, today: 'Friday', autoDay: 'Monday' })).toBe('Friday');
+    // Inside the teaching day the auto day is today itself.
+    expect(resolveDaySelection({ selected: 'Tuesday', pinned: false, today: 'Tuesday', autoDay: 'Tuesday' })).toBe('Tuesday');
   });
 
   it('opens on Monday at the weekend, because that is the next timetable there is', () => {
@@ -121,9 +131,12 @@ describe('campus clock (Asia/Kolkata)', () => {
     }
   });
 
-  it('resolves the weekend on the server too, so the first paint is not empty', () => {
+  it('resolves the schedule-aware day on the server, so the first paint is already right', () => {
     const page = read('app/timetable/[division]/page.js');
-    expect(page).toContain('const initialDay = requestedDay ?? defaultTimetableDay(today);');
+    expect(page).toContain('resolveAutoDay({');
+    expect(page).toContain('days: timetable.days');
+    expect(page).toContain('nowMinutes: campus.minutesOfDay');
+    expect(page).toContain('const initialDay = requestedDay ?? auto.day;');
   });
 
   it('parses and formats the printed period boundaries', () => {
@@ -362,10 +375,10 @@ describe('live component contracts', () => {
     expect(source).toContain('pinnedRef.current = pin;');
   });
 
-  it('exposes a TODAY marker and a way back to today', () => {
+  it('exposes a TODAY marker and a way back to the live day', () => {
     expect(source).toContain('tt-tab__today');
     expect(source).toContain('today` : name}');
-    expect(source).toContain('showToday');
+    expect(source).toContain('showLiveDay');
   });
 
   it('labels a weekend as a preview of Monday, never as a live day', () => {
@@ -451,8 +464,8 @@ describe('opening at the right place', () => {
     expect(source).toContain("prefers-reduced-motion: reduce");
     // The status row is marked for tests and for styling, never by colour alone.
     expect(source).toContain("data-state={ongoing ? 'now' : next ? 'next' : undefined}");
-    // Choosing today keeps following the calendar; choosing another day pins it.
-    expect(source).toContain('const pin = name !== today;');
+    // Choosing the day the schedule is on keeps following it; another day pins.
+    expect(source).toContain('const pin = name !== autoDay;');
     expect(source).toContain('syncUrl(pin ? name : null);');
     expect(source).toContain('syncUrl(null);');
   });
@@ -473,6 +486,21 @@ describe('rendered day view (server pass, fixed instants)', () => {
         initialNow: iso,
       }),
     );
+  }
+
+  /**
+   * The same first paint the server produces: the day comes from
+   * `resolveAutoDay()` over this division's own events, never from the test.
+   */
+  function renderAt({ division = 'O', iso, pinned = false }) {
+    const timetable = getDivisionTimetable(division);
+    const campus = getCampusTime(new Date(iso));
+    const auto = resolveAutoDay({
+      days: timetable.days,
+      weekday: campus.weekday,
+      nowMinutes: campus.minutesOfDay,
+    });
+    return renderLive({ division, day: auto.day, pinned, iso });
   }
 
   it('opens on the institute weekday with a live clock and one NOW + one NEXT', () => {
@@ -556,13 +584,64 @@ describe('rendered day view (server pass, fixed instants)', () => {
     expect(html).toContain('Next class: EPH at 11:10 AM.');
   });
 
-  it('says there are no more classes once the day is over', () => {
-    // Friday 17:30 IST — the printed row ends at 17:10.
-    const html = renderLive({ day: 'Friday', iso: '2026-10-23T12:00:00Z' });
+  it('says there are no more classes once a pinned day is over', () => {
+    // Friday 17:30 IST — the printed row ends at 17:10, so the automatic
+    // schedule has moved on. A visitor who pinned Friday still gets Friday,
+    // and it says so instead of claiming anything is live.
+    const html = renderLive({ day: 'Friday', pinned: true, iso: '2026-10-23T12:00:00Z' });
 
     expect(html).toContain('No more classes today.');
     expect(html).not.toContain('tt-badge--now');
     expect(html).not.toContain('tt-badge--next');
+  });
+
+  it('keeps today while its final lecture is still running', () => {
+    // Friday 17:09 IST — one minute before Division O's last printed end.
+    const html = renderAt({ iso: '2026-10-23T11:39:00Z' });
+
+    expect(html).toContain('aria-pressed="true" aria-label="Friday, today">Fri');
+    expect(html).toContain('Now: LAUC');
+    expect(html).not.toContain('has ended — showing');
+  });
+
+  it('opens on the next day with classes at the exact ending minute', () => {
+    // Friday 17:10 IST — the 16:10–17:10 lecture is over (half-open interval),
+    // so the server resolves the auto day to Monday and paints it first time.
+    const html = renderAt({ iso: '2026-10-23T11:40:00Z' });
+
+    expect(html).toContain('Friday, 23 Oct');
+    expect(html).toContain('aria-pressed="true" aria-label="Monday">Mon');
+    expect(html).toContain('Friday’s last class has ended — showing Monday’s timetable.');
+    // It is a preview of a future day: no NOW/NEXT, no live status, no "Today".
+    expect(html).not.toContain('tt-badge--now');
+    expect(html).not.toContain('tt-badge--next');
+    expect(html).not.toContain('tt-status');
+    expect(html).not.toContain('tt-dayhead__today');
+    // The way back names the day it returns to rather than saying "Today".
+    const jump = html.match(/<button type="button" class="tt-jump">[\s\S]*?<\/button>/)?.[0] || '';
+    expect(jump).toContain('Mon');
+    expect(jump).not.toContain('Today');
+    // And the day's own rows are Monday's rows.
+    expect(html).toContain('WDL-1/ENG-2/WDL-3');
+    expect(html).toContain('timetable for Division O');
+  });
+
+  it('switches per day from each day’s own final lecture', () => {
+    // Division O Tuesday ends at 14:10 (13:10–14:10 COI; the Empowerment Hour
+    // after it is not a lecture). One minute later it is Wednesday.
+    expect(renderAt({ iso: '2026-10-27T08:39:00Z' })).toContain('aria-pressed="true" aria-label="Tuesday, today">Tue');
+    const after = renderAt({ iso: '2026-10-27T08:40:00Z' });
+    expect(after).toContain('aria-pressed="true" aria-label="Wednesday">Wed');
+    expect(after).toContain('Tuesday’s last class has ended — showing Wednesday’s timetable.');
+  });
+
+  it('opens on Monday late on Friday night and at the weekend', () => {
+    for (const iso of ['2026-10-23T18:00:00Z', '2026-10-23T18:35:00Z', '2026-10-25T09:00:00Z']) {
+      const html = renderAt({ iso });
+      expect(html, iso).toContain('aria-pressed="true" aria-label="Monday">Mon');
+      expect(html, iso).not.toContain('tt-badge--now');
+      expect(html, iso).not.toContain('tt-status');
+    }
   });
 
   it('lets lunch keep its own treatment instead of a subject accent', () => {
