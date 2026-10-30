@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { MOBILE_NAV, PRIMARY_NAV, ROUTES } from '@/lib/constants';
+import { primaryNavigation } from '@/lib/navigation/primary';
 import { NAVIGATION_HELP, navigationHelpFor } from '@/lib/navigation/help';
 import {
   buildNavigationTourSteps,
@@ -107,6 +108,77 @@ describe('contextual navigation help', () => {
     expect(css).toContain('.sheet-destination .nav-help__trigger');
     expect(css).toContain('width: min(18rem, calc(100vw - 1rem))');
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)/u);
+  });
+});
+
+describe('the primary rail order', () => {
+  it('shows Timetable where Profile used to be, and Profile directly after it', () => {
+    const items = primaryNavigation('/timetable/o');
+
+    expect(items.map((item) => item.label)).toEqual([
+      'Home',
+      'Explore',
+      'Market',
+      'Gigs',
+      'Clubs',
+      'Communities',
+      'Campus',
+      'Timetable',
+      'Profile',
+    ]);
+    expect(items.find((item) => item.label === 'Timetable').href).toBe('/timetable/o');
+    expect(items.find((item) => item.label === 'Profile').href).toBe(ROUTES.profile);
+
+    // A reorder, not a redesign: every destination keeps its label and icon,
+    // and nothing is added or lost.
+    expect(items).toHaveLength(PRIMARY_NAV.length + 1);
+    for (const item of PRIMARY_NAV) {
+      expect(items.some((entry) => entry.href === item.href && entry.icon === item.icon && entry.label === item.label)).toBe(true);
+    }
+  });
+
+  it('falls back to the public selector and keeps the Timetable explanation', () => {
+    const items = primaryNavigation();
+    const timetable = items.find((item) => item.label === 'Timetable');
+
+    expect(timetable.href).toBe(ROUTES.timetable);
+    // The help topic is the public selector even when the row opens a division.
+    expect(timetable.helpTopic).toBe(ROUTES.timetable);
+    expect(timetable.icon).toBe('calendar');
+    for (const item of items.filter((entry) => entry.label !== 'Timetable')) {
+      expect(item.helpTopic, item.label).toBe(item.href);
+    }
+  });
+
+  it('is what the rail renders — one list, in order, with the same link chrome', () => {
+    const sidebar = read('components/layout/Sidebar.js');
+
+    expect(sidebar).toContain('const primary = primaryNavigation(timetableHref);');
+    expect(sidebar).toContain('{primary.map((item) => (');
+    expect(sidebar).not.toContain('PRIMARY_NAV.map');
+    // Hover, active state, icon and prefetch behaviour are unchanged.
+    expect(sidebar).toContain("aria-current={active(item.href) ? 'page' : undefined}");
+    expect(sidebar).toContain('className="nav-item"');
+    expect(sidebar).toContain('className="nav-icon"');
+    expect(sidebar).toContain('prefetch={item.href === ROUTES.home ? false : undefined}');
+    expect(sidebar).toContain('<NavigationHelp topic={item.helpTopic} label={item.label} />');
+  });
+
+  it('keeps Timetable ahead of Profile on mobile, and the dock at five tabs', () => {
+    const menu = read('components/layout/MobileMenu.js');
+    const timetableAt = menu.indexOf('label="Timetable"');
+    const profileAt = menu.indexOf('href={ROUTES.profile}');
+
+    // On a phone both rows live in the same sheet: Timetable, then the
+    // signed-in student's Profile at the foot of it.
+    expect(timetableAt).toBeGreaterThan(-1);
+    expect(profileAt).toBeGreaterThan(-1);
+    expect(timetableAt).toBeLessThan(profileAt);
+
+    // The bottom dock is untouched: Timetable is not a sixth tab, Profile
+    // keeps its place there.
+    expect(MOBILE_NAV).toHaveLength(5);
+    expect(MOBILE_NAV.map((item) => item.label)).toEqual(['Home', 'Explore', 'Market', 'Chat', 'Profile']);
   });
 });
 

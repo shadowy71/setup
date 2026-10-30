@@ -16,7 +16,10 @@ describe('Home intro prefetch boundary', () => {
     const dock = read('components/layout/BottomNav.js');
     const rail = read('components/layout/Sidebar.js');
     expect(dock).toContain('MOBILE_NAV.map');
-    expect(rail).toContain('PRIMARY_NAV.map');
+    // The rail maps the shared ordered list; that list is built from
+    // PRIMARY_NAV, so every destination is still rendered exactly once.
+    expect(rail).toContain('primary.map');
+    expect(read('lib/navigation/primary.js')).toContain('PRIMARY_NAV.map');
     // The conditional is scoped to Home; it is not a global prefetch={false}.
     expect(dock).not.toContain('<Link\n                key={item.href}\n                href={item.href}\n                prefetch={false}');
     expect(rail).toContain('ROUTES.chat');

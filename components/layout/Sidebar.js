@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { PRIMARY_NAV, ROUTES } from '@/lib/constants';
+import { ROUTES } from '@/lib/constants';
 import { IdentityMark, StaffDot } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { BrandLockup, CollegeCrest } from '@/components/brand/Brand';
@@ -11,6 +11,7 @@ import { getTimetableHref } from '@/lib/timetable/meta';
 import { formatUnread } from '@/lib/notifications/format';
 import { handleOf } from '@/lib/identity/shell-user';
 import { resolveActiveHref } from '@/lib/navigation/active';
+import { primaryNavigation } from '@/lib/navigation/primary';
 import { MessageUnreadBadge } from '@/components/layout/MessageUnreadBadge';
 import { NavigationHelp } from '@/components/navigation/NavigationHelp';
 
@@ -37,13 +38,15 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
     { href: ROUTES.notifications, label: 'Notifications', icon: 'bell', unread },
   ];
   const timetableHref = getTimetableHref(user?.division);
+  // One ordered list: the sections, then Timetable, then Profile. The order
+  // lives in `primaryNavigation()` so it is asserted once and reused.
+  const primary = primaryNavigation(timetableHref);
 
   // One pass over every destination decides which single row is current. A
   // nested route (`/gigs/abc`, `/clubs/abc`) lights its own section and nothing
   // else; if two rows ever matched, the more specific one wins.
   const current = resolveActiveHref(pathname, [
-    ...PRIMARY_NAV.map((item) => item.href),
-    timetableHref,
+    ...primary.map((item) => item.href),
     ...secondary.map((item) => item.href),
     ...(canModerate ? [ROUTES.moderator] : []),
     ...(canAdmin ? [ROUTES.admin] : []),
@@ -61,24 +64,17 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
 
       <nav aria-label="Primary" className="nav-panel mt-4 flex flex-col gap-0.5">
         <p className="nav-group-label mb-1.5">Campus</p>
-        {PRIMARY_NAV.map((item) => (
+        {primary.map((item) => (
           <div key={item.href} className="nav-destination">
             <Link href={item.href} prefetch={item.href === ROUTES.home ? false : undefined} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
               <Icon name={item.icon} size={18} className="nav-icon" />
               {item.label}
             </Link>
-            <NavigationHelp topic={item.href} label={item.label} />
+            {/* Timetable keeps its public-selector explanation even when the
+                row opens a saved division; every other topic is its own href. */}
+            <NavigationHelp topic={item.helpTopic} label={item.label} />
           </div>
         ))}
-        {/* Public pages, personalised landing: a saved division opens its
-            own timetable; without one, the selector. Never inferred. */}
-        <div className="nav-destination">
-          <Link href={timetableHref} aria-current={active(timetableHref) ? 'page' : undefined} className="nav-item">
-            <Icon name="calendar" size={18} className="nav-icon" />
-            Timetable
-          </Link>
-          <NavigationHelp topic={ROUTES.timetable} label="Timetable" />
-        </div>
       </nav>
 
       <div className="side-panel__rule my-3" aria-hidden="true" />

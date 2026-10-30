@@ -34,6 +34,8 @@ import { Icon } from '@/components/ui/icons';
 import { batchName, listBatches } from '@/lib/timetable/batch';
 import { formatSavedAgo } from '@/lib/timetable/offline';
 import { listSavedBatches, loadBatch } from '@/lib/timetable/offline-store';
+import { getCampusTime } from '@/lib/timetable/clock';
+import { resolveAutoDay } from '@/lib/timetable/auto-day';
 import { ROUTES } from '@/lib/constants';
 
 /** `/timetable/o` → 'O'. Anything else (including this page's own address) → null. */
@@ -161,6 +163,20 @@ export default function TimetableOfflineShell() {
     );
   }
 
+  // This branch is painted only after IndexedDB has answered, so resolving the
+  // schedule-aware day here is a client-only decision: the saved timetable opens
+  // on the same day the online page would (today until its last lecture ends,
+  // then the next day with classes), with no flash of Monday first. The instant
+  // is passed down as `initialNow`, so the first client render already agrees
+  // with itself.
+  const opened = new Date();
+  const campus = getCampusTime(opened);
+  const initialDay = resolveAutoDay({
+    days: snapshot.days,
+    weekday: campus.weekday,
+    nowMinutes: campus.minutesOfDay,
+  }).day;
+
   return (
     <TimetableOfflineProvider division={division}>
       <div className="tt-shell__saved">
@@ -190,8 +206,8 @@ export default function TimetableOfflineShell() {
           friendly={snapshot.friendly}
           days={snapshot.days}
           subjects={snapshot.subjects}
-          initialDay={null}
-          initialNow={new Date().toISOString()}
+          initialDay={initialDay}
+          initialNow={opened.toISOString()}
           offlineSlot={<TimetableOfflinePill />}
         />
 
