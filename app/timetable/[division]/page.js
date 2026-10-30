@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DIVISIONS, ROUTES } from '@/lib/constants';
 import { adjacentDivisions, getDivisionTimetable } from '@/lib/timetable';
-import { defaultTimetableDay, getCampusTime, normalizeTimetableDay, timetableDayFor } from '@/lib/timetable/clock';
+import { getCampusTime, normalizeTimetableDay } from '@/lib/timetable/clock';
+import { resolveAutoDay } from '@/lib/timetable/auto-day';
 import { divisionTimetableHref } from '@/lib/timetable/meta';
 import { batchShortName, describeBatch } from '@/lib/timetable/batch';
 import TimetableLive from '@/components/timetable/TimetableLive';
@@ -19,10 +20,12 @@ import { Icon } from '@/components/ui/icons';
  * (/timetable/O) resolve to the same division; anything that is not a
  * single A–R letter is a real 404 (see not-found.js beside this file).
  *
- * The server resolves "today" in Asia/Kolkata and hands the client that
- * instant plus the requested day, so the first paint already shows the right
+ * The server resolves the day the schedule is on in Asia/Kolkata — today until
+ * its last lecture ends, then the next day with classes — and hands the client
+ * that instant plus the resolution, so the first paint already shows the right
  * weekday and clock. Everything after that — the ticking clock, NOW/NEXT
- * moving between periods, crossing midnight — happens in TimetableLive.
+ * moving between periods, the automatic switch when the final lecture ends,
+ * and crossing midnight — happens in TimetableLive.
  *
  * The offline layer hangs off this file and nothing else: the provider reads
  * and writes this device's saved copy of *this* division, the pill in the header
@@ -80,12 +83,22 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
 
   const now = new Date();
   const campus = getCampusTime(now);
-  const today = timetableDayFor(campus.weekday);
-  const initialDay = requestedDay ?? defaultTimetableDay(today);
-  // Naming today in the URL is not a preference: the page keeps following
-  // the calendar (and can roll into the weekend) until a different day is
-  // chosen explicitly.
-  const initialPinned = Boolean(requestedDay && requestedDay !== today);
+  // Schedule-aware, not midnight-aware: the page opens on today until today's
+  // *last* lecture has ended, then on the next day that has classes (Monday
+  // after Friday, Monday at the weekend). The switch time is read from this
+  // division's own events, so a timetable edit moves it automatically, and the
+  // decision is made here on the server so the first paint is already right —
+  // no flash of a finished day while the browser catches up.
+  const auto = resolveAutoDay({
+    days: timetable.days,
+    weekday: campus.weekday,
+    nowMinutes: campus.minutesOfDay,
+  });
+  const initialDay = requestedDay ?? auto.day;
+  // Naming the automatic day in the URL is not a preference: the page keeps
+  // following the schedule (and can roll into the weekend) until a different
+  // day is chosen explicitly.
+  const initialPinned = Boolean(requestedDay && requestedDay !== auto.day);
 
   // Only what the live view and the offline copy need: the week grid keeps its
   // slots server-side, the snapshot carries the same events the page renders.

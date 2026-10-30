@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/icons';
 import { VerifyBadge } from '@/components/timetable/EventText';
 import { CAMPUS_TIME_ZONE, defaultTimetableDay, getCampusTime, resolveDaySelection, timetableDayFor } from '@/lib/timetable/clock';
 import { getDayStatus } from '@/lib/timetable/schedule';
+import { hasLectures, isScheduleComplete, resolveAutoDay } from '@/lib/timetable/auto-day';
 import { sessionScrollBehavior, shouldScrollToSession } from '@/lib/timetable/scroll';
 import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
 
@@ -13,11 +14,12 @@ import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
  *
  * Since this has to know the time, it is the one client component on the
  * page — and it owns the only timer: one `setInterval` for the clock, cleared
- * on unmount. Everything time-dependent (which weekday opens, the NOW/NEXT
+ * on unmount. Everything time-dependent (which day is on screen, the NOW/NEXT
  * status, the date) is derived from `Asia/Kolkata`, so the schedule never
  * disagrees with the institute's wall clock, and it keeps moving while the
  * page stays open: at a period boundary the NOW badge moves to the next
- * session on its own.
+ * session on its own, and when the day's **last lecture ends** the page moves
+ * to the next day with classes — see `resolveAutoDay()`.
  *
  * The initial values arrive from the server (`initialNow` as an ISO instant,
  * `initialDay` already resolved in the campus timezone), so the server HTML
@@ -182,17 +184,32 @@ export default function TimetableLive({
   const parts = useMemo(() => getCampusTime(now), [now]);
   const today = timetableDayFor(parts.weekday);
 
-  // Follow the institute's weekday — across midnight and into/out of the
-  // weekend — unless the visitor has chosen a day themselves. Out of term hours
-  // on a Saturday or Sunday there is no weekday to follow, so the selection
-  // falls back to Monday (`resolveDaySelection` → `defaultTimetableDay`), which
-  // is a preview: `isToday` stays false because `today` is null.
+  // The schedule-aware day: today while its last lecture has not finished,
+  // then the next day that has classes. It is derived from this division's own
+  // events on every tick, so the transition happens by itself at the real
+  // ending time — no midnight, no hardcoded hour — and a timetable edit moves
+  // it. It only changes when the minute does, not on every second.
+  const auto = useMemo(
+    () => resolveAutoDay({ days, weekday: parts.weekday, nowMinutes: parts.minutesOfDay }),
+    [days, parts.weekday, parts.minutesOfDay],
+  );
+  const autoDay = auto.day;
+
+  // Follow the schedule unless the visitor has chosen a day themselves. The
+  // dependency is the resolved day, so this re-renders nothing while the
+  // answer stays the same — including across midnight and the weekend.
   useEffect(() => {
-    setSelected((previous) => resolveDaySelection({ selected: previous, pinned: pinnedRef.current, today }));
-  }, [today]);
+    setSelected((previous) => resolveDaySelection({ selected: previous, pinned: pinnedRef.current, today, autoDay }));
+  }, [autoDay, today]);
 
   const day = selected ? days.find((entry) => entry.day === selected) ?? null : null;
+  // `isToday` stays tied to the real calendar weekday: NOW/NEXT and the "Today"
+  // pill are claims about the institute's clock, and a day shown because
+  // today's lectures finished (or because it is the weekend) must not borrow
+  // them.
   const isToday = Boolean(selected && selected === today);
+  const todayEntry = today ? days.find((entry) => entry.day === today) ?? null : null;
+  const todayComplete = isScheduleComplete(todayEntry, parts.minutesOfDay);
 
   const status = useMemo(
     () =>
@@ -224,19 +241,21 @@ export default function TimetableLive({
     window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
-  // Choosing a day pins it. Choosing *today* is not a preference — it is
-  // following the calendar — so it keeps no `day` parameter and the page
-  // moves on by itself when the weekday changes.
+  // Choosing a day pins it. Choosing the day the schedule is already on is not
+  // a preference — it is following the timetable — so it keeps no `day`
+  // parameter and the page moves on by itself when that day's lectures end.
   function chooseDay(name) {
-    const pin = name !== today;
+    const pin = name !== autoDay;
     pinnedRef.current = pin;
     setSelected(name);
     syncUrl(pin ? name : null);
   }
 
-  function showToday() {
+  // Back to the automatic schedule (labelled "Today" while today is the day it
+  // resolves to, otherwise with that day's short name).
+  function showLiveDay() {
     pinnedRef.current = false;
-    setSelected(defaultTimetableDay(today));
+    setSelected(resolveDaySelection({ selected: null, pinned: false, today, autoDay }));
     syncUrl(null);
   }
 
@@ -273,15 +292,22 @@ export default function TimetableLive({
   }, [isToday, status?.ongoing?.id, status?.next?.id]);
 
   // Another weekday is a preview, not a live claim: name its first academic
-  // session in words instead of borrowing the NOW/NEXT badges. At the weekend
-  // the preview is the whole page, so the note says why Monday is on screen.
+  // session in words instead of borrowing the NOW/NEXT badges. The page also
+  // says *why* a day other than today is on screen, because the automatic
+  // switch happens at the final lecture's ending time, not at midnight.
   let dayNote = null;
   if (!day) dayNote = null;
   else if (!today) dayNote = `It’s the weekend — showing ${selected}’s timetable.`;
   else if (selected !== today) {
-    dayNote = status?.first
-      ? `Not today — ${selected}’s first class is ${status.first.lines[0]} at ${status.first.time.fromLabel}.`
-      : 'Not today.';
+    if (selected === autoDay && todayComplete) {
+      dayNote = `${today}’s last class has ended — showing ${selected}’s timetable.`;
+    } else if (selected === autoDay && !hasLectures(todayEntry)) {
+      dayNote = `No classes are printed for ${today} — showing ${selected}’s timetable.`;
+    } else {
+      dayNote = status?.first
+        ? `Not today — ${selected}’s first class is ${status.first.lines[0]} at ${status.first.time.fromLabel}.`
+        : 'Not today.';
+    }
   }
 
   return (
@@ -340,9 +366,12 @@ export default function TimetableLive({
         </div>
 
         {today && selected !== today ? (
-          <button type="button" className="tt-jump" onClick={showToday}>
+          // Back to the day the schedule is on. It says "Today" while that is
+          // today; after the last lecture (or when a day with no classes is
+          // skipped) it names the day it returns to instead of lying.
+          <button type="button" className="tt-jump" onClick={showLiveDay}>
             <Icon name="calendar" size={14} aria-hidden="true" />
-            Today
+            {autoDay === today ? 'Today' : DAY_SHORT[autoDay] ?? autoDay}
           </button>
         ) : null}
       </div>
@@ -359,7 +388,7 @@ export default function TimetableLive({
         </p>
       ) : null}
 
-      {day ? (
+      {day && entries.length ? (
         <ol className="tt-day" aria-label={`${selected} timetable for Division ${division}`}>
           {entries.map((entry) =>
             entry.event ? (
@@ -381,7 +410,16 @@ export default function TimetableLive({
             ),
           )}
         </ol>
-      ) : null}
+      ) : (
+        // No day to show — a timetable with no lectures anywhere, a caller that
+        // supplied no days, or a day whose printed row is empty. An honest
+        // empty state, not an error and not an invented day.
+        <p className="tt-status" role="status">
+          {day
+            ? `No classes are printed for ${selected}.`
+            : `No timetable is available for Division ${division} yet.`}
+        </p>
+      )}
 
       {selected && subjects.length ? (
         <ul className="tt-legend" aria-label="Subject colours">
