@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/ratelimit';
-import { errors, fromPostgresError, toHttpResponse } from '@/lib/errors';
+import { AppError, errors, fromPostgresError, toHttpResponse } from '@/lib/errors';
 import { searchGifs, trendingGifs, isGiphyConfigured, GIPHY_ATTRIBUTION } from '@/lib/giphy';
 import { can, toActor } from '@/lib/permissions/authorization';
 
@@ -60,6 +60,11 @@ export async function GET(request) {
     if (error?.code === 'internal' && /GIF provider/i.test(error.message)) {
       return NextResponse.json({ ok: false, code: 'unavailable', error: error.message }, { status: 502 });
     }
-    return toHttpResponse(fromPostgresError(error) || error);
+    // An `AppError` already carries the status the client should see (401, 403,
+    // 429, …). `fromPostgresError()` never returns a falsy value — its fallback
+    // is `errors.internal()` — so chaining it with `|| error` here replaced
+    // every AppError with a 500: anonymous callers got "Something went wrong"
+    // instead of 401, and a rate-limited student got 500 instead of 429.
+    return toHttpResponse(error instanceof AppError ? error : fromPostgresError(error));
   }
 }
