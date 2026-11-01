@@ -39,7 +39,7 @@ export function HomePulse({ user, stats = [], children }) {
       <span className="home-pulse__spark home-pulse__spark--warm" aria-hidden="true" />
 
       <div className="home-pulse__grid">
-        <div className="min-w-0">
+        <div className="home-pulse__intro min-w-0">
           <p className="home-pulse__eyebrow">
             <span className="home-pulse__dot" aria-hidden="true" />
             PCCOE · Campus feed
@@ -47,7 +47,7 @@ export function HomePulse({ user, stats = [], children }) {
           <h1 id="home-greeting" className="home-pulse__title">
             <span className="home-pulse__greet">Hey,</span>
             <span className="home-pulse__name">
-              {name}
+              <span className="home-pulse__name-text" title={name}>{name}</span>
               <HandWave />
             </span>
           </h1>
@@ -64,7 +64,11 @@ export function HomePulse({ user, stats = [], children }) {
             </div>
           </div>
           {stats.length ? (
-            <dl className="home-pulse__stats" aria-label="Campus right now">
+            <dl
+              className="home-pulse__stats"
+              style={{ '--home-stat-count': stats.length }}
+              aria-label="Campus right now"
+            >
               {stats.map((stat) => (
                 <div className="home-pulse__stat" key={stat.label} data-empty={stat.value === 0 ? 'true' : undefined}>
                   <dt>{stat.label}</dt>

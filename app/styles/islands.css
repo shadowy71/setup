@@ -32,8 +32,11 @@
    -------------------------------------------------------------------------- */
 
 .home-stage {
+  --home-column-gap: clamp(1.5rem, 3vw, 2rem);
+  --home-columns: minmax(0, 1fr) 21rem;
   position: relative;
   isolation: isolate;
+  container: home-page / inline-size;
 }
 
 /* --------------------------------------------------------------------------

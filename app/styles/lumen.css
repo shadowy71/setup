@@ -150,8 +150,6 @@
    -------------------------------------------------------------------------- */
 :root .brand-word,
 :root .login-title,
-:root .home-pulse__name,
-:root .home-zone__title,
 :root .island__title,
 :root .tt-dayhead__title,
 :root .tt-head__intro {
@@ -161,7 +159,6 @@
 }
 
 :root .brand-word,
-:root .home-zone__title,
 :root .island__title,
 :root .tt-dayhead__title,
 :root .tt-head__intro {
@@ -176,11 +173,6 @@
 :root .brand-sub,
 :root .nav-group-label,
 :root .island__eyebrow,
-:root .home-pulse__eyebrow,
-:root .home-discover__label,
-:root .home-zone__eyebrow,
-:root .home-composer__label,
-:root .home-features__title,
 :root .login-intro .t-label,
 :root .field-label,
 :root .stream-stamp__label,
@@ -195,9 +187,6 @@
   color: var(--color-muted);
 }
 
-:root .home-pulse__title,
-:root .home-pulse__lead,
-:root .home-zone__note,
 :root .island__note {
   font-family: var(--font-body);
   letter-spacing: 0;
@@ -205,11 +194,8 @@
 }
 
 :root .home-pulse__name {
-  margin-top: var(--space-xs);
   background: none;
   color: var(--color-ink);
-  font-size: var(--text-3xl);
-  line-height: 1.05;
   -webkit-text-fill-color: currentColor;
 }
 
@@ -220,7 +206,6 @@
   -webkit-text-fill-color: currentColor;
 }
 
-:root .home-zone__title,
 :root .island__title {
   font-size: var(--text-display-s);
   line-height: 1.1;
@@ -1117,54 +1102,17 @@
 }
 
 /* --------------------------------------------------------------------------
-   Home — compact application greeting, figures well, feed and rail
+   Home — kept materials; route composition and typography live in home.css
    -------------------------------------------------------------------------- */
 :root .home-stage {
   background: var(--color-paper);
 }
 
 :root .home-pulse {
-  min-height: 0;
-  gap: var(--space-lg);
-  padding-block: var(--space-lg) var(--space-xl);
   border-bottom: var(--rule-hair) solid var(--color-rule);
 }
 
-:root .home-pulse__grid {
-  gap: var(--space-lg);
-}
-
-:root .home-pulse__title {
-  margin-top: var(--space-xs);
-  font-family: var(--font-display);
-  font-size: var(--text-3xl);
-  font-weight: 400;
-  letter-spacing: var(--tracking-display);
-  line-height: 1.05;
-  text-transform: lowercase;
-}
-
-:root .home-pulse__greet {
-  font-family: var(--font-body);
-  font-size: var(--text-md);
-  letter-spacing: 0;
-  line-height: 1.55;
-}
-
-:root .home-pulse__lead {
-  margin-top: var(--space-sm);
-  font-size: var(--text-md);
-  line-height: 1.55;
-}
-
-:root .home-pulse__actions {
-  margin-top: var(--space-lg);
-}
-
 :root .home-pulse__stats {
-  gap: 0;
-  margin-top: var(--space-md);
-  padding: var(--space-xs);
   overflow: hidden;
   border: 1px solid var(--color-rule);
   border-radius: var(--radius-card);
@@ -1179,7 +1127,6 @@
 }
 
 :root .home-pulse__stat {
-  padding: var(--space-sm) var(--space-md);
   border-left: var(--rule-hair) solid var(--color-rule);
   border-radius: 0;
   background: color-mix(in oklab, var(--color-paper-2) 88%, transparent);
@@ -1193,14 +1140,12 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   letter-spacing: 0;
-  text-transform: lowercase;
   color: var(--color-muted);
 }
 
 :root .home-pulse__stat dd,
 :root .home-pulse__stat[data-empty='true'] dd {
   color: var(--color-ink);
-  font-size: var(--text-lg);
   font-weight: 400;
 }
 
@@ -1275,9 +1220,6 @@
 
 :root .feature-tile__title {
   color: var(--color-ink);
-  font-family: var(--font-body);
-  font-weight: 500;
-  letter-spacing: 0;
 }
 
 :root .feature-tile__copy {
@@ -1913,26 +1855,24 @@
 }
 
 @media (max-width: 640px) {
-  :root .home-pulse {
-    padding-block: var(--space-md) var(--space-lg);
-  }
-
-  :root .home-pulse__stats {
+  :root .home-pulse__stats:has(> :nth-child(4)) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  :root .home-pulse__stat,
-  :root .home-pulse__stat:first-child {
+  :root .home-pulse__stat {
     padding: var(--space-sm);
+  }
+
+  :root .home-pulse__stats:has(> :nth-child(4)) > .home-pulse__stat {
     border-left: 0;
     border-top: var(--rule-hair) solid var(--color-rule);
   }
 
-  :root .home-pulse__stat:nth-child(-n + 2) {
+  :root .home-pulse__stats:has(> :nth-child(4)) > .home-pulse__stat:nth-child(-n + 2) {
     border-top: 0;
   }
 
-  :root .home-pulse__stat:nth-child(even) {
+  :root .home-pulse__stats:has(> :nth-child(4)) > .home-pulse__stat:nth-child(even) {
     border-left: var(--rule-hair) solid var(--color-rule);
   }
 
