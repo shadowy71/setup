@@ -686,3 +686,11 @@
 .user-text a {
   text-underline-offset: 2px;
 }
+
+/* Geist is the Home interface typeface; keep that family across every route.
+   Instrument Serif remains loaded for intentional brand treatments, not UI text. */
+h1, h2, h3,
+.t-display,
+[class*="__title"] {
+  font-family: var(--font-body) !important;
+}
