@@ -92,11 +92,6 @@ export function SearchField({
           autoFocus={autoFocus}
           enterKeyHint="search"
         />
-        {shortcut ? (
-          <kbd className="search-pill__kbd" aria-hidden="true">
-            /
-          </kbd>
-        ) : null}
         <button type="submit" className="search-pill__icon" aria-label="Search">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d={SEARCH_PATH} />

@@ -16,7 +16,6 @@ export function ShellSearch({ className = '' }) {
     <SearchField
       className={cn('w-full max-w-md', className)}
       hint="Search Campus+…"
-      shortcut
     />
   );
 }

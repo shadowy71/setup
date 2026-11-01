@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { RailCard, Badge } from '@/components/ui';
-import { Icon } from '@/components/ui/icons';
 import { formatCalendarBadge, formatDate, formatTime } from '@/lib/utils';
 
 /**
@@ -19,7 +18,7 @@ import { formatCalendarBadge, formatDate, formatTime } from '@/lib/utils';
  * Every value is real and every link goes where it says; a module with nothing
  * in it is not rendered at all.
  */
-export function HomeRail({ events = [], notices = [], trending = [], marketplace = [], quickLinks = [] }) {
+export function HomeRail({ events = [], notices = [], trending = [], marketplace = [] }) {
   // The busiest entries are ranked here by the counters already on the page, so
   // the bars have a shared scale to be honest against. Normalize backend values
   // before adding them (counts may arrive as numeric strings), and keep empty or
@@ -194,20 +193,6 @@ export function HomeRail({ events = [], notices = [], trending = [], marketplace
         </RailCard>
       ) : null}
 
-      {quickLinks.length ? (
-        <RailCard variant="island" elevation={1} className="rail-island rail-island--keys" icon="grid" title="Jump to">
-          <ul className="rail-keys">
-            {quickLinks.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} className="rail-key hover:no-underline">
-                  <Icon name={link.icon} size={13} className="shrink-0 text-muted" />
-                  <span className="truncate">{link.label}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </RailCard>
-      ) : null}
     </aside>
   );
 }

@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { LinkButton } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
-import { SearchEntry } from '@/components/search/SearchEntry';
 import { HandWave } from '@/components/home/HandWave';
 
 /**
@@ -57,11 +56,6 @@ export function HomePulse({ user, stats = [], children }) {
             <LinkButton href={ROUTES.explore} size="md" variant="sheen" icon="search">
               Explore campus
             </LinkButton>
-            <div className="home-pulse__search">
-              {/* Short enough to survive sharing a row with the Explore button on a
-                phone; Explore's own field carries the long form. */}
-              <SearchEntry hint="Search…" />
-            </div>
           </div>
           {stats.length ? (
             <dl
