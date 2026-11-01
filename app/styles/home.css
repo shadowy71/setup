@@ -336,37 +336,10 @@
 }
 
 .home-pulse__actions {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
+  display: flex;
   align-items: center;
   gap: var(--space-sm);
   margin-top: var(--space-lg);
-}
-
-.home-pulse__search {
-  min-width: 0;
-}
-
-/* Match the existing primary action, without changing the shared search field
-   on Explore, in the header, or in any other route. */
-.home-pulse__search .search-pill__shell {
-  height: 3rem;
-  padding: 1px;
-}
-
-.home-pulse__search .search-pill__input {
-  height: 100%;
-  padding-block: 0.5rem;
-}
-
-.home-pulse__search .search-pill__icon {
-  height: 2.75rem;
-}
-
-@container home-hero (max-width: 21rem) {
-  .home-pulse__actions {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* The "keep exploring" row: frosted chips, each one a real destination. It sits
