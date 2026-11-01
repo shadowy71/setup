@@ -35,6 +35,7 @@ The fixed app type scale, spacing scale, easings and durations live in `app/toke
 ## Type
 - Page and section headings: Instrument Serif 400, lowercase, restrained app sizes
 - Interface, labels, buttons and reading copy: Geist 400/500
+- Home refinement: the personalized name uses locally hosted Geist 700 with a proportional, centered inline hand; card titles use Geist 600. Greeting case is preserved. Brand and editorial section headings retain Instrument Serif, and all existing theme/material tokens stay unchanged.
 - Figures, code and technical readouts: Geist Mono 400, tabular numerals
 - Actual font binaries are self-hosted through `next/font/local` in `app/layout.js`
 
