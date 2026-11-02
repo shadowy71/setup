@@ -156,6 +156,18 @@
   }
 }
 
+/* A very narrow hero keeps its greeting readable instead of letting the type
+   and the single column compete for the same few rems. */
+@container home-hero (max-width: 21rem) {
+  .home-pulse__title {
+    font-size: var(--text-lg);
+  }
+
+  .home-pulse__grid {
+    gap: var(--space-sm);
+  }
+}
+
 .home-pulse__eyebrow {
   display: flex;
   align-items: center;
@@ -1280,7 +1292,7 @@
   color: var(--cp-text-muted);
 }
 
-/* Busiest — understated activity bars, drawn from real counters. */
+/* Busiest — understated activity bars, drawn from the real trending score. */
 .rail-activity {
   display: flex;
   flex-direction: column;
@@ -1337,8 +1349,24 @@
 .rail-activity__bar span {
   display: block;
   height: 100%;
+  max-width: 100%;
   border-radius: 999px;
   background-image: linear-gradient(90deg, color-mix(in oklab, var(--cp-bg-accent) 55%, transparent), color-mix(in oklab, var(--cp-accent-cyan) 70%, transparent));
+  /* Engagement changes arrive through one coalesced re-read; the width settles
+     into its new value instead of jumping. */
+  transition: width var(--dur-panel) var(--ease-out);
+}
+
+/* Only a discussion that actually reached the full-scale benchmark gets a
+   slightly brighter fill — no badge, no counter, no extra clutter. */
+.rail-activity__bar[data-hot='true'] span {
+  filter: brightness(1.12) saturate(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-activity__bar span {
+    transition: none;
+  }
 }
 
 /* Marketplace — price first, the way a listing is actually read. */

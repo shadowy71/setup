@@ -1358,8 +1358,11 @@
   box-shadow: none;
 }
 
+/* The track stays a quiet surface in the light theme too: only the inner
+   span is the measured fill. An accent-coloured track looked permanently full
+   no matter how little engagement a discussion had. */
 :root .rail-activity__bar {
-  background: var(--color-accent);
+  background: var(--color-paper-3);
 }
 
 :root .home-coda {
