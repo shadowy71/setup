@@ -446,9 +446,12 @@ export function HomeFeedClient({
     .sort((a, b) => (b.reaction_count || 0) + (b.comment_count || 0) - ((a.reaction_count || 0) + (a.comment_count || 0)))
     .slice(0, 3);
   const marketplace = feed.filter((item) => ['listing', 'deal'].includes(item.type)).slice(0, 3);
+  // The stat is the total eligible posts on the feed (e.g. 14), not the number
+  // currently loaded (10) — the server reports the total on every page.
+  const feedTotal = typeof snapshot?.page?.total === 'number' ? snapshot.page.total : feed.length;
   const stats = snapshot
     ? [
-        { label: 'On the feed', value: feed.length },
+        { label: 'On the feed', value: feedTotal },
         { label: 'Events ahead', value: events.length },
         { label: 'Notices pinned', value: notices.length },
         { label: 'Market listings', value: marketplace.length },
