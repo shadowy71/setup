@@ -154,6 +154,8 @@ describe('secrets never reach the browser bundle (spec §74, §93)', () => {
       'NEXT_PUBLIC_PLATFORM_NAME',
       'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
       'NEXT_PUBLIC_SUPABASE_URL',
+      'NEXT_PUBLIC_TRENDING_FULL_SCALE',
+      'NEXT_PUBLIC_TRENDING_WINDOW_HOURS',
     ]);
     const secretish = [...publicVars].filter((name) => /SECRET|SERVICE|TOKEN|PASSWORD|PRIVATE_KEY/.test(name));
     expect(secretish).toEqual([]);
