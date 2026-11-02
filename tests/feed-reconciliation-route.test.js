@@ -18,7 +18,7 @@ const TWO = '15fe0000-0000-4000-b000-000000000002';
 
 function railChain() {
   const chain = {};
-  for (const method of ['select', 'eq', 'gte', 'order', 'limit']) chain[method] = () => chain;
+  for (const method of ['select', 'eq', 'is', 'gte', 'order', 'limit']) chain[method] = () => chain;
   chain.then = (resolve) => Promise.resolve({ data: [], error: null }).then(resolve);
   return chain;
 }

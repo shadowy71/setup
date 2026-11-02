@@ -153,6 +153,11 @@ export function HomeFeedClient({
   // feed between the write and the re-read, then dropped so the server always wins.
   const [held] = useState(() => new Map());
   const liveTimerRef = useRef(null);
+  // How many server feed rows this tab has actually received (offset + length of
+  // the newest server page). The "Show more" cursor must follow server rows, not
+  // the rendered window: a locally held post would otherwise inflate the offset
+  // and skip an older post at the page boundary.
+  const serverRowsRef = useRef(0);
   // Full poll snapshots, keyed by post id. They bridge optimistic voting and
   // the first authorized response that actually contains the committed vote.
   const pollOverlaysRef = useRef(new Map());
@@ -226,6 +231,12 @@ export function HomeFeedClient({
         const payload = await response.json();
         if (requestVersion !== requestVersionRef.current) return null;
         if (!payload?.ok) throw new Error('Home feed response was invalid.');
+        if (Array.isArray(payload.feed) && payload.page) {
+          serverRowsRef.current = Math.max(
+            serverRowsRef.current,
+            Number(payload.page.offset) + payload.feed.length,
+          );
+        }
 
         if (payload.unavailable) {
           const previous = readHomeFeedCache(userId);
@@ -463,16 +474,26 @@ export function HomeFeedClient({
     // Read the loaded pages off the snapshot rather than the render-local `feed`, so this
     // callback's identity follows the data instead of changing on every render.
     const loaded = snapshot?.feed || [];
+    // Cursor over server rows, not over the rendered window: held/optimistic entries
+    // must not push the offset past a row the server has not skipped yet, or an older
+    // post would be missed at the page boundary.
+    const cursor = Math.max(0, serverRowsRef.current);
     setLoadingMore(true);
     setLoadMoreError(false);
     try {
-      const response = await fetchEssentialFeed(`/api/home/feed?offset=${loaded.length}`, {
+      const response = await fetchEssentialFeed(`/api/home/feed?offset=${cursor}`, {
         cache: 'no-store',
         headers: { Accept: 'application/json' },
       });
       if (!response.ok) throw new Error('Home feed page request failed.');
       const payload = await response.json();
       if (!payload?.ok || payload.unavailable) throw new Error('Home feed page response was invalid.');
+      if (Array.isArray(payload.feed) && payload.page) {
+        serverRowsRef.current = Math.max(
+          serverRowsRef.current,
+          Number(payload.page.offset) + payload.feed.length,
+        );
+      }
       const overlaid = reconcileFeedPollOverlays(
         mergeFeedPages(loaded, payload.feed),
         pollOverlaysRef.current,
@@ -539,7 +560,9 @@ export function HomeFeedClient({
                 note="Pinned posts first, then the database’s newest-first order — no ranking, no AI, no engagement theatre."
                 aside={feed.length ? (
                   <span className="home-zone__count text-2xs text-muted">
-                    {feed.length} {feed.length === 1 ? 'entry' : 'entries'}
+                    {typeof snapshot?.page?.total === 'number' && snapshot.page.total > feed.length
+                      ? `${feed.length} of ${snapshot.page.total} entries`
+                      : `${feed.length} ${feed.length === 1 ? 'entry' : 'entries'}`}
                   </span>
                 ) : null}
               />
