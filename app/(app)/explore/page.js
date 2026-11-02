@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, TRENDING_WINDOW_HOURS } from '@/lib/constants';
 import { PageHeader, EmptyState, SectionHeader } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { SearchResults } from '@/components/search/SearchResults';
@@ -74,7 +74,10 @@ export default async function ExplorePage({ searchParams }) {
   // Browse mode is a directory, not six miniature boards: each module keeps its
   // own page (and its own pagination). The only content read left here is the
   // deterministic trending list, which exists nowhere else.
-  const { data: trending } = await supabase.rpc('trending_posts', { p_limit: 5, p_hours: 72 });
+  const { data: trending } = await supabase.rpc('trending_posts', {
+    p_limit: 5,
+    p_hours: TRENDING_WINDOW_HOURS,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -113,7 +116,7 @@ export default async function ExplorePage({ searchParams }) {
       <section aria-label="Trending" className="flex flex-col gap-3">
         <SectionHeader
           title="Trending now"
-          description="Deterministic score from reactions, comments and participants — no algorithm, no AI."
+          description="Deterministic score from reactions and comments in the recent window — no algorithm, no AI."
         />
         {trending?.length ? (
           <ul className="card divide-y divide-line">
@@ -137,7 +140,7 @@ export default async function ExplorePage({ searchParams }) {
           <EmptyState
             icon="sparkle"
             title="No trending posts yet"
-            description="Trending is computed from real reactions and comments in the last 72 hours."
+            description={`Trending is computed from real reactions and comments in the last ${TRENDING_WINDOW_HOURS} hours.`}
           />
         )}
       </section>

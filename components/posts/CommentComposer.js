@@ -6,22 +6,29 @@ import { createComment } from '@/lib/actions/social';
 import { LIMITS } from '@/lib/constants';
 import { Button, Notice, Textarea } from '@/components/ui';
 import { GifPicker } from '@/components/media/GifPicker';
+import { useLiveFeed } from '@/components/layout/LiveFeedProvider';
 
 /**
  * Comment composer, used for both top-level comments and replies.
  * Same validation and same mention handling as posts — one code path.
+ *
+ * A published comment contributes to its post's recent engagement, so a
+ * confirmed write announces one engagement change through the shell's existing
+ * live-feed queue (batched, never a request per keystroke or per comment).
  */
 export function CommentComposer({ postId, parentId = null, compact = false, label = 'Comment' }) {
   const [open, setOpen] = useState(!compact);
   const [gif, setGif] = useState(null);
   const [body, setBody] = useState('');
   const formRef = useRef(null);
+  const feed = useLiveFeed();
   const { run, pending, error } = useFormAction(createComment, {
     onSuccess: () => {
       setBody('');
       setGif(null);
       formRef.current?.reset();
       if (compact) setOpen(false);
+      feed.invalidate('engagement', [postId]);
     },
   });
 

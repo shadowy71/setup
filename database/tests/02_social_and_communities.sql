@@ -300,8 +300,16 @@ begin
 end;
 $$;
 
--- A closed poll still rejects every vote, including the author's.
+-- A closed poll still rejects every vote, including the author's. Closing the
+-- poll is a fixture change, not a student write: migration 015 deliberately
+-- leaves `poll_closes_at` out of the authenticated column grants. Switch to the
+-- trusted context for the two fixture updates and back for the denied vote.
+reset role;
+select set_config('request.jwt.claim.role', '', false), set_config('request.jwt.claim.sub', '', false);
 update public.posts set poll_closes_at = now() - interval '1 hour' where title = 'Best library timing?';
+set role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', false);
+select set_config('request.jwt.claim.sub', 'b0000000-0000-4000-a000-000000000001', false);
 select public.test_assert_denied(
   $sql$insert into public.poll_votes (post_id, option_id, user_id)
        select o.post_id, o.id, public.current_profile_id()
@@ -309,7 +317,12 @@ select public.test_assert_denied(
        where p.title = 'Best library timing?' limit 1$sql$,
   'a closed poll must reject votes'
 );
+reset role;
+select set_config('request.jwt.claim.role', '', false), set_config('request.jwt.claim.sub', '', false);
 update public.posts set poll_closes_at = null where title = 'Best library timing?';
+set role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', false);
+select set_config('request.jwt.claim.sub', 'b0000000-0000-4000-a000-000000000001', false);
 
 -- ---------------------------------------------------------------------------
 -- 8. Communities: creator becomes owner, private content stays private.

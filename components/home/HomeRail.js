@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, TRENDING_FULL_SCALE } from '@/lib/constants';
 import { RailCard, Badge } from '@/components/ui';
 import { formatCalendarBadge, formatDate, formatTime } from '@/lib/utils';
-import { activityBarPercentages, activityScore } from '@/lib/social/activity-scale';
+import { activityBarPercentages } from '@/lib/social/activity-scale';
 
 /**
  * The contextual column: five small destinations, five different treatments.
@@ -12,7 +12,7 @@ import { activityBarPercentages, activityScore } from '@/lib/social/activity-sca
  *
  *   events      a timeline — next one lit, dates as small plates
  *   notices     editorial — category leads, headline is the picture
- *   busiest     activity — quiet bars drawn from real counters
+ *   busiest     activity — quiet bars drawn from the real trending score
  *   marketplace price first, the way a listing is read
  *   shortcuts   a keypad of modules, not a list of links
  *
@@ -20,13 +20,14 @@ import { activityBarPercentages, activityScore } from '@/lib/social/activity-sca
  * in it is not rendered at all.
  */
 export function HomeRail({ events = [], notices = [], trending = [], marketplace = [] }) {
-  // The busiest entries are ranked here by the counters already on the page, so
-  // the bars have a shared scale to be honest against. The scaling lives in one
-  // shared helper (lib/social/activity-scale.js): the highest score in the set is
-  // the 100% bound, every other bar is proportional to it, and zero counts render
-  // at 0% — never a flat 100% for every row.
-  const busiest = trending.map((post) => activityScore(post));
-  const percentages = activityBarPercentages(busiest);
+  // The rows arrive already ranked by the database's recent-engagement score.
+  // Bars are normalized against an absolute, configurable benchmark in one
+  // shared helper (lib/social/activity-scale.js) — never against the highest
+  // counter on screen, which is what made two likes look like a full bar.
+  const percentages = activityBarPercentages(
+    trending.map((post) => post?.score),
+    TRENDING_FULL_SCALE,
+  );
 
   return (
     <aside className="home-body__rail" aria-label="Campus information">
@@ -143,7 +144,11 @@ export function HomeRail({ events = [], notices = [], trending = [], marketplace
                       </span>
                     </span>
                   </div>
-                  <span className="rail-activity__bar" aria-hidden="true">
+                  <span
+                    className="rail-activity__bar"
+                    aria-hidden="true"
+                    data-hot={percentage >= 100 ? 'true' : undefined}
+                  >
                     <span style={{ width: `${percentage}%` }} />
                   </span>
                 </li>

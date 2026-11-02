@@ -1,18 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useFormAction } from '@/lib/forms';
 import { toggleReaction } from '@/lib/actions/social';
 import { cn, compactNumber } from '@/lib/utils';
 import { Icon } from '@/components/ui/icons';
+import { useLiveFeed } from '@/components/layout/LiveFeedProvider';
 
 /**
  * One reaction control. Optimistic count, then the database's trigger
  * recomputes the stored counter — the number shown is never client-invented.
+ *
+ * A confirmed post like/unlike is also an engagement change: the shell's live
+ * feed is invalidated once (its queue batches bursts) so Home re-reads the
+ * server-ranked rail. Comments and projects do not move a post's trending
+ * score, so they deliberately do not announce anything.
  */
 export function ReactionBar({ targetType, targetId, count = 0, reactedByMe = false, canReact = true, className = '' }) {
   const [state, setState] = useState({ count, reacted: reactedByMe });
-  const { run, pending } = useFormAction(toggleReaction);
+  const feed = useLiveFeed();
+  const announce = useCallback(
+    () => { if (targetType === 'post') feed.invalidate('engagement', [targetId]); },
+    [feed, targetType, targetId],
+  );
+  const { run, pending } = useFormAction(toggleReaction, { onSuccess: announce });
 
   return (
     <button
