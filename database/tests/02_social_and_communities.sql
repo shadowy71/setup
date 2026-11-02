@@ -238,7 +238,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 7. Polls: one vote per student, author cannot vote on their own poll.
+-- 7. Polls: one vote per student; the poll author may vote like any other student.
 -- ---------------------------------------------------------------------------
 do $$
 declare
@@ -283,15 +283,33 @@ select public.test_assert_denied(
   'a student must not be able to vote twice in the same poll'
 );
 
--- The author cannot vote on their own poll.
+-- The author CAN vote on their own poll — the restriction was removed (migration 039).
 select set_config('request.jwt.claim.sub', 'b0000000-0000-4000-a000-000000000001', false);
+do $$
+declare
+  v_votes int;
+begin
+  insert into public.poll_votes (post_id, option_id, user_id)
+  select o.post_id, o.id, public.current_profile_id()
+  from public.poll_options o join public.posts p on p.id = o.post_id
+  where p.title = 'Best library timing?' and o.label = 'Morning';
+
+  select count(*) into v_votes from public.poll_votes
+  where post_id = (select id from public.posts where title = 'Best library timing?');
+  perform public.test_assert(v_votes = 2, 'the poll author must be able to vote in their own poll');
+end;
+$$;
+
+-- A closed poll still rejects every vote, including the author's.
+update public.posts set poll_closes_at = now() - interval '1 hour' where title = 'Best library timing?';
 select public.test_assert_denied(
   $sql$insert into public.poll_votes (post_id, option_id, user_id)
        select o.post_id, o.id, public.current_profile_id()
        from public.poll_options o join public.posts p on p.id = o.post_id
        where p.title = 'Best library timing?' limit 1$sql$,
-  'a poll author must not vote in their own poll'
+  'a closed poll must reject votes'
 );
+update public.posts set poll_closes_at = null where title = 'Best library timing?';
 
 -- ---------------------------------------------------------------------------
 -- 8. Communities: creator becomes owner, private content stays private.

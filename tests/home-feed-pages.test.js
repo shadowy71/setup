@@ -122,8 +122,8 @@ const { getCampusFeed } = await import('@/lib/data/feed');
 /** The rail chains the route awaits; both resolve to "nothing to show". */
 function railChain() {
   const chain = {};
-  for (const method of ['select', 'eq', 'gte', 'order', 'limit']) chain[method] = () => chain;
-  chain.then = (resolve) => Promise.resolve({ data: [], error: null }).then(resolve);
+  for (const method of ['select', 'eq', 'is', 'gte', 'order', 'limit']) chain[method] = () => chain;
+  chain.then = (resolve) => Promise.resolve({ data: [], error: null, count: null }).then(resolve);
   return chain;
 }
 
@@ -147,7 +147,7 @@ describe('GET /api/home/feed paging', () => {
     const { status, body, args } = await fetchFeed();
     expect(status).toBe(200);
     expect(args).toEqual({ limit: HOME_FEED_PAGE_SIZE, offset: 0, currentProfileId: 'profile-1' });
-    expect(body.page).toEqual({ limit: HOME_FEED_PAGE_SIZE, offset: 0, hasMore: true });
+    expect(body.page).toEqual({ limit: HOME_FEED_PAGE_SIZE, offset: 0, hasMore: true, total: null });
     expect(body.feed).toHaveLength(HOME_FEED_PAGE_SIZE);
   });
 
@@ -211,10 +211,12 @@ describe('the Home surface around those pages', () => {
     const start = home.indexOf('const loadMore');
     expect(start).toBeGreaterThan(-1);
     const loadMore = home.slice(start, home.indexOf('  return (', start));
-    expect(loadMore).toContain('/api/home/feed?offset=${loaded.length}');
+    // The cursor follows server-delivered rows (offset + page length), not the rendered
+    // window — a locally held post must not push the offset past an older server row.
+    expect(loadMore).toContain('/api/home/feed?offset=${cursor}');
+    expect(loadMore).toContain('const cursor = Math.max(0, serverRowsRef.current);');
+    expect(loadMore).toContain('serverRowsRef.current = Math.max(');
     expect(loadMore).toContain('mergeFeedPages(loaded, payload.feed)');
-    // The page boundary is the list length, not a page counter: whatever is on screen is
-    // exactly how far back the reader has already read.
     expect(loadMore).toContain('const loaded = snapshot?.feed || [];');
     expect(loadMore).toContain('writeHomeFeedCache(userId, next, feedRevision())');
     // A failed page leaves the loaded entries alone — it must not fall back to page one.

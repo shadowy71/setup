@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { RailCard, Badge } from '@/components/ui';
 import { formatCalendarBadge, formatDate, formatTime } from '@/lib/utils';
+import { activityBarPercentages, activityScore } from '@/lib/social/activity-scale';
 
 /**
  * The contextual column: five small destinations, five different treatments.
@@ -20,15 +21,12 @@ import { formatCalendarBadge, formatDate, formatTime } from '@/lib/utils';
  */
 export function HomeRail({ events = [], notices = [], trending = [], marketplace = [] }) {
   // The busiest entries are ranked here by the counters already on the page, so
-  // the bars have a shared scale to be honest against. Normalize backend values
-  // before adding them (counts may arrive as numeric strings), and keep empty or
-  // invalid counters at zero.
-  const countValue = (value) => {
-    const count = Number(value);
-    return Number.isFinite(count) && count > 0 ? count : 0;
-  };
-  const busiest = trending.map((post) => countValue(post.reaction_count) + countValue(post.comment_count));
-  const ceiling = Math.max(0, ...busiest);
+  // the bars have a shared scale to be honest against. The scaling lives in one
+  // shared helper (lib/social/activity-scale.js): the highest score in the set is
+  // the 100% bound, every other bar is proportional to it, and zero counts render
+  // at 0% — never a flat 100% for every row.
+  const busiest = trending.map((post) => activityScore(post));
+  const percentages = activityBarPercentages(busiest);
 
   return (
     <aside className="home-body__rail" aria-label="Campus information">
@@ -125,10 +123,7 @@ export function HomeRail({ events = [], notices = [], trending = [], marketplace
         >
           <ol className="rail-activity">
             {trending.map((post, index) => {
-              const score = busiest[index];
-              const percentage = ceiling > 0
-                ? Math.min(100, Math.max(0, (score / ceiling) * 100))
-                : 0;
+              const percentage = percentages[index] ?? 0;
               return (
                 <li key={post.id}>
                   <div className="rail-activity__row">

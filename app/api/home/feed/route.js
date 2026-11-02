@@ -74,11 +74,19 @@ async function serveFeed(request, { reconcile = false } = {}) {
     const [
       { items: feed, unavailable },
       { data: visibleRows, error: visibilityError },
+      // Server-side total of feed-eligible campus posts. RLS still applies (the
+      // read runs as the signed-in student), so blocked/muted authors and
+      // non-published rows are excluded exactly as campus_feed() excludes them.
+      { count: postTotal, error: countError },
       { data: events, error: eventsError },
       { data: notices, error: noticesError },
     ] = await Promise.all([
       getCampusFeed(supabase, { limit: HOME_FEED_PAGE_SIZE, offset, currentProfileId: user.profile.id }),
       visibility,
+      supabase
+        .from('posts')
+        .select('id', { count: 'exact', head: true })
+        .is('community_id', null),
       supabase
         .from('events')
         .select('id, title, starts_on, start_time, location, is_official, organizer')
@@ -110,6 +118,10 @@ async function serveFeed(request, { reconcile = false } = {}) {
         limit: HOME_FEED_PAGE_SIZE,
         offset,
         hasMore: feed.length === HOME_FEED_PAGE_SIZE && offset + feed.length < HOME_FEED_MAX_OFFSET,
+        // Total eligible campus posts (e.g. 14) even while only one page (10) is
+        // loaded; the remaining 4 arrive through normal offset pagination. Null
+        // when the count lookup failed — the loaded count stays the truth then.
+        total: countError ? null : postTotal ?? null,
       },
     };
     if (reconcile) {

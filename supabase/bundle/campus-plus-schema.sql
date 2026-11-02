@@ -1789,7 +1789,6 @@ create policy poll_votes_insert_self on public.poll_votes
         and p.kind = 'poll'
         and p.status = 'published'
         and (p.poll_closes_at is null or p.poll_closes_at > now())
-        and p.author_id <> public.current_profile_id()
     )
     and not exists (
       select 1 from public.posts p2
