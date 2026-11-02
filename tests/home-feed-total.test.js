@@ -13,7 +13,10 @@ vi.mock('@/lib/auth/session', () => ({
   getCurrentUser: vi.fn(),
 }));
 vi.mock('@/lib/supabase/server', () => ({ getServerClient: vi.fn() }));
-vi.mock('@/lib/data/feed', () => ({ getCampusFeed: vi.fn() }));
+vi.mock('@/lib/data/feed', () => ({
+  getCampusFeed: vi.fn(),
+  getTrendingPosts: vi.fn(async () => ({ items: [], unavailable: false })),
+}));
 
 const { GET } = await import('../app/api/home/feed/route.js');
 const { getCurrentUser } = await import('@/lib/auth/session');

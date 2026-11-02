@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { BLOCKED_STATUSES, getCurrentUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
-import { getCampusFeed } from '@/lib/data/feed';
-import { HOME_FEED_MAX_OFFSET, HOME_FEED_PAGE_SIZE, HOME_FEED_RECONCILE_LIMIT } from '@/lib/constants';
+import { getCampusFeed, getTrendingPosts } from '@/lib/data/feed';
+import {
+  HOME_FEED_MAX_OFFSET,
+  HOME_FEED_PAGE_SIZE,
+  HOME_FEED_RECONCILE_LIMIT,
+  TRENDING_RAIL_LIMIT,
+  TRENDING_WINDOW_HOURS,
+} from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +77,9 @@ async function serveFeed(request, { reconcile = false } = {}) {
     const visibility = postIds.length
       ? supabase.rpc('campus_feed_post_visibility', { p_post_ids: postIds })
       : Promise.resolve({ data: [], error: null });
+    // The rail belongs to the newest page. An older "Show more" request already
+    // has its rail in the client snapshot, so it does not pay for another score.
+    const includeTrending = offset === 0;
     const [
       { items: feed, unavailable },
       { data: visibleRows, error: visibilityError },
@@ -80,6 +89,7 @@ async function serveFeed(request, { reconcile = false } = {}) {
       { count: postTotal, error: countError },
       { data: events, error: eventsError },
       { data: notices, error: noticesError },
+      trendingResult,
     ] = await Promise.all([
       getCampusFeed(supabase, { limit: HOME_FEED_PAGE_SIZE, offset, currentProfileId: user.profile.id }),
       visibility,
@@ -101,6 +111,9 @@ async function serveFeed(request, { reconcile = false } = {}) {
         .order('pinned', { ascending: false })
         .order('published_at', { ascending: false })
         .limit(3),
+      includeTrending
+        ? getTrendingPosts(supabase, { limit: TRENDING_RAIL_LIMIT, hours: TRENDING_WINDOW_HOURS })
+        : Promise.resolve(null),
     ]);
 
     const visible = new Set((visibleRows || []).map((row) => row.id));
@@ -112,6 +125,13 @@ async function serveFeed(request, { reconcile = false } = {}) {
       notices: notices || [],
       eventsUnavailable: Boolean(eventsError),
       noticesUnavailable: Boolean(noticesError),
+      // Real, ranked, RLS-scoped trending rows. `score` comes from the database;
+      // the rail only normalizes it into a bar width. A failed RPC is reported
+      // rather than faked, so the client can keep the last honest rows.
+      ...(includeTrending ? {
+        trending: trendingResult?.items || [],
+        trendingUnavailable: Boolean(trendingResult?.unavailable),
+      } : {}),
       // The client renders its "Show more" control off this, rather than guessing
       // from the length it happened to receive: a short page is the feed saying it is over.
       page: {

@@ -146,10 +146,13 @@ describe('marketplace listings', () => {
 });
 
 describe('official content (staff surfaces)', () => {
+  // A fixture pinned to a calendar date goes stale the day after it is written.
+  // "Tomorrow" is always a future event, which is what this schema checks.
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
   const event = {
     title: 'TechTalk: systems',
     description: 'A talk in the main auditorium.',
-    starts_on: '2026-11-01',
+    starts_on: tomorrow,
     location: 'Main auditorium',
   };
 

@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (38 files):
+-- Contents (40 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -71,9 +71,11 @@
 --   36  20261029000004_036_admin_dashboard_counts.sql  (60 lines)
 --   37  20261029000005_037_realtime_authorization_grants.sql  (32 lines)
 --   38  20261101000001_038_post_pin_ordering.sql  (314 lines)
+--   39  20261102000001_039_poll_author_may_vote.sql  (37 lines)
+--   40  20261102000002_040_busiest_trending.sql  (220 lines)
 
 -- ==========================================================================
--- FILE 01/38  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/40  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -194,7 +196,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/38  20261005000002_002_identity_roles.sql
+-- FILE 02/40  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -786,7 +788,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/38  20261005000003_003_blocks.sql
+-- FILE 03/40  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -933,7 +935,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/38  20261005000004_004_communities.sql
+-- FILE 04/40  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1340,7 +1342,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/38  20261005000005_005_social.sql
+-- FILE 05/40  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1789,6 +1791,7 @@ create policy poll_votes_insert_self on public.poll_votes
         and p.kind = 'poll'
         and p.status = 'published'
         and (p.poll_closes_at is null or p.poll_closes_at > now())
+        and p.author_id <> public.current_profile_id()
     )
     and not exists (
       select 1 from public.posts p2
@@ -1962,7 +1965,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/38  20261005000006_006_moderation_core.sql
+-- FILE 06/40  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2437,7 +2440,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/38  20261005000007_007_messaging.sql
+-- FILE 07/40  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3026,7 +3029,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/38  20261005000008_008_marketplace.sql
+-- FILE 08/40  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3548,7 +3551,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/38  20261005000009_009_campus.sql
+-- FILE 09/40  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4582,7 +4585,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/38  20261005000010_010_random.sql
+-- FILE 10/40  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5234,7 +5237,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/38  20261005000011_011_platform.sql
+-- FILE 11/40  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -5974,7 +5977,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/38  20261005000012_012_auth_hooks.sql
+-- FILE 12/40  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6431,7 +6434,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/38  20261005000013_013_reference_data.sql
+-- FILE 13/40  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6705,7 +6708,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/38  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/40  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6918,7 +6921,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/38  20261005000015_015_column_privileges.sql
+-- FILE 15/40  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7146,7 +7149,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/38  20261005000016_016_staff_actions.sql
+-- FILE 16/40  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7853,7 +7856,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/38  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/40  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8051,7 +8054,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/38  20261005000018_018_function_grants.sql
+-- FILE 18/40  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8166,7 +8169,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/38  20261005000019_019_staff_visibility.sql
+-- FILE 19/40  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8242,7 +8245,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/38  20261005000020_020_chat_inbox.sql
+-- FILE 20/40  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8336,7 +8339,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/38  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/40  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8674,7 +8677,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/38  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/40  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8747,7 +8750,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/38  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/40  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8777,7 +8780,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/38  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/40  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9250,7 +9253,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/38  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/40  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9544,7 +9547,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/38  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/40  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9664,7 +9667,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/38  20261025000001_027_backup_change_capture.sql
+-- FILE 27/40  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10930,7 +10933,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/38  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/40  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11257,7 +11260,7 @@ comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
--- FILE 29/38  20261026000001_029_feed_realtime_delivery.sql
+-- FILE 29/40  20261026000001_029_feed_realtime_delivery.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11374,7 +11377,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 30/38  20261027000001_030_random_channel_authorization.sql
+-- FILE 30/40  20261027000001_030_random_channel_authorization.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11567,7 +11570,7 @@ comment on function public.can_access_random_session is
   'can_access_own_random_session(uuid) instead.';
 
 -- ==========================================================================
--- FILE 31/38  20261028000001_031_club_governance.sql
+-- FILE 31/40  20261028000001_031_club_governance.sql
 -- ==========================================================================
 
 -- Campus+ migration 031 — club governance, requests and scoped management
@@ -12620,7 +12623,7 @@ grant execute on function public.remove_community_member(uuid, uuid) to authenti
 grant execute on function public.update_club_profile(uuid, jsonb) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 32/38  20261028000002_032_club_catalogue.sql
+-- FILE 32/40  20261028000002_032_club_catalogue.sql
 -- ==========================================================================
 
 -- Campus+ migration 032 — source-backed club catalogue
@@ -12834,7 +12837,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 33/38  20261029000001_033_unread_count_lookup.sql
+-- FILE 33/40  20261029000001_033_unread_count_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12892,7 +12895,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 34/38  20261029000002_034_inbox_membership_lookup.sql
+-- FILE 34/40  20261029000002_034_inbox_membership_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12984,7 +12987,7 @@ revoke all on function public.conversation_inbox(integer) from public, anon;
 grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 35/38  20261029000003_035_feed_visibility_reconciliation.sql
+-- FILE 35/40  20261029000003_035_feed_visibility_reconciliation.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13040,7 +13043,7 @@ revoke all on function public.campus_feed_post_visibility(uuid[]) from public, a
 grant execute on function public.campus_feed_post_visibility(uuid[]) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 36/38  20261029000004_036_admin_dashboard_counts.sql
+-- FILE 36/40  20261029000004_036_admin_dashboard_counts.sql
 -- ==========================================================================
 
 -- Campus+ 036: one authorized, RLS-scoped Admin count snapshot
@@ -13104,7 +13107,7 @@ revoke all on function public.campus_admin_dashboard_counts() from anon;
 grant execute on function public.campus_admin_dashboard_counts() to authenticated;
 
 -- ==========================================================================
--- FILE 37/38  20261029000005_037_realtime_authorization_grants.sql
+-- FILE 37/40  20261029000005_037_realtime_authorization_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 037 — reassert least-privilege Realtime function grants
@@ -13140,7 +13143,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 38/38  20261101000001_038_post_pin_ordering.sql
+-- FILE 38/40  20261101000001_038_post_pin_ordering.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13456,6 +13459,271 @@ alter table public.posts replica identity using index posts_feed_replica_identit
 
 comment on index public.posts_feed_replica_identity_idx is
   'Realtime update identity: old id/pin/status only, so pin transitions are distinguishable from counter-only writes without full-row replica identity.';
+
+-- ==========================================================================
+-- FILE 39/40  20261102000001_039_poll_author_may_vote.sql
+-- ==========================================================================
+
+-- =============================================================================
+-- Campus+ migration 039 — let a poll's author vote in their own poll
+-- =============================================================================
+-- The poll_votes_insert_self policy carried `p.author_id <> current_profile_id()`,
+-- which silently rejected the poll creator's own vote. That is not an intentional
+-- product rule: the one-vote-per-user unique constraint, the active-account check,
+-- the published-and-open poll check and the block check all stay in force. Only the
+-- author-specific exclusion is removed, so the creator participates like any other
+-- eligible student.
+--
+-- No table shape changes; only the insert policy is recreated. Delete/select
+-- policies, triggers and grants are untouched.
+-- =============================================================================
+
+drop policy if exists poll_votes_insert_self on public.poll_votes;
+
+create policy poll_votes_insert_self on public.poll_votes
+  for insert to authenticated
+  with check (
+    user_id = public.current_profile_id()
+    and public.is_active_user()
+    and exists (
+      select 1 from public.posts p
+      where p.id = post_id
+        and p.kind = 'poll'
+        and p.status = 'published'
+        and (p.poll_closes_at is null or p.poll_closes_at > now())
+    )
+    and not exists (
+      select 1 from public.posts p2
+      where p2.id = post_id and public.is_blocked_with_current(p2.author_id)
+    )
+  );
+
+comment on policy poll_votes_insert_self on public.poll_votes is
+  'Any active student may vote once in an open published poll, including the poll author; duplicates remain blocked by the unique (post_id, user_id) constraint.';
+
+-- ==========================================================================
+-- FILE 40/40  20261102000002_040_busiest_trending.sql
+-- ==========================================================================
+
+-- =============================================================================
+-- Campus+ migration 040 — "Busiest right now": real, recent engagement
+-- =============================================================================
+-- The Home rail's bars were normalized against the highest counter in the three
+-- rows on screen (lib/social/activity-scale.js), so two likes filled the track.
+-- The bar is now normalized against a fixed benchmark, but a fixed benchmark is
+-- only honest if the number behind it is a real trending score and not a
+-- lifetime total from whichever posts happen to be on page one.
+--
+-- `public.trending_posts(integer, integer)` already exists (migration 011) and
+-- is the RPC Explore uses. It is repaired here rather than replaced: the output
+-- contract, the invoker-security RLS boundary and the grants are untouched.
+--
+--   score = ( Σ likes·decay(age) + comment_weight·Σ comments·decay(age) )
+--           × ( post_floor + (1 - post_floor)·2^(-postAge / postHalfLife) )
+--
+--   decay(age) = (2^(-age / halfLife) - 2^(-window / halfLife))
+--                / (1 - 2^(-window / halfLife))        for 0 <= age <= window
+--              = 0                                    outside the window
+--
+--   window      = p_hours (48 h by default; 24–48 h is the intended range)
+--   halfLife    = setting_int('trending_half_life_hours', 12)
+--   commentWeight = setting_int('trending_comment_weight', 2)
+--   postHalfLife  = setting_int('trending_post_age_half_life_hours', 72)
+--   post_floor  = 0.5 (a genuinely active old post is never worth zero)
+--
+-- Those numbers are published in lib/constants.js (TRENDING_*) and pinned by
+-- tests/trending.test.js. The half-life weights are read from the existing
+-- platform_settings table through setting_int(), so the campus can recalibrate
+-- without another migration; no new table, column or function is introduced.
+--
+-- What changes in behaviour:
+--   * Only engagement inside the window counts. A post with 100 accumulated
+--     likes and no recent activity scores 0; 12 fresh likes outrank it.
+--   * A like is one `reactions` row. The existing
+--     reactions_unique_per_item(user_id, target_type, target_id) constraint
+--     makes that one per student, so duplicate likes cannot inflate the score
+--     and no per-user/per-post N+1 read is needed.
+--   * The unbounded `count(distinct commenters)` scan over ALL comments is
+--     replaced by two windowed aggregations using the partial indexes below.
+--   * Candidates are posts with recent engagement plus posts published inside
+--     the window. If neither exists, the newest campus posts are returned with
+--     score 0 so a quiet campus still sees real (unexaggerated) discussions.
+--   * Ordering is score desc, created_at desc, id asc — deterministic even when
+--     every score is zero. No random tie-break, no fabricated engagement.
+--   * `security invoker` + the published/not-deleted/campus-only predicates
+--     keep deleted, hidden, blocked and community-scoped rows out.
+-- =============================================================================
+
+-- Windowed engagement reads. Both partial indexes match the CTE predicates, so
+-- a growing reactions/comments table is not scanned in full on every refresh.
+create index if not exists reactions_recent_post_idx
+  on public.reactions (created_at desc)
+  where target_type = 'post';
+
+create index if not exists comments_recent_published_idx
+  on public.comments (created_at desc)
+  where status = 'published' and deleted_at is null;
+
+create or replace function public.trending_posts(
+  p_limit integer default 20,
+  p_hours integer default 48
+)
+returns table (
+  id uuid,
+  author_id uuid,
+  username text,
+  display_name text,
+  title text,
+  body text,
+  kind public.post_kind,
+  gif jsonb,
+  reaction_count integer,
+  comment_count integer,
+  participant_count integer,
+  created_at timestamptz,
+  score real
+)
+language sql
+stable
+security invoker
+set search_path = public, pg_temp
+as $$
+  with tuning as (
+    select
+      greatest(coalesce(p_hours, 48), 1)::numeric as window_hours,
+      least(greatest(coalesce(p_limit, 20), 1), 50)::integer as lim,
+      greatest(public.setting_int('trending_half_life_hours', 12), 1)::numeric as half_life,
+      greatest(public.setting_int('trending_post_age_half_life_hours', 72), 1)::numeric as post_half_life,
+      greatest(public.setting_int('trending_comment_weight', 2), 0)::numeric as comment_weight,
+      0.5::numeric as post_floor
+  ),
+  params as (
+    select
+      t.*,
+      power(0.5::numeric, t.window_hours / t.half_life) as edge,
+      now() - make_interval(hours => t.window_hours::integer) as since
+    from tuning t
+  ),
+  -- One row per (student, post) because of reactions_unique_per_item. The decay
+  -- reaches 0 exactly at the window edge, so an old like cannot trickle in.
+  recent_likes as (
+    select
+      r.target_id as post_id,
+      count(*)::integer as recent_count,
+      coalesce(sum(
+        greatest(
+          (
+            power(0.5::numeric,
+              greatest(extract(epoch from (now() - r.created_at)) / 3600.0, 0)::numeric
+              / (select half_life from params))
+            - (select edge from params)
+          ) / nullif(1 - (select edge from params), 0),
+          0::numeric
+        )
+      ), 0::numeric) as weighted
+    from public.reactions r
+    where r.target_type = 'post'
+      and r.created_at > (select since from params)
+    group by r.target_id
+  ),
+  recent_comments as (
+    select
+      c.post_id,
+      count(*)::integer as recent_count,
+      count(distinct c.author_id)::integer as participants,
+      coalesce(sum(
+        greatest(
+          (
+            power(0.5::numeric,
+              greatest(extract(epoch from (now() - c.created_at)) / 3600.0, 0)::numeric
+              / (select half_life from params))
+            - (select edge from params)
+          ) / nullif(1 - (select edge from params), 0),
+          0::numeric
+        )
+      ), 0::numeric) as weighted
+    from public.comments c
+    where c.status = 'published'
+      and c.deleted_at is null
+      and c.created_at > (select since from params)
+    group by c.post_id
+  ),
+  active_ids as (
+    select post_id from recent_likes
+    union
+    select post_id from recent_comments
+  ),
+  -- A new discussion with no engagement yet still belongs in the list, at 0%.
+  fresh_posts as (
+    select p.id as post_id
+    from public.posts p
+    where p.status = 'published'
+      and p.deleted_at is null
+      and p.community_id is null
+      and p.created_at > (select since from params)
+  ),
+  candidate_ids as (
+    select post_id from active_ids
+    union
+    select post_id from fresh_posts
+  ),
+  -- Only when the window is completely quiet: the newest real posts, score 0.
+  fallback_ids as (
+    select p.id as post_id
+    from public.posts p
+    where p.status = 'published'
+      and p.deleted_at is null
+      and p.community_id is null
+      and not exists (select 1 from candidate_ids)
+    -- posts_feed_idx serves this order; no window over the whole posts table.
+    order by p.created_at desc, p.id asc
+    limit (select lim from params)
+  ),
+  ids as (
+    select post_id from candidate_ids
+    union all
+    select post_id from fallback_ids
+  )
+  select
+    p.id,
+    p.author_id,
+    pr.username,
+    pr.display_name,
+    p.title,
+    p.body,
+    p.kind,
+    p.gif,
+    p.reaction_count,
+    p.comment_count,
+    coalesce(rc.participants, 0)::integer as participant_count,
+    p.created_at,
+    (
+      (
+        coalesce(rl.weighted, 0::numeric)
+        + (select comment_weight from params) * coalesce(rc.weighted, 0::numeric)
+      )
+      * (
+          (select post_floor from params)
+          + (1 - (select post_floor from params))
+            * power(0.5::numeric,
+                greatest(extract(epoch from (now() - p.created_at)) / 3600.0, 0)::numeric
+                / (select post_half_life from params))
+        )
+    )::real as score
+  from ids i
+  join public.posts p on p.id = i.post_id
+  join public.profiles pr on pr.id = p.author_id
+  left join recent_likes rl on rl.post_id = p.id
+  left join recent_comments rc on rc.post_id = p.id
+  where p.status = 'published'
+    and p.deleted_at is null
+    and p.community_id is null
+  order by score desc, p.created_at desc, p.id asc
+  limit (select lim from params);
+$$;
+
+comment on function public.trending_posts(integer, integer) is
+  'Deterministic recent-engagement trending score. Formula and defaults are published in lib/constants.js#TRENDING_FORMULA; bar normalization lives in lib/social/activity-scale.js. SECURITY INVOKER so RLS still decides visibility.';
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)

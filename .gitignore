@@ -14,6 +14,11 @@ next-env.d.ts
 # `node scripts/dev/perf/mobile.mjs --screenshots`; only the JSON results are tracked.
 perf-results/screens/
 
+# Local Home preview board — regenerated with
+# `node scripts/dev/build-trending-preview.mjs` while the sandbox harness runs.
+# It inlines the dev server's compiled CSS, so it is never committed.
+public/home-trending-preview.html
+
 # Environment — NEVER commit real values
 .env
 .env.local

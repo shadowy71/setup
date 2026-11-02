@@ -4,10 +4,14 @@ import { useState } from 'react';
 import { useFormAction } from '@/lib/forms';
 import { deleteComment } from '@/lib/actions/social';
 import { Button, DeleteButton, KeycapButton } from '@/components/ui';
+import { useLiveFeed } from '@/components/layout/LiveFeedProvider';
 
 /** Delete your own comment (soft delete — moderation evidence is preserved). */
 export function CommentActions({ commentId, postId }) {
-  const { run, pending, error } = useFormAction(deleteComment);
+  const feed = useLiveFeed();
+  const { run, pending, error } = useFormAction(deleteComment, {
+    onSuccess: () => feed.invalidate('engagement', [postId]),
+  });
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {

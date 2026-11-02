@@ -19,9 +19,11 @@ const BUNDLE = 'supabase/bundle/campus-plus-schema.sql';
 const MIGRATION = 'supabase/migrations/20261102000001_039_poll_author_may_vote.sql';
 
 function insertPolicyBody(sql) {
-  const match = sql.match(/create policy poll_votes_insert_self on public\.poll_votes([\s\S]*?);/);
-  expect(match, 'poll_votes_insert_self policy must exist').toBeTruthy();
-  return match[1];
+  // The bundle carries the entire migration history, so the policy is defined
+  // more than once. The last definition is the one a fresh install ends with.
+  const matches = [...sql.matchAll(/create policy poll_votes_insert_self on public\.poll_votes([\s\S]*?);/g)];
+  expect(matches.length, 'poll_votes_insert_self policy must exist').toBeGreaterThan(0);
+  return matches.at(-1)[1];
 }
 
 describe('poll_votes_insert_self RLS policy', () => {

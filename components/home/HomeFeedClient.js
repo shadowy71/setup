@@ -37,6 +37,14 @@ import { patchFeedPoll, reconcileFeedPollOverlays } from '@/lib/social/poll-stat
  */
 const LIVE_REFRESH_MS = 700;
 /**
+ * Someone else's like or comment does not produce a feed Realtime event: the
+ * channel deliberately drops counter-only `posts` updates so a busy campus
+ * cannot make every open tab re-query. A visible Home therefore re-reads once a
+ * minute through the same coalesced refresh path — one request at most, and
+ * only while the tab is actually being looked at.
+ */
+const TRENDING_REFRESH_MS = 60_000;
+/**
  * How long a locally placed post may be held onto when the server page has not
  * caught up with it. Long enough to survive a slow revalidation, short enough that
  * a row the feed genuinely excludes (blocked between the write and the read, say)
@@ -273,7 +281,13 @@ export function HomeFeedClient({
           feedPostIds(payload.feed),
         );
         for (const id of overlaid.settled) pollOverlaysRef.current.delete(id);
-        const next = writeHomeFeedCache(userId, { ...payload, feed: overlaid.feed }, feedRevision());
+        // The rail is server-ranked. An unavailable/missing trending read is not
+        // a quiet campus: keep the last honest rows instead of blanking the rail.
+        const previousTrending = readHomeFeedCache(userId)?.payload?.trending || [];
+        const trending = Array.isArray(payload.trending) && !payload.trendingUnavailable
+          ? payload.trending
+          : previousTrending;
+        const next = writeHomeFeedCache(userId, { ...payload, trending, feed: overlaid.feed }, feedRevision());
         setSnapshot(next);
         setError(false);
         return next;
@@ -429,7 +443,15 @@ export function HomeFeedClient({
     };
     window.addEventListener('focus', refreshIfStale);
     document.addEventListener('visibilitychange', refreshIfStale);
+    // Slow, visibility-gated convergence for engagement that happened in
+    // another tab. `refresh(false)` still honours the cache/revision and the
+    // in-flight coalescing, so this can never stack requests.
+    const convergence = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      void refresh(false);
+    }, TRENDING_REFRESH_MS);
     return () => {
+      window.clearInterval(convergence);
       window.removeEventListener('focus', refreshIfStale);
       document.removeEventListener('visibilitychange', refreshIfStale);
     };
@@ -439,12 +461,11 @@ export function HomeFeedClient({
   const events = snapshot?.events || [];
   const notices = snapshot?.notices || [];
   const unavailable = Boolean(snapshot?.unavailable || snapshot?.feedUnavailable);
-  const postItems = feed.filter((item) => ['post', 'discussion', 'poll'].includes(item.type));
-  const posts = postItems.map((item) => item.post).filter(Boolean);
-  const trending = posts
-    .slice()
-    .sort((a, b) => (b.reaction_count || 0) + (b.comment_count || 0) - ((a.reaction_count || 0) + (a.comment_count || 0)))
-    .slice(0, 3);
+  // The rail is not derived from the loaded feed page any more. `/api/home/feed`
+  // returns `trending` straight from the `trending_posts` RPC: already ranked by
+  // recent engagement, with the database's score and counters on each row. No
+  // client-side re-ranking, no duplicated or stale counter arithmetic.
+  const trending = snapshot?.trending || [];
   const marketplace = feed.filter((item) => ['listing', 'deal'].includes(item.type)).slice(0, 3);
   // The stat is the total eligible posts on the feed (e.g. 14), not the number
   // currently loaded (10) — the server reports the total on every page.
