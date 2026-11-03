@@ -3,50 +3,95 @@ import { Badge } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { ClubMonogram } from '@/components/clubs/ClubMonogram';
 import { truncate } from '@/lib/utils';
-import { ROUTES, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
+import { ROUTES, CLUB_CATEGORIES, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
+
+const CATEGORY_ICON_MAP = Object.fromEntries(
+  CLUB_CATEGORIES.map((c) => [c.value, c.icon]),
+);
 
 /** Truthful discovery states sourced from the club and the viewer's real rows. */
 export function ClubCard({ club, joined = false, pending = false }) {
   const canRecruit = club.admin_assigned && Boolean(club.recruitment_info);
   const organizationType = CLUB_ORGANIZATION_TYPE_LABELS[club.organization_type] || 'Club';
+  const categoryIcon = CATEGORY_ICON_MAP[club.club_category] || 'star';
+
   return (
     <Link
       href={ROUTES.club(club.id)}
-      className="club-card card group flex flex-col gap-3 p-4"
+      className="club-card group"
       aria-label={`${club.name}, ${club.member_count} member${club.member_count === 1 ? '' : 's'}${club.admin_assigned ? '' : ', administrator assignment needed'}`}
     >
-      <div className="flex items-start gap-3">
-        <ClubMonogram name={club.name} id={club.id} size={52} />
-        <div className="min-w-0 flex-1">
-          <h3 className="t-card break-anywhere leading-snug group-hover:underline">{club.name}</h3>
-          <p className="mt-1 text-2xs uppercase tracking-wide text-muted-soft">
-            {club.club_category || 'Club'} · {organizationType}
-          </p>
+      {/* 1. Dedicated upper visual section occupying approximately 40-45% of the card */}
+      <div className="club-card__visual">
+        <div className="club-card__visual-header">
+          <span className="club-card__category-badge">
+            <Icon name={categoryIcon} size={11} className="shrink-0 text-muted" />
+            <span className="truncate">{club.club_category || 'Club'}</span>
+          </span>
+          <span className="club-card__action" aria-hidden="true" title="Open club">
+            <Icon name="arrowUpRight" size={14} className="club-card__action-icon" />
+          </span>
         </div>
-        <Icon name="chevronRight" size={15} className="mt-1 shrink-0 text-muted-soft transition-transform group-hover:translate-x-0.5" />
+
+        <div className="club-card__visual-hero">
+          <ClubMonogram name={club.name} id={club.id} size={58} className="club-card__monogram" />
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        {club.verification_status === 'source_checked' ? (
-          <Badge tone="accent" icon="check">Source checked</Badge>
-        ) : <Badge>Details pending</Badge>}
-        {club.is_official ? <Badge tone="accent">Campus+ reviewed</Badge> : null}
-        {joined ? <Badge tone="success" icon="check">Member</Badge> : null}
-        {!joined && pending ? <Badge tone="warning">Join requested</Badge> : null}
-        {!club.admin_assigned ? <Badge tone="warning">Admin assignment needed</Badge> : null}
-        {canRecruit ? <Badge tone="info" icon="megaphone">Recruiting</Badge> : null}
-        {club.admin_assigned && club.join_policy !== 'open' ? <Badge>Approval needed</Badge> : null}
-      </div>
+      {/* 2. Separate lower information section */}
+      <div className="club-card__body">
+        {/* Title and subtitle hierarchy */}
+        <div className="club-card__header">
+          <h3 className="club-card__title t-card">{club.name}</h3>
+          <p className="club-card__subtitle">{organizationType}</p>
+        </div>
 
-      <p className="line-clamp-3 text-[0.8125rem] leading-relaxed text-muted">{truncate(club.description, 170)}</p>
+        {/* Relevant status and governance badges */}
+        <div className="club-card__badges" aria-label="Status badges">
+          {club.verification_status === 'source_checked' ? (
+            <Badge tone="accent" icon="check">Source checked</Badge>
+          ) : <Badge>Details pending</Badge>}
+          {club.is_official ? <Badge tone="accent">Campus+ reviewed</Badge> : null}
+          {joined ? <Badge tone="success" icon="check">Member</Badge> : null}
+          {!joined && pending ? <Badge tone="warning">Join requested</Badge> : null}
+          {!club.admin_assigned ? <Badge tone="warning">Admin assignment needed</Badge> : null}
+          {canRecruit ? <Badge tone="info" icon="megaphone">Recruiting</Badge> : null}
+          {club.admin_assigned && club.join_policy !== 'open' ? <Badge>Approval needed</Badge> : null}
+        </div>
 
-      <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-line pt-2.5 text-2xs text-muted">
-        <span>
-          <Icon name="users" size={12} className="mr-1 inline align-[-2px]" />
-          {club.member_count} member{club.member_count === 1 ? '' : 's'}
-        </span>
-        {club.meeting_info ? <span className="truncate">Meets · {club.meeting_info}</span> : null}
-        {club.source_label ? <span className="w-full truncate">Source · {club.source_label}</span> : null}
+        {/* Short description */}
+        <p className="club-card__description">
+          {truncate(club.description, 140)}
+        </p>
+
+        {/* 3. Compact icon-supported metadata row (adapted from Uiverse reference icon-box) */}
+        <div className="club-card__footer">
+          <div className="club-card__icon-box">
+            <div className="club-card__meta-item">
+              <Icon name="users" size={14} className="club-card__meta-icon" />
+              <span className="club-card__meta-text">
+                <strong>{club.member_count}</strong> {club.member_count === 1 ? 'member' : 'members'}
+              </span>
+            </div>
+            {club.meeting_info ? (
+              <div className="club-card__meta-item club-card__meta-item--secondary" title={`Meets · ${club.meeting_info}`}>
+                <Icon name="calendar" size={12} className="shrink-0 text-muted" />
+                <span className="truncate">Meets · {club.meeting_info}</span>
+              </div>
+            ) : club.source_label ? (
+              <div className="club-card__meta-item club-card__meta-item--secondary" title={`Source · ${club.source_label}`}>
+                <Icon name="link" size={12} className="shrink-0 text-muted" />
+                <span className="truncate">Source · {club.source_label}</span>
+              </div>
+            ) : null}
+          </div>
+
+          {club.meeting_info && club.source_label ? (
+            <p className="club-card__source" title={`Source · ${club.source_label}`}>
+              Source · {club.source_label}
+            </p>
+          ) : null}
+        </div>
       </div>
     </Link>
   );
