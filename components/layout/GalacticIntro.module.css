@@ -33,14 +33,14 @@
      Local values win over :root inheritance from the prehydration script,
      persisted preferences, and theme changes during playback. The content
      behind this fixed overlay keeps its own, independently selected theme. */
-  --color-paper: #191D21;
-  --color-paper-2: #252B30;
-  --color-ink: #F0EEE9;
-  --color-ink-2: #D1D0CC;
-  --color-rule-2: #7B858C;
-  --color-accent: #91BFE5;
-  --color-accent-2: #C5A983;
-  --color-accent-ink: #191D21;
+  --color-paper: #14181E;
+  --color-paper-2: #1D232B;
+  --color-ink: #F2F1EC;
+  --color-ink-2: #D8D7D2;
+  --color-rule-2: #77828C;
+  --color-accent: #92C3EA;
+  --color-accent-2: #CDAB80;
+  --color-accent-ink: #131720;
   --intro-secondary: var(--color-accent-2);
   --intro-edge: var(--color-accent-ink);
   --intro-glow: var(--color-accent-ink);

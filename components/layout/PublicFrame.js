@@ -24,7 +24,7 @@ export async function PublicFrame({ children }) {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[80rem] flex-col px-4 py-6 sm:px-6 sm:py-8">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+      <header className="public-header flex flex-wrap items-center justify-between gap-3 pb-4">
         <BrandLockup href={ROUTES.clubs} size="lg" className="w-fit" />
         <nav aria-label="Public discovery" className="flex flex-wrap items-center gap-2">
           <Link href={ROUTES.clubs} className="chip">Clubs</Link>
@@ -41,7 +41,7 @@ export async function PublicFrame({ children }) {
 
       <main className="flex-1 py-6 sm:py-8">{children}</main>
 
-      <footer className="flex flex-col gap-3 border-t border-line pt-5">
+      <footer className="public-footer flex flex-col gap-3 pt-5">
         <div className="flex items-start gap-3">
           <CollegeCrest size={40} />
           <p className="max-w-[75ch] text-2xs leading-relaxed text-muted">

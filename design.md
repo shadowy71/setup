@@ -1,52 +1,63 @@
 # Design: Campus+
 
-The locked Hallmark system. Every redesigned route reads this first and shares it. Change it on purpose; this file is the rule.
+The Halo system. Every route reads this first and shares it. Change it on purpose; this file is the rule.
 
 ## System
-- Genre: atmospheric
-- Shape: App Screen; existing public document flows remain document flows
-- Theme: Lumen, night
-- Axes: dark/roman-serif/warm · posture: restrained
-- Redesign: full, presentational only; the existing Campus+ product and behavior are preserved
+- Genre: atmospheric, premium SaaS
+- Shape: App Screen; public document flows remain document flows
+- Theme: Halo, night + day — both individually designed, explicit toggle
+- Axes: dark/cool-ice/warm-sand · posture: confident, luminous, restrained
+- Redesign: full, presentational only; the Campus+ product, routes, data and behavior are preserved
+- Identity: the ice-blue accent and warm sand counter-accent are the brand; the serif wordmark, lowercase page titles, mono chips and the waving-hand greeting remain
+
+## Layers
+Materials resolve in this order (later wins):
+1. Route sheets (`home.css`, `sections.css`, `calendar.css`, …) — structure and composition
+2. `app/styles/lumen.css` — the flattening pass, kept as the structural/type baseline
+3. `app/styles/aurora.css` — the Halo material layer: surfaces, chrome, light, motion
+
+`aurora.css` is imported last in `app/globals.css` **and** after `lumen.css` in every route layout that imports Lumen directly (home, gigs, clubs, public, guide, login, timetable). Unlayered `:root`-prefixed selectors beat the `@layer components` route sheets; source order breaks ties with Lumen. Never rely on an initial-value reset (`x: none/0`) to override a layered rule — the minifier drops it as redundant; change the source value instead.
 
 ## Tokens
-`app/tokens.css` is the source of truth. `app/globals.css` maps its roles into the established Campus+ semantic names. The core roles are:
-```css
-:root {
-  --color-paper: oklch(12.5% 0.027 290); --color-paper-2: oklch(16% 0.03 290); --color-paper-3: oklch(20% 0.032 290);
-  --color-ink: oklch(96% 0.01 300); --color-ink-2: oklch(85% 0.017 298); --color-muted: oklch(69% 0.026 295);
-  --color-rule: oklch(27% 0.034 290); --color-rule-2: oklch(36% 0.04 292);
-  --color-accent: oklch(80% 0.15 62); --color-accent-2: oklch(72% 0.15 12); --color-accent-ink: oklch(14% 0.028 290);
-  --color-focus: oklch(80% 0.15 62); --color-live: oklch(80% 0.13 155);
-  --font-display: "Instrument Serif", ui-serif, Georgia, serif; --font-body: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-outlier: "Geist Mono", ui-monospace, monospace;
-  --radius-card: 10px; --radius-pill: 999px; --rule-hair: 1px;
-  --shadow-card: 0 28px 64px -30px oklch(4% 0.02 290 / 0.8);
-}
-```
-The fixed app type scale, spacing scale, easings and durations live in `app/tokens.css`.
+`app/tokens.css` is the source of truth. `app/globals.css` maps its roles into the established Campus+ semantic names (`--cp-*`, `--color-*`). Per theme:
+- Papers: three surface steps (`--color-paper/-2/-3`); dark reads slate-blue, day reads warm ivory
+- Ink: three text tiers (`--color-ink/-2`, `--color-muted`) — every tier ≥ 4.5:1 on every surface, enforced by `tests/contrast.test.js`
+- Accent: ice blue (`--color-accent`, `--color-accent-text` for text-on-paper); warm sand counter-accent (`--color-accent-warm`, `--color-accent-2`)
+- Material roles: `--halo-page/-hero/-chrome` (ambient compositions), `--grad-surface/-hover/-chrome/-well/-accent/-hairline` (gradient fills), `--edge-light` (top rim), `--glow-accent/-warm/-soft`, `--shadow-glow/-lift`, `--depth-1/-2/-3` (layered ambient shadows)
+- Glass: `--cp-bg-glass*` are ≥ 96% backed (strong is fully opaque) so text contrast holds over any underlay; blur is an enhancement, never a dependency
+- Radii: card 14px, glass 20px, pill 999px; type scale, spacing, easings and durations (`--dur-panel: 320ms`, `--dur-gesture: 720ms`) live in tokens
 
-## Controls
-- Primary: solid brass fill · pill radius · 48px height; 44px small height
-- Secondary: transparent with a hairline inset rule · same radius and height
-- Fields: near-paper fill, muted edge, Geist text, brass focus ring
-- Cards and wells: opaque violet surfaces, 1px rule, 10px radius; no glass or glow
+## Surfaces
+- Cards, islands, glass family: vertical gradient fill + 1px rule + inset top rim (`--edge-light`) + layered `--depth-*` shadow; hover lifts 2–3px into `--depth-2/3` with a brighter rim
+- Feature tiles carry a per-tile `--tile-accent` wash, tinted icon container and an arrow that travels on hover
+- Stream cards keep a 2px kind-marker spine (`--stream-marker`: notice warm, event accent, post muted) and a one-shot entry sweep on hover
+- Wells (search fields, composer textarea, filter bars) are inset: darker gradient + inner shadow
+- Primary buttons: `--grad-accent` fill, bright rim, accent glow; hover brightens, active presses to 0.97. The hero CTA keeps its liquid sheen, flowing only while hovered/focused, clipped to the pill
+
+## Chrome
+- Sidebar: floating glass rail (12px inset, 20px radius, blur 22px) with gradient chrome fill; active item gets an accent blade + soft wash; groups separated by a lit rule
+- Header: floating glass bar; search pill blooms an accent ring on focus
+- Mobile: floating dock with active blade; sheets and menus are backed glass over a blurred scrim
+- Public frame: lit gradient hairlines under header / over footer
 
 ## Type
-- Page and section headings: Instrument Serif 400, lowercase, restrained app sizes
-- Interface, labels, buttons and reading copy: Geist 400/500
-- Home refinement: the personalized name uses locally hosted Geist 700 with a proportional, centered inline hand; card titles use Geist 600. Greeting case is preserved. Brand and editorial section headings retain Instrument Serif, and all existing theme/material tokens stay unchanged.
-- Figures, code and technical readouts: Geist Mono 400, tabular numerals
-- Actual font binaries are self-hosted through `next/font/local` in `app/layout.js`
+- Page and section headings: Instrument Serif 400, lowercase
+- Hero greeting: serif "Hey," over the name in locally hosted Geist 700 with a subtle ice gradient (background-clip: text) and the inline waving hand
+- Interface, labels, buttons, reading copy: Geist 400/500; figures and technical readouts: Geist Mono, tabular
+- Eyebrows: mono uppercase chips; the home stats band is the single blueprint-grid figures well
 
 ## Motion
-The signed-in product otherwise stays at rest: state-only color/background transitions and a 0.98 active press, without new load reveals or pointer-depth movement. Login retains its mouse/touch-interactive ghost; it stops when hidden, cleans up on unmount, has a static no-WebGL fallback, and renders one still frame under reduced motion. Home keeps its static paper background and one-time, route-gated Campus+ landing sequence; the former sea/depth-field canvas, fallback ridges, and continuous animation are removed. The intro's original timing, Skip intro/Escape exits, once-per-document behavior, cleanup, and reduced-motion fallbacks remain intact.
+- Quick, fluid easing (`--ease-out`); entrances 320–520ms; hovers 180–260ms; press 0.97
+- Ambient loops are slow and low-contrast: hero aurora breathe 18s, spark drift 13/17s, horizon travel 17s, pulse 5.5s; sheen runs only while engaged
+- Theme switch cross-fades surfaces (320ms); overlays scale/fade from their trigger; toasts slide in
+- `prefers-reduced-motion` disables every loop and entrance and shortens transitions to 0.01ms; coarse pointers and < 768px drop backdrop sampling on fixed chrome/composer/stats/feed for opaque gradient fallbacks; print flattens to ink on paper
 
 ## Imagery and texture
-Keep existing brand and content imagery. Use the blueprint grid only inside a real diagram/chart/figures well, never behind running prose. Home’s live statistics are its single figures-well use.
+Keep existing brand and content imagery. Ambient light lives in `body::before` (fixed, clipped) and the hero composition; it never sits behind running prose as texture. The blueprint grid appears only in the home figures well.
 
 ## Exports
-- `app/tokens.css`: canonical Hallmark token set and Tailwind v4 static utilities
-- `app/globals.css`: existing semantic-role compatibility mapping
-- `app/styles/lumen.css`: shared application materials; imported after route-specific sheets
+- `app/tokens.css`: canonical Halo token set and Tailwind v4 static utilities
+- `app/globals.css`: semantic-role compatibility mapping
+- `app/styles/aurora.css`: the Halo material layer (this document's implementation)
+- `app/styles/lumen.css`: structural baseline, unchanged
 - No DTCG or shadcn export was requested

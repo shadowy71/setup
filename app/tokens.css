@@ -1,8 +1,15 @@
-/* Campus+ appearance foundations.
+/* Campus+ appearance foundations — the "Halo" premium material system.
    The @theme block exposes utility fallback values to Tailwind. The runtime
    blocks below are the canonical token source for the document; every semantic
    role in globals.css resolves through these variables, so a theme change is
-   one attribute update rather than a page-specific class rewrite. */
+   one attribute update rather than a page-specific class rewrite.
+
+   Halo keeps the established Campus+ identity — ice-blue and warm sand over
+   slate (dark) or warm paper (light) — and adds the atmosphere the product
+   was missing: layered ambient light, gradient surfaces, glass chrome, soft
+   glow and deeper shadow tiers. Text/background pairs stay inside the audited
+   WCAG ratios (tests/contrast.test.js); translucency is bounded so every text
+   tier survives even the worst-case underlay. */
 @theme static {
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -23,13 +30,13 @@
   /* Light fallback values used while generating utilities. */
   --color-error: #963C35;
   --color-success: #2B624C;
-  --color-paper: #E1D9D1;
-  --color-paper-2: #F1EBE5;
-  --color-paper-3: #DCD4CD;
+  --color-paper: #E9E3D9;
+  --color-paper-2: #F7F3EC;
+  --color-paper-3: #E2DACC;
   --color-ink: #292725;
-  --color-ink-2: #514C48;
+  --color-ink-2: #4E4A45;
   --color-muted: #625C56;
-  --color-rule: #B9B0A8;
+  --color-rule: #CDC4B8;
   --color-rule-2: #7C736B;
   --color-accent: #8DBCE3;
   --color-accent-text: #385D75;
@@ -41,9 +48,9 @@
   --font-display: "Instrument Serif", ui-serif, Georgia, serif;
   --font-body: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-outlier: "Geist Mono", ui-monospace, monospace;
-  --radius-card: 10px;
+  --radius-card: 14px;
   --radius-pill: 999px;
-  --shadow-card: 0 18px 42px -30px rgb(41 39 37 / 0.42);
+  --shadow-card: 0 1px 2px rgb(41 39 37 / 0.05), 0 18px 42px -24px rgb(41 39 37 / 0.30);
   --tracking-display: -0.015em;
 }
 
@@ -52,13 +59,13 @@
   color-scheme: light;
   --color-error: #963C35;
   --color-success: #2B624C;
-  --color-paper: #E1D9D1;
-  --color-paper-2: #F1EBE5;
-  --color-paper-3: #DCD4CD;
+  --color-paper: #E9E3D9;
+  --color-paper-2: #F7F3EC;
+  --color-paper-3: #E2DACC;
   --color-ink: #292725;
-  --color-ink-2: #514C48;
+  --color-ink-2: #4E4A45;
   --color-muted: #625C56;
-  --color-rule: #B9B0A8;
+  --color-rule: #CDC4B8;
   --color-rule-2: #7C736B;
   --color-accent: #8DBCE3;
   --color-accent-text: #385D75;
@@ -67,43 +74,111 @@
   --color-accent-ink: #292725;
   --color-live: #2B624C;
   --color-focus: #4D708B;
-  --shadow-card: 0 18px 42px -30px rgb(41 39 37 / 0.42);
-  /* Depth is deliberately separate from the canonical colours: all three
-     tiers use the same paper/ink identity, with only falloff changing. */
-  --depth-1: 0 8px 22px -15px rgb(41 39 37 / 0.24);
-  --depth-2: 0 14px 34px -18px rgb(41 39 37 / 0.30), 0 3px 9px -6px rgb(41 39 37 / 0.15);
-  --depth-3: 0 24px 56px -24px rgb(41 39 37 / 0.38), 0 8px 20px -12px rgb(41 39 37 / 0.22);
-  --ambient-accent: color-mix(in oklab, var(--color-accent) 8%, transparent);
-  --ambient-warm: color-mix(in oklab, var(--color-accent-warm) 5%, transparent);
+
+  /* Depth: three falloff tiers plus a contact shadow, all in the warm ink. */
+  --shadow-card: 0 1px 2px rgb(41 39 37 / 0.05), 0 18px 42px -24px rgb(41 39 37 / 0.30);
+  --depth-1: 0 1px 2px rgb(41 39 37 / 0.06), 0 10px 26px -16px rgb(41 39 37 / 0.24);
+  --depth-2: 0 2px 5px -2px rgb(41 39 37 / 0.10), 0 18px 40px -18px rgb(41 39 37 / 0.30), 0 6px 16px -10px rgb(41 39 37 / 0.14);
+  --depth-3: 0 4px 10px -4px rgb(41 39 37 / 0.12), 0 30px 64px -24px rgb(41 39 37 / 0.38), 0 12px 28px -14px rgb(41 39 37 / 0.20);
+  --ambient-accent: color-mix(in oklab, var(--color-accent) 14%, transparent);
+  --ambient-warm: color-mix(in oklab, var(--color-accent-warm) 12%, transparent);
   --rule-blueprint: rgb(41 39 37 / 0.07);
+
+  /* ---- Halo atmosphere (light) ---------------------------------------- */
+  /* The room: cool sky light from the top-left, warm sand from the right,
+     a faint blue floor bounce, over a gentle vertical paper gradient. */
+  --halo-page:
+    radial-gradient(56rem 34rem at 12% -6%, color-mix(in oklab, var(--color-accent) 26%, transparent), transparent 68%),
+    radial-gradient(46rem 30rem at 96% 4%, color-mix(in oklab, var(--color-accent-warm) 24%, transparent), transparent 72%),
+    radial-gradient(40rem 30rem at 100% 68%, color-mix(in oklab, var(--color-accent-warm) 12%, transparent), transparent 74%),
+    radial-gradient(72rem 44rem at 50% 118%, color-mix(in oklab, var(--color-accent) 13%, transparent), transparent 74%),
+    linear-gradient(180deg, #F0EBE2 0%, var(--color-paper) 44%, #E3DCCF 100%);
+  --halo-hero:
+    radial-gradient(46% 62% at 14% 38%, color-mix(in oklab, var(--color-accent) 26%, transparent) 0%, transparent 72%),
+    radial-gradient(34% 48% at 56% 16%, color-mix(in oklab, var(--color-accent-warm) 18%, transparent) 0%, transparent 74%),
+    radial-gradient(30% 44% at 94% 60%, color-mix(in oklab, var(--color-accent-warm) 16%, transparent) 0%, transparent 76%);
+  --halo-chrome:
+    radial-gradient(80% 46% at 6% 0%, color-mix(in oklab, var(--color-accent) 12%, transparent), transparent 70%),
+    radial-gradient(64% 36% at 102% 104%, color-mix(in oklab, var(--color-accent-warm) 10%, transparent), transparent 74%);
+
+  /* Surfaces: a whisper of sky at the top edge fading into warm paper. */
+  --surface-tint: color-mix(in oklab, var(--color-paper-2) 56%, #ffffff);
+  --grad-surface: linear-gradient(168deg, var(--surface-tint) 0%, var(--color-paper-2) 58%);
+  --grad-surface-hover: linear-gradient(168deg, var(--surface-tint) 0%, color-mix(in oklab, var(--color-paper-2) 90%, var(--color-paper-3)) 62%);
+  --grad-chrome: linear-gradient(165deg, color-mix(in oklab, var(--color-paper-2) 90%, transparent) 0%, color-mix(in oklab, var(--color-paper) 86%, transparent) 100%);
+  --grad-well: linear-gradient(180deg, color-mix(in oklab, var(--color-paper) 96%, var(--color-ink)) 0%, var(--color-paper) 60%);
+  --grad-accent: linear-gradient(180deg, color-mix(in oklab, var(--color-accent) 80%, #ffffff) 0%, var(--color-accent) 52%, color-mix(in oklab, var(--color-accent) 90%, var(--color-accent-ink)) 100%);
+  --grad-hairline: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-accent) 42%, transparent) 30%, color-mix(in oklab, var(--color-accent-warm) 38%, transparent) 70%, transparent);
+
+  --edge-light: rgb(255 255 255 / 0.85);
+  --edge-light-soft: rgb(255 255 255 / 0.55);
+  --glow-accent: color-mix(in oklab, var(--color-accent) 30%, transparent);
+  --glow-warm: color-mix(in oklab, var(--color-accent-warm) 26%, transparent);
+  --glow-soft: color-mix(in oklab, var(--color-accent) 16%, transparent);
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 26%, transparent), 0 6px 24px -8px var(--glow-accent);
+  --shadow-lift: 0 2px 5px -2px rgb(41 39 37 / 0.10), 0 22px 48px -18px rgb(41 39 37 / 0.32), 0 0 32px -12px var(--glow-soft);
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
   --color-error: #E89A91;
   --color-success: #8DC9AE;
-  --color-paper: #191D21;
-  --color-paper-2: #252B30;
-  --color-paper-3: #353B40;
-  --color-ink: #F0EEE9;
-  --color-ink-2: #D1D0CC;
-  --color-muted: #A6A6A2;
-  --color-rule: #3B4044;
-  --color-rule-2: #7B858C;
-  --color-accent: #91BFE5;
-  --color-accent-text: #91BFE5;
-  --color-accent-warm: #C5A983;
-  --color-accent-2: #C5A983;
-  --color-accent-ink: #191D21;
+  --color-paper: #14181E;
+  --color-paper-2: #1D232B;
+  --color-paper-3: #29313B;
+  --color-ink: #F2F1EC;
+  --color-ink-2: #D8D7D2;
+  --color-muted: #A8A8A3;
+  --color-rule: #303945;
+  --color-rule-2: #77828C;
+  --color-accent: #92C3EA;
+  --color-accent-text: #9DCDF2;
+  --color-accent-warm: #CDAB80;
+  --color-accent-2: #CDAB80;
+  --color-accent-ink: #131720;
   --color-live: #8DC9AE;
-  --color-focus: #91BFE5;
-  --shadow-card: 0 22px 48px -30px rgb(0 0 0 / 0.72);
-  --depth-1: 0 9px 24px -15px rgb(0 0 0 / 0.52);
-  --depth-2: 0 16px 38px -19px rgb(0 0 0 / 0.68), 0 4px 12px -7px rgb(0 0 0 / 0.38);
-  --depth-3: 0 26px 60px -22px rgb(0 0 0 / 0.78), 0 8px 22px -11px rgb(0 0 0 / 0.48);
-  --ambient-accent: color-mix(in oklab, var(--color-accent) 10%, transparent);
-  --ambient-warm: color-mix(in oklab, var(--color-accent-warm) 5%, transparent);
-  --rule-blueprint: rgb(240 238 233 / 0.06);
+  --color-focus: #92C3EA;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.32), 0 22px 48px -26px rgb(0 0 0 / 0.66);
+  --depth-1: 0 1px 2px rgb(0 0 0 / 0.34), 0 10px 28px -16px rgb(0 0 0 / 0.56);
+  --depth-2: 0 2px 6px -2px rgb(0 0 0 / 0.44), 0 18px 42px -18px rgb(0 0 0 / 0.66), 0 6px 18px -10px rgb(0 0 0 / 0.40);
+  --depth-3: 0 4px 12px -4px rgb(0 0 0 / 0.50), 0 32px 72px -26px rgb(0 0 0 / 0.78), 0 12px 30px -14px rgb(0 0 0 / 0.46);
+  --ambient-accent: color-mix(in oklab, var(--color-accent) 11%, transparent);
+  --ambient-warm: color-mix(in oklab, var(--color-accent-warm) 7%, transparent);
+  --rule-blueprint: rgb(242 241 236 / 0.06);
+
+  /* ---- Halo atmosphere (dark) ----------------------------------------- */
+  /* Deep slate room: a broad ice-blue bloom above the hero, warm sand at the
+     far edge, a low blue bounce, over a vertical gradient with real depth. */
+  --halo-page:
+    radial-gradient(58rem 36rem at 12% -6%, color-mix(in oklab, var(--color-accent) 20%, transparent), transparent 68%),
+    radial-gradient(48rem 32rem at 96% 4%, color-mix(in oklab, var(--color-accent-warm) 13%, transparent), transparent 72%),
+    radial-gradient(42rem 32rem at 100% 68%, color-mix(in oklab, var(--color-accent-warm) 8%, transparent), transparent 74%),
+    radial-gradient(76rem 48rem at 50% 118%, color-mix(in oklab, var(--color-accent) 11%, transparent), transparent 74%),
+    linear-gradient(180deg, #1A2029 0%, var(--color-paper) 44%, #10141A 100%);
+  --halo-hero:
+    radial-gradient(46% 62% at 14% 38%, color-mix(in oklab, var(--color-accent) 26%, transparent) 0%, transparent 72%),
+    radial-gradient(34% 48% at 56% 16%, color-mix(in oklab, var(--color-accent-warm) 13%, transparent) 0%, transparent 74%),
+    radial-gradient(30% 44% at 94% 60%, color-mix(in oklab, var(--color-accent-warm) 15%, transparent) 0%, transparent 76%);
+  --halo-chrome:
+    radial-gradient(80% 46% at 6% 0%, color-mix(in oklab, var(--color-accent) 14%, transparent), transparent 70%),
+    radial-gradient(64% 36% at 102% 104%, color-mix(in oklab, var(--color-accent-warm) 9%, transparent), transparent 74%);
+
+  --surface-tint: color-mix(in oklab, var(--color-paper-2) 92%, var(--color-accent));
+  --grad-surface: linear-gradient(168deg, var(--surface-tint) 0%, var(--color-paper-2) 58%);
+  --grad-surface-hover: linear-gradient(168deg, color-mix(in oklab, var(--color-paper-2) 88%, var(--color-accent)) 0%, var(--color-paper-3) 70%);
+  --grad-chrome: linear-gradient(165deg, color-mix(in oklab, var(--color-paper-2) 88%, transparent) 0%, color-mix(in oklab, var(--color-paper) 84%, transparent) 100%);
+  --grad-well: linear-gradient(180deg, color-mix(in oklab, var(--color-paper) 92%, #000000) 0%, var(--color-paper) 60%);
+  --grad-accent: linear-gradient(180deg, color-mix(in oklab, var(--color-accent) 82%, #ffffff) 0%, var(--color-accent) 52%, color-mix(in oklab, var(--color-accent) 90%, var(--color-accent-ink)) 100%);
+  --grad-hairline: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-accent) 52%, transparent) 30%, color-mix(in oklab, var(--color-accent-warm) 44%, transparent) 70%, transparent);
+
+  --edge-light: rgb(255 255 255 / 0.12);
+  --edge-light-soft: rgb(255 255 255 / 0.07);
+  --glow-accent: color-mix(in oklab, var(--color-accent) 34%, transparent);
+  --glow-warm: color-mix(in oklab, var(--color-accent-warm) 28%, transparent);
+  --glow-soft: color-mix(in oklab, var(--color-accent) 18%, transparent);
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 30%, transparent), 0 6px 28px -8px var(--glow-accent);
+  --shadow-lift: 0 2px 6px -2px rgb(0 0 0 / 0.46), 0 24px 52px -18px rgb(0 0 0 / 0.70), 0 0 36px -12px var(--glow-soft);
 }
 
 :root {

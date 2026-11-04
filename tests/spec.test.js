@@ -282,14 +282,14 @@ describe('design system (spec §4)', () => {
   });
 
   it('keeps the Campus+ identity on the requested light and dark foundations', () => {
-    expect(lumenTokens).toContain('--color-paper: #E1D9D1');
-    expect(lumenTokens).toContain('--color-paper-2: #F1EBE5');
+    expect(lumenTokens).toContain('--color-paper: #E9E3D9');
+    expect(lumenTokens).toContain('--color-paper-2: #F7F3EC');
     expect(lumenTokens).toContain('--color-ink: #292725');
     expect(lumenTokens).toContain('--color-accent: #8DBCE3');
-    expect(lumenTokens).toContain('--color-paper: #191D21');
-    expect(lumenTokens).toContain('--color-paper-2: #252B30');
-    expect(lumenTokens).toContain('--color-ink: #F0EEE9');
-    expect(lumenTokens).toContain('--color-accent: #91BFE5');
+    expect(lumenTokens).toContain('--color-paper: #14181E');
+    expect(lumenTokens).toContain('--color-paper-2: #1D232B');
+    expect(lumenTokens).toContain('--color-ink: #F2F1EC');
+    expect(lumenTokens).toContain('--color-accent: #92C3EA');
     expect(globals).toContain('--cp-bg-page: var(--color-paper)');
     expect(globals).toContain('--cp-bg-accent: var(--color-accent)');
 
@@ -311,11 +311,11 @@ describe('design system (spec §4)', () => {
     });
     expect(offenders).toEqual([]);
 
-    expect(lumenTokens).toContain('--color-paper: #E1D9D1');
+    expect(lumenTokens).toContain('--color-paper: #E9E3D9');
     expect(globals).toContain('--cp-bg-page: var(--color-paper)');
     // Static browser chrome and install metadata use the dark default; the
     // root effect updates the live meta value for an explicit light choice.
-    const canvas = '#191D21';
+    const canvas = '#14181E';
     const mirrored = (file, pattern) => pattern.exec(read(file))?.[1];
     expect(
       mirrored(path.join('app', 'layout.js'), /<meta name="theme-color" content="(#[0-9a-fA-F]{3,8})" suppressHydrationWarning/),

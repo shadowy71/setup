@@ -86,7 +86,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#191D21" suppressHydrationWarning />
+        <meta name="theme-color" content="#14181E" suppressHydrationWarning />
         <script id="campusplus-theme">{THEME_PREHYDRATION_SCRIPT}</script>
       </head>
       <body className={`${bodyFont.variable} ${displayFont.variable} ${microFont.variable} min-h-dvh bg-canvas text-ink antialiased`}>

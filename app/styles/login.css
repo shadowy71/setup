@@ -18,17 +18,17 @@
 .login-stage {
   /* Light is the fallback, matching the global token layer. Dark below uses
      the exact Campus+ login foundations requested for this scene. */
-  --login-background: #E1D9D1;
-  --login-secondary-background: #F1EBE5;
-  --login-surface: #F1EBE5;
+  --login-background: #E9E3D9;
+  --login-secondary-background: #F7F3EC;
+  --login-surface: #F7F3EC;
   --login-text: #292725;
   --login-tagline: #292725;
-  --login-secondary-text: #514C48;
+  --login-secondary-text: #4E4A45;
   --login-muted: #625C56;
   --login-accent: #8DBCE3;
   --login-link: #385D75;
   --login-on-accent: #292725;
-  --login-border: #B9B0A8;
+  --login-border: #CDC4B8;
   --login-button-hover: color-mix(in oklab, var(--login-accent) 90%, var(--login-surface));
 
   /* Feed the existing login/material selectors without changing their rules. */
@@ -70,17 +70,17 @@
 }
 
 :root[data-theme='dark'] .login-stage {
-  --login-background: #191D21;
-  --login-secondary-background: #1F252A;
-  --login-surface: #252B30;
-  --login-text: #F0EEE9;
-  --login-tagline: #E1D9D1;
+  --login-background: #14181E;
+  --login-secondary-background: #1D232B;
+  --login-surface: #1D232B;
+  --login-text: #F2F1EC;
+  --login-tagline: #E9E3D9;
   --login-secondary-text: #B5B8BA;
   --login-muted: #92999E;
-  --login-accent: #91BFE5;
-  --login-link: #91BFE5;
-  --login-on-accent: #191D21;
-  --login-border: #384149;
+  --login-accent: #92C3EA;
+  --login-link: #92C3EA;
+  --login-on-accent: #131720;
+  --login-border: #303945;
   --login-button-hover: color-mix(in oklab, var(--login-accent) 90%, var(--login-tagline));
 }
 
@@ -106,7 +106,7 @@
   --ghost-body: #6C8B9F;
   --ghost-bright: #8DBCE3;
   --ghost-light: #B4CFDF;
-  --ghost-eye: #E1D9D1;
+  --ghost-eye: #E9E3D9;
   --ghost-socket: #292725;
   --ghost-ambient: #D8CEC4;
   --ghost-rim-a: #8DBCE3;
@@ -126,8 +126,8 @@
   --ghost-bright: #91BFE5;
   --ghost-light: #A9C6D9;
   --ghost-eye: #C2D9E7;
-  --ghost-socket: #191D21;
-  --ghost-ambient: #1F252A;
+  --ghost-socket: #14181E;
+  --ghost-ambient: #1D232B;
   --ghost-rim-a: #91BFE5;
   --ghost-rim-b: #B5B8BA;
   --ghost-firefly: #91BFE5;

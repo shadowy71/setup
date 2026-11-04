@@ -6,7 +6,10 @@
 @import './base.css' layer(base);
 
 /* Route-specific sheets stay with their owning layouts. The semantic tokens
-   below are compatibility boundaries into Hallmark Lumen, not a second theme. */
+   below are compatibility boundaries into the Halo material system, not a
+   second theme. aurora.css is the final material layer: it re-skins the
+   restrained Lumen base with the premium atmosphere (ambient light, gradient
+   surfaces, glass chrome, glow) while Lumen keeps structure and type. */
 @import './styles/surfaces.css';
 @import './styles/controls.css';
 @import './styles/feedback.css';
@@ -17,6 +20,7 @@
 @import './styles/islands.css';
 @import './styles/night.css';
 @import './styles/lumen.css';
+@import './styles/aurora.css';
 
 /* ==========================================================================
    Campus+ semantic compatibility roles → Hallmark Lumen
@@ -60,10 +64,10 @@
   --cp-text-on-accent: var(--color-accent-ink);
   --cp-bg-accent-hover: color-mix(in oklab, var(--color-accent) 88%, var(--color-ink));
   --cp-bg-accent-pressed: var(--color-accent);
-  --cp-bg-accent-deep: var(--color-paper-3);
-  --cp-bg-accent-soft: var(--color-paper-3);
-  --cp-bg-accent-tint: var(--color-paper-2);
-  --cp-accent-pale: var(--color-paper-3);
+  --cp-bg-accent-deep: color-mix(in oklab, var(--color-accent) 16%, var(--color-paper-3));
+  --cp-bg-accent-soft: color-mix(in oklab, var(--color-accent) 12%, var(--color-paper-2));
+  --cp-bg-accent-tint: color-mix(in oklab, var(--color-accent) 7%, var(--color-paper-2));
+  --cp-accent-pale: color-mix(in oklab, var(--color-accent) 10%, var(--color-paper-3));
   --cp-accent-highlight: var(--color-accent-text);
   --cp-accent-cyan: var(--color-accent-text);
   --cp-accent-warm: var(--color-accent-warm);
@@ -126,14 +130,17 @@
   --cp-switch-thumb-checked: var(--color-accent-ink);
   --cp-switch-track: var(--color-rule-2);
 
-  /* Legacy glass names now mean opaque Lumen wells. */
-  --cp-bg-glass: var(--color-paper-2);
-  --cp-bg-glass-soft: var(--color-paper-2);
+  /* Halo glass: near-opaque tinted surfaces. The alpha is bounded so every
+     text tier keeps its audited contrast over any underlay (see
+     tests/contrast.test.js "bounds glass contrast"); the blur and the rim,
+     not transparency, carry the glass effect. */
+  --cp-bg-glass: color-mix(in oklab, var(--color-paper-2) 97%, transparent);
+  --cp-bg-glass-soft: color-mix(in oklab, var(--color-paper-2) 96%, transparent);
   --cp-bg-glass-strong: var(--color-paper-3);
-  --cp-glass-tint: transparent;
-  --cp-glass-border: var(--color-rule);
-  --cp-glass-reflection: transparent;
-  --cp-glass-warmth: transparent;
+  --cp-glass-tint: color-mix(in oklab, var(--color-accent) 5%, transparent);
+  --cp-glass-border: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  --cp-glass-reflection: rgba(255, 255, 255, 0.08);
+  --cp-glass-warmth: color-mix(in oklab, var(--color-accent-warm) 7%, transparent);
   --cp-scrim: color-mix(in oklab, var(--color-accent-ink) 72%, transparent);
   --cp-toast-bg: var(--color-paper-3);
   --cp-toast-text: var(--color-ink);
@@ -146,7 +153,7 @@
   --cp-sky-icon-bg: var(--color-paper-3);
   --cp-sky-border: var(--color-rule-2);
   --cp-sky-wash: color-mix(in oklab, var(--color-paper) 72%, transparent);
-  --cp-bg-cinematic-glass: var(--color-paper-2);
+  --cp-bg-cinematic-glass: color-mix(in oklab, var(--color-paper-2) 97%, transparent);
   --cp-cinematic-border: var(--color-rule-2);
   /* Original institutional crest asset: retain its white contrast plate. */
   --cp-brand-plate: #fffdf9;
@@ -162,18 +169,20 @@
   --cp-highlight-soft: transparent;
   --cp-shade: color-mix(in oklab, var(--color-accent-ink) 30%, transparent);
 
-  /* Shared surfaces stay free of ambient illumination. The Login ghost opts
-     into its own scoped scene tokens. */
-  --cp-illum-core: transparent;
-  --cp-illum-cyan: transparent;
-  --cp-illum-warm: transparent;
-  --cp-illum-sand: transparent;
-  --cp-illum-deep: transparent;
-  --cp-glow-accent: transparent;
-  --cp-glow-cyan: transparent;
-  --cp-glow-warm: transparent;
-  --cp-glow-soft: transparent;
-  --cp-edge-light: var(--color-rule);
+  /* Halo illumination: accent-derived light for hero aurora, active nav,
+     icon blooms and the travelling horizon. Values stay low-alpha so they
+     decorate surfaces without ever washing out text. The Login ghost keeps
+     its own scoped scene tokens on top of these. */
+  --cp-illum-core: color-mix(in oklab, var(--color-accent) 20%, transparent);
+  --cp-illum-cyan: color-mix(in oklab, var(--color-accent) 26%, transparent);
+  --cp-illum-warm: color-mix(in oklab, var(--color-accent-warm) 22%, transparent);
+  --cp-illum-sand: color-mix(in oklab, var(--color-accent-warm) 14%, transparent);
+  --cp-illum-deep: color-mix(in oklab, var(--color-accent) 10%, transparent);
+  --cp-glow-accent: color-mix(in oklab, var(--color-accent) 32%, transparent);
+  --cp-glow-cyan: color-mix(in oklab, var(--color-accent) 32%, transparent);
+  --cp-glow-warm: color-mix(in oklab, var(--color-accent-warm) 27%, transparent);
+  --cp-glow-soft: color-mix(in oklab, var(--color-accent) 17%, transparent);
+  --cp-edge-light: rgba(255, 255, 255, 0.14);
   --cp-edge-accent: var(--color-accent-text);
   --cp-grain: transparent;
   --cp-scanline: transparent;
@@ -183,12 +192,12 @@
   --glass-base: var(--color-paper-2);
   --glass-elevated: var(--color-paper-2);
   --glass-strong: var(--color-paper-3);
-  --glass-border: var(--color-rule);
-  --glass-highlight: transparent;
-  --glow-teal: transparent;
-  --glow-orange: transparent;
-  --glow-sand: transparent;
-  --radius-glass: var(--radius-card);
+  --glass-border: var(--cp-glass-border);
+  --glass-highlight: var(--edge-light-soft);
+  --glow-teal: var(--glow-accent);
+  --glow-orange: var(--glow-warm);
+  --glow-sand: var(--glow-warm);
+  --radius-glass: 20px;
 
   --c-canvas: var(--cp-bg-page);
   --c-canvas-deep: var(--cp-bg-page-deep);
@@ -303,14 +312,14 @@
   --font-sans: var(--font-body);
   --font-mono: var(--font-outlier);
 
-  /* Lumen has two radii: 10px cards and pill controls. */
-  --radius-xs: 10px;
+  /* Halo radii: a real scale — crisp small controls, generous panels. */
+  --radius-xs: 8px;
   --radius-sm: 10px;
-  --radius-md: 10px;
-  --radius-lg: 10px;
-  --radius-xl: 10px;
-  --radius-2xl: 10px;
-  --radius-glass: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --radius-glass: 20px;
   --radius-full: 999px;
 
   --text-3xs: 0.75rem;
@@ -346,7 +355,7 @@
   --color-brand-teal: var(--brand-teal);
   --color-brand-sand: var(--brand-sand);
   --color-brand-orange: var(--brand-orange);
-  --radius-glass: var(--radius-card);
+  --radius-glass: 20px;
 }
 
 /* --------------------------------------------------------------------------
