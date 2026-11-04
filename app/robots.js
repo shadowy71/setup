@@ -13,7 +13,7 @@ export default function robots() {
     rules: [
       {
         userAgent: '*',
-        allow: ['/clubs', '/c/', '/campus/events'],
+        allow: ['/clubs', '/c/', '/campus/events', '/api/public/club-image/', '/api/public/event-image/'],
         disallow: [
           '/api/',
           '/home',

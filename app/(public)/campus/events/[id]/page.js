@@ -8,6 +8,11 @@ import { getPublicEventById, getPublicClubIdentityById } from '@/lib/data/public
 import { UUID_REGEX, ROUTES } from '@/lib/constants';
 import { eventMetadata, eventSchema, breadcrumbs, noindexMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
+import { listPublishedEvents } from '@/lib/data/public-cache';
+import { eventStartMs, upcomingRelatedEvents } from '@/lib/discovery/public';
+import { eventCalendar } from '@/lib/discovery/calendar';
+import Countdown from '@/components/discovery/Countdown';
+import { ContentCard } from '@/components/content/ContentCard';
 import { readIntent } from '@/lib/auth/return-to';
 import { PageHeader, Badge, Notice, Card, StaffDot } from '@/components/ui';
 import { IdentityLine } from '@/components/identity/IdentityLine';
@@ -20,7 +25,7 @@ import { ExternalLink } from '@/components/content/ExternalLink';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { GuestActionPrompt, IntentNotice } from '@/components/auth/GuestActionPrompt';
 import { ShareButton } from '@/components/social/ShareButton';
-import { formatDate, formatDateTime, formatTime } from '@/lib/utils';
+import { formatDate, formatTime } from '@/lib/utils';
 
 /**
  * Metadata uses ONLY the anonymous published-event projection. A draft that a
@@ -116,12 +121,17 @@ export default async function EventPage({ params, searchParams }) {
   const going = attendees.filter((row) => row.status === 'going').length;
   const interested = attendees.filter((row) => row.status === 'interested').length;
   const canonicalPath = ROUTES.event(id);
+  const publicEvent = publicResult.item?.status === 'published' ? publicResult.item : null;
+  const start = publicEvent ? eventStartMs(publicEvent) : null;
+  const related = publicEvent ? await listPublishedEvents({ limit: 100, upcoming: true }) : { items: [] };
+  const relatedEvents = upcomingRelatedEvents(related.items, id);
 
   return (
     <div className="flex flex-col gap-4">
       {publicResult.item?.status === 'published' ? <><JsonLd value={eventSchema(publicResult.item, linkedClub?.visibility === 'public' && linkedClub?.status === 'published' ? linkedClub : null)} /><JsonLd value={breadcrumbs([['Campus+', '/'], ['Events', '/campus/events'], [publicResult.item.title, ROUTES.event(id)]])} /></> : null}
       {intent && viewer ? <IntentNotice intent={intent} /> : null}
 
+      <nav aria-label="Breadcrumb" className="text-2xs text-muted"><Link href="/" className="underline">Campus+</Link> / <Link href="/campus/events" className="underline">Events</Link> / <span aria-current="page">{event.title}</span></nav>
       <PageHeader
         title={event.title}
         description={[formatDate(event.starts_on), event.start_time ? formatTime(event.start_time) : null, event.location].filter(Boolean).join(' · ')}
@@ -129,8 +139,11 @@ export default async function EventPage({ params, searchParams }) {
         action={<ShareButton path={canonicalPath} label="Share event" title={event.title} />}
       />
 
+      {start !== null ? <Countdown startsAt={start} /> : null}
+      {publicEvent && eventCalendar(publicEvent) ? <a href={`/api/public/event-calendar/${id}`} className="text-sm font-semibold underline" download>Add to calendar (.ics)</a> : null}
       <div className="flex flex-wrap items-center gap-2">
         {event.is_official ? <Badge tone="accent">Official</Badge> : <Badge>Student-organized</Badge>}
+        {event.status === 'published' ? <Badge>Published</Badge> : null}
         {viewer && event.status !== 'published' ? <Badge tone={event.status === 'draft' ? 'warning' : 'danger'}>{event.status === 'draft' ? 'In review' : event.status}</Badge> : null}
         {linkedClub ? <Link href={ROUTES.club(linkedClub.slug)} className="chip">Hosted by {linkedClub.name}</Link> : (event.club_id ? <Badge>Club event</Badge> : null)}
         {categoryLabel(event.category) ? <Badge>{categoryLabel(event.category)}</Badge> : null}
@@ -158,7 +171,7 @@ export default async function EventPage({ params, searchParams }) {
           <p className="user-text whitespace-pre-wrap text-[0.9375rem] leading-relaxed"><LinkifiedText text={event.description} /></p>
         ) : null}
         <dl className="flex flex-wrap gap-x-4 gap-y-1 text-2xs text-muted">
-          <div className="flex gap-1"><dt>Starts</dt><dd>{formatDateTime(`${event.starts_on}T${event.start_time || '00:00:00'}`)}</dd></div>
+          <div className="flex gap-1"><dt>Starts</dt><dd>{[formatDate(event.starts_on), event.start_time ? formatTime(event.start_time) : null].filter(Boolean).join(' · ')}</dd></div>
           {event.ends_on ? <div className="flex gap-1"><dt>Ends</dt><dd>{formatDate(event.ends_on)}</dd></div> : null}
           {event.end_time ? <div className="flex gap-1"><dt>Until</dt><dd>{formatTime(event.end_time)}</dd></div> : null}
           {event.location ? <div className="flex gap-1"><dt>Venue</dt><dd>{event.location}</dd></div> : null}
@@ -231,6 +244,7 @@ export default async function EventPage({ params, searchParams }) {
         </Card>
       ) : null}
 
+      {publicEvent ? <section className="flex flex-col gap-3" aria-label="Related events"><h2 className="text-sm font-semibold">Related events</h2>{relatedEvents.length ? relatedEvents.map((item) => <ContentCard key={item.id} href={ROUTES.event(item.id)} title={item.title} description={item.description} icon="calendar" badges={[{ label: formatDate(item.starts_on), tone: 'accent' }]} meta={[item.location]} />) : <p className="text-2xs text-muted">No other upcoming events are available right now.</p>}</section> : null}
       <div className="flex items-center justify-between">
         <Link href="/campus/events" className="text-2xs text-muted underline hover:text-ink">All events</Link>
         {viewer && can(actor, 'report_content') ? <ReportDialog targetType="event" targetRef={event.id} label="this event" /> : null}

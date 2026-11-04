@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Badge } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
+import { hasVerifiedRecruitment } from '@/lib/discovery/public';
 import { ClubMonogram } from '@/components/clubs/ClubMonogram';
 import { truncate } from '@/lib/utils';
 import { ROUTES, CLUB_CATEGORIES, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
@@ -17,7 +18,7 @@ const CATEGORY_ICON_MAP = Object.fromEntries(
  * state that can only be known from a signed-in student's private rows.
  */
 export function ClubCard({ club, joined = false, pending = false, viewer = false }) {
-  const canRecruit = club.admin_assigned && Boolean(club.recruitment_info);
+  const canRecruit = hasVerifiedRecruitment(club);
   const organizationType = CLUB_ORGANIZATION_TYPE_LABELS[club.organization_type] || 'Club';
   const categoryIcon = CATEGORY_ICON_MAP[club.club_category] || 'star';
   const href = club.slug ? ROUTES.club(club.slug) : ROUTES.clubLegacy(club.id);
@@ -61,7 +62,7 @@ export function ClubCard({ club, joined = false, pending = false, viewer = false
           {club.is_official ? <Badge tone="accent">Campus+ reviewed</Badge> : null}
           {viewer && joined ? <Badge tone="success" icon="check">Member</Badge> : null}
           {viewer && !joined && pending ? <Badge tone="warning">Join requested</Badge> : null}
-          {!club.admin_assigned ? <Badge tone="warning">Admin assignment needed</Badge> : null}
+          {club.admin_assigned ? <Badge>Administrator assigned</Badge> : <Badge tone="warning">Admin assignment needed</Badge>}
           {canRecruit ? <Badge tone="info" icon="megaphone">Recruiting</Badge> : null}
           {club.admin_assigned && club.join_policy !== 'open' ? <Badge>Approval needed</Badge> : null}
         </div>
