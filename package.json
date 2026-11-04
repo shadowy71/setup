@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/build-sw.mjs",
+    "prebuild": "node scripts/check-proxy-routes.mjs && node scripts/build-sw.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
