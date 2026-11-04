@@ -5,13 +5,18 @@ import { ClubMonogram } from '@/components/clubs/ClubMonogram';
 import { truncate } from '@/lib/utils';
 import { ROUTES, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
 
-/** Truthful discovery states sourced from the club and the viewer's real rows. */
-export function ClubCard({ club, joined = false, pending = false }) {
+/**
+ * Truthful discovery states sourced from the club and the viewer's real rows.
+ * `href` is the canonical slug URL — the UUID is only used by ClubMonogram to
+ * derive its (non-identifying) colour and is NEVER a public link.
+ */
+export function ClubCard({ club, joined = false, pending = false, viewer = false }) {
   const canRecruit = club.admin_assigned && Boolean(club.recruitment_info);
   const organizationType = CLUB_ORGANIZATION_TYPE_LABELS[club.organization_type] || 'Club';
+  const href = club.slug ? ROUTES.club(club.slug) : ROUTES.clubLegacy(club.id);
   return (
     <Link
-      href={ROUTES.club(club.id)}
+      href={href}
       className="club-card card group flex flex-col gap-3 p-4"
       aria-label={`${club.name}, ${club.member_count} member${club.member_count === 1 ? '' : 's'}${club.admin_assigned ? '' : ', administrator assignment needed'}`}
     >
@@ -31,8 +36,8 @@ export function ClubCard({ club, joined = false, pending = false }) {
           <Badge tone="accent" icon="check">Source checked</Badge>
         ) : <Badge>Details pending</Badge>}
         {club.is_official ? <Badge tone="accent">Campus+ reviewed</Badge> : null}
-        {joined ? <Badge tone="success" icon="check">Member</Badge> : null}
-        {!joined && pending ? <Badge tone="warning">Join requested</Badge> : null}
+        {viewer && joined ? <Badge tone="success" icon="check">Member</Badge> : null}
+        {viewer && !joined && pending ? <Badge tone="warning">Join requested</Badge> : null}
         {!club.admin_assigned ? <Badge tone="warning">Admin assignment needed</Badge> : null}
         {canRecruit ? <Badge tone="info" icon="megaphone">Recruiting</Badge> : null}
         {club.admin_assigned && club.join_policy !== 'open' ? <Badge>Approval needed</Badge> : null}

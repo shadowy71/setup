@@ -117,20 +117,38 @@ async function auditRls(client) {
       unexpectedDenyAll.length ? `deny-all by design: ${unexpectedDenyAll.map((t) => t.name).join(', ')}` : '');
   }
 
-  // Anything that grants access to a role that includes anon is a red flag:
-  // the whole product is authenticated-only.
-  const anonReadable = policies.filter(
+  // Anonymous access is NOT a blanket denial: migration 041 grants three
+  // read-only projections for public club/event discovery. Every other policy
+  // must still be `to authenticated` (or a specific non-anon role). The allow-
+  // list is exact, and each allowed policy must be a scoped SELECT — a `true`
+  // USING expression or a write command would fail here.
+  const ANON_POLICY_ALLOW_LIST = new Set([
+    'communities.communities_select_public_club',
+    'events.events_select_public_published',
+    'posts.posts_select_public_club_announcement',
+  ]);
+  const anonPolicies = policies.filter(
     (p) => p.roles.includes('anon') || p.roles.includes('0') || p.roles.join(',') === ''
   );
-  if (anonReadable.length) {
+  const unexpectedAnon = anonPolicies.filter(
+    (p) =>
+      !ANON_POLICY_ALLOW_LIST.has(`${p.tablename}.${p.policyname}`) ||
+      p.cmd !== 'SELECT' ||
+      !p.using_expr ||
+      p.using_expr === 'true'
+  );
+  if (unexpectedAnon.length || anonPolicies.length !== ANON_POLICY_ALLOW_LIST.size) {
     fail(
       'RLS',
-      'No policy grants access to anon',
-      anonReadable.map((p) => `${p.tablename}.${p.policyname} (${p.roles.join('|')})`).join('; '),
-      'Policies must be `to authenticated` (or a specific role).'
+      'Only the three scoped public-discovery SELECT policies grant access to anon',
+      unexpectedAnon.length
+        ? unexpectedAnon.map((p) => `${p.tablename}.${p.policyname} (${p.cmd}, ${p.roles.join('|')})`).join('; ')
+        : `${anonPolicies.length} anon policies, expected ${ANON_POLICY_ALLOW_LIST.size}`,
+      'Keep anon policies read-only, non-trivial and limited to communities/events/posts.'
     );
   } else {
-    pass('RLS', 'No policy grants access to anon', `${policies.length} policies checked`);
+    pass('RLS', 'Only the three scoped public-discovery SELECT policies grant access to anon',
+      `${policies.length} policies checked; ${anonPolicies.length} anon SELECT policies`);
   }
 
   // Reference data (roles, permissions, categories, flags) is readable by every
@@ -185,6 +203,50 @@ async function auditGrants(client) {
     fail('Grants', 'anon holds no table privileges', anonTables.map((r) => `${r.table_name}:${r.privs}`).join('; '), 'REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon.');
   } else {
     pass('Grants', 'anon holds no table privileges in public');
+  }
+
+  // Migration 041 grants anon SELECT on named columns only. Assert the exact
+  // allow-list from the catalog: no write privilege, no private table, and no
+  // column that could carry administrator or student identity. A `select('*')`
+  // on one of these tables must still fail closed.
+  const anonColumns = (
+    await client.query(`
+      select table_name, column_name, privilege_type
+      from information_schema.column_privileges
+      where table_schema = 'public' and grantee = 'anon'
+      order by 1, 2
+    `)
+  ).rows;
+  const ANON_COLUMN_ALLOW_LIST = {
+    communities: new Set([
+      'id', 'kind', 'name', 'slug', 'description', 'club_category', 'organization_type',
+      'meeting_info', 'recruitment_info', 'contact_info', 'external_url', 'visibility',
+      'join_policy', 'status', 'is_official', 'verification_status', 'source_label',
+      'source_url', 'directory_aliases', 'admin_assigned', 'member_count', 'post_count',
+      'created_at', 'updated_at',
+    ]),
+    events: new Set([
+      'id', 'title', 'description', 'starts_on', 'ends_on', 'start_time', 'end_time',
+      'location', 'organizer', 'registration_info', 'registration_url', 'capacity',
+      'show_attendees', 'club_id', 'category', 'status', 'is_official', 'published_at',
+      'created_at',
+    ]),
+    posts: new Set([
+      'id', 'community_id', 'title', 'body', 'kind', 'visibility', 'status',
+      'is_official', 'created_at', 'deleted_at',
+    ]),
+  };
+  const badAnonColumns = anonColumns.filter(
+    (c) => c.privilege_type !== 'SELECT' ||
+      !ANON_COLUMN_ALLOW_LIST[c.table_name]?.has(c.column_name)
+  );
+  if (badAnonColumns.length) {
+    fail('Grants', 'anon column grants are read-only and limited to the public projections',
+      badAnonColumns.map((c) => `${c.table_name}.${c.column_name}:${c.privilege_type}`).join('; '),
+      'REVOKE the unexpected column privilege; see migration 041.');
+  } else {
+    pass('Grants', 'anon column grants are read-only and limited to the public projections',
+      `${anonColumns.length} SELECT columns across communities/events/posts (no table-level grants)`);
   }
 
   // Functions: `anon` inherits EXECUTE from PUBLIC unless it was revoked from

@@ -83,7 +83,7 @@ export function AssignClubAdminForm({ club }) {
       submitLabel="Assign administrator"
       pendingLabel="Assigning…"
       successMessage="Administrator assigned. Membership requests can now be accepted."
-      cancelHref={ROUTES.club(club.id)}
+      cancelHref={club.slug ? ROUTES.club(club.slug) : ROUTES.clubLegacy(club.id)}
       fields={[
         {
           name: 'admin_username',
@@ -135,7 +135,7 @@ export function ClubRequestStatus({ request }) {
       </p>
       {request.review_note ? <p className="text-[0.8125rem] leading-relaxed">Review note: {request.review_note}</p> : null}
       {request.community_id ? (
-        <Link href={ROUTES.club(request.community_id)} className="text-[0.8125rem] font-medium text-accent underline">
+        <Link href={request.slug ? ROUTES.club(request.slug) : ROUTES.clubLegacy(request.community_id)} className="text-[0.8125rem] font-medium text-accent underline">
           Open the approved club
         </Link>
       ) : null}

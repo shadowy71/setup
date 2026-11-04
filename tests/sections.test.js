@@ -81,7 +81,7 @@ describe('gig and club routes', () => {
     expect(ROUTES.gigEdit('abc')).toBe('/gigs/abc/edit');
     expect(ROUTES.clubs).toBe('/clubs');
     expect(ROUTES.clubNew).toBe('/clubs/new');
-    expect(ROUTES.club('abc')).toBe('/clubs/abc');
+    expect(ROUTES.club('abc')).toBe('/c/abc');
     expect(ROUTES.clubEdit('abc')).toBe('/clubs/abc/edit');
   });
 
@@ -89,11 +89,11 @@ describe('gig and club routes', () => {
     const legacyGig = read('app/(app)/market/gigs/[id]/page.js');
     expect(legacyGig).toContain('redirect(ROUTES.gig(id))');
 
-    const legacyClubs = read('app/(app)/campus/clubs/page.js');
+    const legacyClubs = read('app/(public)/campus/clubs/page.js');
     expect(legacyClubs).toContain('redirect(ROUTES.clubs)');
 
-    const legacyClub = read('app/(app)/campus/clubs/[id]/page.js');
-    expect(legacyClub).toContain('redirect(ROUTES.club(id))');
+    const legacyClub = read('app/(public)/campus/clubs/[id]/page.js');
+    expect(legacyClub).toContain('permanentRedirect(ROUTES.club(club.slug))');
 
     // Old tab links land on the dedicated boards instead of rendering a
     // second, slightly different list.

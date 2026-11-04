@@ -10,7 +10,8 @@
  *
  * It is deliberately *not* the authorization layer: every page, server action
  * and RLS policy checks permissions again (spec §106, §107). A path the matcher
- * misses is still safe — it just skips the cookie refresh.
+ * misses is still safe — it just skips the cookie refresh or sends a guest to
+ * sign-in when a public page should have been reachable.
  */
 
 import { NextResponse } from 'next/server';
@@ -31,6 +32,80 @@ import { originFromHeaders } from '@/lib/auth/oauth';
 const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules', '/guide', '/timetable'];
 
 /**
+ * Public discovery (migration 041 / docs/PUBLIC-DISCOVERY.md).
+ *
+ * These are *exact* paths or single-segment patterns, never broad prefixes:
+ * `/clubs` is public while `/clubs/new`, `/clubs/request` and
+ * `/clubs/<uuid>/manage` stay protected; `/campus/events` is public while
+ * `/campus/events/new` stays protected. Adding `/clubs` or `/campus/events`
+ * to PUBLIC_PATHS would have made those prefixes (and every child) public.
+ *
+ * `/sitemap.xml` is generated from published public records only, so it must
+ * be reachable by crawlers without a session. `robots.txt` is already excluded
+ * by the matcher below.
+ */
+const PUBLIC_EXACT_PATHS = ['/clubs', '/campus/events', '/campus/clubs', '/sitemap.xml'];
+
+/** Protected single-segment children of `/clubs`. Static routes win in Next,
+ * but the proxy must agree with that decision, not guess. */
+const PROTECTED_CLUB_SEGMENTS = new Set(['new', 'request']);
+/** The one protected single-segment child of `/campus/events`. */
+const PROTECTED_EVENT_SEGMENTS = new Set(['new']);
+
+function stripTrailingSlash(pathname) {
+  return pathname !== '/' && pathname.endsWith('/') ? pathname.replace(/\/+$/, '') : pathname;
+}
+
+/** `/clubs/<uuid>` — the legacy compatibility redirect, public by design. */
+function isPublicClubChild(pathname) {
+  const match = /^\/clubs\/([^/]+)$/.exec(pathname);
+  return Boolean(match && !PROTECTED_CLUB_SEGMENTS.has(match[1]));
+}
+
+/** `/c/<slug>` — the canonical public club profile. */
+function isPublicClubSlug(pathname) {
+  return /^\/c\/[^/]+$/.test(pathname);
+}
+
+/** `/campus/events/<id>` — a published event's public detail page. */
+function isPublicEventChild(pathname) {
+  const match = /^\/campus\/events\/([^/]+)$/.exec(pathname);
+  return Boolean(match && !PROTECTED_EVENT_SEGMENTS.has(match[1]));
+}
+
+/** `/campus/clubs/<uuid>` — pre-section compatibility redirect. */
+function isPublicLegacyCampusClub(pathname) {
+  return /^\/campus\/clubs\/[^/]+$/.test(pathname);
+}
+
+/**
+ * True when the proxy may let a signed-out visitor through.
+ *
+ * Exported so the routing regression tests exercise the real matcher rather
+ * than a copy of it. Skipping a redirect never authorizes anything: pages,
+ * route handlers, server actions, RPCs and RLS still enforce their own rules.
+ *
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+export function isPublicPath(rawPath) {
+  if (typeof rawPath !== 'string' || !rawPath.startsWith('/')) return false;
+  const pathname = stripTrailingSlash(rawPath);
+  if (pathname === '/') return true;
+  if (PUBLIC_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return true;
+  if (PUBLIC_EXACT_PATHS.includes(pathname)) return true;
+  if (isPublicClubChild(pathname)) return true;
+  if (isPublicClubSlug(pathname)) return true;
+  if (isPublicEventChild(pathname)) return true;
+  if (isPublicLegacyCampusClub(pathname)) return true;
+  return false;
+}
+
+function isPublic(pathname) {
+  return isPublicPath(pathname);
+}
+
+/**
  * The one-time-code step (and its route) was replaced by Google sign-in.
  *
  * Old links — emails, bookmarks, cached redirects — must land on the sign-in
@@ -45,11 +120,6 @@ function legacyCodeStep(request) {
   const target = new URL('/login', origin);
   target.searchParams.set('notice', 'google');
   return NextResponse.redirect(target);
-}
-
-function isPublic(pathname) {
-  if (pathname === '/') return true;
-  return PUBLIC_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 /**

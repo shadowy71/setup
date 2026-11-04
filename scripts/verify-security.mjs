@@ -35,6 +35,28 @@ function isTransportError(error) {
   return /fetch failed|failed to fetch|network|enotfound|econnrefused|econnreset|etimedout|timeout|abort|socket|dns|ssl|getaddrinfo/i.test(text);
 }
 
+/**
+ * The inverse of `denied`: migration 041 deliberately makes a narrow public
+ * catalogue readable. An error here means a real deployment is serving an
+ * empty club/event directory — or that the migration was never applied.
+ */
+async function allowed(label, run) {
+  try {
+    const { data, error } = await run();
+    if (error) {
+      bad(`${label} — UNEXPECTED error: ${error.code || error.message}`);
+      failures += 1;
+      return;
+    }
+    ok(`${label} — readable via the anonymous projection`);
+    return data;
+  } catch (error) {
+    bad(`${label} — ${error.message}`);
+    failures += 1;
+    return null;
+  }
+}
+
 /** A probe passes when the operation is *denied* or returns no rows. */
 async function denied(label, run) {
   try {
@@ -121,6 +143,81 @@ await denied('anon cannot read encrypted Drive credentials', () =>
   anon.rpc('backup_private_get_credentials', { p_connection_ref: '00000000-0000-4000-a000-000000000000' }));
 await denied('anon cannot enqueue a backup job', () =>
   anon.rpc('backup_request_job', { p_kind: 'snapshot', p_note: 'probe' }));
+
+// ---------------------------------------------------------------------------
+// Public discovery (migration 041). Anon gets three *named-column* SELECT
+// grants and three scoped policies — nothing else. Both halves matter: the
+// catalogue must be readable, and everything outside it must still be denied.
+// ---------------------------------------------------------------------------
+banner('Public discovery (migration 041)');
+
+const publicProjection = await allowed('anon can read the published public club catalogue', () =>
+  anon.from('communities')
+    .select('id, kind, name, slug, description, club_category, organization_type, meeting_info, recruitment_info, contact_info, external_url, visibility, join_policy, status, is_official, verification_status, source_label, source_url, directory_aliases, admin_assigned, member_count, post_count, created_at, updated_at')
+    .eq('kind', 'club')
+    .eq('status', 'published')
+    .eq('visibility', 'public')
+    .limit(5));
+if (Array.isArray(publicProjection) && publicProjection.length) {
+  const offCatalogue = publicProjection.filter(
+    (row) => row.kind !== 'club' || row.status !== 'published' || row.visibility !== 'public'
+  );
+  if (offCatalogue.length) {
+    bad(`public club projection returned ${offCatalogue.length} non-public row(s)`);
+    failures += 1;
+  } else {
+    ok('public club projection is limited to published, public clubs');
+  }
+}
+
+await allowed('anon can read published events', () =>
+  anon.from('events')
+    .select('id, title, description, starts_on, ends_on, start_time, end_time, location, organizer, registration_info, registration_url, capacity, show_attendees, club_id, category, status, is_official, published_at, created_at')
+    .eq('status', 'published')
+    .limit(5));
+
+// No table-level grant: `select('*')` must fail even where a column grant exists.
+for (const table of ['communities', 'events', 'posts']) {
+  await denied(`anon cannot select('*') from ${table}`, () => anon.from(table).select('*').limit(1));
+}
+// Administrator identity, provenance and internal state are outside the grant.
+for (const [table, column] of [
+  ['communities', 'created_by'], ['communities', 'approved_by'], ['communities', 'catalogue_key'],
+  ['events', 'created_by'], ['events', 'discussion_post_id'], ['events', 'search_vector'],
+  ['posts', 'author_id'], ['posts', 'moderated_by'], ['posts', 'moderation_reason'],
+]) {
+  await denied(`anon cannot read ${table}.${column}`, () => anon.from(table).select(column).limit(1));
+}
+
+// The policies are real predicates, not `using (true)`.
+await denied('anon sees no campus-only clubs', () =>
+  anon.from('communities').select('id').eq('visibility', 'campus').limit(1));
+await denied('anon sees no private clubs', () =>
+  anon.from('communities').select('id').eq('visibility', 'private').limit(1));
+await denied('anon sees no draft events', () =>
+  anon.from('events').select('id').eq('status', 'draft').limit(1));
+await denied('anon sees no campus-only club announcements', () =>
+  anon.from('posts').select('id').eq('visibility', 'campus').limit(1));
+
+for (const table of ['community_members', 'community_join_requests', 'event_registrations']) {
+  await denied(`anon cannot read ${table}`, () => anon.from(table).select('*').limit(1));
+}
+for (const [label, run] of [
+  ['anon cannot insert a club', () => anon.from('communities').insert({ name: 'probe', kind: 'club', slug: 'security-probe' }).select('id')],
+  ['anon cannot update a club', () => anon.from('communities').update({ name: 'probe' }).eq('slug', 'coding-club')],
+  ['anon cannot delete a club', () => anon.from('communities').delete().eq('slug', 'coding-club')],
+  ['anon cannot insert an event', () => anon.from('events').insert({ title: 'probe', starts_on: '2026-12-01' }).select('id')],
+  ['anon cannot insert a post', () => anon.from('posts').insert({ body: 'probe' }).select('id')],
+  ['anon cannot RSVP', () => anon.from('event_registrations').insert({ event_id: '00000000-0000-4000-a000-000000000000', status: 'going' }).select('id')],
+  ['anon cannot join a club', () => anon.from('community_members').insert({ community_id: '00000000-0000-4000-a000-000000000000', role: 'member' }).select('id')],
+  ['anon cannot send a join request', () => anon.from('community_join_requests').insert({ community_id: '00000000-0000-4000-a000-000000000000', message: 'probe' }).select('id')],
+]) {
+  await denied(label, run);
+}
+await denied('anon cannot call the authenticated-only global_search()', () =>
+  anon.rpc('global_search', { p_query: 'club', p_scope: 'all', p_limit: 5, p_offset: 0 }));
+await denied('anon cannot call assign_club_admin()', () =>
+  anon.rpc('assign_club_admin', { p_club: '00000000-0000-4000-a000-000000000000', p_admin_username: 'probe' }));
 
 banner('Repository hygiene');
 

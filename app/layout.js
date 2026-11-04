@@ -8,6 +8,7 @@ import localFont from 'next/font/local';
 import { PLATFORM } from '@/lib/constants';
 import { shouldUseVercelTelemetry } from '@/lib/vercel-telemetry';
 import { THEME_PREHYDRATION_SCRIPT } from '@/lib/theme';
+import { SITE_URL } from '@/lib/seo';
 
 /* Hallmark Lumen's exact faces, self-hosted for reproducible production and
    offline rendering. The variables override the generated token fallbacks on
@@ -57,6 +58,10 @@ const microFont = localFont({
  */
 
 export const metadata = {
+  // Public pages emit canonical `/c/<slug>` and `/campus/events/<id>` URLs;
+  // metadataBase turns their relative `alternates.canonical` into absolute ones.
+  // Protected pages override `robots` through this root's noindex default.
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${PLATFORM.name} — ${PLATFORM.collegeName}`,
     template: `%s · ${PLATFORM.name}`,
@@ -64,6 +69,7 @@ export const metadata = {
   description: `${PLATFORM.tagline} An unofficial, text-first platform for ${PLATFORM.collegeName} students.`,
   applicationName: PLATFORM.name,
   // No images, no social preview cards: Campus+ is text-first and stores no media.
+  // Indexable public pages override this explicitly (lib/seo.js#publicMetadata).
   robots: { index: false, follow: false },
   formatDetection: { telephone: false, email: false, address: false },
 };

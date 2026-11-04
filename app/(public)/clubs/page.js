@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { requireUser } from '@/lib/auth/session';
+import { getCurrentUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
-import { countClubsByCategory, listCommunities } from '@/lib/data/campus';
+import { listCommunities, countClubsByCategory } from '@/lib/data/campus';
 import { listPendingCommunityJoinRequests } from '@/lib/data/clubs';
+import { listPublicClubs, countPublicClubsByCategory } from '@/lib/data/public';
 import {
   ROUTES,
   CLUB_CATEGORIES,
@@ -11,42 +12,92 @@ import {
   CLUB_ORGANIZATION_TYPES,
   CLUB_DIRECTORY_STATES,
 } from '@/lib/constants';
+import { publicMetadata } from '@/lib/seo';
+import { returnToHref } from '@/lib/auth/return-to';
 import { Button, EmptyState, LinkButton, Notice, PageHeader, SectionHeader } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { ClubCard } from '@/components/clubs/ClubCard';
+import { GuestActionPrompt } from '@/components/auth/GuestActionPrompt';
+import { ShareButton } from '@/components/social/ShareButton';
 
-export const metadata = { title: 'Clubs' };
+export const dynamic = 'force-dynamic';
 
+export const metadata = publicMetadata({
+  title: 'Clubs',
+  description: 'Browse PCCOE collegiate teams, department associations, professional chapters and student organizations. Open to everyone — no account needed to look around.',
+  canonical: ROUTES.clubs,
+});
+
+/** Membership states are only meaningful to a signed-in student. */
+const GUEST_STATES = CLUB_DIRECTORY_STATES.filter((entry) =>
+  ['all', 'recruiting', 'unassigned'].includes(entry.value),
+);
+
+/**
+ * The club directory — ONE implementation for guests and students.
+ *
+ * The catalogue itself is a shared, viewer-independent read: guests use the
+ * cached anonymous projection (`listPublicClubs`), signed-in students use their
+ * session-scoped read (`listCommunities`) so they also see campus-only clubs
+ * they are allowed to view. Both feed the same filters, cards and layout.
+ * Viewer-specific joined/pending state is fetched separately, in the same
+ * request, and is never placed in a shared cache entry.
+ *
+ * Management controls, pending administration queues and membership state are
+ * only rendered when a real Campus+ profile is present. Guests get a sign-in
+ * prompt that returns them to this exact filtered view.
+ */
 export default async function ClubsPage({ searchParams }) {
-  const user = await requireUser();
-  const supabase = await getServerClient();
-  const actor = toActor(user);
   const params = await searchParams;
-
   const q = typeof params?.q === 'string' && params.q.trim().length >= 2 ? params.q.trim() : null;
   const category = CLUB_CATEGORIES.some((entry) => entry.value === params?.category) ? params.category : null;
   const organizationType = CLUB_ORGANIZATION_TYPES.some((entry) => entry.value === params?.type) ? params.type : null;
-  const state = CLUB_DIRECTORY_STATES.some((entry) => entry.value === params?.state) ? params.state : 'all';
   const sort = CLUB_SORTS.some((entry) => entry.value === params?.sort) ? params.sort : 'members';
 
-  const [directory, counts, memberships, pendingRequests] = await Promise.all([
-    listCommunities(supabase, { kind: 'club', q, category, organizationType, order: sort, limit: 500 }),
-    countClubsByCategory(supabase),
-    supabase
-      .from('community_members')
-      .select('community_id')
-      .eq('user_id', user.profile.id)
-      .eq('status', 'active')
-      .limit(300),
-    listPendingCommunityJoinRequests(supabase, user.profile.id),
-  ]);
+  const user = await getCurrentUser();
+  const viewer = user?.profile ? user : null;
+  const allowedStates = viewer ? CLUB_DIRECTORY_STATES : GUEST_STATES;
+  const requestedState = allowedStates.some((entry) => entry.value === params?.state) ? params.state : 'all';
+  const state = requestedState;
 
-  const joined = new Set((memberships.data || []).map((row) => row.community_id));
-  const pending = new Set(pendingRequests.map((row) => row.community_id));
-  const canCreate = can(actor, 'manage_clubs');
+  let directory = { items: [], unavailable: true };
+  let counts = { counts: {}, total: 0, unavailable: true };
+  const joined = new Set();
+  const pending = new Set();
+
+  if (viewer) {
+    const supabase = await getServerClient();
+    if (supabase) {
+      const [list, categoryCounts, memberships, pendingRequests] = await Promise.all([
+        listCommunities(supabase, { kind: 'club', q, category, organizationType, order: sort, limit: 500 }),
+        countClubsByCategory(supabase),
+        supabase
+          .from('community_members')
+          .select('community_id')
+          .eq('user_id', viewer.profile.id)
+          .eq('status', 'active')
+          .limit(300),
+        listPendingCommunityJoinRequests(supabase, viewer.profile.id),
+      ]);
+      directory = list;
+      counts = categoryCounts;
+      for (const row of memberships.data || []) joined.add(row.community_id);
+      for (const row of pendingRequests) pending.add(row.community_id);
+    }
+  } else {
+    // Anonymous projection: `anon` RLS + column grants in migration 041. The
+    // cache key is the filter tuple, so search/filter/sort all work with cache.
+    [directory, counts] = await Promise.all([
+      listPublicClubs({ q, category, organizationType, order: sort, limit: 500 }),
+      countPublicClubsByCategory(),
+    ]);
+  }
+
+  const canCreate = viewer ? can(toActor(viewer), 'manage_clubs') : false;
   const hasFilters = Boolean(q || category || organizationType || state !== 'all' || sort !== 'members');
   const allItems = directory.items;
   const items = allItems.filter((club) => {
+    if (!viewer && (state === 'joined' || state === 'pending')) return true;
     if (state === 'joined') return joined.has(club.id);
     if (state === 'pending') return pending.has(club.id) && !joined.has(club.id);
     if (state === 'recruiting') return club.admin_assigned && Boolean(club.recruitment_info);
@@ -65,18 +116,25 @@ export default async function ClubsPage({ searchParams }) {
     return query ? `${ROUTES.clubs}?${query}` : ROUTES.clubs;
   };
 
+  const currentHref = hrefWith({});
+  const headerAction = viewer ? (
+    <div className="flex flex-wrap gap-2">
+      <LinkButton href={ROUTES.clubRequest} icon="plus" variant="secondary">Request a club</LinkButton>
+      {canCreate ? <LinkButton href={ROUTES.clubNew} icon="plus" tone="accent">Create with admin</LinkButton> : null}
+    </div>
+  ) : (
+    <LinkButton href={returnToHref(currentHref, 'request_club')} icon="lock" tone="accent" size="sm">
+      Sign in to request a club
+    </LinkButton>
+  );
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Clubs"
         eyebrow="Campus life"
         description="Find collegiate teams, department associations, professional chapters and student organizations. Source, verification and administrator states are shown explicitly."
-        action={
-          <div className="flex flex-wrap gap-2">
-            <LinkButton href={ROUTES.clubRequest} icon="plus" variant="secondary">Request a club</LinkButton>
-            {canCreate ? <LinkButton href={ROUTES.clubNew} icon="plus" tone="accent">Create with admin</LinkButton> : null}
-          </div>
-        }
+        action={headerAction}
       />
 
       <section aria-label="Club discovery filters" className="card flex flex-col gap-3 p-3">
@@ -109,9 +167,9 @@ export default async function ClubsPage({ searchParams }) {
             </select>
           </label>
           <label className="flex min-w-0 flex-col gap-1.5">
-            <span className="field-label">Membership</span>
+            <span className="field-label">Directory state</span>
             <select name="state" defaultValue={state} className="control control-select h-9 w-full py-0 xl:w-48">
-              {CLUB_DIRECTORY_STATES.map((entry) => <option key={entry.value} value={entry.value}>{entry.label}</option>)}
+              {allowedStates.map((entry) => <option key={entry.value} value={entry.value}>{entry.label}</option>)}
             </select>
           </label>
           <label className="flex min-w-0 flex-col gap-1.5">
@@ -127,25 +185,51 @@ export default async function ClubsPage({ searchParams }) {
         </form>
       </section>
 
+      {!viewer && user ? (
+        <Notice tone="info" icon="user">
+          Finish setting up your Campus+ account to join clubs.{' '}
+          <Link href={ROUTES.onboarding} className="font-semibold underline">Complete your profile</Link>
+        </Notice>
+      ) : null}
+
       {directory.unavailable ? <Notice tone="warning" icon="flag">Clubs could not be loaded right now. Try again in a moment.</Notice> : null}
+
+      {!viewer ? (
+        <GuestActionPrompt
+          title="Looking around? No account needed."
+          description="Everything in this directory is public. Sign in with your institutional Google account when you want to join a club, message its members or follow its announcements."
+          next={currentHref}
+          intent="join"
+          actionLabel="Sign in with Google"
+          linkLabel="Read the first-visit guide"
+          linkHref={ROUTES.guide}
+        />
+      ) : null}
 
       <SectionHeader
         title={category ? `${category} clubs` : q ? `Clubs matching “${q}”` : 'Club directory'}
-        description={`${items.length} organization${items.length === 1 ? '' : 's'} in this view${state !== 'all' ? ` · ${allItems.length} before the membership-state filter` : ''}.`}
+        description={`${items.length} organization${items.length === 1 ? '' : 's'} in this view${state !== 'all' ? ` · ${allItems.length} before the directory-state filter` : ''}.`}
       />
 
       {!directory.unavailable && !items.length ? (
         <EmptyState
           icon="star"
           title={hasFilters ? 'No clubs match that view' : 'No clubs yet'}
-          description={hasFilters ? 'Try another category, organization type or membership state.' : 'Club pages appear here after the catalogue is imported or a request is approved.'}
-          action={<LinkButton href={ROUTES.clubRequest} size="sm" tone="accent" icon="plus">Request a club</LinkButton>}
+          description={hasFilters ? 'Try another category, organization type or directory state.' : 'Club pages appear here after the catalogue is imported or a request is approved.'}
+          action={viewer ? <LinkButton href={ROUTES.clubRequest} size="sm" tone="accent" icon="plus">Request a club</LinkButton> : null}
         />
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((club) => (
-          <ClubCard key={club.id} club={club} joined={joined.has(club.id)} pending={pending.has(club.id)} />
+          <div key={club.id} className="flex flex-col gap-1.5">
+            <ClubCard club={club} joined={joined.has(club.id)} pending={pending.has(club.id)} viewer={Boolean(viewer)} />
+            {club.slug ? (
+              <div className="flex justify-end px-1">
+                <ShareButton path={ROUTES.club(club.slug)} label="Copy club link" size="sm" variant="ghost" title={club.name} />
+              </div>
+            ) : null}
+          </div>
         ))}
       </div>
 

@@ -88,7 +88,7 @@ export default async function ClubManagePage({ params, searchParams }) {
           eyebrow="Presentation preview"
           description="Your permissions have not changed. This preview uses published club content and hides management controls."
           back={{ href: ROUTES.clubManage(club.id), label: 'Back to management' }}
-          action={<LinkButton href={ROUTES.club(club.id)} size="sm" variant="secondary" icon="eye">Open actual club page</LinkButton>}
+          action={<LinkButton href={ROUTES.club(club.slug)} size="sm" variant="secondary" icon="eye">Open actual club page</LinkButton>}
         />
         <Notice tone="neutral" icon="info">Preview only. Join, chat, and management actions are intentionally not reproduced here; the actual club page applies each viewer’s own membership and RLS.</Notice>
         <ClubMemberPreview club={club} posts={posts} members={members} events={events.items} />
@@ -151,11 +151,11 @@ export default async function ClubManagePage({ params, searchParams }) {
         title={`Manage ${club.name}`}
         eyebrow={activeLabel}
         description="Club-scoped tools backed by real membership, content, notification and audit records. No platform-wide powers are granted here."
-        back={{ href: ROUTES.club(club.id), label: 'Public club page' }}
+        back={{ href: ROUTES.club(club.slug), label: 'Public club page' }}
         action={
           <div className="flex flex-wrap gap-2">
             <LinkButton href={`${ROUTES.clubManage(club.id)}?preview=member`} size="sm" variant="secondary" icon="eye">View as member</LinkButton>
-            <LinkButton href={ROUTES.club(club.id)} size="sm" variant="ghost" icon="arrowUpRight">Public page</LinkButton>
+            <LinkButton href={ROUTES.club(club.slug)} size="sm" variant="ghost" icon="arrowUpRight">Public page</LinkButton>
           </div>
         }
       />
