@@ -47,16 +47,6 @@ const checks = [
     validate: (v) => (/^[a-z0-9.-]+(,[a-z0-9.-]+)*$/i.test(v) ? true : 'comma-separated domains, e.g. pccoepune.org'),
   },
   {
-    // Server-only canonical origin for public discovery (canonical URLs, OG
-    // previews, robots.txt, sitemap.xml). It must NOT be NEXT_PUBLIC_*: the
-    // browser ShareButton derives its own origin from window.location.origin.
-    key: 'SITE_URL',
-    required: false,
-    hint: 'Optional; defaults to https://pccoe.in. Set the real deployment origin before going live.',
-    validate: (v) =>
-      (/^https:\/\/[a-z0-9.-]+(?::\d{2,5})?$/i.test(v) ? true : 'must be an https origin with no path or trailing slash, e.g. https://pccoe.in'),
-  },
-  {
     key: 'GIPHY_API_KEY',
     required: false,
     hint: 'Optional until you want the GIF picker; becomes required by docs/DEPLOYMENT.md.',

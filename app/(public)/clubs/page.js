@@ -22,11 +22,15 @@ import { ShareButton } from '@/components/social/ShareButton';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = publicMetadata({
-  title: 'Clubs',
-  description: 'Browse PCCOE collegiate teams, department associations, professional chapters and student organizations. Open to everyone — no account needed to look around.',
-  canonical: ROUTES.clubs,
-});
+export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
+  return publicMetadata({
+    title: 'PCCOE Clubs & Student Organizations',
+    description: 'Explore student clubs, collegiate teams, technical communities, sports groups and student organizations at PCCOE through Campus+.',
+    canonical: ROUTES.clubs,
+    index: !params || Object.keys(params).length === 0,
+  });
+}
 
 /** Membership states are only meaningful to a signed-in student. */
 const GUEST_STATES = CLUB_DIRECTORY_STATES.filter((entry) =>

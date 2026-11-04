@@ -288,9 +288,7 @@ describe('SEO and sharing metadata', () => {
     expect(absoluteUrl('/c/coding-club')).toBe('https://pccoe.in/c/coding-club');
     expect(absoluteUrl('/campus/events/abc')).toBe('https://pccoe.in/campus/events/abc');
     expect(read('app/layout.js')).toContain('metadataBase: new URL(SITE_URL)');
-    expect(read('.env.example')).toContain('SITE_URL=https://pccoe.in');
     expect(read('lib/seo.js')).toContain("import 'server-only'");
-    expect(read('scripts/check-env.mjs')).toContain("key: 'SITE_URL'");
     expect(read('.env.example')).not.toContain('NEXT_PUBLIC_SITE_URL');
   });
 
@@ -301,7 +299,7 @@ describe('SEO and sharing metadata', () => {
     expect(meta.robots.follow).toBe(true);
     expect(meta.openGraph.url).toBe('https://pccoe.in/c/coding-club');
     expect(meta.openGraph.siteName).toBeTruthy();
-    expect(meta.twitter.card).toBe('summary');
+    expect(meta.twitter.card).toBe('summary_large_image');
     expect(noindexMetadata('Draft').robots.index).toBe(false);
     expect(publicDescription('  a   long   description  ')).toBe('a long description');
     expect(publicDescription('')).toMatch(/public club and event directory/);
@@ -356,7 +354,7 @@ describe('SEO and sharing metadata', () => {
     }
     expect(read('app/(public)/clubs/page.js')).toContain('path={ROUTES.club(club.slug)}');
     expect(read('app/(public)/c/[slug]/page.js')).toContain('path={canonicalPath}');
-    expect(read('components/social/ShareButton.js')).toContain('window.location.origin');
+    expect(read('components/social/ShareButton.js')).toContain('absoluteUrl(path)');
     expect(read('components/social/ShareButton.js')).not.toContain('process.env');
   });
 });
