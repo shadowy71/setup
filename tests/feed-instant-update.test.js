@@ -248,7 +248,7 @@ describe('every other surface that lists posts is told to re-read', () => {
       'app/(app)/explore/page.js',
       'app/(app)/profile/page.js',
       'app/(app)/communities/[slug]/page.js',
-      'app/(app)/clubs/[id]/page.js',
+      'app/(public)/c/[slug]/page.js',
       'app/(app)/user/[username]/page.js',
     ];
 

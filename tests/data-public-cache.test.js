@@ -73,6 +73,12 @@ vi.mock('@/lib/supabase/server', () => ({
   getServerClient: async () => supabase,
 }));
 
+// Published events are read with NO session (the anon role), while the
+// authenticated noticeboard keeps its session-aware client.
+vi.mock('@/lib/supabase/public', () => ({
+  getPublicClient: () => supabase,
+}));
+
 const { PUBLIC_REVALIDATE_SECONDS, PUBLIC_TAGS, listPublishedEvents, listPublishedNotices } =
   await import('@/lib/data/public-cache');
 
@@ -92,10 +98,10 @@ beforeEach(() => {
 });
 
 describe('public cache boundary', () => {
-  it('uses a short revalidation window and one tag per table', () => {
+  it('uses a short revalidation window and one tag per public table', () => {
     expect(PUBLIC_REVALIDATE_SECONDS).toBeGreaterThanOrEqual(30);
     expect(PUBLIC_REVALIDATE_SECONDS).toBeLessThanOrEqual(120);
-    expect(PUBLIC_TAGS).toEqual({ notices: 'public:notices', events: 'public:events' });
+    expect(PUBLIC_TAGS).toEqual({ notices: 'public:notices', events: 'public:events', clubs: 'public:clubs' });
   });
 
   it('only ever asks for published notices', async () => {

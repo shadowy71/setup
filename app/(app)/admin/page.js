@@ -568,7 +568,7 @@ export default async function AdminPage({ searchParams }) {
                 <span className="w-full text-2xs text-muted">
                   {request.reviewed_at ? formatDateTime(request.reviewed_at) : formatDateTime(request.updated_at)}
                   {request.reviewer_username ? ` · reviewed by @${request.reviewer_username}` : ''}
-                  {request.community_id ? <> · <Link href={ROUTES.club(request.community_id)} className="underline">Open club</Link></> : null}
+                  {request.community_id ? <> · <Link href={request.slug ? ROUTES.club(request.slug) : ROUTES.clubLegacy(request.community_id)} className="underline">Open club</Link></> : null}
                 </span>
               </Card>
             ))}

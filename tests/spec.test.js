@@ -189,6 +189,7 @@ describe('route surface (spec §5, §6)', () => {
     const candidates = [
       path.join(ROOT, 'app', route, 'page.js'),
       path.join(ROOT, 'app', '(app)', route, 'page.js'),
+      path.join(ROOT, 'app', '(public)', route, 'page.js'),
     ];
     return candidates.some((candidate) => fs.existsSync(candidate));
   };

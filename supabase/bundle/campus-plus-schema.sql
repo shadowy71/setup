@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (40 files):
+-- Contents (41 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -73,9 +73,10 @@
 --   38  20261101000001_038_post_pin_ordering.sql  (314 lines)
 --   39  20261102000001_039_poll_author_may_vote.sql  (37 lines)
 --   40  20261102000002_040_busiest_trending.sql  (220 lines)
+--   41  20261103000001_041_public_discovery.sql  (276 lines)
 
 -- ==========================================================================
--- FILE 01/40  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/41  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -196,7 +197,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/40  20261005000002_002_identity_roles.sql
+-- FILE 02/41  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -788,7 +789,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/40  20261005000003_003_blocks.sql
+-- FILE 03/41  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -935,7 +936,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/40  20261005000004_004_communities.sql
+-- FILE 04/41  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1342,7 +1343,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/40  20261005000005_005_social.sql
+-- FILE 05/41  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1965,7 +1966,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/40  20261005000006_006_moderation_core.sql
+-- FILE 06/41  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2440,7 +2441,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/40  20261005000007_007_messaging.sql
+-- FILE 07/41  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3029,7 +3030,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/40  20261005000008_008_marketplace.sql
+-- FILE 08/41  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3551,7 +3552,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/40  20261005000009_009_campus.sql
+-- FILE 09/41  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4585,7 +4586,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/40  20261005000010_010_random.sql
+-- FILE 10/41  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5237,7 +5238,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/40  20261005000011_011_platform.sql
+-- FILE 11/41  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -5977,7 +5978,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/40  20261005000012_012_auth_hooks.sql
+-- FILE 12/41  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6434,7 +6435,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/40  20261005000013_013_reference_data.sql
+-- FILE 13/41  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6708,7 +6709,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/40  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/41  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6921,7 +6922,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/40  20261005000015_015_column_privileges.sql
+-- FILE 15/41  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7149,7 +7150,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/40  20261005000016_016_staff_actions.sql
+-- FILE 16/41  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7856,7 +7857,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/40  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/41  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8054,7 +8055,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/40  20261005000018_018_function_grants.sql
+-- FILE 18/41  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8169,7 +8170,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/40  20261005000019_019_staff_visibility.sql
+-- FILE 19/41  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8245,7 +8246,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/40  20261005000020_020_chat_inbox.sql
+-- FILE 20/41  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8339,7 +8340,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/40  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/41  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8677,7 +8678,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/40  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/41  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8750,7 +8751,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/40  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/41  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8780,7 +8781,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/40  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/41  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9253,7 +9254,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/40  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/41  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9547,7 +9548,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/40  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/41  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9667,7 +9668,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/40  20261025000001_027_backup_change_capture.sql
+-- FILE 27/41  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10933,7 +10934,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/40  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/41  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11260,7 +11261,7 @@ comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
--- FILE 29/40  20261026000001_029_feed_realtime_delivery.sql
+-- FILE 29/41  20261026000001_029_feed_realtime_delivery.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11377,7 +11378,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 30/40  20261027000001_030_random_channel_authorization.sql
+-- FILE 30/41  20261027000001_030_random_channel_authorization.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11570,7 +11571,7 @@ comment on function public.can_access_random_session is
   'can_access_own_random_session(uuid) instead.';
 
 -- ==========================================================================
--- FILE 31/40  20261028000001_031_club_governance.sql
+-- FILE 31/41  20261028000001_031_club_governance.sql
 -- ==========================================================================
 
 -- Campus+ migration 031 — club governance, requests and scoped management
@@ -12623,7 +12624,7 @@ grant execute on function public.remove_community_member(uuid, uuid) to authenti
 grant execute on function public.update_club_profile(uuid, jsonb) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 32/40  20261028000002_032_club_catalogue.sql
+-- FILE 32/41  20261028000002_032_club_catalogue.sql
 -- ==========================================================================
 
 -- Campus+ migration 032 — source-backed club catalogue
@@ -12837,7 +12838,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 33/40  20261029000001_033_unread_count_lookup.sql
+-- FILE 33/41  20261029000001_033_unread_count_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12895,7 +12896,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 34/40  20261029000002_034_inbox_membership_lookup.sql
+-- FILE 34/41  20261029000002_034_inbox_membership_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12987,7 +12988,7 @@ revoke all on function public.conversation_inbox(integer) from public, anon;
 grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 35/40  20261029000003_035_feed_visibility_reconciliation.sql
+-- FILE 35/41  20261029000003_035_feed_visibility_reconciliation.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13043,7 +13044,7 @@ revoke all on function public.campus_feed_post_visibility(uuid[]) from public, a
 grant execute on function public.campus_feed_post_visibility(uuid[]) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 36/40  20261029000004_036_admin_dashboard_counts.sql
+-- FILE 36/41  20261029000004_036_admin_dashboard_counts.sql
 -- ==========================================================================
 
 -- Campus+ 036: one authorized, RLS-scoped Admin count snapshot
@@ -13107,7 +13108,7 @@ revoke all on function public.campus_admin_dashboard_counts() from anon;
 grant execute on function public.campus_admin_dashboard_counts() to authenticated;
 
 -- ==========================================================================
--- FILE 37/40  20261029000005_037_realtime_authorization_grants.sql
+-- FILE 37/41  20261029000005_037_realtime_authorization_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 037 — reassert least-privilege Realtime function grants
@@ -13143,7 +13144,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 38/40  20261101000001_038_post_pin_ordering.sql
+-- FILE 38/41  20261101000001_038_post_pin_ordering.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13461,7 +13462,7 @@ comment on index public.posts_feed_replica_identity_idx is
   'Realtime update identity: old id/pin/status only, so pin transitions are distinguishable from counter-only writes without full-row replica identity.';
 
 -- ==========================================================================
--- FILE 39/40  20261102000001_039_poll_author_may_vote.sql
+-- FILE 39/41  20261102000001_039_poll_author_may_vote.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13502,7 +13503,7 @@ comment on policy poll_votes_insert_self on public.poll_votes is
   'Any active student may vote once in an open published poll, including the poll author; duplicates remain blocked by the unique (post_id, user_id) constraint.';
 
 -- ==========================================================================
--- FILE 40/40  20261102000002_040_busiest_trending.sql
+-- FILE 40/41  20261102000002_040_busiest_trending.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13724,6 +13725,286 @@ $$;
 
 comment on function public.trending_posts(integer, integer) is
   'Deterministic recent-engagement trending score. Formula and defaults are published in lib/constants.js#TRENDING_FORMULA; bar normalization lives in lib/social/activity-scale.js. SECURITY INVOKER so RLS still decides visibility.';
+
+-- ==========================================================================
+-- FILE 41/41  20261103000001_041_public_discovery.sql
+-- ==========================================================================
+
+-- Campus+ migration 041 — public discovery: clubs by slug, public events
+-- =============================================================================
+-- Product rule: public discovery, private student data, authenticated
+-- participation, controlled administration. This migration opens *reads* for
+-- three very narrow projections and opens no writes at all.
+--
+-- ── The visibility decision (explicit, not silent) ─────────────────────────
+-- Migration 032 imported 35 published catalogue clubs with
+-- `visibility = 'campus'`. In the existing model `campus` means "readable by
+-- signed-in campus accounts"; `public` means "readable by everyone on Campus+";
+-- `community` / `private` are member-only. Making every `campus` row visible to
+-- the anonymous key would also expose private study groups and unrelated
+-- communities, so that is NOT what this migration does.
+--
+-- Instead, the 35 source-roster catalogue entries are *explicitly* moved from
+-- `campus` to `public`, and the anonymous SELECT policy below additionally
+-- requires `kind = 'club'` and `status = 'published'`. For clubs, `public` now
+-- also means "listed on the open web" (the club settings form says so). Every
+-- other `campus`, `community` and `private` row keeps its existing boundary:
+-- anon has no policy that can return it. Published/unpublished status stays
+-- authoritative too — a club that is hidden, removed or archived drops out of
+-- the public directory immediately.
+--
+-- Affected records: exactly the 35 `catalogue_key` values seeded by migration
+-- 032, listed in the UPDATE below. Clubs created through the staff workflow or
+-- an approved request keep their `campus` default until a manager explicitly
+-- chooses "Public on the web"; that is a deliberate, auditable choice, not a
+-- side effect of creating a club. Nothing else is rewritten.
+--
+-- ── Column projections ─────────────────────────────────────────────────────
+-- Migration 014/018 revoke ALL table privileges from `anon`. This migration
+-- grants SELECT on named columns only (never `select *`), so even a mistake in
+-- a public page cannot read an administrator's profile id, a moderation note,
+-- an author id or an attendee row. `information_schema.role_table_grants` stays
+-- empty for anon; the audit script checks `column_privileges` explicitly.
+--
+-- ── Mutations ──────────────────────────────────────────────────────────────
+-- No INSERT/UPDATE/DELETE policy is created for anon, no write column is
+-- granted, and no function EXECUTE is granted (migration 018's blanket revoke
+-- stays in force). RLS therefore denies every anonymous mutation, including
+-- join requests, memberships, RSVPs, event/club writes and management RPCs.
+-- =============================================================================
+
+-- Snapshot the effective anon EXECUTE surface BEFORE this migration changes
+-- anything, so section 5 can prove the migration added no new callable
+-- function. Earlier migrations left a few SECURITY DEFINER *trigger* functions
+-- reachable through PUBLIC's default EXECUTE; those are pre-existing, are not
+-- RPCs (they need a NEW/OLD row and are only invoked by triggers), and are
+-- deliberately left untouched here. What matters is that public discovery does
+-- not widen that surface by a single function.
+create temp table __anon_exec_before_041 as
+select p.oid
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public'
+   and has_function_privilege('anon', p.oid, 'EXECUTE');
+
+-- ---------------------------------------------------------------------------
+-- 1. Documented visibility change for the published club catalogue
+-- ---------------------------------------------------------------------------
+
+update public.communities
+   set visibility = 'public'
+ where kind = 'club'
+   and status = 'published'
+   and visibility = 'campus'
+   and catalogue_key in (
+     'team-red-baron', 'team-kratos-racing-electric', 'team-solarium',
+     'team-ambush', 'team-automatons', 'team-maverick-india', 'team-anantam',
+     'coding-club', 'devcorps', 'cybsec', 'foss', 'gdg-campus',
+     'cesa', 'mesa', 'etsa', 'ciesa', 'itsa', 'aimsa', 'cresa', 'mcasa',
+     'acm-pccoe', 'acm-w-pccoe', 'csi-pccoe', 'iet-pccoe', 'iste-pccoe',
+     'codechef-pccoe', 'owasp-pccoe', 'ieee-pccoe', 'iete-pccoe',
+     'swaad', 'pac', 'nss', 'games-and-sports', 'samvaad', 'campus-plus'
+   );
+
+comment on column public.communities.visibility is
+  'public = listed on the open web (clubs only for anon, see migration 041); '
+  'campus = signed-in campus accounts; community/private = member-only. '
+  'The anonymous policy additionally requires kind = club and status = published.';
+
+-- ---------------------------------------------------------------------------
+-- 2. Column-level anonymous reads — explicit allow-lists, never whole tables
+-- ---------------------------------------------------------------------------
+
+-- Clubs: public profile fields only. No created_by / approved_by / approved_at
+-- (administrator identity), no catalogue_key (internal import provenance), no
+-- study-group fields. `id` is needed to associate published events with a club;
+-- it is not used as a public URL identifier (the slug is).
+grant select (
+  id, kind, name, slug, description, club_category, organization_type,
+  meeting_info, recruitment_info, contact_info, external_url, visibility,
+  join_policy, status, is_official, verification_status, source_label,
+  source_url, directory_aliases, admin_assigned, member_count, post_count,
+  created_at, updated_at
+) on public.communities to anon;
+
+-- Events: public listing/detail fields only. No created_by / updated_by /
+-- updated_at / discussion_post_id / search_vector. `registration_info` and
+-- `registration_url` are intentionally public fields (migration 009) and are
+-- rendered as plain text/external links on a published event page.
+grant select (
+  id, title, description, starts_on, ends_on, start_time, end_time, location,
+  organizer, registration_info, registration_url, capacity, show_attendees,
+  club_id, category, status, is_official, published_at, created_at
+) on public.events to anon;
+
+-- Posts: only the columns needed to show a public club announcement. No
+-- author_id, no moderation columns, no poll/vote state, no gif payload.
+-- `deleted_at`, `visibility`, `status`, `community_id`, `kind` and
+-- `is_official` are needed by the policy/predicate below, not by the page.
+grant select (
+  id, community_id, title, body, kind, visibility, status, is_official,
+  created_at, deleted_at
+) on public.posts to anon;
+
+-- ---------------------------------------------------------------------------
+-- 3. Narrow anonymous SELECT policies
+-- ---------------------------------------------------------------------------
+
+create policy communities_select_public_club on public.communities
+  for select to anon
+  using (
+    kind = 'club'
+    and status = 'published'
+    and visibility = 'public'
+  );
+
+comment on policy communities_select_public_club on public.communities is
+  'Anonymous catalogue reads only. Private, campus-only, unpublished, removed '
+  'and non-club communities are excluded; see migration 041.';
+
+create policy events_select_public_published on public.events
+  for select to anon
+  using (status = 'published');
+
+comment on policy events_select_public_published on public.events is
+  'Anonymous reads are limited to published events. Drafts, cancelled, '
+  'rejected, review notes and attendee rows have no anonymous policy.';
+
+create policy posts_select_public_club_announcement on public.posts
+  for select to anon
+  using (
+    status = 'published'
+    and deleted_at is null
+    and visibility = 'public'
+    and community_id is not null
+    and exists (
+      select 1 from public.communities c
+       where c.id = community_id
+         and c.kind = 'club'
+         and c.status = 'published'
+         and c.visibility = 'public'
+    )
+  );
+
+comment on policy posts_select_public_club_announcement on public.posts is
+  'A public club does not make every post public. Only a published, explicitly '
+  'public, undeleted announcement in a published publicly listed club is '
+  'readable anonymously. No author identity is projected.';
+
+-- ---------------------------------------------------------------------------
+-- 4. Search results link to the canonical slug URL
+-- ---------------------------------------------------------------------------
+-- `global_search()` (migration 024, replacing 011) still builds the pre-section
+-- `/campus/clubs/<uuid>` address. That address redirects twice today; rewrite
+-- the single expression in the current function definition instead of copying
+-- 280 lines of SQL. `pg_get_functiondef` returns a runnable CREATE OR REPLACE
+-- statement, so the function body, grants, volatility and SECURITY INVOKER
+-- behaviour are all preserved. If a deployment has a custom definition that no
+-- longer contains the exact expression, leave it alone and warn: the legacy
+-- URL still resolves through the permanent redirect in app/(public)/clubs/[id].
+-- Distinct dollar-quote tags: the inner literals contain SQL string quotes, so
+-- nesting the same tag inside the outer block would terminate it early.
+do $patch_search$
+declare
+  v_def text;
+  v_new text;
+begin
+  select pg_get_functiondef(p.oid) into v_def
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname = 'global_search';
+
+  v_new := replace(v_def, $old_url$'/campus/clubs/' || c.id::text$old_url$, $new_url$'/c/' || c.slug$new_url$);
+  if v_def is null or v_new = v_def then
+    raise notice 'global_search club URL expression not found; legacy redirect remains in place.';
+  else
+    execute v_new;
+  end if;
+end $patch_search$;
+
+-- `create or replace function` keeps the old ACL, but make the existing
+-- contract explicit anyway: the search RPC is authenticated-only.
+revoke all on function public.global_search(text, text, integer, integer) from public, anon;
+grant execute on function public.global_search(text, text, integer, integer) to authenticated, service_role;
+
+-- Migration 031 created five SECURITY DEFINER trigger functions *after* 018 had
+-- revoked PUBLIC's default EXECUTE, so they reappeared with PUBLIC EXECUTE and
+-- `anon` inherited it. They are trigger functions rather than RPCs, but an
+-- anonymous visitor has no reason to hold EXECUTE on any definer function.
+-- EXECUTE on a trigger function is checked when the trigger is created (all
+-- five triggers already exist), and the bodies run with the owner's privileges,
+-- so this revoke does not change any application behaviour.
+revoke all on function public.guard_club_creation_request_insert() from public, anon;
+revoke all on function public.notify_club_request_admins() from public, anon;
+revoke all on function public.sync_club_admin_assignment() from public, anon;
+revoke all on function public.guard_community_membership_write() from public, anon;
+revoke all on function public.guard_club_linked_content() from public, anon;
+grant execute on function public.guard_club_creation_request_insert() to authenticated, service_role;
+grant execute on function public.notify_club_request_admins() to authenticated, service_role;
+grant execute on function public.sync_club_admin_assignment() to authenticated, service_role;
+grant execute on function public.guard_community_membership_write() to authenticated, service_role;
+grant execute on function public.guard_club_linked_content() to authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
+-- 5. Self-verification: the migration refuses to leave a wider hole behind
+-- ---------------------------------------------------------------------------
+
+do $$
+declare
+  v_bad_policies text;
+  v_bad_grants text;
+  v_bad_columns text;
+begin
+  -- Every anon policy must be a SELECT with a real predicate, on one of the
+  -- three intended tables. (pg_policies.qual is the USING expression.)
+  select string_agg(format('%s.%s (%s)', tablename, policyname, cmd), '; ')
+    into v_bad_policies
+    from pg_policies
+   where schemaname = 'public'
+     and 'anon' = any(roles)
+     and (
+       cmd <> 'SELECT'
+       or tablename not in ('communities', 'events', 'posts')
+       or coalesce(qual, '') in ('', 'true')
+     );
+  if v_bad_policies is not null then
+    raise exception 'Unexpected anonymous policy: %', v_bad_policies;
+  end if;
+
+  -- No table-level privileges for anon (only column-level SELECT was granted).
+  select string_agg(format('%s:%s', table_name, privilege_type), '; ')
+    into v_bad_grants
+    from information_schema.role_table_grants
+   where table_schema = 'public' and grantee = 'anon';
+  if v_bad_grants is not null then
+    raise exception 'anon must not hold table-level privileges: %', v_bad_grants;
+  end if;
+
+  -- No anonymous write privilege on any column, and no SELECT outside the
+  -- three public projections.
+  select string_agg(format('%s.%s:%s', table_name, column_name, privilege_type), '; ')
+    into v_bad_columns
+    from information_schema.column_privileges
+   where table_schema = 'public' and grantee = 'anon'
+     and (privilege_type <> 'SELECT'
+          or table_name not in ('communities', 'events', 'posts'));
+  if v_bad_columns is not null then
+    raise exception 'Unexpected anonymous column privilege: %', v_bad_columns;
+  end if;
+
+  -- Belt and braces: NO new function became executable by anon as a result of
+  -- this migration. Comparing against the snapshot taken at the top is both
+  -- stricter and more portable than hard-coding a list of legacy functions.
+  select string_agg(p.proname, '; ')
+    into v_bad_grants
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public'
+     and has_function_privilege('anon', p.oid, 'EXECUTE')
+     and not exists (select 1 from __anon_exec_before_041 b where b.oid = p.oid);
+  if v_bad_grants is not null then
+    raise exception 'public discovery granted anon EXECUTE on a new function: %', v_bad_grants;
+  end if;
+end $$;
+
+drop table __anon_exec_before_041;
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)

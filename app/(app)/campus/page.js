@@ -155,7 +155,7 @@ export default async function CampusPage() {
           {clubs.map((club) => (
             <ContentCard
               key={club.id}
-              href={ROUTES.club(club.id)}
+              href={club.slug ? ROUTES.club(club.slug) : ROUTES.clubLegacy(club.id)}
               title={club.name}
               description={club.description}
               icon="star"

@@ -34,7 +34,7 @@ export default async function EditClubPage({ params }) {
       {club.status !== 'published' ? (
         <Notice tone="warning" icon="flag">This club is {club.status}. It stays hidden from the board until staff publish it.</Notice>
       ) : null}
-      <ClubSettingsForm club={club} cancelHref={ROUTES.club(club.id)} />
+      <ClubSettingsForm club={club} cancelHref={ROUTES.club(club.slug)} />
     </div>
   );
 }

@@ -25,9 +25,10 @@ const mocks = vi.hoisted(() => ({
   enforceRateLimit: vi.fn(),
   notify: vi.fn(),
   revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
 }));
 
-vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
+vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath, revalidateTag: mocks.revalidateTag }));
 vi.mock('@/lib/auth/session', () => ({ getActiveUser: mocks.getActiveUser }));
 vi.mock('@/lib/supabase/server', () => ({ getServerClient: mocks.getServerClient }));
 vi.mock('@/lib/ratelimit', () => ({ enforceRateLimit: mocks.enforceRateLimit }));
@@ -283,7 +284,7 @@ describe('createPost returns the canonical record a feed can render', () => {
       '/explore',
       '/profile',
       '/communities/[slug]',
-      '/clubs/[id]',
+      '/c/[slug]',
       '/user/[username]',
       // and the author's own permalink, for the exact post that changed
       `/post/${POST_ID}`,
