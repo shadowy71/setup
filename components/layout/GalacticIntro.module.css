@@ -1,6 +1,5 @@
-/* Original Home choreography and geometry are preserved. Only the scene
-   palette changed: Dark keeps the shared Lumen values and Light has a warm
-   scoped colour treatment. */
+/* The original lockup and choreography remain intact; the scene uses only
+   the existing theme colours, with a little more depth behind the wordmark. */
 /* Both files are variable fonts. Their real axes are Syne wght 400–800 and
    Space Grotesk wght 300–700; the descriptors below must describe those
    ranges, not a guessed static weight. The wordmark uses Syne 800. `block` for
@@ -37,6 +36,11 @@
   --intro-glow: var(--color-accent-ink);
   background:
     radial-gradient(
+      ellipse 55% 38% at 50% 48%,
+      color-mix(in oklab, var(--color-ink) 9%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
       ellipse 78% 60% at 22% 20%,
       color-mix(in oklab, var(--color-accent) 20%, transparent),
       transparent 62%
@@ -59,7 +63,7 @@
   /* The delay is supplied by GalacticIntro.js (SAFETY_CSS_DELAY_MS) so this
      script-independent deadline always sits just after the JS safety timer,
      even when the font wait extends the normal startup. */
-  animation: safety 0s var(--intro-safety-delay, 9.5s) forwards;
+  animation: safety 0s var(--intro-safety-delay, 7.35s) forwards;
 }
 .stage[data-phase='fading'] {
   opacity: 0;
@@ -107,7 +111,7 @@
 .stars {
   position: absolute;
   inset: 0;
-  opacity: 0.82;
+  opacity: 0.36;
   background-image:
     radial-gradient(
       1px 1px at 14% 20%,
@@ -142,7 +146,11 @@
   transform: translate(-50%, -50%);
   width: min(860px, 92vw);
   height: 220px;
-  background: radial-gradient(ellipse, color-mix(in oklab, var(--intro-glow) 34%, transparent), transparent 72%);
+  background: radial-gradient(ellipse,
+    color-mix(in oklab, var(--color-accent) 13%, transparent),
+    color-mix(in oklab, var(--intro-glow) 12%, transparent) 42%,
+    transparent 72%);
+  opacity: 0.7;
   filter: blur(16px);
   z-index: 1;
 }
@@ -275,24 +283,27 @@
 .stage:not([data-phase='waiting']) .center {
   visibility: visible;
 }
+.stage:not([data-phase='waiting']) .haze {
+  animation: ambientIn 1.8s ease-out both;
+}
 .stage:not([data-phase='waiting']) .flare {
-  animation: flare 2.6s ease 0.2s forwards;
+  animation: flare 1.8s ease 0.1s forwards;
 }
 .stage:not([data-phase='waiting']) .campus {
   animation:
-    draw 1.65s cubic-bezier(0.77, 0, 0.175, 1) 0.95s forwards,
-    fill 1.1s ease 2.8s forwards;
+    draw 1.25s cubic-bezier(0.77, 0, 0.175, 1) 0.55s forwards,
+    fill 0.75s ease 1.65s forwards;
 }
 .stage:not([data-phase='waiting']) .plus {
   animation:
-    draw 1s cubic-bezier(0.77, 0, 0.175, 1) 2.45s forwards,
-    fill 1s ease 3.55s forwards;
+    draw 0.65s cubic-bezier(0.77, 0, 0.175, 1) 1.3s forwards,
+    fill 0.7s ease 1.7s forwards;
 }
 .stage:not([data-phase='waiting']) .logo {
-  animation: breathe 3s ease 5s infinite alternate;
+  animation: breathe 3s ease 2.5s infinite alternate;
 }
 .stage:not([data-phase='waiting']) .tagline {
-  animation: tagIn 0.8s ease 4.45s forwards;
+  animation: tagIn 0.55s ease 2.25s forwards;
 }
 .skip {
   position: absolute;
@@ -315,6 +326,10 @@
 .skip:focus-visible {
   outline: 3px solid var(--color-ink);
   outline-offset: 5px;
+}
+@keyframes ambientIn {
+  from { opacity: 0.3; }
+  to { opacity: 0.7; }
 }
 @keyframes flare {
   0% {
@@ -389,8 +404,8 @@
   }
   .stage:not([data-phase='waiting']) .plus {
     animation:
-      draw 0.4s cubic-bezier(0.77, 0, 0.175, 1) 0.45s forwards,
-      fill 0.35s ease 0.85s forwards;
+      draw 0.4s cubic-bezier(0.77, 0, 0.175, 1) 0.32s forwards,
+      fill 0.35s ease 0.65s forwards;
   }
   .stage:not([data-phase='waiting']) .logo {
     animation: none;

@@ -99,8 +99,8 @@ const SPACE_GLYPHS = `${TAGLINE_TEXT}${SKIP_LABEL}`;
 
 /* Playback timing, all measured from the single transition to `playing`.
    The CSS keyframe delays in GalacticIntro.module.css mirror these values. */
-const FADE_AT_MS = 5250;
-const FINISH_AT_MS = 5650;
+const FADE_AT_MS = 3100;
+const FINISH_AT_MS = 3500;
 /* Phones get the same identity, not a six-second gate in front of the feed.
    The compact CSS choreography below lands with these times. */
 const MOBILE_FONT_WAIT_MS = 1000;
@@ -117,7 +117,7 @@ const FONT_WAIT_MS = 3000;
    possible startup (the full font budget) plus the normal sequence plus the
    previous 550 ms of slack. It does not depend on animation events, fonts or
    SVG APIs. */
-const SAFETY_DEADLINE_MS = FONT_WAIT_MS + 6200;
+const SAFETY_DEADLINE_MS = FONT_WAIT_MS + FINISH_AT_MS + 550;
 /* The CSS stage has a second, script-independent emergency deadline. Derive
    its delay from the same value so the JS and CSS deadlines cannot drift. */
 const SAFETY_CSS_DELAY_MS = SAFETY_DEADLINE_MS + 300;
