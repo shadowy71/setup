@@ -17,6 +17,7 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { originFromHeaders } from '@/lib/auth/oauth';
+import { isKnownRoute } from '@/lib/auth/proxy-routes';
 
 /** Routes that must be reachable without a session. `/legal` and `/rules` are
  * linked from the sign-in screen itself (the independence disclosure and the
@@ -197,7 +198,9 @@ export async function proxy(request) {
 
   const { pathname, search } = request.nextUrl;
 
-  if (!signedIn && !isPublic(pathname)) {
+  // Unknown paths must reach the App Router 404. Known protected routes still
+  // redirect; the inventory is checked against the filesystem in tests.
+  if (!signedIn && !isPublic(pathname) && isKnownRoute(pathname)) {
     const target = new URL('/login', request.url);
     if (pathname !== '/') target.searchParams.set('next', `${pathname}${search}`);
     return NextResponse.redirect(target);
