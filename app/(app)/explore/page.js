@@ -1,4 +1,9 @@
 import Link from 'next/link';
+import '@/app/styles/sections.css';
+import { listPublicClubs, getPublicClubIdentities } from '@/lib/data/public';
+import { listPublishedEvents } from '@/lib/data/public-cache';
+import { publicClubs, selectClubs, upcomingEvents, interestLinks } from '@/lib/explore/campus-discovery';
+import { CampusDiscovery } from '@/components/explore/CampusDiscovery';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { ROUTES, TRENDING_WINDOW_HOURS } from '@/lib/constants';
@@ -19,10 +24,9 @@ export const metadata = { title: 'Explore' };
  *              tabs, results from the server. The scope is part of the URL, so
  *              `/explore?q=robotics&scope=projects` can be bookmarked.
  *
- *   no q       BROWSE. A compact directory of the modules that already have
- *              their own pages, plus the deterministic trending list. It does
- *              not re-implement those boards here — a second copy would drift
- *              from the page it imitates.
+ *   no q       BROWSE. A bounded public campus selection, the existing module
+ *              directory and the deterministic trending list. The club and event
+ *              directories remain the authoritative full catalogues.
  *
  * Every destination is a canonical `ROUTES` entry, and every count or row comes
  * from the real tables. An empty database shows "nothing yet", never filler.
@@ -71,13 +75,19 @@ export default async function ExplorePage({ searchParams }) {
 
   const supabase = await getServerClient();
 
-  // Browse mode is a directory, not six miniature boards: each module keeps its
-  // own page (and its own pagination). The only content read left here is the
-  // deterministic trending list, which exists nowhere else.
-  const { data: trending } = await supabase.rpc('trending_posts', {
-    p_limit: 5,
-    p_hours: TRENDING_WINDOW_HOURS,
-  });
+  // Bounded, anonymous catalogue reads are shared; trending remains session-scoped.
+  const [trendingResult, clubResult, recruitmentResult, eventResult] = await Promise.all([
+    supabase.rpc('trending_posts', { p_limit: 5, p_hours: TRENDING_WINDOW_HOURS }),
+    listPublicClubs({ order: 'name', limit: 30 }),
+    listPublicClubs({ order: 'name', limit: 8, hasRecruitment: true }),
+    listPublishedEvents({ limit: 30, upcoming: true }),
+  ]);
+  const trending = trendingResult.data;
+  const clubs = publicClubs(clubResult.items);
+  const recruitment = publicClubs(recruitmentResult.items).filter((club) => typeof club.recruitment_info === 'string' && club.recruitment_info.trim()).slice(0, 4);
+  const events = upcomingEvents(eventResult.items);
+  const identities = await getPublicClubIdentities(events.map((event) => event.club_id));
+  const hosts = new Map(publicClubs(identities.items).map((club) => [club.id, club]));
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,7 +96,12 @@ export default async function ExplorePage({ searchParams }) {
           data and renders nothing — see components/social/LiveFeedSync. */}
       <LiveFeedSync />
       <PageHeader title="Explore" description="Search, trending, and the modules you might not have opened yet." />
-      <SearchResults initialQuery="" initialScope="all" />
+      <section aria-labelledby="campus-life-heading" className="card flex flex-col gap-3 p-4 sm:p-5">
+        <div><h2 id="campus-life-heading">There&apos;s more happening on campus.</h2><p className="mt-2 text-sm text-muted">Find student communities, explore clubs and discover what&apos;s happening at PCCOE.</p></div>
+        <SearchResults initialQuery="" initialScope="all" hint="Search clubs, events, interests and more…" />
+      </section>
+
+      <CampusDiscovery clubs={selectClubs(clubs)} recruitment={recruitment} events={events} hosts={hosts} interests={interestLinks(clubs)} clubsUnavailable={clubResult.unavailable} recruitmentUnavailable={recruitmentResult.unavailable} eventsUnavailable={eventResult.unavailable} />
 
       <section aria-label="Browse campus" className="flex flex-col gap-3">
         <SectionHeader

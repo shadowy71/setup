@@ -57,7 +57,7 @@ function readAddress() {
   };
 }
 
-export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
+export function SearchResults({ initialQuery = '', initialScope = 'all', hint = 'Search people, posts, communities, events, listings…' }) {
   const [query, setQuery] = useState(initialQuery);
   const [scope, setScope] = useState(initialScope);
   const [groups, setGroups] = useState([]);
@@ -169,7 +169,7 @@ export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
             run(term.trim(), scope, 0);
             syncAddress(term.trim(), scope);
           }}
-          hint="Search people, posts, communities, events, listings…"
+          hint={hint}
           autoFocus
         />
       </div>
