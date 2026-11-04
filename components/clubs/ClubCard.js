@@ -17,8 +17,8 @@ const CATEGORY_ICON_MAP = Object.fromEntries(
  * badges are viewer-gated: a guest must not see a "Member" or "Join requested"
  * state that can only be known from a signed-in student's private rows.
  */
-export function ClubCard({ club, joined = false, pending = false, viewer = false }) {
-  const canRecruit = hasVerifiedRecruitment(club);
+export function ClubCard({ club, joined = false, pending = false, viewer = false, showRecruitmentStatus = true }) {
+  const canRecruit = showRecruitmentStatus && hasVerifiedRecruitment(club);
   const organizationType = CLUB_ORGANIZATION_TYPE_LABELS[club.organization_type] || 'Club';
   const categoryIcon = CATEGORY_ICON_MAP[club.club_category] || 'star';
   const href = club.slug ? ROUTES.club(club.slug) : ROUTES.clubLegacy(club.id);
