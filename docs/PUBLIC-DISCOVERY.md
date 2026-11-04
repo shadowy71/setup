@@ -177,20 +177,20 @@ placed in a shared entry.
 
 ## 6. SEO and sharing
 
-Root metadata gained `metadataBase` from a **server-only** `SITE_URL` setting
-(default `https://pccoe.in`, documented in `.env.example`); the root still
-defaults to `noindex`. `lib/seo.js#publicMetadata` sets a canonical alternate,
-`index/follow`, Open Graph and Twitter summary for indexable public pages;
+Root metadata uses `metadataBase` from the fixed canonical origin in
+`lib/canonical.js` (`https://pccoe.in`), independent of deployment hosts.
+The root still defaults to `noindex`. `lib/seo.js#publicMetadata` sets a canonical
+alternate, `index/follow`, Open Graph and Twitter cards for indexable public pages;
 `noindexMetadata` is used for private/draft records and redirect pages.
 
 `app/robots.js` allows `/clubs`, `/c/`, `/campus/events`, disallows all
 management/creation/personal routes, and points to `app/sitemap.js`. The
-sitemap contains the two directory URLs, the 35 published public clubs and
-published events only — generated from the same anonymous readers, so a private
-row cannot leak through a sitemap, a preview or structured metadata.
-`ShareButton` builds `${window.location.origin}${relativePath}`, so share/copy
-always uses the canonical slug URL and can never be pointed off-site by stored
-data.
+sitemap contains the two directory URLs and published public clubs and events
+only, paged through the same cached anonymous readers. A read failure returns an
+error rather than caching a partial catalogue. The catalogue currently uses a
+single sitemap; introduce sitemap index/shards before it reaches 50,000 URLs.
+`ShareButton` builds links against the fixed canonical origin, never a preview
+host. Record metadata and structured data use only anonymous public projections.
 
 ## 7. Tests and deployment
 
@@ -209,6 +209,6 @@ data.
 validation script are the checks to run. **No migration has been applied to a
 production database and no deployment has been performed.** The operator must
 apply `041_public_discovery.sql` (or the regenerated bundle on a fresh project)
-and set `SITE_URL` before the public pages go live; until then, the anonymous
+before the public pages go live; until then, the anonymous
 client has no `anon` policies and the public directory renders its honest
 "unavailable" state rather than exposing anything.

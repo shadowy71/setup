@@ -6,7 +6,8 @@ import { can, toActor } from '@/lib/permissions/authorization';
 import { getEvent, getEventRsvp, listEventAttendees, getCommunityById } from '@/lib/data/campus';
 import { getPublicEventById, getPublicClubIdentityById } from '@/lib/data/public';
 import { UUID_REGEX, ROUTES } from '@/lib/constants';
-import { publicMetadata, noindexMetadata } from '@/lib/seo';
+import { eventMetadata, eventSchema, breadcrumbs, noindexMetadata } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
 import { readIntent } from '@/lib/auth/return-to';
 import { PageHeader, Badge, Notice, Card, StaffDot } from '@/components/ui';
 import { IdentityLine } from '@/components/identity/IdentityLine';
@@ -31,12 +32,8 @@ export async function generateMetadata({ params }) {
   if (!UUID_REGEX.test(id)) return noindexMetadata('Event not found');
   const { item } = await getPublicEventById(id);
   if (!item || item.status !== 'published') return noindexMetadata('Event');
-  return publicMetadata({
-    title: item.title,
-    description: item.description || `${item.title} — event details on Campus+.`,
-    canonical: ROUTES.event(id),
-    type: 'article',
-  });
+  const { item: club } = item.club_id ? await getPublicClubIdentityById(item.club_id) : { item: null };
+  return eventMetadata(item, club?.kind === 'club' && club?.visibility === 'public' && club?.status === 'published' ? club : null);
 }
 
 /**
@@ -122,6 +119,7 @@ export default async function EventPage({ params, searchParams }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {publicResult.item?.status === 'published' ? <><JsonLd value={eventSchema(publicResult.item, linkedClub?.visibility === 'public' && linkedClub?.status === 'published' ? linkedClub : null)} /><JsonLd value={breadcrumbs([['Campus+', '/'], ['Events', '/campus/events'], [publicResult.item.title, ROUTES.event(id)]])} /></> : null}
       {intent && viewer ? <IntentNotice intent={intent} /> : null}
 
       <PageHeader
