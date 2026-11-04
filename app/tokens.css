@@ -68,6 +68,13 @@
   --color-live: #2B624C;
   --color-focus: #4D708B;
   --shadow-card: 0 18px 42px -30px rgb(41 39 37 / 0.42);
+  /* Depth is deliberately separate from the canonical colours: all three
+     tiers use the same paper/ink identity, with only falloff changing. */
+  --depth-1: 0 8px 22px -15px rgb(41 39 37 / 0.24);
+  --depth-2: 0 14px 34px -18px rgb(41 39 37 / 0.30), 0 3px 9px -6px rgb(41 39 37 / 0.15);
+  --depth-3: 0 24px 56px -24px rgb(41 39 37 / 0.38), 0 8px 20px -12px rgb(41 39 37 / 0.22);
+  --ambient-accent: color-mix(in oklab, var(--color-accent) 8%, transparent);
+  --ambient-warm: color-mix(in oklab, var(--color-accent-warm) 5%, transparent);
   --rule-blueprint: rgb(41 39 37 / 0.07);
 }
 
@@ -91,6 +98,11 @@
   --color-live: #8DC9AE;
   --color-focus: #91BFE5;
   --shadow-card: 0 22px 48px -30px rgb(0 0 0 / 0.72);
+  --depth-1: 0 9px 24px -15px rgb(0 0 0 / 0.52);
+  --depth-2: 0 16px 38px -19px rgb(0 0 0 / 0.68), 0 4px 12px -7px rgb(0 0 0 / 0.38);
+  --depth-3: 0 26px 60px -22px rgb(0 0 0 / 0.78), 0 8px 22px -11px rgb(0 0 0 / 0.48);
+  --ambient-accent: color-mix(in oklab, var(--color-accent) 10%, transparent);
+  --ambient-warm: color-mix(in oklab, var(--color-accent-warm) 5%, transparent);
   --rule-blueprint: rgb(240 238 233 / 0.06);
 }
 
