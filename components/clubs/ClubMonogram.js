@@ -5,7 +5,7 @@
  * mark is a monogram: its initials over a colour pair derived deterministically
  * from its id. The same club always looks the same and nothing is stored.
  */
-function initials(name) {
+export function initials(name) {
   const words = String(name || '')
     .replace(/[^\p{L}\p{N}\s&-]/gu, ' ')
     .split(/[\s&-]+/)
@@ -34,7 +34,7 @@ function hueFor(seed) {
  * sand. Every club still has its own stable colour; none of them leaves the
  * brand.
  */
-function familyHue(seed) {
+export function familyHue(seed) {
   const hash = hueFor(seed);
   const warm = hash % 5 === 0;
   const hue = warm ? 20 + (hash % 18) : 166 + (hash % 28);

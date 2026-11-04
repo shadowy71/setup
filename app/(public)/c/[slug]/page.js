@@ -16,10 +16,13 @@ import { getCommunityPosts } from '@/lib/data/feed';
 import { listPublishedEvents } from '@/lib/data/public-cache';
 import {
   getPublicClubBySlug,
+  listPublicClubs,
   listPublicClubAnnouncements,
   isPubliclyListedClub,
 } from '@/lib/data/public';
-import { ROUTES, CLUB_SLUG_REGEX } from '@/lib/constants';
+import { relatedClubs } from '@/lib/discovery/public';
+import { ClubCard } from '@/components/clubs/ClubCard';
+import { ROUTES, CLUB_SLUG_REGEX, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
 import { clubMetadata, clubSchema, breadcrumbs, noindexMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { readIntent } from '@/lib/auth/return-to';
@@ -34,7 +37,7 @@ import { LiveFeedSync } from '@/components/social/LiveFeedSync';
 import { CommunityActions } from '@/components/communities/CommunityActions';
 import { MessageButton } from '@/components/social/MessageButton';
 import { ReportDialog } from '@/components/social/ReportDialog';
-import { ClubMonogram } from '@/components/clubs/ClubMonogram';
+import { ClubHeroIdentity } from '@/components/clubs/ClubHeroIdentity';
 import { ClubMembersPanel } from '@/components/clubs/ClubMembersPanel';
 import { GuestActionPrompt, IntentNotice } from '@/components/auth/GuestActionPrompt';
 import { ShareButton } from '@/components/social/ShareButton';
@@ -147,6 +150,11 @@ export default async function ClubPage({ params, searchParams }) {
 
   // Shared, viewer-independent published-event cache. No RSVP/attendee state.
   const events = await listPublishedEvents({ limit: 5, clubId: club.id, upcoming: true });
+  const recommendations = publiclyListed ? relatedClubs(publicClub, (await Promise.all([
+    publicClub.club_category ? listPublicClubs({ category: publicClub.club_category, order: 'name', limit: 100 }) : Promise.resolve({ items: [] }),
+    publicClub.organization_type ? listPublicClubs({ organizationType: publicClub.organization_type, order: 'name', limit: 100 }) : Promise.resolve({ items: [] }),
+    publicClub.directory_aliases?.trim() ? listPublicClubs({ q: publicClub.directory_aliases.trim().split(/[,;\n]+/)[0].trim(), order: 'name', limit: 100 }) : Promise.resolve({ items: [] }),
+  ])).flatMap((result) => result.items)) : [];
   const owner = members.find((member) => member.role === 'owner') || null;
 
   const activity = viewer
@@ -178,10 +186,11 @@ export default async function ClubPage({ params, searchParams }) {
 
       {intent && viewer ? <IntentNotice intent={intent} /> : null}
 
+      <nav aria-label="Breadcrumb" className="text-2xs text-muted"><Link href="/" className="underline">Campus+</Link> / <Link href={ROUTES.clubs} className="underline">Clubs</Link> / <span aria-current="page">{club.name}</span></nav>
       <PageHeader
         title={club.name}
         eyebrow={club.club_category ? `${club.club_category} club` : 'Club'}
-        description={`${club.member_count ?? 0} member${club.member_count === 1 ? '' : 's'} · page added ${formatDate(club.created_at)}`}
+        description={[club.club_category, CLUB_ORGANIZATION_TYPE_LABELS[club.organization_type], club.member_count != null ? `${club.member_count} member${club.member_count === 1 ? '' : 's'}` : null].filter(Boolean).join(' · ')}
         back={{ href: ROUTES.clubs, label: 'Clubs' }}
         action={
           <div className="flex flex-wrap items-center gap-2">
@@ -208,22 +217,7 @@ export default async function ClubPage({ params, searchParams }) {
       ) : null}
 
       <Card className="club-hero flex flex-col gap-4 p-4 sm:p-5">
-        <div className="flex items-start gap-3.5">
-          <ClubMonogram name={club.name} id={club.id} size={64} />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              {club.verification_status === 'source_checked' ? <Badge tone="accent" icon="check">Source checked</Badge> : <Badge>Details pending</Badge>}
-              {club.is_official ? <Badge tone="accent">Campus+ reviewed</Badge> : null}
-              {!club.admin_assigned ? <Badge tone="warning">Admin assignment needed</Badge> : null}
-              {club.admin_assigned && club.recruitment_info ? <Badge tone="info" icon="megaphone">Recruiting</Badge> : null}
-              {club.admin_assigned && club.join_policy !== 'open' ? <Badge>Approval needed</Badge> : null}
-              {isMember ? <Badge tone="success" icon="check">Member</Badge> : null}
-            </div>
-            <p className="user-text mt-2.5 text-[0.9375rem] leading-relaxed">
-              <LinkifiedText text={club.description} mentions />
-            </p>
-          </div>
-        </div>
+        <ClubHeroIdentity club={club} isMember={isMember} />
 
         <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-2xs text-muted">
           {club.meeting_info ? (
@@ -252,7 +246,7 @@ export default async function ClubPage({ params, searchParams }) {
           ) : (
             <span>{club.source_label ? `Source: ${club.source_label}` : 'Public source and contact details are pending.'}</span>
           )}
-          <span className="mt-1 block">Source checked means the organization is listed by the cited source; it does not verify every detail on this page. Contact details here are the club&apos;s own public contact fields, not a student&apos;s personal contact.</span>
+          <span className="mt-1 block">Source checked means the cited source lists the organization; Campus+ reviewed reflects a platform review. Administrator assigned means a club administrator has been assigned. None of these labels implies institutional endorsement. Contact details here are the club&apos;s own public contact fields, not a student&apos;s personal contact.</span>
         </div>
 
         {club.recruitment_info ? (
@@ -386,8 +380,8 @@ export default async function ClubPage({ params, searchParams }) {
             <h2 className="text-sm font-semibold">Club facts</h2>
             <dl className="flex flex-col gap-2 text-2xs">
               <div className="flex items-start justify-between gap-3"><dt className="text-muted">Category</dt><dd className="text-right font-medium">{club.club_category || 'Uncategorised'}</dd></div>
-              <div className="flex items-start justify-between gap-3"><dt className="text-muted">Organization type</dt><dd className="text-right font-medium">{club.organization_type || 'Not recorded'}</dd></div>
-              <div className="flex items-start justify-between gap-3"><dt className="text-muted">Members</dt><dd className="text-right font-medium">{club.member_count ?? 0}</dd></div>
+              <div className="flex items-start justify-between gap-3"><dt className="text-muted">Organization type</dt><dd className="text-right font-medium">{CLUB_ORGANIZATION_TYPE_LABELS[club.organization_type] || 'Not recorded'}</dd></div>
+              <div className="flex items-start justify-between gap-3"><dt className="text-muted">Members</dt><dd className="text-right font-medium">{club.member_count ?? 'Not available'}</dd></div>
               <div className="flex items-start justify-between gap-3"><dt className="text-muted">Verification</dt><dd className="text-right font-medium">{club.verification_status === 'source_checked' ? 'Source checked' : 'Details pending'}</dd></div>
               <div className="flex items-start justify-between gap-3"><dt className="text-muted">Campus+ review</dt><dd className="text-right font-medium">{club.is_official ? 'Reviewed' : 'Not yet reviewed'}</dd></div>
               <div className="flex items-start justify-between gap-3"><dt className="text-muted">Joining</dt><dd className="text-right font-medium">{club.admin_assigned ? (club.join_policy === 'open' ? 'Open' : 'Approval needed') : 'Administrator pending'}</dd></div>
@@ -462,6 +456,13 @@ export default async function ClubPage({ params, searchParams }) {
           ) : null}
         </aside>
       </div>
+      {publiclyListed ? (
+        <section className="flex flex-col gap-3" aria-label="Related clubs">
+          <SectionHeader title="You might also like" description="Clubs with a matching category or organization type." />
+          {recommendations.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{recommendations.map((item) => <ClubCard key={item.slug} club={item} />)}</div> : <p className="text-2xs text-muted">No related public clubs found yet.</p>}
+          <Link href={ROUTES.clubs} className="text-2xs text-muted underline hover:text-ink">Explore all clubs</Link>
+        </section>
+      ) : null}
     </div>
   );
 }

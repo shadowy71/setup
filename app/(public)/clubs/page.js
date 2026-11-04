@@ -13,6 +13,7 @@ import {
   CLUB_DIRECTORY_STATES,
 } from '@/lib/constants';
 import { publicMetadata } from '@/lib/seo';
+import { hasVerifiedRecruitment } from '@/lib/discovery/public';
 import { returnToHref } from '@/lib/auth/return-to';
 import { Button, EmptyState, LinkButton, Notice, PageHeader, SectionHeader } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
@@ -104,7 +105,7 @@ export default async function ClubsPage({ searchParams }) {
     if (!viewer && (state === 'joined' || state === 'pending')) return true;
     if (state === 'joined') return joined.has(club.id);
     if (state === 'pending') return pending.has(club.id) && !joined.has(club.id);
-    if (state === 'recruiting') return club.admin_assigned && Boolean(club.recruitment_info);
+    if (state === 'recruiting') return hasVerifiedRecruitment(club);
     if (state === 'unassigned') return !club.admin_assigned;
     return true;
   });

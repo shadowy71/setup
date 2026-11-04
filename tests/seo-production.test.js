@@ -18,7 +18,8 @@ describe('production SEO', () => {
     expect(first.description).toContain('Students learn coding together.');
     expect(first.alternates.canonical).toBe('/c/coding-club');
     expect(first.openGraph.url).toBe('https://pccoe.in/c/coding-club');
-    expect(first.openGraph.images[0].url).toBe(SOCIAL_IMAGE);
+    expect(first.openGraph.images[0].url).toBe('https://pccoe.in/api/public/club-image/coding-club');
+    expect(SOCIAL_IMAGE).toContain('/timetable/social-preview.png');
     expect(first.twitter.card).toBe('summary_large_image');
     expect(isPublicPath('/timetable/social-preview.png')).toBe(true);
   });
