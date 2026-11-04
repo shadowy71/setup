@@ -212,17 +212,17 @@ describe('document-level galactic intro architecture', () => {
 
   it('preserves the SVG proportions and the CSS choreography delays', () => {
     expect(source).toContain('viewBox="0 0 760 110"');
-    expect(source).toContain('const FADE_AT_MS = 5250');
-    expect(source).toContain('const FINISH_AT_MS = 5650');
+    expect(source).toContain('const FADE_AT_MS = 3100');
+    expect(source).toContain('const FINISH_AT_MS = 3500');
     expect(css).toContain(
-      'draw 1.65s cubic-bezier(0.77, 0, 0.175, 1) 0.95s',
+      'draw 1.25s cubic-bezier(0.77, 0, 0.175, 1) 0.55s',
     );
-    expect(css).toContain('draw 1s cubic-bezier(0.77, 0, 0.175, 1) 2.45s');
-    expect(css).toContain('fill 1.1s ease 2.8s');
-    expect(css).toContain('fill 1s ease 3.55s');
-    expect(css).toContain('tagIn 0.8s ease 4.45s');
-    expect(css).toContain('breathe 3s ease 5s');
-    expect(css).toContain('flare 2.6s ease 0.2s');
+    expect(css).toContain('draw 0.65s cubic-bezier(0.77, 0, 0.175, 1) 1.3s');
+    expect(css).toContain('fill 0.75s ease 1.65s');
+    expect(css).toContain('fill 0.7s ease 1.7s');
+    expect(css).toContain('tagIn 0.55s ease 2.25s');
+    expect(css).toContain('breathe 3s ease 2.5s');
+    expect(css).toContain('flare 1.8s ease 0.1s');
   });
 
   it('keeps the identity but compresses the phone choreography and font budget', () => {
@@ -235,20 +235,20 @@ describe('document-level galactic intro architecture', () => {
     expect(source).toContain('later(end, finishAtMs)');
     expect(css).toContain('@media (max-width: 767px) and (prefers-reduced-motion: no-preference)');
     expect(css).toContain('draw 0.55s cubic-bezier(0.77, 0, 0.175, 1) 0.1s');
-    expect(css).toContain('fill 0.35s ease 0.85s');
+    expect(css).toContain('fill 0.35s ease 0.65s');
     expect(css).toContain('tagIn 0.35s ease 1s');
     // Reduced motion still takes the immediate existing exit, not this sequence.
     expect(source).toContain('later(end, 100)');
   });
 
   it('aligns the independent JS and CSS safety deadlines', () => {
-    expect(source).toContain('const SAFETY_DEADLINE_MS = FONT_WAIT_MS + 6200');
+    expect(source).toContain('const SAFETY_DEADLINE_MS = FONT_WAIT_MS + FINISH_AT_MS + 550');
     expect(source).toContain(
       'const SAFETY_CSS_DELAY_MS = SAFETY_DEADLINE_MS + 300',
     );
     expect(source).toContain('later(end, SAFETY_DEADLINE_MS)');
     expect(source).toContain("'--intro-safety-delay'");
-    expect(css).toContain('var(--intro-safety-delay, 9.5s)');
+    expect(css).toContain('var(--intro-safety-delay, 7.35s)');
   });
 
   it('scopes warm Light scene colours while retaining Dark colour defaults', () => {
@@ -260,13 +260,12 @@ describe('document-level galactic intro architecture', () => {
     expect(lightScene).toContain('--intro-secondary: #D8CEC4');
     expect(lightScene).toContain('--intro-edge: #D8CEC4');
     expect(lightScene).toContain('--intro-glow: #F1EBE5');
-    // Only colour inputs are themed; the original gradient geometry and
-    // opacity stops remain shared by both scenes.
+    // The scene geometry remains shared by both themes.
     expect(css).toContain('ellipse 78% 60% at 22% 20%');
     expect(css).toContain('transparent 60%');
     expect(css).toContain('var(--intro-edge) 88%');
     expect(css).toContain('var(--intro-edge) 100%');
-    expect(css).toContain('color-mix(in oklab, var(--intro-glow) 34%, transparent)');
+    expect(css).toContain('color-mix(in oklab, var(--color-accent) 13%, transparent)');
     expect(css).not.toContain(":global(:root[data-theme='dark']) .stage");
   });
 

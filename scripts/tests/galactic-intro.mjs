@@ -254,11 +254,11 @@ try {
       };
     });
     const parts = (value) => value.split(',').map((part) => part.trim());
-    assert.deepEqual(parts(animations.campus.delay), ['0.95s', '2.8s']);
-    assert.deepEqual(parts(animations.plus.delay), ['2.45s', '3.55s']);
-    assert.deepEqual(parts(animations.tagline.delay), ['4.45s']);
-    assert.deepEqual(parts(animations.logo.delay), ['5s']);
-    console.log('PASS choreography delays unchanged and aligned');
+    assert.deepEqual(parts(animations.campus.delay), ['0.55s', '1.65s']);
+    assert.deepEqual(parts(animations.plus.delay), ['1.3s', '1.7s']);
+    assert.deepEqual(parts(animations.tagline.delay), ['2.25s']);
+    assert.deepEqual(parts(animations.logo.delay), ['2.5s']);
+    console.log('PASS refined choreography delays aligned');
 
     // Completion, then no replay in this document.
     await splash.waitFor({ state: 'detached', timeout: 9000 });
