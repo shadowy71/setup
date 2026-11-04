@@ -251,22 +251,31 @@ describe('document-level galactic intro architecture', () => {
     expect(css).toContain('var(--intro-safety-delay, 7.35s)');
   });
 
-  it('scopes warm Light scene colours while retaining Dark colour defaults', () => {
-    expect(css).toContain('--intro-secondary: var(--color-accent-2)');
-    expect(css).toContain('--intro-edge: var(--color-accent-ink)');
-    expect(css).toContain('--intro-glow: var(--color-accent-ink)');
-    const lightScene = css.match(/:global\(:root\[data-theme='light'\]\) \.stage\s*\{([^}]*)\}/)?.[1];
-    expect(lightScene).toContain('color-scheme: light');
-    expect(lightScene).toContain('--intro-secondary: #D8CEC4');
-    expect(lightScene).toContain('--intro-edge: #D8CEC4');
-    expect(lightScene).toContain('--intro-glow: #F1EBE5');
-    // The scene geometry remains shared by both themes.
+  it('owns exactly the dark scene tokens regardless of the document theme', () => {
+    const tokens = read('app/tokens.css');
+    const dark = tokens.match(/:root\[data-theme='dark'\]\s*\{([^}]*)\}/)?.[1];
+    const stage = css.match(/\.stage\s*\{([^}]*)\}/)?.[1];
+    expect(dark).toBeDefined();
+    expect(stage).toContain('color-scheme: dark');
+    for (const token of [
+      'paper', 'paper-2', 'ink', 'ink-2', 'rule-2',
+      'accent', 'accent-2', 'accent-ink',
+    ]) {
+      const name = `--color-${token}`;
+      const value = dark.match(new RegExp(`${name}:\\s*(#[0-9A-Fa-f]+)`))?.[1];
+      expect(value, `${name} should exist in the dark theme`).toBeDefined();
+      expect(stage).toContain(`${name}: ${value};`);
+    }
+    expect(stage).toContain('--intro-secondary: var(--color-accent-2)');
+    expect(stage).toContain('--intro-edge: var(--color-accent-ink)');
+    expect(stage).toContain('--intro-glow: var(--color-accent-ink)');
+    expect(css).not.toMatch(/:global\(:root\[data-theme=/);
+    // The scene geometry and choreography remain shared by both themes.
     expect(css).toContain('ellipse 78% 60% at 22% 20%');
     expect(css).toContain('transparent 60%');
     expect(css).toContain('var(--intro-edge) 88%');
     expect(css).toContain('var(--intro-edge) 100%');
     expect(css).toContain('color-mix(in oklab, var(--color-accent) 13%, transparent)');
-    expect(css).not.toContain(":global(:root[data-theme='dark']) .stage");
   });
 
   it('preloads the exclusive cinematic faces only on the Home route', () => {

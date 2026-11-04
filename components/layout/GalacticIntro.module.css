@@ -1,5 +1,5 @@
-/* The original lockup and choreography remain intact; the scene uses only
-   the existing theme colours, with a little more depth behind the wordmark. */
+/* The original lockup and choreography remain intact. The scene owns its
+   dark palette so the document theme can change without repainting the intro. */
 /* Both files are variable fonts. Their real axes are Syne wght 400–800 and
    Space Grotesk wght 300–700; the descriptors below must describe those
    ranges, not a guessed static weight. The wordmark uses Syne 800. `block` for
@@ -29,8 +29,18 @@
   overflow: hidden;
   color: var(--color-ink);
   color-scheme: dark;
-  /* Dark retains the original scene colours. Light overrides only these
-     colour inputs below; geometry and choreography stay shared. */
+  /* Mirror only the dark tokens consumed by this scene (app/tokens.css).
+     Local values win over :root inheritance from the prehydration script,
+     persisted preferences, and theme changes during playback. The content
+     behind this fixed overlay keeps its own, independently selected theme. */
+  --color-paper: #191D21;
+  --color-paper-2: #252B30;
+  --color-ink: #F0EEE9;
+  --color-ink-2: #D1D0CC;
+  --color-rule-2: #7B858C;
+  --color-accent: #91BFE5;
+  --color-accent-2: #C5A983;
+  --color-accent-ink: #191D21;
   --intro-secondary: var(--color-accent-2);
   --intro-edge: var(--color-accent-ink);
   --intro-glow: var(--color-accent-ink);
@@ -164,14 +174,6 @@
     color-mix(in oklab, var(--intro-edge) 92%, transparent) 100%
   );
   z-index: 1;
-}
-/* Light changes the scene's colour inputs only. The warm edge replaces the
-   dark ink vignette, while the ivory centre glow preserves the same shape. */
-:global(:root[data-theme='light']) .stage {
-  color-scheme: light;
-  --intro-secondary: #D8CEC4;
-  --intro-edge: #D8CEC4;
-  --intro-glow: #F1EBE5;
 }
 .flare {
   position: absolute;
