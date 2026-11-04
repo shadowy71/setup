@@ -12,6 +12,7 @@
  */
 
 import { useRef, useState } from 'react';
+import { absoluteUrl } from '@/lib/canonical';
 import { Button, Toast } from '@/components/ui';
 
 export function ShareButton({
@@ -35,7 +36,7 @@ export function ShareButton({
   };
 
   const share = async () => {
-    const url = `${window.location.origin}${path}`;
+    const url = absoluteUrl(path);
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({ title, url });

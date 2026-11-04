@@ -1,6 +1,6 @@
 import { listPublicClubs } from '@/lib/data/public';
 import { listPublishedEvents } from '@/lib/data/public-cache';
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, CLUB_SLUG_REGEX, UUID_REGEX } from '@/lib/constants';
 import { SITE_URL } from '@/lib/seo';
 
 /**
@@ -12,11 +12,12 @@ import { SITE_URL } from '@/lib/seo';
  * every administrative route are structurally incapable of appearing here —
  * even if someone later adds a broad `select('*')` to one of the readers.
  *
- * The two static directory URLs are always present; dynamic URLs are included
- * only when the database confirms the row is public. Failures degrade to an
- * empty list rather than a 500 (and never to a guessed URL).
+ * A successful sitemap includes the two directories and only records the
+ * database confirms are public. Failures return an error rather than caching
+ * a partial catalogue as complete.
  */
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 
 function entry(path, lastModified, changeFrequency, priority) {
@@ -28,24 +29,34 @@ function entry(path, lastModified, changeFrequency, priority) {
   };
 }
 
+// The public readers use anonymous RLS and tagged caches. Page through the
+// catalogue rather than silently dropping everything after the first 500 rows.
+async function allPages(reader, options) {
+  const items = [];
+  const size = 500;
+  for (let offset = 0; ; offset += size) {
+    const page = await reader({ ...options, limit: size, offset });
+    if (page.unavailable) throw new Error('Public sitemap catalogue unavailable');
+    items.push(...(page.items || []));
+    if ((page.items || []).length < size) return items;
+  }
+}
+
 export default async function sitemap() {
   const [clubs, events] = await Promise.all([
-    listPublicClubs({ limit: 500 }),
-    listPublishedEvents({ limit: 500, allDates: true }),
+    allPages(listPublicClubs, { order: 'name' }),
+    allPages(listPublishedEvents, { allDates: true }),
   ]);
-
   const staticEntries = [
     entry(ROUTES.clubs, null, 'daily', 0.9),
     entry('/campus/events', null, 'daily', 0.8),
   ];
-
-  const clubEntries = (clubs.items || [])
-    .filter((club) => club.slug && club.status === 'published' && club.visibility === 'public')
-    .map((club) => entry(ROUTES.club(club.slug), club.updated_at || club.created_at, 'weekly', 0.7));
-
-  const eventEntries = (events.items || [])
-    .filter((event) => event.id && event.status === 'published')
-    .map((event) => entry(ROUTES.event(event.id), event.published_at || event.created_at, 'weekly', 0.6));
-
-  return [...staticEntries, ...clubEntries, ...eventEntries];
+  const clubEntries = clubs
+    .filter((club) => CLUB_SLUG_REGEX.test(club.slug || '') && club.kind === 'club' && club.status === 'published' && club.visibility === 'public')
+    .map((club) => entry(ROUTES.club(club.slug), club.updated_at, 'weekly', 0.7));
+  const eventEntries = events
+    .filter((event) => UUID_REGEX.test(event.id || '') && event.status === 'published')
+    .map((event) => entry(ROUTES.event(event.id), event.published_at, 'weekly', 0.6));
+  // Concurrent changes during paging cannot create duplicate sitemap URLs.
+  return [...new Map([...staticEntries, ...clubEntries, ...eventEntries].map((item) => [item.url, item])).values()];
 }

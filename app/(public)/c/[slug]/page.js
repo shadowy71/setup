@@ -20,7 +20,8 @@ import {
   isPubliclyListedClub,
 } from '@/lib/data/public';
 import { ROUTES, CLUB_SLUG_REGEX } from '@/lib/constants';
-import { publicMetadata, noindexMetadata } from '@/lib/seo';
+import { clubMetadata, clubSchema, breadcrumbs, noindexMetadata } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
 import { readIntent } from '@/lib/auth/return-to';
 import { PageHeader, Badge, Card, EmptyState, LinkButton, Notice, SectionHeader, StaffDot } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
@@ -52,12 +53,7 @@ export async function generateMetadata({ params }) {
   if (!CLUB_SLUG_REGEX.test(slug)) return noindexMetadata('Club not found');
   const { item } = await getPublicClubBySlug(slug);
   if (!isPubliclyListedClub(item)) return noindexMetadata('Club');
-  return publicMetadata({
-    title: item.name,
-    description: item.description || `${item.name} — club profile on Campus+.`,
-    canonical: ROUTES.club(slug),
-    type: 'profile',
-  });
+  return clubMetadata(item);
 }
 
 /**
@@ -175,6 +171,7 @@ export default async function ClubPage({ params, searchParams }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {publiclyListed ? <><JsonLd value={clubSchema(publicClub)} /><JsonLd value={breadcrumbs([['Campus+', '/'], ['Clubs', ROUTES.clubs], [publicClub.name, ROUTES.club(publicClub.slug)]])} /></> : null}
       {/* Guests have no feed channel: the public frame deliberately carries no
           realtime provider. Only a signed-in viewer's page needs reconciling. */}
       {viewer ? <LiveFeedSync /> : null}

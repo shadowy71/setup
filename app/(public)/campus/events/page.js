@@ -18,11 +18,15 @@ import { formatDate, formatTime } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = publicMetadata({
-  title: 'Events',
-  description: 'The PCCOE campus activity calendar — official and reviewed student-organized events, dates, venues and registration links. Open to everyone.',
-  canonical: '/campus/events',
-});
+export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
+  return publicMetadata({
+    title: 'PCCOE Events & Campus Activities',
+    description: 'Discover upcoming events, workshops, competitions and campus activities at PCCOE.',
+    canonical: '/campus/events',
+    index: !params || Object.keys(params).length === 0,
+  });
+}
 
 const RSVP_LABELS = { going: 'You’re going', interested: 'Interested', not_going: 'Can’t make it', waitlist: 'Waitlisted' };
 
