@@ -34,8 +34,9 @@ describe('Home sea/depth-field removal', () => {
     expect(home).not.toContain('<canvas');
   });
 
-  it('keeps the existing static paper stage without substituting another sea', () => {
-    expect(read('app/styles/lumen.css')).toMatch(/:root \.home-stage\s*\{\s*background: var\(--color-paper\);/);
+  it('keeps the paper stage without substituting another animated sea', () => {
+    expect(read('app/styles/lumen.css')).toMatch(/:root \.home-stage\s*\{\s*background-color: var\(--color-paper\);/);
+    expect(read('app/styles/lumen.css')).toContain('var(--ambient-accent)');
     const islands = read('app/styles/islands.css');
     expect(islands).toContain('.home-stage {');
     expect(islands).not.toMatch(/canvas|ridge|horizon|depth-drift/i);

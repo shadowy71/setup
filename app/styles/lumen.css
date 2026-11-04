@@ -40,14 +40,26 @@
   backdrop-filter: none;
 }
 
+/* Paper stays opaque; only the falloff adds depth to reading surfaces. */
+:root .card,
+:root .card-elevated,
+:root .card-glass,
+:root .home-composer,
+:root .rail-island {
+  box-shadow: var(--depth-1);
+}
+
 :root .glass-floating,
-:root .glass-strong,
+:root .glass-strong {
+  box-shadow: var(--depth-2);
+}
+
 :root .dialog,
 :root .toast,
 :root .command-palette,
 :root .navigation-tour-dialog,
 :root .navigation-tour-offer {
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--depth-3);
 }
 
 :root .tilt__card,
@@ -102,9 +114,11 @@
 :root .feature-tile,
 :root .club-card,
 :root .gig-card {
-  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out);
 }
 
+@media (hover: hover) and (pointer: fine) {
   :root a.card:hover,
   :root button.card:hover,
   :root .card-interactive:hover,
@@ -112,10 +126,11 @@
   :root .rail-island:hover,
   :root .club-card:hover,
   :root .gig-card:hover {
-  border-color: var(--color-rule-2);
-  background-color: var(--color-paper-3);
-  box-shadow: none;
-  transform: none;
+    border-color: var(--color-rule-2);
+    background-color: var(--color-paper-3);
+    box-shadow: var(--depth-2);
+    transform: translateY(-2px);
+  }
 }
 
 :root .card-feature,
@@ -286,7 +301,7 @@
   border: 0;
   background: var(--color-accent);
   color: var(--color-accent-ink);
-  box-shadow: none;
+  box-shadow: var(--depth-1);
   animation: none;
 }
 
@@ -313,8 +328,8 @@
 :root .btn-sheen:hover:not(:disabled):not([aria-disabled='true']) {
   background: color-mix(in oklab, var(--color-accent) 88%, var(--color-ink));
   color: var(--color-accent-ink);
-  box-shadow: none;
-  transform: none;
+  box-shadow: var(--depth-2);
+  transform: translateY(-1px);
 }
 
 :root .btn.cp-btn:hover .cp-btn-face,
@@ -364,8 +379,8 @@
 :root .btn-danger:hover:not(:disabled):not([aria-disabled='true']) {
   background: var(--color-paper-2);
   color: var(--color-ink);
-  box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2);
-  transform: none;
+  box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule-2), var(--depth-1);
+  transform: translateY(-1px);
 }
 
 :root .btn-delete:hover:not(:disabled):not([aria-disabled='true']),
@@ -429,9 +444,10 @@
   font-size: var(--text-md);
   box-shadow: none;
   transition:
-    border-color var(--dur-micro) var(--ease-out),
-    background-color var(--dur-micro) var(--ease-out),
-    color var(--dur-micro) var(--ease-out);
+    border-color var(--dur-short) var(--ease-out),
+    background-color var(--dur-short) var(--ease-out),
+    color var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -461,7 +477,7 @@
   border-color: var(--color-focus);
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
-  box-shadow: none;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-focus) 12%, transparent);
 }
 
 :root input:disabled,
@@ -478,6 +494,16 @@
 :root input[type='radio'],
 :root .check-input {
   accent-color: var(--color-accent);
+}
+
+/* A single quiet inset and falloff make the header search feel like a field,
+   without reintroducing a second palette or changing its hit target. */
+:root .search-pill__shell {
+  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--color-ink) 8%, transparent), var(--depth-1);
+}
+
+:root .search-pill__shell:focus-within {
+  box-shadow: var(--depth-1), 0 0 0 4px color-mix(in oklab, var(--color-focus) 12%, transparent);
 }
 
 :root .search-pill__shell::before,
@@ -501,6 +527,16 @@
   color: var(--color-muted);
   box-shadow: none;
   transform: none;
+  transition: color var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out);
+}
+
+:root .search-pill__shell:hover .search-pill__icon,
+:root .search-pill__shell:focus-within .search-pill__icon {
+  color: var(--color-accent-text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :root .search-pill__shell:hover .search-pill__icon { transform: scale(1.06); }
 }
 
 :root .switch-track {
@@ -724,7 +760,7 @@
     border-right: var(--rule-hair) solid var(--color-rule);
     border-radius: 0;
     background: var(--color-paper);
-    box-shadow: none;
+    box-shadow: var(--depth-2);
   }
 
   :root .shell-root {
@@ -737,6 +773,7 @@
   border-bottom: var(--rule-hair) solid var(--color-rule);
   background: var(--color-paper);
   background-image: none;
+  box-shadow: 0 10px 28px -20px var(--color-ink-2);
 }
 
 :root .shell-header__bar {
@@ -748,11 +785,28 @@
   backdrop-filter: none;
 }
 
+/* Header actions keep their original footprint and fill. The account trigger
+   is an existing button rather than a new wrapper or interaction layer. */
+:root .shell-header button[aria-label='Account menu'] {
+  box-shadow: var(--depth-1);
+  transition: border-color var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+}
+
+:root .shell-header button[aria-label='Account menu']:hover,
+:root .shell-header button[aria-label='Account menu']:focus-visible {
+  box-shadow: var(--depth-2);
+}
+
+:root .shell-header button[aria-label='Account menu']:active {
+  transform: scale(0.98);
+}
+
 :root .side-panel__account {
   border: 1px solid var(--color-rule);
   border-radius: var(--radius-card);
   background: var(--color-paper-2);
-  box-shadow: none;
+  box-shadow: var(--depth-1);
 }
 
 :root .brand,
@@ -782,7 +836,8 @@
   letter-spacing: 0;
   text-transform: lowercase;
   box-shadow: none;
-  transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+  transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out),
+    box-shadow var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out);
 }
 
 :root .nav-item {
@@ -792,14 +847,16 @@
 }
 
 :root .nav-item:hover,
-:root .nav-item:active,
 :root .sheet-destination:hover,
 :root .tab-item:hover {
   background: var(--color-paper-3);
   color: var(--color-ink);
-  box-shadow: none;
-  transform: none;
+  box-shadow: var(--depth-1);
   text-decoration: none;
+}
+
+:root .nav-item:active {
+  transform: scale(0.985);
 }
 
 :root .nav-item[aria-current='page'],
@@ -807,7 +864,7 @@
   background: var(--color-paper-3);
   color: var(--color-ink);
   font-weight: 500;
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px var(--color-rule), var(--depth-1);
   transform: none;
 }
 
@@ -822,7 +879,7 @@
   height: 20px;
   border-radius: var(--radius-pill);
   background: var(--color-accent);
-  box-shadow: none;
+  box-shadow: 0 0 9px -3px var(--color-accent);
   animation: lumen-nav-indicator var(--dur-short) var(--ease-out) both;
 }
 
@@ -945,6 +1002,16 @@
   color: var(--color-ink);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+/* Blur only floating chrome; content cards stay fully opaque and readable. */
+@media (min-width: 768px) {
+  :root .cp-menu,
+  :root .command-palette {
+    background: color-mix(in oklab, var(--color-paper-3) 96%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
 }
 
 :root .cp-menu-item,
@@ -1105,7 +1172,12 @@
    Home — kept materials; route composition and typography live in home.css
    -------------------------------------------------------------------------- */
 :root .home-stage {
-  background: var(--color-paper);
+  background-color: var(--color-paper);
+  /* Two stationary, low-alpha washes. Neither layer alters the paper colour
+     or creates a continuously repainted full-page animation. */
+  background-image:
+    radial-gradient(ellipse 55% 22rem at 22% 5%, var(--ambient-accent), transparent 78%),
+    radial-gradient(ellipse 45% 19rem at 90% 36rem, var(--ambient-warm), transparent 80%);
 }
 
 :root .home-pulse {
@@ -1207,15 +1279,19 @@
   border-radius: var(--radius-card);
   background: var(--color-paper-2);
   color: var(--color-ink);
-  box-shadow: none;
+  box-shadow: var(--depth-1);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+  transition: background-color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out),
+    transform var(--dur-short) var(--ease-out);
 }
 
 :root .feature-tile__icon {
   background: transparent;
   color: var(--color-accent-text);
   box-shadow: none;
+  transition: box-shadow var(--dur-short) var(--ease-out);
 }
 
 :root .feature-tile__title {
@@ -1230,7 +1306,11 @@
   :root .feature-tile:hover {
     border-color: var(--tile-accent);
     background: var(--color-paper-3);
+    box-shadow: var(--depth-2);
     transform: translateY(-2px);
+  }
+  :root .feature-tile:hover .feature-tile__icon {
+    box-shadow: 0 0 14px -6px var(--tile-accent);
   }
 }
 
