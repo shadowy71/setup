@@ -1,3 +1,4 @@
+import { normalizeBranch } from '@/lib/branches';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
@@ -99,7 +100,7 @@ export default async function CommunityPage({ params }) {
           {community.is_official ? <Badge tone="accent">Official</Badge> : <Badge>Student-run</Badge>}
           {community.subject ? <Badge>{community.subject}</Badge> : null}
           {community.branch || community.year ? (
-            <Badge>{[community.branch, community.year].filter(Boolean).join(' · ')}</Badge>
+            <Badge>{[normalizeBranch(community.branch), community.year].filter(Boolean).join(' · ')}</Badge>
           ) : null}
           <Badge>{community.visibility === 'campus' ? 'PCCOE only' : community.visibility}</Badge>
           {community.join_policy !== 'open' ? <Badge tone="warning">Approval needed</Badge> : null}

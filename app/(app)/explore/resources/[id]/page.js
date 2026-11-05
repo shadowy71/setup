@@ -1,3 +1,4 @@
+import { normalizeBranch } from '@/lib/branches';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -45,7 +46,7 @@ export default async function ResourcePage({ params }) {
       <div className="flex flex-wrap items-center gap-2">
         {resource.is_official ? <Badge tone="accent">Official</Badge> : <Badge>Community submitted</Badge>}
         {resource.type ? <Badge>{resource.type}</Badge> : null}
-        {resource.branch ? <Badge>{resource.branch}</Badge> : null}
+        {resource.branch ? <Badge>{normalizeBranch(resource.branch)}</Badge> : null}
         {resource.semester ? <Badge>{resource.semester}</Badge> : null}
         {resource.status !== 'published' ? <Badge tone="danger">{resource.status}</Badge> : null}
       </div>

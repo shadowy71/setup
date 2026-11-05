@@ -37,6 +37,7 @@ import { listSavedBatches, loadBatch } from '@/lib/timetable/offline-store';
 import { getCampusTime } from '@/lib/timetable/clock';
 import { resolveAutoDay } from '@/lib/timetable/auto-day';
 import { ROUTES } from '@/lib/constants';
+import { normalizeBranch } from '@/lib/branches';
 
 /** `/timetable/o` → 'O'. Anything else (including this page's own address) → null. */
 export function divisionFromPathname(pathname) {
@@ -58,7 +59,7 @@ function SavedBatchList({ batches, active }) {
               aria-current={batch.division === active ? 'page' : undefined}
             >
               <span className="tt-shell__chip-letter">{batch.division}</span>
-              {batch.label}
+              {normalizeBranch(batch.label)}
               <span className="tt-shell__chip-age">{formatSavedAgo(batch.savedAt, new Date())}</span>
             </a>
           </li>
@@ -202,7 +203,7 @@ export default function TimetableOfflineShell() {
 
         <TimetableLive
           division={snapshot.division}
-          label={snapshot.label}
+          label={normalizeBranch(snapshot.label)}
           friendly={snapshot.friendly}
           days={snapshot.days}
           subjects={snapshot.subjects}

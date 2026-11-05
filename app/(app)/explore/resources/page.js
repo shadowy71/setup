@@ -1,3 +1,4 @@
+import { normalizeBranch } from '@/lib/branches';
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -92,7 +93,7 @@ export default async function ResourcesPage({ searchParams }) {
   const current = {
     q: typeof params?.q === 'string' ? params.q.slice(0, 80) : '',
     subject: typeof params?.subject === 'string' ? params.subject.slice(0, 120) : '',
-    branch: BRANCHES.includes(params?.branch) ? params.branch : '',
+    branch: BRANCHES.includes(normalizeBranch(params?.branch)) ? normalizeBranch(params.branch) : '',
     year: YEARS.includes(params?.year) ? params.year : '',
     semester: SEMESTERS.includes(params?.semester) ? params.semester : '',
     type: RESOURCE_TYPES.some((type) => type.value === params?.type) ? params.type : '',
@@ -170,7 +171,7 @@ export default async function ResourcesPage({ searchParams }) {
             community={!resource.is_official}
             badges={[
               ...(resource.type ? [{ label: typeLabel(resource.type) }] : []),
-              ...(resource.branch ? [{ label: resource.branch }] : []),
+              ...(resource.branch ? [{ label: normalizeBranch(resource.branch) }] : []),
               ...(resource.semester ? [{ label: `Sem ${resource.semester}` }] : []),
             ]}
             meta={[resource.subject, `Published ${formatDate(resource.published_at || resource.created_at)}`]}

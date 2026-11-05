@@ -1,3 +1,4 @@
+import { normalizeBranch } from '@/lib/branches';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -74,7 +75,7 @@ export default async function StudyPostPage({ params }) {
         <p className="user-text mt-3 whitespace-pre-wrap text-[0.9375rem] leading-relaxed"><LinkifiedText text={post.description} mentions /></p>
         <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-2xs text-muted">
           <div className="flex gap-1"><dt>Subject</dt><dd className="text-ink">{post.subject}</dd></div>
-          {post.branch ? <div className="flex gap-1"><dt>Branch</dt><dd>{post.branch}</dd></div> : null}
+          {post.branch ? <div className="flex gap-1"><dt>Branch</dt><dd>{normalizeBranch(post.branch)}</dd></div> : null}
           {post.year ? <div className="flex gap-1"><dt>Year</dt><dd>{post.year}</dd></div> : null}
           {post.academic_context ? <div className="flex gap-1"><dt>Context</dt><dd>{post.academic_context}</dd></div> : null}
           {post.expires_on ? <div className="flex gap-1"><dt>Open till</dt><dd>{formatDate(post.expires_on)}</dd></div> : null}
