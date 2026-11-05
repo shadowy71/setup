@@ -11,6 +11,7 @@ import '@/app/styles/home.css';
 // tiny pre-paint storage check belongs in the shared shell or on public routes.
 import '@/app/styles/guide-strip.css';
 import '@/app/styles/lumen.css';
+import '@/app/styles/aurora.css';
 
 export default function HomeLayout({ children }) {
   preload('/fonts/Syne.ttf', {

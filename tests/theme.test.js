@@ -54,11 +54,11 @@ describe('two-theme appearance architecture', () => {
   it('defines the exact requested light and dark foundations', () => {
     expect(DEFAULT_THEME).toBe('dark');
     expect(THEME_PALETTES).toEqual({
-      light: { background: '#E1D9D1', section: '#F1EBE5', accent: '#8DBCE3', text: '#292725' },
-      dark: { background: '#191D21', section: '#252B30', accent: '#91BFE5', text: '#F0EEE9' },
+      light: { background: '#E9E3D9', section: '#F7F3EC', accent: '#8DBCE3', text: '#292725' },
+      dark: { background: '#14181E', section: '#1D232B', accent: '#92C3EA', text: '#F2F1EC' },
     });
     const tokens = read('app/tokens.css');
-    for (const value of ['#E1D9D1', '#F1EBE5', '#8DBCE3', '#292725', '#191D21', '#252B30', '#91BFE5', '#F0EEE9']) {
+    for (const value of ['#E9E3D9', '#F7F3EC', '#8DBCE3', '#292725', '#14181E', '#1D232B', '#92C3EA', '#F2F1EC']) {
       expect(tokens).toContain(value);
     }
     expect(tokens).toContain(":root[data-theme='dark']");
@@ -71,7 +71,7 @@ describe('two-theme appearance architecture', () => {
   it('renders dark first and restores an explicit choice before paint', () => {
     const layout = read('app/layout.js');
     expect(layout).toContain('<html lang="en" data-theme="dark" suppressHydrationWarning>');
-    expect(layout).toContain('<meta name="theme-color" content="#191D21" suppressHydrationWarning />');
+    expect(layout).toContain('<meta name="theme-color" content="#14181E" suppressHydrationWarning />');
     expect(layout).toContain('THEME_PREHYDRATION_SCRIPT');
     expect(layout).toContain('<ThemeChrome />');
     expect(read('components/layout/ThemeChrome.js')).toContain('syncThemeChrome');
@@ -114,7 +114,7 @@ describe('two-theme appearance architecture', () => {
 
   it('leaves React-owned browser chrome for post-hydration synchronization', () => {
     const root = fakeRoot();
-    const meta = { content: '#191D21', setAttribute(name, value) { this[name] = value; } };
+    const meta = { content: '#14181E', setAttribute(name, value) { this[name] = value; } };
     globalThis.window = { localStorage: memoryStorage({ [THEME_STORAGE_KEY]: 'light' }) };
     globalThis.document = {
       documentElement: root,
@@ -123,9 +123,9 @@ describe('two-theme appearance architecture', () => {
     };
     new Function(THEME_PREHYDRATION_SCRIPT)();
     expect(root.getAttribute('data-theme')).toBe('light');
-    expect(meta.content).toBe('#191D21');
+    expect(meta.content).toBe('#14181E');
     syncThemeChrome(root, 'light');
-    expect(meta.content).toBe('#E1D9D1');
+    expect(meta.content).toBe('#E9E3D9');
   });
 
   it('updates the root and browser chrome without a reload', () => {
@@ -134,10 +134,10 @@ describe('two-theme appearance architecture', () => {
     globalThis.document = { querySelector: () => meta };
     expect(applyTheme(root, 'dark')).toBe('dark');
     expect(root.getAttribute('data-theme')).toBe('dark');
-    expect(meta.content).toBe('#191D21');
+    expect(meta.content).toBe('#14181E');
     expect(applyTheme(root, 'invalid')).toBe('dark');
     expect(root.getAttribute('data-theme')).toBe('dark');
-    expect(meta.content).toBe('#191D21');
+    expect(meta.content).toBe('#14181E');
   });
 
   it('synchronizes every nested browser-chrome meta tag', () => {
@@ -148,12 +148,12 @@ describe('two-theme appearance architecture', () => {
       querySelector: () => first,
     };
     applyTheme(fakeRoot(), 'light');
-    expect(first.content).toBe('#E1D9D1');
-    expect(second.content).toBe('#E1D9D1');
+    expect(first.content).toBe('#E9E3D9');
+    expect(second.content).toBe('#E9E3D9');
 
     syncThemeChrome(fakeRoot(), 'dark');
-    expect(first.content).toBe('#191D21');
-    expect(second.content).toBe('#191D21');
+    expect(first.content).toBe('#14181E');
+    expect(second.content).toBe('#14181E');
   });
 
   it('keeps timetable install metadata without a second live browser-chrome value', () => {

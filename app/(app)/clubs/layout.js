@@ -7,6 +7,7 @@
  */
 import '@/app/styles/sections.css';
 import '@/app/styles/lumen.css';
+import '@/app/styles/aurora.css';
 
 export default function ClubsLayout({ children }) {
   return children;
