@@ -9,6 +9,7 @@ import { PLATFORM } from '@/lib/constants';
 import { shouldUseVercelTelemetry } from '@/lib/vercel-telemetry';
 import { THEME_PREHYDRATION_SCRIPT } from '@/lib/theme';
 import { SITE_URL } from '@/lib/seo';
+import { HOME_INSTALL_CAPTURE_SCRIPT } from '@/lib/install/home-install';
 
 /* Hallmark Lumen's exact faces, self-hosted for reproducible production and
    offline rendering. The variables override the generated token fallbacks on
@@ -88,6 +89,7 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="theme-color" content="#191D21" suppressHydrationWarning />
         <script id="campusplus-theme">{THEME_PREHYDRATION_SCRIPT}</script>
+        <script id="campusplus-install-capture">{HOME_INSTALL_CAPTURE_SCRIPT}</script>
       </head>
       <body className={`${bodyFont.variable} ${displayFont.variable} ${microFont.variable} min-h-dvh bg-canvas text-ink antialiased`}>
         <ThemeChrome />

@@ -7,6 +7,7 @@ import { HOME_FEED_PAGE_SIZE, HOME_FEED_RECONCILE_LIMIT, ROUTES } from '@/lib/co
 import { Button, CascadeLoader, EmptyState, Notice, WordLoader } from '@/components/ui';
 import { PostComposer } from '@/components/posts/PostComposer';
 import { IslandMotion } from '@/components/home/IslandMotion';
+import { HomeInstallCard } from '@/components/install/HomeInstallCard';
 import { HomePulse, HomeZone } from '@/components/home/HomePulse';
 import { StreamItem, StreamSlot } from '@/components/home/StreamItem';
 import { HomeRail } from '@/components/home/HomeRail';
@@ -540,6 +541,7 @@ export function HomeFeedClient({
 
   return (
     <>
+      <HomeInstallCard />
       <HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>
 
       <IslandMotion>
