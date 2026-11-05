@@ -108,16 +108,20 @@ describe('placement: the install action belongs to the timetable and nowhere els
     expect(division).toMatch(/<TimetableOfflineProvider/);
   });
 
-  it('owns the install listeners alone, so no other feature can pop a prompt', () => {
+  it('limits install listeners to the separate timetable and Home flows', () => {
     // A dev tool may *observe* the event (the offline check does, passively);
-    // nothing in the shipped app may listen for it except this feature.
+    // Only these two independently gated features capture it.
     const needle = ['beforeinstall', 'prompt'].join('');
     const listeners = files('.', (file) => {
       const name = relative(file);
       if (name.startsWith('tests/') || name.startsWith('scripts/')) return false;
       return fs.readFileSync(file, 'utf8').includes(needle);
     }).map(relative);
-    expect(listeners).toEqual(['lib/timetable/offline-install.js']);
+    expect(listeners).toEqual(['lib/install/home-install.js', 'lib/timetable/offline-install.js']);
+    const home = read('lib/install/home-install.js');
+    expect(home).toContain("location.pathname.startsWith('/timetable')");
+    expect(home).toContain("'/manifest.webmanifest'");
+    expect(home).toContain('e.stopImmediatePropagation()');
   });
 
   it('renders exactly one service worker registration call in the app', () => {
