@@ -1,3 +1,4 @@
+import { normalizeBranch } from '@/lib/branches';
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
@@ -33,7 +34,7 @@ describe('embedded master timetable data', () => {
   it('keeps the source branch label for every division-day', () => {
     for (const day of DAYS) {
       for (const division of DIVISIONS) {
-        expect(SOURCE.days[day][division].branch, `${day} ${division}`).toBe(DIVISION_PROGRAMMES[division].label);
+        expect(normalizeBranch(SOURCE.days[day][division].branch), `${day} ${division}`).toBe(DIVISION_PROGRAMMES[division].label);
       }
     }
     // Source abbreviations stay distinct and unmangled.

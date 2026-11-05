@@ -1,3 +1,4 @@
+import { normalizeBranch } from '@/lib/branches';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
@@ -148,7 +149,7 @@ export default async function StudyPage({ searchParams }) {
               ]}
               meta={[
                 post.subject,
-                [post.branch, post.year].filter(Boolean).join(' · ') || null,
+                [normalizeBranch(post.branch), post.year].filter(Boolean).join(' · ') || null,
                 (post.availability || []).map(availabilityLabel).join(', ') || null,
                 creator ? `@${creator.username}` : null,
               ]}

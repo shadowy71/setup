@@ -1,3 +1,4 @@
+import { normalizeBranch } from '@/lib/branches';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { listResources } from '@/lib/data/campus';
@@ -54,7 +55,7 @@ export default async function CollectionPage({ params }) {
             official={resource.is_official}
             badges={[
               ...(resource.type ? [{ label: resource.type }] : []),
-              ...(resource.branch ? [{ label: resource.branch }] : []),
+              ...(resource.branch ? [{ label: normalizeBranch(resource.branch) }] : []),
             ]}
           />
         ))}
