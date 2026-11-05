@@ -464,7 +464,7 @@
     position: relative;
     isolation: isolate;
     overflow: clip;
-    overflow-clip-margin: 4px;
+    overflow-clip-margin: 0;
     --btn-radius: 999px;
     --sheen-layer-a: color-mix(in oklab, var(--brand-sand) 86%, var(--cp-accent-pale));
     --sheen-layer-b: var(--cp-accent-warm);

@@ -87,7 +87,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#191D21" suppressHydrationWarning />
+        <meta name="theme-color" content="#14181E" suppressHydrationWarning />
         <script id="campusplus-theme">{THEME_PREHYDRATION_SCRIPT}</script>
         <script id="campusplus-install-capture">{HOME_INSTALL_CAPTURE_SCRIPT}</script>
       </head>

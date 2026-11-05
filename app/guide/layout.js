@@ -10,6 +10,7 @@
  */
 import '@/app/styles/guide.css';
 import '@/app/styles/lumen.css';
+import '@/app/styles/aurora.css';
 
 export default function GuideLayout({ children }) {
   return children;
