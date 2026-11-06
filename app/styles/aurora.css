@@ -393,9 +393,21 @@ html {
 }
 
 /* --------------------------------------------------------------------------
-   4. The header — a floating glass sheet, not a full-bleed bar
+   4. The header — the accent material, floating above the room
    -------------------------------------------------------------------------- */
+/* The bar carries the same material as the product's primary actions: the
+   accent gradient with the lit rim and inner light used by the Create button
+   and the hero CTA (section 9, `.btn.cp-btn` / `.btn-sheen`). That fill is
+   light, so the controls inside the bar are drawn in the accent's own ink —
+   colour only, the header's size, spacing and interaction are untouched. The
+   scoped roles below keep that ink in one place. */
 :root .shell-header {
+  --header-ink: var(--color-accent-ink);
+  --header-ink-soft: color-mix(in oklab, var(--color-accent-ink) 84%, var(--color-accent));
+  --header-rim: color-mix(in oklab, var(--color-accent-ink) 22%, transparent);
+  --header-rim-strong: color-mix(in oklab, var(--color-accent-ink) 40%, transparent);
+  --header-face: color-mix(in oklab, #ffffff 26%, transparent);
+  --header-face-strong: color-mix(in oklab, #ffffff 42%, transparent);
   padding: var(--space-sm) var(--space-sm) 0;
   border-bottom: 0;
   background: transparent;
@@ -409,21 +421,72 @@ html {
   }
 }
 
+/* The gradient itself is the existing accent token — the same three stops and
+   the same 180deg flow as the primary buttons — with the button's rim, its
+   inner top light and a deeper version of its accent shadow. */
 :root .shell-header__bar {
-  border: 1px solid var(--cp-glass-border);
+  border: 1px solid color-mix(in oklab, var(--color-accent) 52%, #ffffff);
   border-radius: var(--radius-lg);
-  background-color: var(--cp-bg-glass);
-  background-image: var(--grad-chrome);
-  box-shadow: inset 0 1px 0 var(--edge-light-soft), var(--depth-2);
+  background-color: var(--color-accent);
+  background-image: var(--grad-accent);
+  color: var(--header-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 color-mix(in oklab, var(--color-accent-ink) 14%, transparent),
+    0 18px 44px -24px var(--glow-accent),
+    var(--depth-2);
   -webkit-backdrop-filter: blur(20px) saturate(1.35);
   backdrop-filter: blur(20px) saturate(1.35);
 }
 
+/* Text and icon controls on the lighter fill. */
+:root .shell-header .brand-word {
+  color: var(--header-ink);
+}
+
+:root .shell-header .brand-sub {
+  color: var(--header-ink-soft);
+}
+
+:root .shell-header .icon-btn,
+:root .shell-header .icon-btn--glass,
+:root .shell-header .icon-btn.theme-toggle {
+  color: var(--header-ink-soft);
+}
+
+:root .shell-header .icon-btn:hover:not(:disabled):not([aria-disabled='true']),
+:root .shell-header .icon-btn:focus-visible:not(:disabled):not([aria-disabled='true']),
+:root .shell-header .icon-btn--glass:hover:not(:disabled):not([aria-disabled='true']),
+:root .shell-header .icon-btn--glass:focus-visible:not(:disabled):not([aria-disabled='true']) {
+  background-color: var(--header-face-strong);
+  color: var(--header-ink);
+  box-shadow: inset 0 0 0 1px var(--header-rim);
+}
+
+:root .shell-header .shell-header__divider {
+  background-image: linear-gradient(180deg, transparent, var(--header-rim), transparent);
+}
+
+/* Keyboard focus keeps a visible ring on the lighter fill. */
+:root .shell-header :focus-visible {
+  outline-color: var(--header-ink);
+}
+
+/* The unread badge keeps its sunset fill and its dark glyph; only the ring
+   that separated it from the old dark sheet is re-cut in the bar's accent. */
+:root .shell-header .notification-badge {
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--color-accent) 92%, transparent),
+    0 0 10px -2px var(--glow-warm);
+}
+
+/* The account trigger keeps its own fill, now a lighter pane of the bar. */
 :root .shell-header button[aria-label='Account menu'] {
-  border: 1px solid var(--cp-glass-border);
-  background-color: var(--cp-bg-glass-soft);
-  background-image: linear-gradient(168deg, var(--cp-glass-reflection), transparent 55%);
-  box-shadow: inset 0 1px 0 var(--edge-light-soft), var(--depth-1);
+  border: 1px solid var(--header-rim);
+  background-color: var(--header-face);
+  background-image: linear-gradient(168deg, rgba(255, 255, 255, 0.22), transparent 55%);
+  color: var(--header-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), var(--depth-1);
   transition:
     border-color var(--dur-short) var(--ease-out),
     box-shadow var(--dur-short) var(--ease-out),
@@ -432,12 +495,73 @@ html {
 
 :root .shell-header button[aria-label='Account menu']:hover,
 :root .shell-header button[aria-label='Account menu']:focus-visible {
-  border-color: color-mix(in oklab, var(--color-accent) 34%, var(--cp-glass-border));
-  box-shadow: inset 0 1px 0 var(--edge-light), var(--shadow-lift);
+  border-color: var(--header-rim-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), var(--shadow-lift);
 }
 
 :root .shell-header button[aria-label='Account menu']:active {
   transform: scale(0.98);
+}
+
+:root .shell-header button[aria-label='Account menu'] .text-muted {
+  color: var(--header-ink-soft);
+}
+
+/* The quick-action keycap follows the trigger it sits in. */
+:root .shell-header kbd {
+  border-color: var(--header-rim);
+  background-color: var(--header-face);
+  color: var(--header-ink-soft);
+  box-shadow: none;
+}
+
+/* The search pill is a well pressed into the bar rather than a dark panel
+   dropped on top of it: the same accent family, recessed a step, with ink
+   text. Its dimensions, placeholder and behaviour are the existing ones. */
+:root .shell-header .search-pill__shell {
+  border-color: var(--header-rim);
+  background-color: color-mix(in oklab, var(--color-accent-ink) 9%, transparent);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 62%);
+  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--color-accent-ink) 12%, transparent);
+}
+
+:root .shell-header .search-pill__shell:hover {
+  border-color: var(--header-rim-strong);
+}
+
+:root .shell-header .search-pill__shell:focus-within {
+  border-color: color-mix(in oklab, var(--color-accent-ink) 34%, transparent);
+  outline: none;
+  box-shadow:
+    inset 0 1px 2px color-mix(in oklab, var(--color-accent-ink) 12%, transparent),
+    0 0 0 3px rgba(255, 255, 255, 0.5),
+    0 10px 30px -14px color-mix(in oklab, var(--color-accent-ink) 34%, transparent);
+}
+
+:root .shell-header .search-pill__input {
+  color: var(--header-ink);
+  caret-color: var(--header-ink);
+}
+
+:root .shell-header .search-pill__input::placeholder {
+  color: var(--header-ink-soft);
+}
+
+:root .shell-header .search-pill__input:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+:root .shell-header .search-pill__icon,
+:root .shell-header .search-pill__shell:hover .search-pill__icon,
+:root .shell-header .search-pill__shell:focus-within .search-pill__icon {
+  color: var(--header-ink-soft);
+  border-left-color: color-mix(in oklab, var(--color-accent-ink) 30%, transparent);
+}
+
+/* A signed-out trigger only appears if the shell renders without a user; it
+   still has to be legible on the accent fill. */
+:root .shell-header .btn-secondary {
+  color: var(--header-ink);
 }
 
 /* Icon controls: quiet glass squares that light up on approach. */
