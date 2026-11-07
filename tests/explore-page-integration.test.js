@@ -40,6 +40,13 @@ describe('existing Explore page integration', () => {
     expect(mocks.searchProps[0]).toMatchObject({ initialQuery: 'robotics', initialScope: 'events' });
     expect(html).toContain('Results for');
   });
+  it('keys search results by query and scope so a new header search resets existing results', async () => {
+    const first = await ExplorePage({ searchParams: Promise.resolve({ q: 'robotics' }) });
+    const second = await ExplorePage({ searchParams: Promise.resolve({ q: 'design' }) });
+    const firstResults = first.props.children[1];
+    const secondResults = second.props.children[1];
+    expect(firstResults.key).not.toBe(secondResults.key);
+  });
   it('does not read discovery data if the authentication gate rejects', async () => {
     mocks.requireUser.mockRejectedValue(new Error('redirect'));
     await expect(ExplorePage({ searchParams: Promise.resolve({}) })).rejects.toThrow('redirect');

@@ -14,6 +14,7 @@
  * `.shell-header` in app/styles/navigation.css.
  */
 
+import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { BrandLockup } from '@/components/brand/Brand';
@@ -46,25 +47,79 @@ function NotificationBell({ unreadNotifications = 0 }) {
 }
 
 export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = false, canModerate = false, canAdmin = false, createItems = [] }) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchId = useId();
+  const searchTriggerRef = useRef(null);
+  const searchPanelRef = useRef(null);
+
+  useEffect(() => {
+    if (!searchOpen) return undefined;
+    const dismissOnOutside = (event) => {
+      if (!searchPanelRef.current?.contains(event.target) && !searchTriggerRef.current?.contains(event.target)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', dismissOnOutside);
+    return () => document.removeEventListener('pointerdown', dismissOnOutside);
+  }, [searchOpen]);
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    // The trigger becomes visible again after React commits the closed state.
+    requestAnimationFrame(() => searchTriggerRef.current?.focus());
+  };
+
   return (
     /* Level-2 floating glass — the header is chrome, not a page surface. */
     <div className="shell-header sticky top-0 z-30 px-3 pt-3 lg:px-4 lg:pt-4">
       <GlassSurface as="header" tone="floating" className="shell-header__bar mx-auto w-full">
         {/* Mobile */}
         <div className="flex h-14 items-center gap-1.5 px-2 lg:hidden">
-          <MobileMenu
-            user={user}
-            unreadNotifications={unreadNotifications}
-            isStaff={isStaff}
-            canModerate={canModerate}
-            canAdmin={canAdmin}
-            createItems={createItems}
-          />
-          <BrandLockup size="sm" subtitle={null} wordClass="text-[0.9375rem]" />
-          <div className="ml-auto flex items-center gap-0.5">
-            <Link href={ROUTES.explore} aria-label="Search Campus+" className="icon-btn icon-btn--glass">
+          {!searchOpen ? (
+            <>
+              <MobileMenu
+                user={user}
+                unreadNotifications={unreadNotifications}
+                isStaff={isStaff}
+                canModerate={canModerate}
+                canAdmin={canAdmin}
+                createItems={createItems}
+              />
+              <BrandLockup size="sm" subtitle={null} wordClass="text-[0.9375rem]" />
+            </>
+          ) : (
+            <div
+              id={searchId}
+              ref={searchPanelRef}
+              className="shell-header__search-inline"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  setSearchOpen(false);
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.stopPropagation();
+                  closeSearch();
+                }
+              }}
+            >
+              <ShellSearch autoFocus label="Search Campus+, enter at least 2 characters" onNavigate={() => setSearchOpen(false)} />
+            </div>
+          )}
+          <div className="ml-auto flex shrink-0 items-center gap-0.5">
+            <button
+              ref={searchTriggerRef}
+              type="button"
+              aria-label="Search Campus+"
+              aria-expanded={searchOpen}
+              aria-controls={searchOpen ? searchId : undefined}
+              onClick={() => setSearchOpen(true)}
+              style={searchOpen ? { display: 'none' } : undefined}
+              className="icon-btn icon-btn--glass"
+            >
               <Icon name="search" size={19} />
-            </Link>
+            </button>
             <NotificationBell unreadNotifications={unreadNotifications} />
             <ThemeToggle />
             <AccountMenu user={user} isStaff={isStaff} />
@@ -74,11 +129,13 @@ export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = fa
         {/* Desktop */}
         <div className="hidden h-16 items-center gap-3 px-4 lg:flex">
           <ShellSearch />
-          <CommandPaletteTrigger />
           <div className="ml-auto flex items-center gap-2">
-            <NotificationBell unreadNotifications={unreadNotifications} />
+            <div className="flex items-center gap-2" role="group" aria-label="Quick actions">
+              <CommandPaletteTrigger kbd={false} />
+              <NotificationBell unreadNotifications={unreadNotifications} />
+              <ThemeToggle />
+            </div>
             <span className="shell-header__divider" aria-hidden="true" />
-            <ThemeToggle />
             <AccountMenu user={user} isStaff={isStaff} />
           </div>
         </div>

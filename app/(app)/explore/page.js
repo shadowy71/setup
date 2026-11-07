@@ -68,7 +68,7 @@ export default async function ExplorePage({ searchParams }) {
     return (
       <div className="flex flex-col gap-4">
         <PageHeader title="Explore" description={`Results for “${query}”`} />
-        <SearchResults initialQuery={query} initialScope={scope} />
+        <SearchResults key={JSON.stringify([query, scope])} initialQuery={query} initialScope={scope} />
       </div>
     );
   }
