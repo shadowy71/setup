@@ -36,6 +36,7 @@ export function SearchField({
   value = null,
   onChange = null,
   onSubmit = null,
+  onNavigate = null,
 }) {
   const router = useRouter();
   const [internal, setInternal] = useState(initialQuery);
@@ -72,7 +73,10 @@ export function SearchField({
       if (query.length >= 2) onSubmit?.(query);
       return;
     }
-    if (query.length >= 2) router.push(`/explore?q=${encodeURIComponent(query)}`);
+    if (query.length >= 2) {
+      router.push(`/explore?q=${encodeURIComponent(query)}`);
+      onNavigate?.(query);
+    }
   };
 
   return (
