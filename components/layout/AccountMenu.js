@@ -38,7 +38,7 @@ export function AccountMenu({ user = null, isStaff = false }) {
           aria-label="Account menu"
           className="flex items-center gap-2 rounded-full border border-line bg-surface p-0.5 pr-2 text-[0.8125rem] font-medium text-ink shadow-[var(--shadow-inset-top)] transition-colors hover:border-line-strong"
         >
-          <IdentityMark name={name} size={26} square={false} />
+          <IdentityMark name={name} size={30} square={false} />
           <span className="hidden max-w-24 truncate sm:block">{name}</span>
           <Icon name="chevronDown" size={14} className="text-muted" />
         </button>

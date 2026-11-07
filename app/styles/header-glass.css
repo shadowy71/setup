@@ -1,0 +1,186 @@
+/* Header-only material refinements. The solid tinted backing keeps chrome
+   legible over scrolling content; the translucent layers provide the glass. */
+:root .shell-header {
+  --header-ink: var(--color-ink);
+  --header-ink-soft: var(--color-ink-2);
+  --header-rim: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  --header-rim-strong: color-mix(in oklab, var(--color-ink) 28%, transparent);
+  --header-face: color-mix(in oklab, var(--color-ink) 4%, transparent);
+  --header-face-strong: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  --header-search: color-mix(in oklab, var(--color-paper-3) 70%, transparent);
+  --header-search-rim: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  background: radial-gradient(circle at center, rgba(120, 180, 255, 0.08), transparent 70%);
+}
+
+:root .shell-header__bar {
+  border: 1px solid var(--header-rim);
+  background-color: color-mix(in oklab, var(--color-paper-2) 96%, transparent);
+  background-image: linear-gradient(180deg, rgba(180, 220, 255, 0.14) 0%, rgba(120, 180, 255, 0.08) 50%, rgba(50, 90, 150, 0.05) 100%);
+  color: var(--header-ink);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+
+:root[data-theme='dark'] .shell-header {
+  --header-rim: rgba(255, 255, 255, 0.12);
+  --header-rim-strong: rgba(255, 255, 255, 0.24);
+  --header-face: rgba(255, 255, 255, 0.04);
+  --header-face-strong: rgba(255, 255, 255, 0.08);
+  --header-search: rgba(0, 0, 0, 0.16);
+  --header-search-rim: rgba(255, 255, 255, 0.08);
+}
+
+:root .shell-header .search-pill__shell {
+  border: 1px solid var(--header-search-rim);
+  border-radius: 12px;
+  padding: 0 2px 0 0;
+  background: var(--header-search);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+:root .shell-header .search-pill__shell:hover {
+  border-color: var(--header-rim-strong);
+}
+
+:root .shell-header .search-pill__shell:focus-within {
+  border-color: var(--color-focus);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+:root .shell-header .search-pill__input,
+:root .shell-header .search-pill__input:focus {
+  background: transparent;
+  color: var(--header-ink);
+}
+
+:root .shell-header .search-pill__input {
+  padding-left: 1rem;
+}
+
+:root .shell-header .search-pill__input::placeholder {
+  color: var(--header-ink-soft);
+  opacity: 1;
+}
+
+:root .shell-header .search-pill__icon,
+:root .shell-header .search-pill__shell:hover .search-pill__icon,
+:root .shell-header .search-pill__shell:focus-within .search-pill__icon {
+  border: 0;
+  color: var(--header-ink-soft);
+  background: transparent;
+  transform: none;
+}
+
+/* A quiet submit affordance stays inside the recessed search layer. */
+:root .shell-header .search-pill__icon svg {
+  width: 18px;
+  height: 18px;
+  margin-left: 0;
+}
+
+:root .shell-header .search-pill__icon:hover:not(:disabled) {
+  color: var(--header-ink);
+}
+
+:root .shell-header .shell-header__divider {
+  width: 1px;
+  height: 24px;
+  margin: 0 2px;
+  flex: none;
+}
+
+/* 44px targets keep the compact visual treatment comfortable on touch. */
+:root .shell-header .icon-btn,
+:root .shell-header .icon-btn--glass,
+:root .shell-header .icon-btn.theme-toggle {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  border: 1px solid var(--header-rim);
+  border-radius: 12px;
+  background: var(--header-face);
+  color: var(--header-ink-soft);
+  box-shadow: none;
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :root .shell-header .icon-btn:hover:not(:disabled):not([aria-disabled='true']) {
+    transform: translateY(-2px);
+    border-color: var(--header-rim-strong);
+    background: var(--header-face-strong);
+    color: var(--header-ink);
+    box-shadow: 0 6px 18px rgba(100, 170, 255, 0.12);
+  }
+}
+
+:root .shell-header button[aria-label='Account menu'] {
+  min-height: 44px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid var(--header-rim);
+  border-radius: 12px;
+  background: var(--header-face);
+  color: var(--header-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+:root .shell-header button[aria-label='Account menu'] .identity-mark {
+  box-shadow: 0 0 0 1px var(--header-rim), 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+:root .shell-header button[aria-label='Account menu']:hover,
+:root .shell-header button[aria-label='Account menu']:focus-visible {
+  border-color: var(--header-rim-strong);
+  background: var(--header-face-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+:root .shell-header .notification-badge {
+  box-shadow: 0 0 0 2px var(--color-paper-2);
+}
+
+:root .shell-header :focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Keep the existing mobile performance guard against backdrop sampling. */
+@media (pointer: coarse), (max-width: 767px) {
+  :root .shell-header__bar {
+    background-color: var(--color-paper-2);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* On very narrow phones preserve the controls and their touch targets. The
+   brand link retains its accessible name when the wordmark is hidden. */
+@media (max-width: 380px) {
+  :root .shell-header .brand-word { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root .shell-header .icon-btn,
+  :root .shell-header button[aria-label='Account menu'] { transition: none; }
+  :root .shell-header .icon-btn:hover:not(:disabled):not([aria-disabled='true']) { transform: none; }
+}
+
+/* Mobile search replaces the menu, brand and search trigger while the
+   notification, theme and account controls remain in place. */
+:root .shell-header__search-inline {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0%;
+  min-width: 0;
+  gap: 8px;
+}
+
+:root .shell-header__search-inline .search-pill {
+  min-width: 0;
+  flex: 1 1 0%;
+  max-width: none;
+}

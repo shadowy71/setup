@@ -11,11 +11,14 @@
 import { SearchField } from '@/components/ui/SearchField';
 import { cn } from '@/lib/utils';
 
-export function ShellSearch({ className = '' }) {
+export function ShellSearch({ className = '', autoFocus = false, onNavigate = null, label = 'Search Campus+' }) {
   return (
     <SearchField
       className={cn('w-full max-w-md', className)}
       hint="Search Campus+…"
+      label={label}
+      autoFocus={autoFocus}
+      onNavigate={onNavigate}
     />
   );
 }
