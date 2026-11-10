@@ -11,8 +11,7 @@ export const metadata = {
 /**
  * The division selector — public, static, and useful before a student even
  * has an account. Every tile is a real link to that division's timetable;
- * the programme abbreviation is the source document's own label, with the
- * expanded name shown only where the source material supplies one.
+ * each tile shows its division, short programme label and academic year.
  */
 export default function TimetableIndexPage() {
   const divisions = getDivisionSummaries();
@@ -35,7 +34,7 @@ export default function TimetableIndexPage() {
 
       <nav aria-label="Divisions A to R" className="mt-8">
         <ul className="tt-tiles">
-          {divisions.map(({ division, label, friendly }) => (
+          {divisions.map(({ division, label, year }) => (
             <li key={division}>
               <Link
                 href={divisionTimetableHref(division)}
@@ -44,7 +43,7 @@ export default function TimetableIndexPage() {
               >
                 <span className="tt-tile__letter">{division}</span>
                 <span className="tt-tile__branch">{label}</span>
-                <span className="tt-tile__friendly">{friendly || 'First year'}</span>
+                <span className="tt-tile__friendly">{year}</span>
               </Link>
             </li>
           ))}
