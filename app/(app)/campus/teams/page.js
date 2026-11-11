@@ -56,6 +56,7 @@ export default async function TeamsPage() {
           return (
             <ContentCard
               key={post.id}
+              href={`/campus/teams/${post.id}`}
               title={post.project_name}
               description={post.description}
               icon="users"

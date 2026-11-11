@@ -13,6 +13,7 @@ import { PostCard } from '@/components/posts/PostCard';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { ProfileActions } from '@/components/profile/ProfileActions';
 import { formatDate } from '@/lib/utils';
+import { ProfileAchievements } from '@/components/profile/ProfileAchievements';
 
 /**
  * Public profile (spec §12).
@@ -124,6 +125,8 @@ export default async function UserProfilePage({ params }) {
           </div>
         </div>
       </Card>
+
+      <ProfileAchievements db={supabase} profileId={profile.id} owner={isSelf} moderator={can(actor, 'moderate_all')} />
 
       <section aria-label="Posts" className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold">Posts</h2>

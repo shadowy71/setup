@@ -35,12 +35,13 @@ export default async function NewRidePage() {
         resetOnSuccess={false}
         cancelHref="/campus/rides"
         fields={[
+          { name: 'ride_kind', label: 'Ride type', type: 'select', defaultValue: 'offer', options: [{ value: 'offer', label: 'Offering a ride' }, { value: 'request', label: 'Looking for a ride' }], placeholder: 'Not specified' },
           { name: 'origin', label: 'From', required: true, maxLength: 120, placeholder: 'PCCOE main gate' },
           { name: 'destination', label: 'To', required: true, maxLength: 120, placeholder: 'Pune airport' },
           { name: 'ride_date', label: 'Date', type: 'date', required: true },
           { name: 'ride_time', label: 'Time', type: 'time' },
           { name: 'seats', label: 'Seats available', type: 'number', min: 1, max: 10, step: '1' },
-          { name: 'description', label: 'Details', type: 'textarea', required: true, maxLength: 1000 },
+          { name: 'description', label: 'Details', type: 'textarea', required: true, maxLength: 800 },
         ]}
       />
       <Notice tone="neutral" icon="shield">

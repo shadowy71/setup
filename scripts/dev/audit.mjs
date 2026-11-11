@@ -107,7 +107,7 @@ async function auditRls(client) {
 
   // Internal bookkeeping tables are intentionally deny-all for clients: they are
   // reached only through SECURITY DEFINER functions.
-  const denyAllByDesign = new Set(['rate_limits', 'storage_accounts', 'storage_files']);
+  const denyAllByDesign = new Set(['rate_limits', 'storage_accounts', 'storage_files', 'event_rsvp_capacity']);
   const noPolicies = tables.filter((t) => !byTable.has(t.name) && !denyAllByDesign.has(t.name));
   const unexpectedDenyAll = tables.filter((t) => !byTable.has(t.name) && denyAllByDesign.has(t.name));
   if (noPolicies.length) {
@@ -129,6 +129,17 @@ async function auditRls(client) {
   `)).rows;
   if (ledgerAccess.length) fail('RLS', 'Storage ledger is private', ledgerAccess.map((t) => t.name).join(', '), 'Revoke client privileges and policies.');
   else pass('RLS', 'Storage ledger is private', 'No client table grants or policies');
+
+  // RSVP counters must remain private even when an event hides attendees.
+  const counterAccess = (await client.query(`
+    select c.relname as name from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and c.relname='event_rsvp_capacity'
+      and (not c.relrowsecurity or exists (select 1 from pg_policies p where p.schemaname='public' and p.tablename=c.relname)
+        or has_table_privilege('anon',c.oid,'select,insert,update,delete')
+        or has_table_privilege('authenticated',c.oid,'select,insert,update,delete'))
+  `)).rows;
+  if (counterAccess.length) fail('RLS', 'Event RSVP capacity counter is private', counterAccess.map((t) => t.name).join(', '), 'Revoke client privileges and policies.');
+  else pass('RLS', 'Event RSVP capacity counter is private', 'No client table grants or policies');
 
   // Anonymous access is NOT a blanket denial: migration 041 grants three
   // read-only projections for public club/event discovery. Every other policy

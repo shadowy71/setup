@@ -4,6 +4,7 @@ import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
 import { getLostFound } from '@/lib/data/campus';
 import { PageHeader, Notice, Badge, Card } from '@/components/ui';
+import { OwnBoardActions } from '@/components/campus/OwnBoardActions';
 import { PostActionsRow } from '@/components/campus/PostActionsRow';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { formatDate, formatTime } from '@/lib/utils';
@@ -23,7 +24,7 @@ export default async function LostFoundDetailPage({ params }) {
   const { id } = await params;
 
   const item = await getLostFound(supabase, id);
-  if (!item || item.status !== 'published') notFound();
+  if (!item || (item.status !== 'published' && item.creator_id !== user.profile.id && !can(actor, 'moderate_all'))) notFound();
 
   const isLost = item.kind === 'lost';
   const isOwner = item.creator_id === user.profile.id;
@@ -42,6 +43,7 @@ export default async function LostFoundDetailPage({ params }) {
           <span className="flex flex-wrap items-center gap-2">
             <Badge tone={isLost ? 'warning' : 'accent'}>{isLost ? 'Lost item' : 'Found item'}</Badge>
             {item.resolved_at ? <Badge tone="success">Resolved</Badge> : null}
+            {item.status !== 'published' ? <Badge tone="danger">{item.status}</Badge> : null}
           </span>
         }
       />
@@ -84,6 +86,8 @@ export default async function LostFoundDetailPage({ params }) {
           />
         </span>
       </Card>
+
+      {isOwner ? <OwnBoardActions type="lostfound" id={item.id} editHref={`/campus/lost-found/${item.id}/edit`} /> : null}
 
       {item.resolved_at ? (
         <Notice tone="success" icon="check">

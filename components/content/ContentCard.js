@@ -80,6 +80,8 @@ export function ContentCard({
   const textHasLink =
     containsLinkableUrl(displayDescription) || (typeof title === 'string' && containsLinkableUrl(title));
 
+  const titleLink = href && (textHasLink || footer);
+
   const inner = (
     <>
       {media ? <div className="block w-24 shrink-0 sm:w-32">{media}</div> : null}
@@ -88,10 +90,10 @@ export function ContentCard({
           <Icon name={icon} size={15} />
         </span>
       ) : null}
-      <span className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-2">
           <span className={skin.title}>
-            {href && textHasLink && !(typeof title === 'string' && containsLinkableUrl(title)) ? (
+            {titleLink && !(typeof title === 'string' && containsLinkableUrl(title)) ? (
               <Link href={href} className="hover:underline">
                 {title}
               </Link>
@@ -123,12 +125,12 @@ export function ContentCard({
           </span>
         ) : null}
         {footer}
-      </span>
+      </div>
       {emphasis ? <span className={skin.stamp}>{emphasis}</span> : null}
     </>
   );
 
-  if (!href || textHasLink) {
+  if (!href || textHasLink || footer) {
     return <article className={skin.root}>{inner}</article>;
   }
 

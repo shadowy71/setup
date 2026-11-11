@@ -687,6 +687,7 @@ export default async function AdminPage({ searchParams }) {
                     {row.title}
                   </Link>
                   {row.status ? <Badge tone={row.status === 'published' ? 'success' : 'warning'}>{row.status}</Badge> : null}
+                  <LinkButton href={`/campus/events/${row.id}/edit`} size="sm" variant="secondary">Edit</LinkButton>
                   <span className="text-2xs text-muted">
                     {row.starts_on} {row.start_time || ''} {row.location ? `· ${row.location}` : ''}
                   </span>

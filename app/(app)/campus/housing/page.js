@@ -6,6 +6,7 @@ import { ROUTES } from '@/lib/constants';
 import { PageHeader, EmptyState, Notice, LinkButton } from '@/components/ui';
 import { ContentCard } from '@/components/content/ContentCard';
 import { PostActionsRow } from '@/components/campus/PostActionsRow';
+import { OwnBoardActions } from '@/components/campus/OwnBoardActions';
 import { formatDate } from '@/lib/utils';
 
 export const metadata = { title: 'Housing' };
@@ -51,6 +52,7 @@ export default async function HousingPage() {
           return (
             <ContentCard
               key={post.id}
+              href={`/campus/housing/${post.id}`}
               title={post.title}
               description={post.description}
               icon="building"
@@ -62,7 +64,7 @@ export default async function HousingPage() {
               ]}
               meta={[post.area, creator ? `@${creator.username}` : null]}
               footer={
-                <span className="mt-2 flex flex-wrap items-center gap-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   <PostActionsRow
                     creatorId={post.creator_id}
                     creatorUsername={creator?.username}
@@ -72,7 +74,8 @@ export default async function HousingPage() {
                     reportType="housing_post"
                     reportRef={post.id}
                   />
-                </span>
+                  {post.creator_id === user.profile.id ? <OwnBoardActions type="housing" id={post.id} editHref={`/campus/housing/${post.id}/edit`} /> : null}
+                </div>
               }
             />
           );

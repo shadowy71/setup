@@ -32,7 +32,7 @@ export default async function NoticeboardPage({ searchParams }) {
         title="Noticeboard"
         description="Official notices from the campus. Published by staff roles only."
         back={{ href: ROUTES.campus, label: 'Campus' }}
-        action={can(actor, 'manage_notices') ? <LinkButton href="/moderator?tab=notices" size="sm">Manage notices</LinkButton> : null}
+        action={can(actor, 'manage_notices') ? <LinkButton href="/campus/noticeboard/manage" size="sm">Manage notices</LinkButton> : null}
       />
 
       <Card className="flex flex-wrap gap-1.5 p-3">

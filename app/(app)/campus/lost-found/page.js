@@ -18,8 +18,9 @@ export default async function LostFoundPage({ searchParams }) {
   const params = await searchParams;
   const kind = ['lost', 'found'].includes(String(params?.kind)) ? String(params.kind) : null;
   const showResolved = params?.resolved === '1';
+  const q = typeof params?.q === 'string' ? params.q.trim().slice(0, 120) : '';
 
-  const { items, unavailable } = await listLostFound(supabase, { kind, resolved: showResolved, limit: 30 });
+  const { items, unavailable } = await listLostFound(supabase, { kind, resolved: showResolved, q, limit: 30 });
   const canCreate = can(actor, 'create_lost_found');
 
   const creators = await (async () => {
@@ -45,6 +46,13 @@ export default async function LostFoundPage({ searchParams }) {
         <LinkButton href="/campus/lost-found?resolved=1" size="sm" variant={showResolved ? 'secondary' : 'ghost'}>Resolved</LinkButton>
       </Card>
 
+      <form action="/campus/lost-found" className="flex flex-wrap gap-2" role="search">
+        {kind ? <input type="hidden" name="kind" value={kind} /> : null}
+        {showResolved ? <input type="hidden" name="resolved" value="1" /> : null}
+        <label className="sr-only" htmlFor="lost-found-search">Search reports</label>
+        <input id="lost-found-search" name="q" defaultValue={q} maxLength={120} className="control control-input min-w-0 flex-1" placeholder="Search reports" />
+        <button type="submit" className="btn btn-secondary">Search</button>
+      </form>
       {unavailable ? <Notice tone="warning" icon="flag">Lost &amp; found could not be loaded right now.</Notice> : null}
 
       {!unavailable && !items.length ? (
