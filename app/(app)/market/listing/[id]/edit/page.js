@@ -5,6 +5,8 @@ import { getListing, listCategories } from '@/lib/data/marketplace';
 import { ROUTES, UUID_REGEX, LIMITS, MARKETPLACE_CONDITIONS } from '@/lib/constants';
 import { PageHeader, Notice } from '@/components/ui';
 import { ActionForm } from '@/components/forms/ActionForm';
+import { MarketplaceGallery } from '@/components/marketplace/MarketplaceGallery';
+import { can, toActor } from '@/lib/permissions/authorization';
 import { updateListing } from '@/lib/actions/marketplace';
 
 export const metadata = { title: 'Edit listing' };
@@ -23,7 +25,7 @@ export default async function EditListingPage({ params }) {
   const listing = await getListing(supabase, id);
   if (!listing) notFound();
 
-  if (listing.seller_id !== user.profile.id) {
+  if (listing.seller_id !== user.profile.id && !can(toActor(user), 'moderate_marketplace') && !can(toActor(user), 'moderate_all')) {
     return (
       <div className="flex flex-col gap-4">
         <PageHeader title="Edit listing" back={{ href: ROUTES.listing(id), label: 'Listing' }} />
@@ -43,6 +45,7 @@ export default async function EditListingPage({ params }) {
         description={listing.title}
         back={{ href: ROUTES.listing(id), label: 'Listing' }}
       />
+      {process.env.CAMPUS_MARKET_ATTACHMENTS_ENABLED === '1' && process.env.CAMPUS_STORAGE_V3_ENABLED === '1' ? <MarketplaceGallery listingId={listing.id} username={user.profile.username} manage /> : null}
       <ActionForm
         action={updateListing}
         hidden={{ id: listing.id }}

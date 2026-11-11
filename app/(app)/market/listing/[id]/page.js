@@ -13,6 +13,7 @@ import {
 import { ROUTES, UUID_REGEX } from '@/lib/constants';
 import { PageHeader, Badge, Notice, LinkButton, StaffDot, Card } from '@/components/ui';
 import { IdentityLine } from '@/components/identity/IdentityLine';
+import { MarketplaceGallery } from '@/components/marketplace/MarketplaceGallery';
 import { ListingActions } from '@/components/marketplace/ListingActions';
 import { ReportDialog } from '@/components/social/ReportDialog';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
@@ -62,7 +63,7 @@ export default async function ListingPage({ params }) {
         title={listing.title}
         back={{ href: ROUTES.market, label: 'Market' }}
         action={
-          isSeller ? (
+          isSeller || canModerateMarketplace ? (
             <LinkButton href={`${ROUTES.listing(listing.id)}/edit`} size="sm" variant="secondary">
               Edit listing
             </LinkButton>
@@ -70,6 +71,7 @@ export default async function ListingPage({ params }) {
         }
       />
 
+      {process.env.CAMPUS_MARKET_ATTACHMENTS_ENABLED === '1' && process.env.CAMPUS_STORAGE_V3_ENABLED === '1' ? <MarketplaceGallery listingId={listing.id} /> : null}
       <Card className="flex flex-col gap-3 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="accent">{listing.is_free ? 'Free' : formatPrice(listing.price)}</Badge>

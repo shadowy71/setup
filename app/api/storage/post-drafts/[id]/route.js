@@ -14,7 +14,8 @@ async function authorize(request, params, write = true) {
   if (!user?.profile?.id || user.needsProfileSetup) return { status: 401 };
   const { id } = await params;
   if (!UUID_REGEX.test(id || '')) return { status: 404 };
-  if (write && (process.env.CAMPUS_POST_ATTACHMENTS_ENABLED !== '1' || process.env.CAMPUS_STORAGE_V3_ENABLED !== '1')) return { status: 503 };
+  const marketplace = new URL(request.url).searchParams.get('scope') === 'marketplace';
+  if (write && ((marketplace ? process.env.CAMPUS_MARKET_ATTACHMENTS_ENABLED : process.env.CAMPUS_POST_ATTACHMENTS_ENABLED) !== '1' || process.env.CAMPUS_STORAGE_V3_ENABLED !== '1')) return { status: 503 };
   return { id, owner: user.profile.id };
 }
 export async function PUT(request, { params }) {
