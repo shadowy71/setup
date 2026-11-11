@@ -10,6 +10,7 @@ import { PageHeader, LinkButton, EmptyState, Badge, Card, IdentityMark, StaffDot
 import { PostCard } from '@/components/posts/PostCard';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { formatDate } from '@/lib/utils';
+import { ProfileAchievements } from '@/components/profile/ProfileAchievements';
 
 export const metadata = { title: 'Your profile' };
 
@@ -88,6 +89,8 @@ export default async function ProfilePage() {
         Your institutional email and account details are private. Other students only ever see your
         username, display name and what you post.
       </Notice>
+
+      <ProfileAchievements db={supabase} profileId={profile.id} owner moderator={can(actor, 'moderate_all')} />
 
       <section aria-label="Your posts" className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold">Your posts</h2>

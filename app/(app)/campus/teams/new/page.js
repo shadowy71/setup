@@ -1,3 +1,4 @@
+import { getServerClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/session';
 import { can, toActor } from '@/lib/permissions/authorization';
 import { PageHeader, Notice } from '@/components/ui';
@@ -20,6 +21,9 @@ export default async function NewTeamPage() {
     );
   }
 
+  const db = await getServerClient();
+  const { data: projects } = await db.from('projects').select('id,title').eq('creator_id', user.profile.id).eq('status', 'published').order('title').limit(100);
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -35,6 +39,7 @@ export default async function NewTeamPage() {
         resetOnSuccess={false}
         cancelHref="/campus/teams"
         fields={[
+          { name: 'project_id', label: 'Your published project (optional)', type: 'select', options: (projects || []).map((project) => ({ value: project.id, label: project.title })) },
           { name: 'project_name', label: 'Project or competition', required: true, maxLength: 140 },
           { name: 'description', label: 'What are you building?', type: 'textarea', required: true, maxLength: 2000 },
           { name: 'required_skills', label: 'Who are you looking for?', required: true, maxLength: 300, placeholder: 'One designer, one backend dev' },

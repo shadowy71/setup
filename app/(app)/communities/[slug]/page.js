@@ -88,9 +88,10 @@ export default async function CommunityPage({ params }) {
         back={{ href: ROUTES.communities, label: 'Communities' }}
         action={
           canManage ? (
-            <Link href={`/moderator?target=community&id=${community.id}`} className="text-2xs text-muted underline hover:text-ink">
-              Moderate
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              {community.kind !== 'club' ? <Link href={`/communities/${community.slug}/manage`} className="text-2xs text-muted underline hover:text-ink">Manage</Link> : null}
+              {isStaff ? <Link href={`/moderator?target=community&id=${community.id}`} className="text-2xs text-muted underline hover:text-ink">Moderate</Link> : null}
+            </div>
           ) : null
         }
       />

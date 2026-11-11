@@ -191,8 +191,9 @@ export default async function EventPage({ params, searchParams }) {
       {viewer ? (
         <Card className="flex flex-col gap-3 p-4">
           <h2 className="text-sm font-semibold">Your RSVP</h2>
-          <RsvpForm eventId={event.id} currentStatus={rsvp?.status || null} canRsvp={can(actor, 'rsvp_events')} />
+          <RsvpForm eventId={event.id} currentStatus={rsvp?.status || null} canRsvp={event.status === 'published' && can(actor, 'rsvp_events')} />
           {event.show_attendees ? <p className="text-2xs text-muted">{going} going · {interested} interested</p> : null}
+          {event.capacity ? <p className="text-2xs text-muted">Going RSVPs are limited by the listed capacity. Follow the organizer’s registration instructions as well.</p> : null}
         </Card>
       ) : (
         <GuestActionPrompt

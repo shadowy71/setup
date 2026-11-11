@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (51 files):
+-- Contents (60 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -84,9 +84,18 @@
 --   49  20261112000003_049_post_attachment_order.sql  (28 lines)
 --   50  20261112000004_050_post_attachment_drafts.sql  (170 lines)
 --   51  20261112000005_051_marketplace_attachments.sql  (146 lines)
+--   52  20261112000006_052_team_request_integrity.sql  (25 lines)
+--   53  20261112000007_053_profile_achievements.sql  (53 lines)
+--   54  20261112000008_054_ride_kinds.sql  (5 lines)
+--   55  20261112000009_055_notice_delete.sql  (17 lines)
+--   56  20261112000010_056_event_rsvp_guard.sql  (8 lines)
+--   57  20261112000011_057_team_invitations.sql  (78 lines)
+--   58  20261112000012_058_team_project_link.sql  (17 lines)
+--   59  20261112000013_059_board_staff_visibility.sql  (4 lines)
+--   60  20261112000014_060_event_rsvp_capacity.sql  (39 lines)
 
 -- ==========================================================================
--- FILE 01/51  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/60  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -207,7 +216,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/51  20261005000002_002_identity_roles.sql
+-- FILE 02/60  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -799,7 +808,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/51  20261005000003_003_blocks.sql
+-- FILE 03/60  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -946,7 +955,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/51  20261005000004_004_communities.sql
+-- FILE 04/60  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1353,7 +1362,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/51  20261005000005_005_social.sql
+-- FILE 05/60  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1976,7 +1985,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/51  20261005000006_006_moderation_core.sql
+-- FILE 06/60  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2451,7 +2460,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/51  20261005000007_007_messaging.sql
+-- FILE 07/60  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3040,7 +3049,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/51  20261005000008_008_marketplace.sql
+-- FILE 08/60  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3562,7 +3571,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/51  20261005000009_009_campus.sql
+-- FILE 09/60  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4596,7 +4605,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/51  20261005000010_010_random.sql
+-- FILE 10/60  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5248,7 +5257,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/51  20261005000011_011_platform.sql
+-- FILE 11/60  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -5988,7 +5997,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/51  20261005000012_012_auth_hooks.sql
+-- FILE 12/60  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6445,7 +6454,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/51  20261005000013_013_reference_data.sql
+-- FILE 13/60  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6719,7 +6728,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/51  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/60  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6932,7 +6941,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/51  20261005000015_015_column_privileges.sql
+-- FILE 15/60  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7160,7 +7169,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/51  20261005000016_016_staff_actions.sql
+-- FILE 16/60  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7867,7 +7876,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/51  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/60  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8065,7 +8074,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/51  20261005000018_018_function_grants.sql
+-- FILE 18/60  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8180,7 +8189,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/51  20261005000019_019_staff_visibility.sql
+-- FILE 19/60  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8256,7 +8265,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/51  20261005000020_020_chat_inbox.sql
+-- FILE 20/60  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8350,7 +8359,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/51  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/60  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8688,7 +8697,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/51  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/60  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8761,7 +8770,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/51  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/60  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8791,7 +8800,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/51  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/60  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9264,7 +9273,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/51  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/60  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9558,7 +9567,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/51  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/60  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9678,7 +9687,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/51  20261025000001_027_backup_change_capture.sql
+-- FILE 27/60  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10944,7 +10953,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/51  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/60  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11271,7 +11280,7 @@ comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
--- FILE 29/51  20261026000001_029_feed_realtime_delivery.sql
+-- FILE 29/60  20261026000001_029_feed_realtime_delivery.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11388,7 +11397,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 30/51  20261027000001_030_random_channel_authorization.sql
+-- FILE 30/60  20261027000001_030_random_channel_authorization.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11581,7 +11590,7 @@ comment on function public.can_access_random_session is
   'can_access_own_random_session(uuid) instead.';
 
 -- ==========================================================================
--- FILE 31/51  20261028000001_031_club_governance.sql
+-- FILE 31/60  20261028000001_031_club_governance.sql
 -- ==========================================================================
 
 -- Campus+ migration 031 — club governance, requests and scoped management
@@ -12634,7 +12643,7 @@ grant execute on function public.remove_community_member(uuid, uuid) to authenti
 grant execute on function public.update_club_profile(uuid, jsonb) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 32/51  20261028000002_032_club_catalogue.sql
+-- FILE 32/60  20261028000002_032_club_catalogue.sql
 -- ==========================================================================
 
 -- Campus+ migration 032 — source-backed club catalogue
@@ -12848,7 +12857,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 33/51  20261029000001_033_unread_count_lookup.sql
+-- FILE 33/60  20261029000001_033_unread_count_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12906,7 +12915,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 34/51  20261029000002_034_inbox_membership_lookup.sql
+-- FILE 34/60  20261029000002_034_inbox_membership_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12998,7 +13007,7 @@ revoke all on function public.conversation_inbox(integer) from public, anon;
 grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 35/51  20261029000003_035_feed_visibility_reconciliation.sql
+-- FILE 35/60  20261029000003_035_feed_visibility_reconciliation.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13054,7 +13063,7 @@ revoke all on function public.campus_feed_post_visibility(uuid[]) from public, a
 grant execute on function public.campus_feed_post_visibility(uuid[]) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 36/51  20261029000004_036_admin_dashboard_counts.sql
+-- FILE 36/60  20261029000004_036_admin_dashboard_counts.sql
 -- ==========================================================================
 
 -- Campus+ 036: one authorized, RLS-scoped Admin count snapshot
@@ -13118,7 +13127,7 @@ revoke all on function public.campus_admin_dashboard_counts() from anon;
 grant execute on function public.campus_admin_dashboard_counts() to authenticated;
 
 -- ==========================================================================
--- FILE 37/51  20261029000005_037_realtime_authorization_grants.sql
+-- FILE 37/60  20261029000005_037_realtime_authorization_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 037 — reassert least-privilege Realtime function grants
@@ -13154,7 +13163,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 38/51  20261101000001_038_post_pin_ordering.sql
+-- FILE 38/60  20261101000001_038_post_pin_ordering.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13472,7 +13481,7 @@ comment on index public.posts_feed_replica_identity_idx is
   'Realtime update identity: old id/pin/status only, so pin transitions are distinguishable from counter-only writes without full-row replica identity.';
 
 -- ==========================================================================
--- FILE 39/51  20261102000001_039_poll_author_may_vote.sql
+-- FILE 39/60  20261102000001_039_poll_author_may_vote.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13513,7 +13522,7 @@ comment on policy poll_votes_insert_self on public.poll_votes is
   'Any active student may vote once in an open published poll, including the poll author; duplicates remain blocked by the unique (post_id, user_id) constraint.';
 
 -- ==========================================================================
--- FILE 40/51  20261102000002_040_busiest_trending.sql
+-- FILE 40/60  20261102000002_040_busiest_trending.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13737,7 +13746,7 @@ comment on function public.trending_posts(integer, integer) is
   'Deterministic recent-engagement trending score. Formula and defaults are published in lib/constants.js#TRENDING_FORMULA; bar normalization lives in lib/social/activity-scale.js. SECURITY INVOKER so RLS still decides visibility.';
 
 -- ==========================================================================
--- FILE 41/51  20261103000001_041_public_discovery.sql
+-- FILE 41/60  20261103000001_041_public_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 041 — public discovery: clubs by slug, public events
@@ -14017,7 +14026,7 @@ end $$;
 drop table __anon_exec_before_041;
 
 -- ==========================================================================
--- FILE 42/51  20261105000001_042_ai_ml_branch.sql
+-- FILE 42/60  20261105000001_042_ai_ml_branch.sql
 -- ==========================================================================
 
 -- Rename only complete, structured branch values. Identifiers, divisions,
@@ -14061,7 +14070,7 @@ where regexp_replace(lower(branch), '[^a-z0-9]', '', 'g') in (
 ) and branch <> 'AI & ML';
 
 -- ==========================================================================
--- FILE 43/51  20261110000001_043_profile_storage_foundation.sql
+-- FILE 43/60  20261110000001_043_profile_storage_foundation.sql
 -- ==========================================================================
 
 -- Storage ledger foundation only. No file endpoints are enabled by this migration.
@@ -14197,7 +14206,7 @@ revoke all on function public.storage_account_usage(uuid) from public, anon;
 grant execute on function public.storage_account_usage(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 44/51  20261110000002_044_storage_admin_summary.sql
+-- FILE 44/60  20261110000002_044_storage_admin_summary.sql
 -- ==========================================================================
 
 -- Read-only operational view of Campus+ ledger rows, never the Drive account.
@@ -14228,7 +14237,7 @@ revoke all on function public.admin_storage_summary() from public, anon;
 grant execute on function public.admin_storage_summary() to authenticated;
 
 -- ==========================================================================
--- FILE 45/51  20261110000003_045_backup_capture_late_tables.sql
+-- FILE 45/60  20261110000003_045_backup_capture_late_tables.sql
 -- ==========================================================================
 
 -- Migration 027 installed capture before the club-request and storage tables
@@ -14237,7 +14246,7 @@ grant execute on function public.admin_storage_summary() to authenticated;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 46/51  20261110000004_046_profile_photo_lifecycle.sql
+-- FILE 46/60  20261110000004_046_profile_photo_lifecycle.sql
 -- ==========================================================================
 
 -- Profile photos use the existing ledger as the association. There is at most
@@ -14330,7 +14339,7 @@ revoke all on function public.storage_complete_profile_delete(uuid,uuid) from pu
 grant execute on function public.storage_complete_profile_delete(uuid,uuid) to service_role;
 
 -- ==========================================================================
--- FILE 47/51  20261112000001_047_profile_storage_v3.sql
+-- FILE 47/60  20261112000001_047_profile_storage_v3.sql
 -- ==========================================================================
 
 -- V3 keys are immutable and separate from legacy V2 keys. Existing rows stay V2.
@@ -14395,7 +14404,7 @@ revoke all on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,
 grant execute on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,text,bigint,text) to service_role;
 
 -- ==========================================================================
--- FILE 48/51  20261112000002_048_post_attachments.sql
+-- FILE 48/60  20261112000002_048_post_attachments.sql
 -- ==========================================================================
 
 -- The existing storage ledger remains the single quota and operation ledger.
@@ -14519,7 +14528,7 @@ revoke all on function public.can_view_post_attachment(uuid) from public,anon;
 grant execute on function public.can_view_post_attachment(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 49/51  20261112000003_049_post_attachment_order.sql
+-- FILE 49/60  20261112000003_049_post_attachment_order.sql
 -- ==========================================================================
 
 -- Reorder only an exact snapshot of this owner's current ready attachments.
@@ -14551,7 +14560,7 @@ revoke all on function public.storage_reorder_post_attachments(uuid,uuid,uuid[])
 grant execute on function public.storage_reorder_post_attachments(uuid,uuid,uuid[]) to service_role;
 
 -- ==========================================================================
--- FILE 50/51  20261112000004_050_post_attachment_drafts.sql
+-- FILE 50/60  20261112000004_050_post_attachment_drafts.sql
 -- ==========================================================================
 
 -- Private, expiring upload drafts. Nothing is visible as a post until the
@@ -14725,7 +14734,7 @@ grant execute on function public.publish_post_with_draft(uuid,uuid,public.post_k
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 51/51  20261112000005_051_marketplace_attachments.sql
+-- FILE 51/60  20261112000005_051_marketplace_attachments.sql
 -- ==========================================================================
 
 insert into public.feature_flags(key,label,description,group_name,enabled) values ('marketplace_images','Marketplace images','Allow entitled users to attach images to marketplace listings.','marketplace',false) on conflict (key) do nothing;
@@ -14872,6 +14881,288 @@ $$;
 revoke all on function public.can_view_marketplace_images(uuid) from public,anon;
 grant execute on function public.can_view_marketplace_images(uuid) to authenticated;
 
+select public.backup_sync_triggers();
+
+-- ==========================================================================
+-- FILE 52/60  20261112000006_052_team_request_integrity.sql
+-- ==========================================================================
+
+-- Team requests are private to the applicant and the team-post owner. Prevent
+-- direct API clients from submitting an already accepted request or forging a
+-- decision timestamp. Column grants and existing owner-only RLS still apply.
+create or replace function public.guard_team_post_request()
+returns trigger language plpgsql set search_path = public, pg_temp as $$
+begin
+  if not public.feature_enabled('team_finder') then
+    raise exception 'Team finder disabled' using errcode = '42501';
+  end if;
+  if tg_op = 'INSERT' then
+    if new.status <> 'pending' or new.decided_at is not null then
+      raise exception 'New requests must be pending' using errcode = '42501';
+    end if;
+  else
+    if old.status <> 'pending' or new.status not in ('accepted', 'declined') then
+      raise exception 'Only pending requests may be accepted or declined' using errcode = '42501';
+    end if;
+    new.decided_at := now();
+  end if;
+  return new;
+end $$;
+revoke all on function public.guard_team_post_request() from public, anon, authenticated;
+create trigger guard_team_post_request before insert or update on public.team_post_requests
+for each row execute function public.guard_team_post_request();
+
+-- ==========================================================================
+-- FILE 53/60  20261112000007_053_profile_achievements.sql
+-- ==========================================================================
+
+-- Student-submitted profile achievements are distinct from system-awarded,
+-- deterministic badges. They are labelled self-reported in the application.
+create table public.profile_achievements (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null check (length(btrim(title)) between 3 and 140),
+  description text not null check (length(btrim(description)) between 5 and 1000),
+  category text not null check (category in ('academic','competition','community','creative','sport','other')),
+  achieved_on date,
+  status public.content_status not null default 'published' check (status in ('published','hidden','removed')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index profile_achievements_owner_idx on public.profile_achievements(owner_id, achieved_on desc, created_at desc);
+create trigger profile_achievements_touch before update on public.profile_achievements for each row execute function public.touch_updated_at();
+alter table public.profile_achievements enable row level security;
+create policy profile_achievements_read on public.profile_achievements for select to authenticated using (
+  public.feature_enabled('achievements') and (
+    (status = 'published' and public.is_active_profile(owner_id) and not public.is_blocked_with_current(owner_id))
+    or owner_id = public.current_profile_id() or public.has_permission('moderate_all')
+  )
+);
+create policy profile_achievements_insert on public.profile_achievements for insert to authenticated with check (
+  public.feature_enabled('achievements') and public.is_active_user() and owner_id = public.current_profile_id() and status = 'published'
+);
+create policy profile_achievements_update on public.profile_achievements for update to authenticated using (
+  public.feature_enabled('achievements') and (owner_id = public.current_profile_id() or public.has_permission('moderate_all'))
+) with check (public.feature_enabled('achievements') and (owner_id = public.current_profile_id() or public.has_permission('moderate_all')));
+create policy profile_achievements_delete on public.profile_achievements for delete to authenticated using (
+  public.feature_enabled('achievements') and owner_id = public.current_profile_id()
+);
+revoke all on public.profile_achievements from anon, authenticated;
+grant select, delete on public.profile_achievements to authenticated;
+grant insert (owner_id,title,description,category,achieved_on) on public.profile_achievements to authenticated;
+grant update (title,description,category,achieved_on,status) on public.profile_achievements to authenticated;
+grant all on public.profile_achievements to service_role;
+create function public.guard_profile_achievement_status() returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  if new.status is distinct from old.status then
+    if not public.has_permission('moderate_all') then
+      raise exception 'Only moderators can change achievement status' using errcode='42501';
+    end if;
+    insert into public.audit_logs(actor_user_id,action,target_type,target_id,metadata,visibility)
+    values (public.current_profile_id(),'achievement.moderate','profile_achievement',new.id,jsonb_build_object('previous_status',old.status,'new_status',new.status),'staff');
+    insert into public.moderation_actions(moderator_id,action,target_type,target_id,previous_status,new_status)
+    values (public.current_profile_id(),'achievement.moderate','profile_achievement',new.id,old.status::text,new.status::text);
+  end if;
+  return new;
+end $$;
+revoke all on function public.guard_profile_achievement_status() from public,anon,authenticated;
+create trigger guard_profile_achievement_status before update on public.profile_achievements for each row execute function public.guard_profile_achievement_status();
+select public.backup_sync_triggers();
+
+-- ==========================================================================
+-- FILE 54/60  20261112000008_054_ride_kinds.sql
+-- ==========================================================================
+
+-- Existing posts remain unclassified rather than being guessed as offers.
+alter table public.ride_posts add column ride_kind text check (ride_kind in ('offer', 'request'));
+grant update (ride_kind) on public.ride_posts to authenticated;
+create index ride_posts_kind_date_idx on public.ride_posts (ride_kind, ride_date) where status = 'published';
+
+-- ==========================================================================
+-- FILE 55/60  20261112000009_055_notice_delete.sql
+-- ==========================================================================
+
+-- Delete and audit as one operation; do not grant notice permissions to new roles.
+create function public.delete_official_notice(p_id uuid) returns boolean
+language plpgsql security definer set search_path=public,pg_temp as $$
+declare deleted_id uuid;
+begin
+  if not public.is_active_user() or not public.has_permission('manage_notices') then
+    raise exception 'Not allowed' using errcode='42501';
+  end if;
+  delete from public.notices where id=p_id returning id into deleted_id;
+  if deleted_id is null then return false; end if;
+  insert into public.audit_logs(actor_user_id,action,target_type,target_id,metadata,visibility)
+  values(public.current_profile_id(),'notice.delete','notice',deleted_id,'{}'::jsonb,'staff');
+  return true;
+end $$;
+revoke all on function public.delete_official_notice(uuid) from public,anon;
+grant execute on function public.delete_official_notice(uuid) to authenticated;
+
+-- ==========================================================================
+-- FILE 56/60  20261112000010_056_event_rsvp_guard.sql
+-- ==========================================================================
+
+-- A previously saved RSVP cannot be changed after an event stops accepting
+-- registrations. Existing rows remain untouched; users may still delete theirs.
+alter policy event_registrations_update_own on public.event_registrations
+  using (user_id = public.current_profile_id() and public.is_active_user() and public.has_permission('rsvp_events')
+         and exists (select 1 from public.events e where e.id = event_id and e.status = 'published'))
+  with check (user_id = public.current_profile_id() and public.is_active_user() and public.has_permission('rsvp_events')
+              and exists (select 1 from public.events e where e.id = event_id and e.status = 'published'));
+
+-- ==========================================================================
+-- FILE 57/60  20261112000011_057_team_invitations.sql
+-- ==========================================================================
+
+-- Invitations are private, and all mutations run through narrowly scoped RPCs.
+create table public.team_invitations (
+  id uuid primary key default gen_random_uuid(),
+  team_post_id uuid not null references public.team_posts(id) on delete cascade,
+  invitee_id uuid not null references public.profiles(id) on delete cascade,
+  invited_by uuid not null references public.profiles(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending','accepted','declined')),
+  created_at timestamptz not null default now(),
+  responded_at timestamptz,
+  unique(team_post_id, invitee_id)
+);
+create index team_invitations_invitee_idx on public.team_invitations(invitee_id,status,created_at desc);
+alter table public.team_invitations enable row level security;
+create policy team_invitations_involved on public.team_invitations for select to authenticated using (
+  public.feature_enabled('team_finder') and public.is_active_user() and
+  (invitee_id=public.current_profile_id() or invited_by=public.current_profile_id()) and
+  not public.is_blocked_with_current(case when invitee_id=public.current_profile_id() then invited_by else invitee_id end)
+);
+revoke all on public.team_invitations from public,anon,authenticated;
+grant select on public.team_invitations to authenticated;
+grant all on public.team_invitations to service_role;
+
+create function public.invite_team_member(p_team uuid,p_username text) returns uuid
+language plpgsql security definer set search_path=public,pg_temp as $$
+declare actor uuid := public.current_profile_id(); target uuid; invitation uuid;
+begin
+  if not public.is_active_user() or not public.feature_enabled('team_finder') then raise exception 'Unavailable' using errcode='42501'; end if;
+  if not exists(select 1 from public.team_posts where id=p_team and creator_id=actor and status='published') then raise exception 'Not allowed' using errcode='42501'; end if;
+  select id into target from public.profiles where username=lower(btrim(p_username)) and public.is_active_profile(id);
+  if target is null or target=actor or public.is_blocked_with_current(target) then raise exception 'Student unavailable' using errcode='22023'; end if;
+  if exists(select 1 from public.team_post_requests where team_post_id=p_team and user_id=target and status='accepted') then raise exception 'Already a team member' using errcode='23505'; end if;
+  insert into public.team_invitations(team_post_id,invitee_id,invited_by) values(p_team,target,actor)
+  on conflict(team_post_id,invitee_id) do update set status='pending',invited_by=actor,responded_at=null,created_at=now()
+  returning id into invitation;
+  perform public.notify_user(target,'community_activity','Team invitation','You have been invited to a team.','team_post',p_team::text,'/campus/teams/' || p_team::text);
+  return invitation;
+end $$;
+revoke all on function public.invite_team_member(uuid,text) from public,anon;
+grant execute on function public.invite_team_member(uuid,text) to authenticated;
+
+create function public.respond_team_invitation(p_invitation uuid,p_accept boolean) returns void
+language plpgsql security definer set search_path=public,pg_temp as $$
+declare actor uuid := public.current_profile_id(); inv public.team_invitations%rowtype; team public.team_posts%rowtype; request_status text;
+begin
+  if not public.is_active_user() or not public.feature_enabled('team_finder') or p_accept is null then raise exception 'Unavailable' using errcode='42501'; end if;
+  select * into inv from public.team_invitations where id=p_invitation and invitee_id=actor for update;
+  if not found or inv.status <> 'pending' then raise exception 'Invitation unavailable' using errcode='42501'; end if;
+  select * into team from public.team_posts where id=inv.team_post_id for update;
+  if not found or team.status <> 'published' or team.creator_id <> inv.invited_by or not public.is_active_profile(team.creator_id) or public.is_blocked_with_current(team.creator_id) then raise exception 'Team unavailable' using errcode='42501'; end if;
+  if p_accept then
+    insert into public.team_post_requests(team_post_id,user_id,status) values(team.id,actor,'pending') on conflict(team_post_id,user_id) do nothing;
+    select status into request_status from public.team_post_requests where team_post_id=team.id and user_id=actor for update;
+    if request_status='pending' then
+      update public.team_post_requests set status='accepted' where team_post_id=team.id and user_id=actor;
+    elsif request_status<>'accepted' then
+      raise exception 'Existing request must be withdrawn before accepting' using errcode='22023';
+    end if;
+  end if;
+  update public.team_invitations set status=case when p_accept then 'accepted' else 'declined' end,responded_at=now() where id=inv.id;
+end $$;
+revoke all on function public.respond_team_invitation(uuid,boolean) from public,anon;
+grant execute on function public.respond_team_invitation(uuid,boolean) to authenticated;
+
+create function public.remove_team_member(p_request uuid) returns uuid
+language plpgsql security definer set search_path=public,pg_temp as $$
+declare team_id uuid;
+begin
+  if not public.is_active_user() or not public.feature_enabled('team_finder') then raise exception 'Unavailable' using errcode='42501'; end if;
+  delete from public.team_post_requests r using public.team_posts t
+  where r.id=p_request and r.team_post_id=t.id and t.creator_id=public.current_profile_id() and r.status='accepted'
+  returning t.id into team_id;
+  if team_id is null then raise exception 'Membership unavailable' using errcode='42501'; end if;
+  return team_id;
+end $$;
+revoke all on function public.remove_team_member(uuid) from public,anon;
+grant execute on function public.remove_team_member(uuid) to authenticated;
+select public.backup_sync_triggers();
+
+-- ==========================================================================
+-- FILE 58/60  20261112000012_058_team_project_link.sql
+-- ==========================================================================
+
+-- An optional association: existing team requests stay unchanged.
+alter table public.team_posts add column project_id uuid references public.projects(id) on delete set null;
+create index team_posts_project_idx on public.team_posts(project_id) where project_id is not null;
+grant update(project_id) on public.team_posts to authenticated;
+create function public.guard_team_project_link() returns trigger
+language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  if new.project_id is not null and (tg_op = 'INSERT' or new.project_id is distinct from old.project_id)
+    and not exists(select 1 from public.projects p where p.id=new.project_id and p.creator_id=new.creator_id and p.status='published') then
+    raise exception 'Only your published projects may be linked' using errcode='42501';
+  end if;
+  return new;
+end $$;
+revoke all on function public.guard_team_project_link() from public,anon,authenticated;
+create trigger team_project_link_guard before insert or update of project_id on public.team_posts
+for each row execute function public.guard_team_project_link();
+
+-- ==========================================================================
+-- FILE 59/60  20261112000013_059_board_staff_visibility.sql
+-- ==========================================================================
+
+-- Moderators can inspect hidden board reports without granting student access.
+create policy housing_select_staff on public.housing_posts for select to authenticated using (public.has_permission('moderate_all'));
+create policy rides_select_staff on public.ride_posts for select to authenticated using (public.has_permission('moderate_all'));
+
+-- ==========================================================================
+-- FILE 60/60  20261112000014_060_event_rsvp_capacity.sql
+-- ==========================================================================
+
+-- Keep capacity accounting private even when attendee visibility is disabled.
+-- This separate counter is serialized by its row lock and never exposed through
+-- event public projections. Existing RSVPs are retained, even if over capacity.
+create table public.event_rsvp_capacity (
+  event_id uuid primary key references public.events(id) on delete cascade,
+  going_count integer not null default 0 check (going_count >= 0)
+);
+alter table public.event_rsvp_capacity enable row level security;
+revoke all on public.event_rsvp_capacity from public,anon,authenticated;
+grant all on public.event_rsvp_capacity to service_role;
+insert into public.event_rsvp_capacity(event_id,going_count)
+select e.id, count(r.id)::integer from public.events e left join public.event_registrations r on r.event_id=e.id and r.status='going' group by e.id;
+
+create function public.sync_event_rsvp_capacity() returns trigger
+language plpgsql security definer set search_path=public,pg_temp as $$
+declare old_going boolean := false; new_going boolean := false; target uuid; max_places integer;
+begin
+  if tg_op <> 'INSERT' then old_going := old.status='going'; end if;
+  if tg_op <> 'DELETE' then new_going := new.status='going'; end if;
+  target := case when tg_op='DELETE' then old.event_id else new.event_id end;
+  if old_going = new_going then return coalesce(new,old); end if;
+  if new_going then
+    -- Lock the event against concurrent capacity edits; the counter row performs
+    -- the atomic bounded increment even when multiple RSVP transactions race.
+    select capacity into max_places from public.events where id=target for share;
+    if not found then raise exception 'Event unavailable' using errcode='23503'; end if;
+    insert into public.event_rsvp_capacity(event_id) values(target) on conflict do nothing;
+    update public.event_rsvp_capacity set going_count=going_count+1 where event_id=target and (max_places is null or going_count < max_places);
+    if not found then raise exception 'Event capacity is full' using errcode='23514'; end if;
+  else
+    update public.event_rsvp_capacity set going_count=greatest(going_count-1,0) where event_id=target;
+  end if;
+  return coalesce(new,old);
+end $$;
+revoke all on function public.sync_event_rsvp_capacity() from public,anon,authenticated;
+create trigger event_rsvp_capacity_sync after insert or update of status or delete on public.event_registrations
+for each row execute function public.sync_event_rsvp_capacity();
 select public.backup_sync_triggers();
 
 -- ==========================================================================

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -11,6 +12,7 @@ import { ReportDialog } from '@/components/social/ReportDialog';
 import { ExternalLink } from '@/components/content/ExternalLink';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { formatDate } from '@/lib/utils';
+import { OwnBoardActions } from '@/components/campus/OwnBoardActions';
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -31,6 +33,7 @@ export default async function ProjectPage({ params }) {
   const project = await getProject(supabase, id);
   if (!project) notFound();
 
+  const { data: teams } = await supabase.from('team_posts').select('id,project_name').eq('project_id', id).eq('status', 'published').order('created_at', { ascending: false }).limit(20);
   const isCreator = project.creator_id === user.profile.id;
   const canModerate = can(actor, 'moderate_all');
   if (['hidden', 'removed'].includes(project.status) && !isCreator && !canModerate) notFound();
@@ -44,6 +47,8 @@ export default async function ProjectPage({ params }) {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title={project.title} back={{ href: '/explore/projects', label: 'Projects' }} />
+
+      {isCreator ? <OwnBoardActions type="projects" id={project.id} editHref={`/explore/projects/${project.id}/edit`} /> : null}
 
       <div className="flex flex-wrap items-center gap-2">
         {project.status !== 'published' ? <Badge tone="danger">{project.status}</Badge> : null}
@@ -77,6 +82,8 @@ export default async function ProjectPage({ params }) {
           ) : null}
         </Card>
       ) : null}
+
+      {teams?.length ? <Card className="flex flex-col gap-2 p-4"><h2 className="text-sm font-semibold">Find a team</h2>{teams.map((team) => <Link key={team.id} href={`/campus/teams/${team.id}`} className="text-sm underline">{team.project_name}</Link>)}</Card> : null}
 
       {project.status !== 'published' ? (
         <Notice tone="warning" icon="flag">
