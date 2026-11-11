@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal } from '@/components/ui';
+import { Button, Modal } from '@/components/ui';
 
 /** Reuse the pixels already displayed while the authorized full-size image loads. */
 export function snapshotThumbnail(image) {
@@ -27,10 +27,24 @@ export function FullImage({ postId, file, preview }) {
   </>;
 }
 
+/** The owner editor uses the same add-files interaction as the composer. */
+export function EditAttachmentPicker({ open, disabled, onOpen, onClose, onChoose, error }) {
+  return <>
+    <Button type="button" variant="ghost" size="sm" icon="paperclip" aria-expanded={open} onClick={onOpen} disabled={disabled}>Add files</Button>
+    <Modal open={open} onClose={onClose} title="Add files" description="Images or PDFs, up to eight (3 MiB each)." size="sm">
+      <label className="mt-4 block text-sm text-muted">Choose JPEG, PNG, WebP or PDF files
+        <input type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" onChange={onChoose} disabled={disabled} className="mt-2 block max-w-full text-xs" />
+      </label>
+      {error ? <p role="alert" className="mt-2 text-xs text-danger">{error}</p> : null}
+    </Modal>
+  </>;
+}
+
 /** Post-scoped images and PDFs; the endpoint applies RLS on every request. */
 export function PostAttachments({ postId, manage = false }) {
   const [files, setFiles] = useState([]); const [canUpload, setCanUpload] = useState(false);
   const [selected, setSelected] = useState([]); const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false); const closePicker = useCallback(() => setPickerOpen(false), []);
   const [lightbox, setLightbox] = useState(null); const closeLightbox = useCallback(() => setLightbox(null), []); const root = useRef(null); const [visible, setVisible] = useState(manage);
   const load = useCallback(async () => { try { const response = await fetch(`/api/storage/posts/${postId}`, { cache: 'no-store' }); if (!response.ok) return; const data = await response.json(); setFiles(data.attachments || []); setCanUpload(data.canUpload === true); return data.attachments || []; } catch { /* keep existing view */ } return null; }, [postId]);
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -40,11 +54,13 @@ export function PostAttachments({ postId, manage = false }) {
   function release(item) { if (item.preview) { URL.revokeObjectURL(item.preview); previews.current.delete(item.preview); } }
   function choose(event, replaceId = null) {
     const incoming = Array.from(event.target.files || []); event.target.value = '';
+    if (!incoming.length) return;
     if (replaceId && incoming.some((file) => !file.type.startsWith('image/'))) { setMessage('Choose an image to replace this image.'); return; }
     if (incoming.some((file) => !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type) || file.size < 1 || file.size > 3 * 1024 * 1024)) { setMessage('Choose JPEG, PNG, WebP or PDF files up to 3 MiB.'); return; }
     if (files.length + selected.length + incoming.length > 8) { setMessage('A post can have up to eight attachments.'); return; }
     const added = incoming.map((file) => { const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null; if (preview) previews.current.add(preview); return { file, id: crypto.randomUUID(), preview, progress: 0, replaceId }; });
     setSelected((old) => [...old, ...added]); setMessage('');
+    if (!replaceId) setPickerOpen(false);
   }
   async function upload(item) {
     setBusy(true); setMessage('');
@@ -83,9 +99,9 @@ export function PostAttachments({ postId, manage = false }) {
       {file.mime_type.startsWith('image/') ? <button type="button" onClick={() => openImage(file)} aria-label={`View ${file.original_name}`} className="block w-full"><img data-attachment-id={file.id} src={`/api/storage/posts/${postId}/${file.id}?size=thumb`} alt={file.original_name} loading="lazy" decoding="async" className="mx-auto block max-h-96 w-auto max-w-full rounded object-contain" /></button> : <a className="block break-all p-2 text-sm underline" href={`/api/storage/posts/${postId}/${file.id}`}>{file.original_name} · {(file.byte_size / 1024).toFixed(0)} KiB</a>}
       {manage ? <div className="flex flex-wrap gap-2 text-xs">{file.mime_type.startsWith('image/') ? <label className="p-1 underline">Replace<input aria-label={`Replace ${file.original_name}`} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={(event) => choose(event, file.id)} className="sr-only" /></label> : null}<button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} className="p-1 underline">Earlier</button><button type="button" disabled={busy || index === files.length - 1} onClick={() => move(index, 1)} className="p-1 underline">Later</button><button type="button" disabled={busy} onClick={() => remove(file)} className="p-1 text-muted underline">Remove</button></div> : null}
     </div>)}</div> : null}
-    {manage && canUpload ? <div className="mt-2"><label className="text-xs text-muted">Add images or PDFs (up to eight; 3 MiB each)<input type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" disabled={busy} onChange={choose} className="block text-xs" /></label></div> : null}
+    {manage && canUpload ? <div className="mt-2"><EditAttachmentPicker open={pickerOpen} disabled={busy} onOpen={() => { setMessage(''); setPickerOpen(true); }} onClose={closePicker} onChoose={choose} error={message} /></div> : null}
     {selected.map((item) => <div key={item.id} className="mt-2 flex items-center gap-2 text-xs">{item.preview ? <img src={item.preview} alt="" className="h-10 w-10 rounded object-cover" /> : null}<span className="min-w-0 truncate">{item.file.name}</span><button type="button" disabled={busy} onClick={() => upload(item)} className="underline">Upload {item.progress ? `${item.progress}%` : ''}</button><button type="button" disabled={busy} onClick={() => { release(item); setSelected((old) => old.filter((entry) => entry.id !== item.id)); }} className="underline">Cancel</button></div>)}
-    {message ? <p role="status" className="mt-2 text-xs text-danger">{message}</p> : null}
+    {message && !pickerOpen ? <p role="status" className="mt-2 text-xs text-danger">{message}</p> : null}
     <Modal open={Boolean(lightbox)} onClose={closeLightbox} title={lightbox?.file.original_name || 'Image'} size="lg">
       {lightbox ? <FullImage key={lightbox.file.id} postId={postId} file={lightbox.file} preview={lightbox.preview} /> : null}
       {lightbox && files.filter((file) => file.mime_type.startsWith('image/')).length > 1 ? <div className="mt-2 flex justify-between text-sm">
