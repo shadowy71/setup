@@ -8,6 +8,8 @@ import { GifAttachment } from '@/components/media/GifPicker';
 import { ReactionBar } from '@/components/posts/ReactionBar';
 import { PostActions } from '@/components/posts/PostActions';
 import { PollBlock } from '@/components/posts/PollBlock';
+import { PostAttachments } from '@/components/posts/PostAttachments';
+import { PostTextEditor } from '@/components/posts/PostTextEditor';
 import { ReportDialog } from '@/components/social/ReportDialog';
 import { renderTextWithMentions } from '@/components/posts/richText';
 import { segmentTextLinks } from '@/lib/linkify';
@@ -132,6 +134,8 @@ export function PostCard({
           </div>
         ) : null}
 
+        {!isDeleted && !isHidden ? <PostAttachments postId={post.id} manage={Boolean(isOwner && detail)} /> : null}
+
         {poll && !isDeleted ? (
           <PollBlock postId={post.id} poll={poll} canVote={Boolean(currentUserId)} onVoteChange={onPollVote} />
         ) : null}
@@ -171,6 +175,7 @@ export function PostCard({
 
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="text-2xs text-muted-soft lg:hidden">{relativeTime(post.created_at)}</span>
+          {isOwner && detail && post.status === 'published' && post.kind !== 'poll' ? <PostTextEditor postId={post.id} body={post.body} title={post.title} kind={post.kind} /> : null}
           <PostActions postId={post.id} status={post.status} canManage={isOwner} />
         </div>
       </div>

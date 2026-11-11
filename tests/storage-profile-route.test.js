@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/auth/session', () => ({ getActiveUser: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ getServerClient: vi.fn() }));
-vi.mock('@/lib/storage/profile-photo', () => ({ cleanProfilePhotos: vi.fn(), uploadProfilePhoto: vi.fn(), removeProfilePhoto: vi.fn(), readProfilePhoto: vi.fn() }));
+vi.mock('@/lib/storage/profile-photo', () => ({ cleanProfilePhotos: vi.fn(), uploadProfilePhoto: vi.fn(), removeProfilePhoto: vi.fn(), getProfilePhotoMetadata: vi.fn(), downloadProfilePhoto: vi.fn() }));
 import { getActiveUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
-import { cleanProfilePhotos, uploadProfilePhoto, removeProfilePhoto, readProfilePhoto } from '@/lib/storage/profile-photo';
+import { cleanProfilePhotos, uploadProfilePhoto, removeProfilePhoto, getProfilePhotoMetadata, downloadProfilePhoto } from '@/lib/storage/profile-photo';
 import { POST, DELETE } from '@/app/api/storage/profile-photo/route';
 import { GET } from '@/app/api/storage/profile-photo/[username]/route';
 
@@ -57,19 +57,48 @@ describe('profile photo routes', () => {
     expect((await GET(null, context)).status).toBe(401);
     getServerClient.mockResolvedValue({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: 'visible', is_active: false }, error: null }) }) }) }) });
     expect((await GET(null, context)).status).toBe(404);
-    expect(readProfilePhoto).not.toHaveBeenCalled();
+    expect(getProfilePhotoMetadata).not.toHaveBeenCalled();
+  });
+  it('returns 304 only after authentication and current profile visibility checks', async () => {
+    const req = new Request('https://pccoe.in/api/storage/profile-photo/alice', { headers: { 'if-none-match': `"${'a'.repeat(64)}"` } });
+    const ctx = { params: Promise.resolve({ username: 'alice' }) };
+    getActiveUser.mockResolvedValueOnce(null).mockResolvedValue(user);
+    expect((await GET(req, ctx)).status).toBe(401);
+    const maybeSingle = vi.fn().mockResolvedValueOnce({ data: null, error: null }).mockResolvedValue({ data: { id: 'visible', is_active: true }, error: null });
+    getServerClient.mockResolvedValue({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }) });
+    expect((await GET(req, ctx)).status).toBe(404);
+    expect(getProfilePhotoMetadata).not.toHaveBeenCalled();
+    getProfilePhotoMetadata.mockResolvedValueOnce({ checksum: 'a'.repeat(64), mime_type: 'image/png', provider_file_id: 'private' }).mockResolvedValueOnce(null);
+    const cached = await GET(req, ctx);
+    expect(cached.status).toBe(304);
+    expect(cached.headers.get('cache-control')).toBe('private, no-cache, must-revalidate');
+    expect(cached.headers.get('vary')).toContain('Cookie');
+    expect(downloadProfilePhoto).not.toHaveBeenCalled();
+    expect((await GET(req, ctx)).status).toBe(404); // deleted, not a stale 304
+  });
+  it('downloads replacement bytes when the cached validator is stale', async () => {
+    const req = new Request('https://pccoe.in/api/storage/profile-photo/alice', { headers: { 'if-none-match': `"${'a'.repeat(64)}"` } });
+    getActiveUser.mockResolvedValue(user);
+    getServerClient.mockResolvedValue({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: 'visible', is_active: true }, error: null }) }) }) }) });
+    getProfilePhotoMetadata.mockResolvedValue({ checksum: 'b'.repeat(64), mime_type: 'image/png', provider_file_id: 'private' });
+    downloadProfilePhoto.mockResolvedValue({ bytes: image, mime: 'image/png' });
+    const response = await GET(req, { params: Promise.resolve({ username: 'alice' }) });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('etag')).toBe(`"${'b'.repeat(64)}"`);
+    expect(downloadProfilePhoto).toHaveBeenCalledTimes(1);
   });
   it('checks the block-aware profile projection before accessing private ledger', async () => {
     getActiveUser.mockResolvedValue(user);
     const maybeSingle = vi.fn().mockResolvedValueOnce({ data: null, error: null }).mockResolvedValueOnce({ data: { id: 'visible', is_active: true }, error: null });
     getServerClient.mockResolvedValue({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }) });
     expect((await GET(null, { params: Promise.resolve({ username: 'alice' }) })).status).toBe(404);
-    expect(readProfilePhoto).not.toHaveBeenCalled();
-    readProfilePhoto.mockResolvedValue({ bytes: image, mime: 'image/png' });
+    expect(getProfilePhotoMetadata).not.toHaveBeenCalled();
+    getProfilePhotoMetadata.mockResolvedValue({ provider_file_id: 'private', mime_type: 'image/png', checksum: 'a'.repeat(64) });
+    downloadProfilePhoto.mockResolvedValue({ bytes: image, mime: 'image/png' });
     const response = await GET(null, { params: Promise.resolve({ username: 'alice' }) });
-    expect(response.status).toBe(200); expect(response.headers.get('cache-control')).toContain('no-store');
+    expect(response.status).toBe(200); expect(response.headers.get('cache-control')).toBe('private, no-cache, must-revalidate');
     expect(response.headers.get('x-content-type-options')).toBe('nosniff');
     expect(Buffer.from(await response.arrayBuffer())).toEqual(image);
-    expect(readProfilePhoto).toHaveBeenCalledWith('visible');
+    expect(getProfilePhotoMetadata).toHaveBeenCalledWith('visible');
   });
 });

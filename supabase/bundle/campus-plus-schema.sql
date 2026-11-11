@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (46 files):
+-- Contents (50 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -79,9 +79,13 @@
 --   44  20261110000002_044_storage_admin_summary.sql  (27 lines)
 --   45  20261110000003_045_backup_capture_late_tables.sql  (5 lines)
 --   46  20261110000004_046_profile_photo_lifecycle.sql  (89 lines)
+--   47  20261112000001_047_profile_storage_v3.sql  (61 lines)
+--   48  20261112000002_048_post_attachments.sql  (120 lines)
+--   49  20261112000003_049_post_attachment_order.sql  (28 lines)
+--   50  20261112000004_050_post_attachment_drafts.sql  (170 lines)
 
 -- ==========================================================================
--- FILE 01/46  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/50  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -202,7 +206,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/46  20261005000002_002_identity_roles.sql
+-- FILE 02/50  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -794,7 +798,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/46  20261005000003_003_blocks.sql
+-- FILE 03/50  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -941,7 +945,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/46  20261005000004_004_communities.sql
+-- FILE 04/50  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1348,7 +1352,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/46  20261005000005_005_social.sql
+-- FILE 05/50  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1971,7 +1975,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/46  20261005000006_006_moderation_core.sql
+-- FILE 06/50  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2446,7 +2450,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/46  20261005000007_007_messaging.sql
+-- FILE 07/50  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3035,7 +3039,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/46  20261005000008_008_marketplace.sql
+-- FILE 08/50  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3557,7 +3561,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/46  20261005000009_009_campus.sql
+-- FILE 09/50  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4591,7 +4595,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/46  20261005000010_010_random.sql
+-- FILE 10/50  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5243,7 +5247,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/46  20261005000011_011_platform.sql
+-- FILE 11/50  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -5983,7 +5987,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/46  20261005000012_012_auth_hooks.sql
+-- FILE 12/50  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6440,7 +6444,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/46  20261005000013_013_reference_data.sql
+-- FILE 13/50  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6714,7 +6718,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/46  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/50  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6927,7 +6931,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/46  20261005000015_015_column_privileges.sql
+-- FILE 15/50  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7155,7 +7159,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/46  20261005000016_016_staff_actions.sql
+-- FILE 16/50  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7862,7 +7866,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/46  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/50  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8060,7 +8064,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/46  20261005000018_018_function_grants.sql
+-- FILE 18/50  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8175,7 +8179,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/46  20261005000019_019_staff_visibility.sql
+-- FILE 19/50  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8251,7 +8255,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/46  20261005000020_020_chat_inbox.sql
+-- FILE 20/50  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8345,7 +8349,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/46  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/50  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8683,7 +8687,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/46  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/50  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8756,7 +8760,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/46  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/50  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8786,7 +8790,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/46  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/50  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9259,7 +9263,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/46  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/50  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9553,7 +9557,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/46  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/50  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9673,7 +9677,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/46  20261025000001_027_backup_change_capture.sql
+-- FILE 27/50  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10939,7 +10943,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/46  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/50  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11266,7 +11270,7 @@ comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
--- FILE 29/46  20261026000001_029_feed_realtime_delivery.sql
+-- FILE 29/50  20261026000001_029_feed_realtime_delivery.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11383,7 +11387,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 30/46  20261027000001_030_random_channel_authorization.sql
+-- FILE 30/50  20261027000001_030_random_channel_authorization.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11576,7 +11580,7 @@ comment on function public.can_access_random_session is
   'can_access_own_random_session(uuid) instead.';
 
 -- ==========================================================================
--- FILE 31/46  20261028000001_031_club_governance.sql
+-- FILE 31/50  20261028000001_031_club_governance.sql
 -- ==========================================================================
 
 -- Campus+ migration 031 — club governance, requests and scoped management
@@ -12629,7 +12633,7 @@ grant execute on function public.remove_community_member(uuid, uuid) to authenti
 grant execute on function public.update_club_profile(uuid, jsonb) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 32/46  20261028000002_032_club_catalogue.sql
+-- FILE 32/50  20261028000002_032_club_catalogue.sql
 -- ==========================================================================
 
 -- Campus+ migration 032 — source-backed club catalogue
@@ -12843,7 +12847,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 33/46  20261029000001_033_unread_count_lookup.sql
+-- FILE 33/50  20261029000001_033_unread_count_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12901,7 +12905,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 34/46  20261029000002_034_inbox_membership_lookup.sql
+-- FILE 34/50  20261029000002_034_inbox_membership_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12993,7 +12997,7 @@ revoke all on function public.conversation_inbox(integer) from public, anon;
 grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 35/46  20261029000003_035_feed_visibility_reconciliation.sql
+-- FILE 35/50  20261029000003_035_feed_visibility_reconciliation.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13049,7 +13053,7 @@ revoke all on function public.campus_feed_post_visibility(uuid[]) from public, a
 grant execute on function public.campus_feed_post_visibility(uuid[]) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 36/46  20261029000004_036_admin_dashboard_counts.sql
+-- FILE 36/50  20261029000004_036_admin_dashboard_counts.sql
 -- ==========================================================================
 
 -- Campus+ 036: one authorized, RLS-scoped Admin count snapshot
@@ -13113,7 +13117,7 @@ revoke all on function public.campus_admin_dashboard_counts() from anon;
 grant execute on function public.campus_admin_dashboard_counts() to authenticated;
 
 -- ==========================================================================
--- FILE 37/46  20261029000005_037_realtime_authorization_grants.sql
+-- FILE 37/50  20261029000005_037_realtime_authorization_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 037 — reassert least-privilege Realtime function grants
@@ -13149,7 +13153,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 38/46  20261101000001_038_post_pin_ordering.sql
+-- FILE 38/50  20261101000001_038_post_pin_ordering.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13467,7 +13471,7 @@ comment on index public.posts_feed_replica_identity_idx is
   'Realtime update identity: old id/pin/status only, so pin transitions are distinguishable from counter-only writes without full-row replica identity.';
 
 -- ==========================================================================
--- FILE 39/46  20261102000001_039_poll_author_may_vote.sql
+-- FILE 39/50  20261102000001_039_poll_author_may_vote.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13508,7 +13512,7 @@ comment on policy poll_votes_insert_self on public.poll_votes is
   'Any active student may vote once in an open published poll, including the poll author; duplicates remain blocked by the unique (post_id, user_id) constraint.';
 
 -- ==========================================================================
--- FILE 40/46  20261102000002_040_busiest_trending.sql
+-- FILE 40/50  20261102000002_040_busiest_trending.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13732,7 +13736,7 @@ comment on function public.trending_posts(integer, integer) is
   'Deterministic recent-engagement trending score. Formula and defaults are published in lib/constants.js#TRENDING_FORMULA; bar normalization lives in lib/social/activity-scale.js. SECURITY INVOKER so RLS still decides visibility.';
 
 -- ==========================================================================
--- FILE 41/46  20261103000001_041_public_discovery.sql
+-- FILE 41/50  20261103000001_041_public_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 041 — public discovery: clubs by slug, public events
@@ -14012,7 +14016,7 @@ end $$;
 drop table __anon_exec_before_041;
 
 -- ==========================================================================
--- FILE 42/46  20261105000001_042_ai_ml_branch.sql
+-- FILE 42/50  20261105000001_042_ai_ml_branch.sql
 -- ==========================================================================
 
 -- Rename only complete, structured branch values. Identifiers, divisions,
@@ -14056,7 +14060,7 @@ where regexp_replace(lower(branch), '[^a-z0-9]', '', 'g') in (
 ) and branch <> 'AI & ML';
 
 -- ==========================================================================
--- FILE 43/46  20261110000001_043_profile_storage_foundation.sql
+-- FILE 43/50  20261110000001_043_profile_storage_foundation.sql
 -- ==========================================================================
 
 -- Storage ledger foundation only. No file endpoints are enabled by this migration.
@@ -14192,7 +14196,7 @@ revoke all on function public.storage_account_usage(uuid) from public, anon;
 grant execute on function public.storage_account_usage(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 44/46  20261110000002_044_storage_admin_summary.sql
+-- FILE 44/50  20261110000002_044_storage_admin_summary.sql
 -- ==========================================================================
 
 -- Read-only operational view of Campus+ ledger rows, never the Drive account.
@@ -14223,7 +14227,7 @@ revoke all on function public.admin_storage_summary() from public, anon;
 grant execute on function public.admin_storage_summary() to authenticated;
 
 -- ==========================================================================
--- FILE 45/46  20261110000003_045_backup_capture_late_tables.sql
+-- FILE 45/50  20261110000003_045_backup_capture_late_tables.sql
 -- ==========================================================================
 
 -- Migration 027 installed capture before the club-request and storage tables
@@ -14232,7 +14236,7 @@ grant execute on function public.admin_storage_summary() to authenticated;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 46/46  20261110000004_046_profile_photo_lifecycle.sql
+-- FILE 46/50  20261110000004_046_profile_photo_lifecycle.sql
 -- ==========================================================================
 
 -- Profile photos use the existing ledger as the association. There is at most
@@ -14323,6 +14327,401 @@ begin
 end $$;
 revoke all on function public.storage_complete_profile_delete(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.storage_complete_profile_delete(uuid,uuid) to service_role;
+
+-- ==========================================================================
+-- FILE 47/50  20261112000001_047_profile_storage_v3.sql
+-- ==========================================================================
+
+-- V3 keys are immutable and separate from legacy V2 keys. Existing rows stay V2.
+alter table public.storage_files add column upload_expires_at timestamptz;
+alter table public.storage_files add column gateway_key text unique;
+alter table public.storage_files add constraint storage_v3_key_check check (
+  (gateway_key is null and upload_expires_at is null) or
+  (gateway_key is not null and upload_expires_at is not null and
+   gateway_key = floor(extract(epoch from upload_expires_at) * 1000)::bigint::text || '-' || id::text)
+);
+
+
+-- Even trusted callers cannot extend a reservation after its key was issued.
+create function public.storage_preserve_gateway_key() returns trigger
+language plpgsql set search_path = public, pg_temp as $$
+begin
+  if new.gateway_key is distinct from old.gateway_key or new.upload_expires_at is distinct from old.upload_expires_at then
+    raise exception 'Upload operation key is immutable' using errcode='22023';
+  end if;
+  return new;
+end $$;
+revoke all on function public.storage_preserve_gateway_key() from public, anon, authenticated;
+create trigger storage_gateway_key_immutable before update on public.storage_files
+for each row execute function public.storage_preserve_gateway_key();
+
+create function public.storage_reserve_profile_picture_v3(
+  p_owner uuid, p_request_id uuid, p_original_name text, p_mime_type text, p_byte_size bigint, p_checksum text
+) returns uuid language plpgsql security definer set search_path = public, pg_temp as $$
+declare v_user uuid := p_owner; v_account public.storage_accounts%rowtype;
+  v_existing public.storage_files%rowtype; v_used bigint; v_id uuid;
+begin
+  if v_user is null or not public.is_active_profile(v_user) then raise exception 'Active account required' using errcode='42501'; end if;
+  if p_request_id is null or p_original_name is null or length(p_original_name) not between 1 and 180
+     or p_mime_type is null or p_mime_type not in ('image/jpeg','image/png','image/webp')
+     or p_byte_size is null or p_byte_size not between 1 and 3145728
+     or p_checksum is null or p_checksum !~ '^[0-9a-f]{64}$' then raise exception 'Invalid file metadata' using errcode='22023'; end if;
+  insert into public.storage_accounts(profile_id) values(v_user) on conflict do nothing;
+  select * into v_account from public.storage_accounts where profile_id=v_user for update;
+  if not v_account.upload_enabled then raise exception 'Uploads are not enabled' using errcode='42501'; end if;
+  select * into v_existing from public.storage_files where owner_id=v_user and request_id=p_request_id;
+  if found then
+    if v_existing.original_name <> p_original_name or v_existing.mime_type <> p_mime_type
+       or v_existing.byte_size <> p_byte_size or v_existing.checksum <> p_checksum
+       or v_existing.status not in ('reserved','ready') or v_existing.gateway_key is null
+       or (v_existing.status = 'reserved' and v_existing.upload_expires_at <= clock_timestamp()) then
+      raise exception 'Upload request conflicts with an existing operation' using errcode='23505';
+    end if;
+    return v_existing.id;
+  end if;
+  select coalesce(sum(byte_size),0) into v_used from public.storage_files
+    where owner_id=v_user and status in ('reserved','ready','delete_pending');
+  if v_used + p_byte_size > v_account.quota_bytes then raise exception 'Storage quota exceeded' using errcode='22023'; end if;
+  v_id := gen_random_uuid();
+  -- The deadline is assigned once and embedded in the immutable gateway key.
+  insert into public.storage_files(id,owner_id,request_id,original_name,mime_type,byte_size,checksum,resource_id,upload_expires_at,gateway_key)
+    select v_id,v_user,p_request_id,p_original_name,p_mime_type,p_byte_size,p_checksum,v_user,
+      to_timestamp(deadline_ms / 1000.0), deadline_ms::text || '-' || v_id::text
+    from (select floor(extract(epoch from clock_timestamp() + interval '10 minutes') * 1000)::bigint as deadline_ms) as deadline;
+  return v_id;
+end $$;
+revoke all on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,text,bigint,text) from public,anon,authenticated;
+grant execute on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,text,bigint,text) to service_role;
+
+-- ==========================================================================
+-- FILE 48/50  20261112000002_048_post_attachments.sql
+-- ==========================================================================
+
+-- The existing storage ledger remains the single quota and operation ledger.
+-- Post attachments use the same V3 fencing and never expose provider IDs.
+alter table public.storage_files drop constraint storage_files_resource_id_fkey;
+alter table public.storage_files drop constraint storage_files_resource_type_check;
+alter table public.storage_files drop constraint storage_files_mime_type_check;
+-- The original multi-column check ties resource_id to the profile owner.
+alter table public.storage_files drop constraint storage_files_check;
+alter table public.storage_files add constraint storage_resource_type_check check (resource_type in ('profile_picture','post_attachment'));
+alter table public.storage_files add constraint storage_mime_type_check check (mime_type in ('image/jpeg','image/png','image/webp','application/pdf'));
+alter table public.storage_files add constraint storage_profile_resource_check check (resource_type <> 'profile_picture' or (resource_id = owner_id and mime_type <> 'application/pdf'));
+
+create table public.post_attachment_links (
+  file_id uuid primary key references public.storage_files(id) on delete restrict,
+  post_id uuid not null references public.posts(id) on delete restrict,
+  position integer not null check (position between 0 and 7)
+);
+create index post_attachment_links_post_idx on public.post_attachment_links(post_id,position);
+alter table public.post_attachment_links enable row level security;
+revoke all on public.post_attachment_links from public,anon,authenticated;
+-- Deliberately no student access: metadata is filtered through the API.
+create policy post_attachment_links_deny_clients on public.post_attachment_links for all to authenticated using (false) with check (false);
+grant select,insert,update on public.post_attachment_links to service_role;
+
+create function public.storage_reserve_post_attachment(p_owner uuid,p_post uuid,p_request_id uuid,p_original_name text,p_mime_type text,p_byte_size bigint,p_checksum text)
+returns uuid language plpgsql security definer set search_path=public,pg_temp as $$
+declare a public.storage_accounts%rowtype; f public.storage_files%rowtype; v_id uuid; v_pos integer; v_used bigint; v_ms bigint;
+begin
+  if p_owner is null or not public.is_active_profile(p_owner) then raise exception 'Active account required' using errcode='42501'; end if;
+  if p_request_id is null or p_original_name is null or length(p_original_name) not between 1 and 180
+    or p_mime_type not in ('image/jpeg','image/png','image/webp','application/pdf') or p_byte_size not between 1 and 3145728
+    or p_checksum !~ '^[0-9a-f]{64}$' then raise exception 'Invalid metadata' using errcode='22023'; end if;
+  insert into public.storage_accounts(profile_id) values(p_owner) on conflict do nothing;
+  select * into a from public.storage_accounts where profile_id=p_owner for update;
+  if not a.upload_enabled then raise exception 'Uploads disabled' using errcode='42501'; end if;
+  -- Post lock serializes reservation and deletion/visibility changes.
+  perform 1 from public.posts where id=p_post and author_id=p_owner and status='published' and deleted_at is null for update;
+  if not found then raise exception 'Post unavailable' using errcode='42501'; end if;
+  select * into f from public.storage_files where owner_id=p_owner and request_id=p_request_id;
+  if found then
+    if f.resource_type <> 'post_attachment' or f.resource_id <> p_post or f.original_name <> p_original_name or f.mime_type <> p_mime_type
+      or f.byte_size <> p_byte_size or f.checksum <> p_checksum or f.status not in ('reserved','ready')
+      or (f.status='reserved' and f.upload_expires_at <= clock_timestamp()) then raise exception 'Conflicting operation' using errcode='23505'; end if;
+    return f.id;
+  end if;
+  select coalesce(sum(byte_size),0) into v_used from public.storage_files where owner_id=p_owner and status in ('reserved','ready','delete_pending');
+  if v_used+p_byte_size>a.quota_bytes then raise exception 'Quota exceeded' using errcode='22023'; end if;
+  select n into v_pos from generate_series(0,7) n where not exists (
+    select 1 from public.post_attachment_links l join public.storage_files s on s.id=l.file_id
+    where l.post_id=p_post and l.position=n and s.status in ('reserved','ready')) order by n limit 1;
+  if v_pos is null then raise exception 'Attachment limit reached' using errcode='22023'; end if;
+  v_id:=gen_random_uuid(); v_ms:=floor(extract(epoch from clock_timestamp()+interval '10 minutes')*1000)::bigint;
+  insert into public.storage_files(id,owner_id,request_id,original_name,mime_type,byte_size,checksum,resource_type,resource_id,upload_expires_at,gateway_key)
+    values(v_id,p_owner,p_request_id,p_original_name,p_mime_type,p_byte_size,p_checksum,'post_attachment',p_post,to_timestamp(v_ms/1000.0),v_ms::text||'-'||v_id::text);
+  insert into public.post_attachment_links(file_id,post_id,position) values(v_id,p_post,v_pos);
+  return v_id;
+end $$;
+revoke all on function public.storage_reserve_post_attachment(uuid,uuid,uuid,text,text,bigint,text) from public,anon,authenticated;
+grant execute on function public.storage_reserve_post_attachment(uuid,uuid,uuid,text,text,bigint,text) to service_role;
+
+create function public.storage_finalize_post_attachment(p_owner uuid,p_file uuid,p_provider_id text,p_checksum text,p_size bigint,p_mime text)
+returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare f public.storage_files%rowtype; allowed boolean;
+begin
+  select upload_enabled into allowed from public.storage_accounts where profile_id=p_owner for update;
+  if not found or not allowed or not public.is_active_profile(p_owner) then raise exception 'Upload no longer allowed'; end if;
+  select * into f from public.storage_files where id=p_file and owner_id=p_owner and resource_type='post_attachment' for update;
+  if not found or p_provider_id is null or p_provider_id !~ '^[A-Za-z0-9_-]{10,200}$' or f.checksum is distinct from p_checksum or f.byte_size is distinct from p_size or f.mime_type is distinct from p_mime then raise exception 'Invalid operation'; end if;
+  if f.status='ready' and f.provider_file_id=p_provider_id then return; end if;
+  if f.status<>'reserved' then raise exception 'Operation no longer pending'; end if;
+  perform 1 from public.posts where id=f.resource_id and author_id=p_owner and status='published' and deleted_at is null for update;
+  if not found then raise exception 'Post unavailable'; end if;
+  update public.storage_files set status='ready',provider_file_id=p_provider_id where id=p_file;
+end $$;
+revoke all on function public.storage_finalize_post_attachment(uuid,uuid,text,text,bigint,text) from public,anon,authenticated;
+grant execute on function public.storage_finalize_post_attachment(uuid,uuid,text,text,bigint,text) to service_role;
+
+create function public.storage_retire_post_attachment(p_owner uuid,p_file uuid) returns void
+language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  perform 1 from public.storage_accounts where profile_id=p_owner for update;
+  update public.storage_files set status='delete_pending' where id=p_file and owner_id=p_owner and resource_type='post_attachment' and status in ('ready','reserved');
+end $$;
+revoke all on function public.storage_retire_post_attachment(uuid,uuid) from public,anon,authenticated;
+grant execute on function public.storage_retire_post_attachment(uuid,uuid) to service_role;
+
+create function public.storage_complete_post_attachment_delete(p_file uuid) returns void
+language sql security definer set search_path=public,pg_temp as $$
+  update public.storage_files set status='deleted',deleted_at=now() where id=p_file and resource_type='post_attachment' and status='delete_pending';
+$$;
+revoke all on function public.storage_complete_post_attachment_delete(uuid) from public,anon,authenticated;
+grant execute on function public.storage_complete_post_attachment_delete(uuid) to service_role;
+
+-- Soft deletion retires attachments in the same transaction. Restore does not
+-- revive deleted uploads; reconciliation releases quota only after Drive cleanup.
+create function public.storage_retire_deleted_post() returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  if new.status='deleted' and old.status <> 'deleted' then
+    update public.storage_files set status='delete_pending' where resource_type='post_attachment' and resource_id=new.id and status in ('reserved','ready');
+  end if;
+  return new;
+end $$;
+revoke all on function public.storage_retire_deleted_post() from public,anon,authenticated;
+create trigger storage_retire_deleted_post after update of status on public.posts for each row execute function public.storage_retire_deleted_post();
+
+-- Include the new associations in the independent backup catalogue.
+select public.backup_sync_triggers();
+
+-- Do not let author/staff SELECT policies bypass normal attachment visibility.
+-- Invoker RLS and the explicit predicates both apply to every request.
+create function public.can_view_post_attachment(p_post uuid) returns boolean
+language sql stable security invoker set search_path=public,pg_temp as $$
+  select exists(select 1 from public.posts p where p.id=p_post and p.status='published' and p.deleted_at is null
+    and public.is_active_profile(p.author_id) and not public.is_blocked_with_current(p.author_id)
+    and not public.is_muted_by_current(p.author_id)
+    and ((p.community_id is null and p.visibility in ('public','campus'))
+      or (p.community_id is not null and public.can_view_community(p.community_id))));
+$$;
+revoke all on function public.can_view_post_attachment(uuid) from public,anon;
+grant execute on function public.can_view_post_attachment(uuid) to authenticated;
+
+-- ==========================================================================
+-- FILE 49/50  20261112000003_049_post_attachment_order.sql
+-- ==========================================================================
+
+-- Reorder only an exact snapshot of this owner's current ready attachments.
+-- The account and post locks serialize this with reservations and removals.
+create function public.storage_reorder_post_attachments(p_owner uuid,p_post uuid,p_files uuid[])
+returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare expected integer; supplied integer;
+begin
+  if p_owner is null or p_post is null or p_files is null or not public.is_active_profile(p_owner) then raise exception 'Invalid request' using errcode='42501'; end if;
+  perform 1 from public.storage_accounts where profile_id=p_owner for update;
+  if not found then raise exception 'Not permitted' using errcode='42501'; end if;
+  perform 1 from public.posts where id=p_post and author_id=p_owner and status='published' and deleted_at is null for update;
+  if not found then raise exception 'Post unavailable' using errcode='42501'; end if;
+  if exists(select 1 from public.storage_files where resource_type='post_attachment' and resource_id=p_post and status='reserved') then
+    raise exception 'Upload pending' using errcode='23505';
+  end if;
+  select count(*) into expected from public.storage_files where resource_type='post_attachment' and resource_id=p_post and owner_id=p_owner and status='ready';
+  select count(distinct id) into supplied from unnest(p_files) id;
+  if expected <> coalesce(array_length(p_files,1),0) or supplied <> expected or exists (
+    select 1 from unnest(p_files) id where not exists (
+      select 1 from public.storage_files f join public.post_attachment_links l on l.file_id=f.id
+      where f.id=id and f.owner_id=p_owner and f.resource_type='post_attachment' and f.resource_id=p_post and f.status='ready' and l.post_id=p_post))
+  then raise exception 'Attachments changed; reload' using errcode='23505'; end if;
+  update public.post_attachment_links l set position=ordered.ordinality-1
+    from unnest(p_files) with ordinality as ordered(file_id,ordinality)
+    where l.file_id=ordered.file_id and l.post_id=p_post;
+end $$;
+revoke all on function public.storage_reorder_post_attachments(uuid,uuid,uuid[]) from public,anon,authenticated;
+grant execute on function public.storage_reorder_post_attachments(uuid,uuid,uuid[]) to service_role;
+
+-- ==========================================================================
+-- FILE 50/50  20261112000004_050_post_attachment_drafts.sql
+-- ==========================================================================
+
+-- Private, expiring upload drafts. Nothing is visible as a post until the
+-- invoker-RLS publication function commits the post and links in one transaction.
+create table public.post_upload_drafts (
+  id uuid primary key,
+  owner_id uuid not null references public.profiles(id) on delete restrict,
+  state text not null default 'open' check (state in ('open','published','abandoned')),
+  post_id uuid references public.posts(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default now() + interval '24 hours',
+  check ((state = 'published') = (post_id is not null))
+);
+create index post_upload_drafts_expiry on public.post_upload_drafts(expires_at) where state='open';
+alter table public.post_upload_drafts enable row level security;
+revoke all on public.post_upload_drafts from public,anon,authenticated;
+create policy post_upload_drafts_deny on public.post_upload_drafts for all to authenticated using(false) with check(false);
+grant select,insert,update on public.post_upload_drafts to service_role;
+
+create table public.post_upload_draft_files (
+  file_id uuid primary key references public.storage_files(id) on delete restrict,
+  draft_id uuid not null references public.post_upload_drafts(id) on delete restrict,
+  position integer not null check(position between 0 and 7)
+);
+create index post_upload_draft_files_draft on public.post_upload_draft_files(draft_id,position);
+alter table public.post_upload_draft_files enable row level security;
+revoke all on public.post_upload_draft_files from public,anon,authenticated;
+create policy post_upload_draft_files_deny on public.post_upload_draft_files for all to authenticated using(false) with check(false);
+grant select,insert,update on public.post_upload_draft_files to service_role;
+
+create function public.storage_create_post_draft(p_owner uuid,p_draft uuid) returns uuid language plpgsql security definer set search_path=public,pg_temp as $$
+declare existing public.post_upload_drafts%rowtype; enabled boolean;
+begin
+  if p_owner is null or p_draft is null or not public.is_active_profile(p_owner) then raise exception 'Not allowed' using errcode='42501'; end if;
+  insert into public.storage_accounts(profile_id) values(p_owner) on conflict do nothing;
+  select upload_enabled into enabled from public.storage_accounts where profile_id=p_owner for update;
+  if not enabled then raise exception 'Uploads disabled' using errcode='42501'; end if;
+  select * into existing from public.post_upload_drafts where id=p_draft for update;
+  if found then
+    if existing.owner_id<>p_owner or existing.state<>'open' or existing.expires_at<=now() then raise exception 'Draft unavailable' using errcode='42501'; end if;
+    return p_draft;
+  end if;
+  if (select count(*) from public.post_upload_drafts where owner_id=p_owner and state='open' and expires_at>now())>=5 then raise exception 'Too many drafts' using errcode='22023'; end if;
+  insert into public.post_upload_drafts(id,owner_id) values(p_draft,p_owner);
+  return p_draft;
+end $$;
+revoke all on function public.storage_create_post_draft(uuid,uuid) from public,anon,authenticated;
+grant execute on function public.storage_create_post_draft(uuid,uuid) to service_role;
+
+create function public.storage_reserve_draft_attachment(p_owner uuid,p_draft uuid,p_request_id uuid,p_name text,p_mime text,p_size bigint,p_checksum text)
+returns uuid language plpgsql security definer set search_path=public,pg_temp as $$
+declare account public.storage_accounts%rowtype; f public.storage_files%rowtype; v_id uuid; v_pos integer; v_used bigint; v_ms bigint;
+begin
+  if p_owner is null or not public.is_active_profile(p_owner) then raise exception 'Not allowed' using errcode='42501'; end if;
+  if p_request_id is null or p_name is null or length(p_name) not between 1 and 180 or p_mime is null or p_mime not in ('image/jpeg','image/png','image/webp','application/pdf') or p_size is null or p_size not between 1 and 3145728 or p_checksum is null or p_checksum !~ '^[0-9a-f]{64}$' then raise exception 'Invalid file' using errcode='22023'; end if;
+  select * into account from public.storage_accounts where profile_id=p_owner for update;
+  if not found or not account.upload_enabled then raise exception 'Uploads disabled' using errcode='42501'; end if;
+  perform 1 from public.post_upload_drafts where id=p_draft and owner_id=p_owner and state='open' and expires_at>now() for update;
+  if not found then raise exception 'Draft unavailable' using errcode='42501'; end if;
+  select * into f from public.storage_files where owner_id=p_owner and request_id=p_request_id;
+  if found then
+    if f.resource_type<>'post_attachment' or f.resource_id<>p_draft or f.original_name<>p_name or f.mime_type<>p_mime or f.byte_size<>p_size or f.checksum<>p_checksum or f.status not in ('reserved','ready') or (f.status='reserved' and f.upload_expires_at<=clock_timestamp()) then raise exception 'Conflicting operation' using errcode='23505'; end if;
+    return f.id;
+  end if;
+  select coalesce(sum(byte_size),0) into v_used from public.storage_files where owner_id=p_owner and status in ('reserved','ready','delete_pending');
+  if v_used+p_size>account.quota_bytes then raise exception 'Quota exceeded' using errcode='22023'; end if;
+  select n into v_pos from generate_series(0,7) n where not exists (select 1 from public.post_upload_draft_files l join public.storage_files sf on sf.id=l.file_id where l.draft_id=p_draft and l.position=n and sf.status in ('reserved','ready')) order by n limit 1;
+  if v_pos is null then raise exception 'Attachment limit' using errcode='22023'; end if;
+  v_id:=gen_random_uuid(); v_ms:=floor(extract(epoch from clock_timestamp()+interval '10 minutes')*1000)::bigint;
+  insert into public.storage_files(id,owner_id,request_id,original_name,mime_type,byte_size,checksum,resource_type,resource_id,upload_expires_at,gateway_key)
+    values(v_id,p_owner,p_request_id,p_name,p_mime,p_size,p_checksum,'post_attachment',p_draft,to_timestamp(v_ms/1000.0),v_ms::text||'-'||v_id::text);
+  insert into public.post_upload_draft_files(file_id,draft_id,position) values(v_id,p_draft,v_pos);
+  return v_id;
+end $$;
+revoke all on function public.storage_reserve_draft_attachment(uuid,uuid,uuid,text,text,bigint,text) from public,anon,authenticated;
+grant execute on function public.storage_reserve_draft_attachment(uuid,uuid,uuid,text,text,bigint,text) to service_role;
+
+create function public.storage_finalize_draft_attachment(p_owner uuid,p_file uuid,p_provider text,p_checksum text,p_size bigint,p_mime text) returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare f public.storage_files%rowtype; enabled boolean;
+begin
+  select upload_enabled into enabled from public.storage_accounts where profile_id=p_owner for update;
+  if not found or not enabled or not public.is_active_profile(p_owner) then raise exception 'Uploads disabled' using errcode='42501'; end if;
+  select * into f from public.storage_files where id=p_file and owner_id=p_owner and resource_type='post_attachment' for update;
+  if not found or p_provider is null or p_provider !~ '^[A-Za-z0-9_-]{10,200}$' or f.checksum is distinct from p_checksum or f.byte_size is distinct from p_size or f.mime_type is distinct from p_mime then raise exception 'Invalid operation'; end if;
+  perform 1 from public.post_upload_drafts where id=f.resource_id and owner_id=p_owner and state='open' and expires_at>now() for update;
+  if not found then raise exception 'Draft unavailable'; end if;
+  if f.status='ready' and f.provider_file_id=p_provider then return; end if;
+  if f.status<>'reserved' then raise exception 'Operation no longer pending'; end if;
+  update public.storage_files set status='ready',provider_file_id=p_provider where id=p_file;
+end $$;
+revoke all on function public.storage_finalize_draft_attachment(uuid,uuid,text,text,bigint,text) from public,anon,authenticated;
+grant execute on function public.storage_finalize_draft_attachment(uuid,uuid,text,text,bigint,text) to service_role;
+
+create function public.storage_abandon_post_draft(p_owner uuid,p_draft uuid) returns text language plpgsql security definer set search_path=public,pg_temp as $$
+declare current_state text;
+begin
+  perform 1 from public.storage_accounts where profile_id=p_owner for update;
+  select state into current_state from public.post_upload_drafts where id=p_draft and owner_id=p_owner for update;
+  if not found then return 'absent'; end if;
+  if current_state='published' then return 'published'; end if;
+  if current_state='open' then
+    update public.post_upload_drafts set state='abandoned' where id=p_draft;
+    update public.storage_files f set status='delete_pending' from public.post_upload_draft_files l where l.file_id=f.id and l.draft_id=p_draft and f.resource_type='post_attachment' and f.resource_id=p_draft and f.owner_id=p_owner and f.status in ('reserved','ready');
+  end if;
+  return 'abandoned';
+end $$;
+revoke all on function public.storage_abandon_post_draft(uuid,uuid) from public,anon,authenticated;
+grant execute on function public.storage_abandon_post_draft(uuid,uuid) to service_role;
+
+-- A draft UUID can equal a post UUID. Retire by association, not by the
+-- polymorphic resource_id alone, so deleting a post cannot retire draft files.
+create or replace function public.storage_retire_deleted_post() returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  if new.status='deleted' and old.status <> 'deleted' then
+    update public.storage_files f set status='delete_pending' from public.post_attachment_links l
+      where l.file_id=f.id and l.post_id=new.id and f.resource_type='post_attachment' and f.resource_id=new.id and f.status in ('reserved','ready');
+  end if;
+  return new;
+end $$;
+
+-- Only the draft owner can claim its files onto their own newly created post.
+create function public.storage_commit_post_draft(p_draft uuid,p_post uuid,p_files uuid[]) returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare actor uuid:=public.current_profile_id(); draft public.post_upload_drafts%rowtype; n integer;
+begin
+  if actor is null or not public.is_active_user() or p_files is null or cardinality(p_files) not between 1 and 8 then raise exception 'Not allowed' using errcode='42501'; end if;
+  perform 1 from public.storage_accounts where profile_id=actor and upload_enabled for update;
+  if not found then raise exception 'Uploads disabled' using errcode='42501'; end if;
+  select * into draft from public.post_upload_drafts where id=p_draft and owner_id=actor for update;
+  if not found or draft.state<>'open' or draft.expires_at<=now() then raise exception 'Draft unavailable' using errcode='42501'; end if;
+  perform 1 from public.posts where id=p_post and author_id=actor and status in ('published','pending') and deleted_at is null and created_at > now() - interval '5 minutes' for update;
+  if not found then raise exception 'Post unavailable' using errcode='42501'; end if;
+  if exists(select 1 from public.post_attachment_links l join public.storage_files f on f.id=l.file_id where l.post_id=p_post and f.status in ('ready','reserved')) then raise exception 'Post already has attachments' using errcode='23505'; end if;
+  select count(*) into n from public.storage_files f join public.post_upload_draft_files l on l.file_id=f.id where l.draft_id=p_draft and f.owner_id=actor and f.resource_type='post_attachment' and f.resource_id=p_draft and f.status in ('ready','reserved');
+  if n<>cardinality(p_files) or (select count(distinct x) from unnest(p_files) x)<>n or exists(select 1 from unnest(p_files) x where not exists(select 1 from public.storage_files f join public.post_upload_draft_files l on l.file_id=f.id where f.id=x and f.owner_id=actor and f.resource_id=p_draft and f.status='ready' and l.draft_id=p_draft)) then raise exception 'Draft uploads incomplete' using errcode='23505'; end if;
+  update public.storage_files set resource_id=p_post where id=any(p_files);
+  insert into public.post_attachment_links(file_id,post_id,position) select x,p_post,ordinality-1 from unnest(p_files) with ordinality as files(x,ordinality);
+  update public.post_upload_drafts set state='published',post_id=p_post where id=p_draft;
+end $$;
+revoke all on function public.storage_commit_post_draft(uuid,uuid,uuid[]) from public,anon;
+grant execute on function public.storage_commit_post_draft(uuid,uuid,uuid[]) to authenticated;
+
+-- A lost response can be retried without creating a second post.
+create function public.storage_published_draft_post(p_draft uuid) returns uuid language sql stable security definer set search_path=public,pg_temp as $$
+  select post_id from public.post_upload_drafts where id=p_draft and owner_id=public.current_profile_id() and public.is_active_user() and state='published';
+$$;
+revoke all on function public.storage_published_draft_post(uuid) from public,anon;
+grant execute on function public.storage_published_draft_post(uuid) to authenticated;
+
+-- RLS still controls INSERT; post and file association commit atomically.
+create function public.publish_post_with_draft(p_draft uuid,p_post uuid,p_kind public.post_kind,p_title text,p_body text,p_gif jsonb,p_community uuid,p_closes timestamptz,p_options text[],p_files uuid[]) returns uuid
+language plpgsql security invoker set search_path=public,pg_temp as $$
+declare actor uuid:=public.current_profile_id(); option_text text; pos integer:=0; existing uuid;
+begin
+  if actor is null or not public.is_active_user() then raise exception 'Not allowed' using errcode='42501'; end if;
+  existing:=public.storage_published_draft_post(p_draft);
+  if existing is not null then return existing; end if;
+  insert into public.posts(id,author_id,kind,title,body,gif,visibility,community_id,status,poll_closes_at)
+    values(p_post,actor,p_kind,p_title,p_body,p_gif,case when p_community is null then 'campus'::public.visibility_level else 'community'::public.visibility_level end,p_community,'published',p_closes);
+  if p_kind='poll' then
+    if cardinality(p_options) not between 2 and 6 then raise exception 'Invalid poll'; end if;
+    foreach option_text in array p_options loop
+      insert into public.poll_options(post_id,label,position) values(p_post,option_text,pos); pos:=pos+1;
+    end loop;
+  elsif coalesce(cardinality(p_options),0)<>0 then raise exception 'Unexpected options'; end if;
+  perform public.storage_commit_post_draft(p_draft,p_post,p_files);
+  return p_post;
+end $$;
+revoke all on function public.publish_post_with_draft(uuid,uuid,public.post_kind,text,text,jsonb,uuid,timestamptz,text[],uuid[]) from public,anon;
+grant execute on function public.publish_post_with_draft(uuid,uuid,public.post_kind,text,text,jsonb,uuid,timestamptz,text[],uuid[]) to authenticated;
+
+select public.backup_sync_triggers();
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)

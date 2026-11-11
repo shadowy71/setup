@@ -10,6 +10,16 @@ var CAMPUS_MAX_BYTES = 3 * 1024 * 1024;
 var CAMPUS_FILE_PREFIX = 'campus-upload-v2-';
 var CAMPUS_NONCE_PREFIX = 'campus-nonce-v1-';
 var CAMPUS_DELETED_PREFIX = 'campus-deleted-v1-';
+// Versioned keys encode an immutable upload deadline. Legacy keys remain in
+// their own namespace and retain their permanent tombstones.
+var CAMPUS_FILE_V3_PREFIX = 'campus-upload-v3-';
+var CAMPUS_DELETED_V3_PREFIX = 'campus-deleted-v3-';
+var CAMPUS_V3_MAX_FUTURE_MS = 60 * 60 * 1000;
+
+function campusV3Deadline_(key) {
+  if (typeof key !== 'string' || !/^[0-9]{13}-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(key)) return null;
+  return Number(key.slice(0, 13));
+}
 
 function campusJson_(result) {
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
@@ -42,12 +52,44 @@ function campusMember_(file, root) {
 function campusFile_(id, root) {
   if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{10,200}$/.test(id)) throw new Error('invalid_request');
   var file = DriveApp.getFileById(id);
-  if (!campusMember_(file, root) || !/^campus-upload-v2-[a-f0-9-]{36}$/.test(file.getName())) throw new Error('not_found');
+  if (!campusMember_(file, root) || !(/^campus-upload-v2-[a-f0-9-]{36}$/.test(file.getName()) || /^campus-upload-v3-[0-9]{13}-[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(file.getName()))) throw new Error('not_found');
   return file;
 }
 function campusRun_(payload) {
   var root = campusRoot_();
   if (payload.operation === 'health') return { ok: true };
+  // V3 uses a separate Drive namespace: a legacy request cannot bypass its
+  // deadline or deletion marker. The deadline is part of the immutable key.
+  if (payload.operation === 'upload_v3') {
+    var deadline = campusV3Deadline_(payload.key);
+    var now = Date.now(); // checked while holding the gateway lock
+    if (deadline === null || deadline < now || deadline > now + CAMPUS_V3_MAX_FUTURE_MS) return campusError_('operation_expired');
+    if (typeof payload.name !== 'string' || payload.name.length < 1 || payload.name.length > 180 ||
+        typeof payload.mime !== 'string' || ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].indexOf(payload.mime) < 0 ||
+        typeof payload.base64 !== 'string' || payload.base64.length > 4 * Math.ceil(CAMPUS_MAX_BYTES / 3) ||
+        !/^[A-Za-z0-9+/]*={0,2}$/.test(payload.base64) || !/^[a-f0-9]{64}$/.test(payload.checksum || '')) return campusError_('invalid_request');
+    var v3bytes = Utilities.base64Decode(payload.base64);
+    if (!v3bytes.length || v3bytes.length > CAMPUS_MAX_BYTES || campusHash_(v3bytes) !== payload.checksum) return campusError_('invalid_request');
+    if (PropertiesService.getScriptProperties().getProperty(CAMPUS_DELETED_V3_PREFIX + payload.key)) return campusError_('operation_deleted');
+    var v3name = CAMPUS_FILE_V3_PREFIX + payload.key;
+    var v3files = root.getFilesByName(v3name);
+    var v3file = v3files.hasNext() ? v3files.next() : null;
+    if (v3files.hasNext()) return campusError_('idempotency_conflict');
+    if (!v3file) v3file = root.createFile(Utilities.newBlob(v3bytes, payload.mime, v3name));
+    if (v3file.isTrashed() || v3file.getMimeType() !== payload.mime || v3file.getSize() !== v3bytes.length ||
+        campusHash_(v3file.getBlob().getBytes()) !== payload.checksum) return campusError_('idempotency_conflict');
+    return { ok: true, id: v3file.getId(), size: v3file.getSize(), mime: v3file.getMimeType(), checksum: payload.checksum };
+  }
+  if (payload.operation === 'delete_key_v3') {
+    var deleteDeadline = campusV3Deadline_(payload.key);
+    if (deleteDeadline === null || deleteDeadline > Date.now() + CAMPUS_V3_MAX_FUTURE_MS) return campusError_('invalid_request');
+    // Until the upload deadline, a marker must be durable, including if the
+    // deletion response is lost. Once past it, upload_v3 itself fails closed.
+    if (deleteDeadline >= Date.now()) PropertiesService.getScriptProperties().setProperty(CAMPUS_DELETED_V3_PREFIX + payload.key, String(deleteDeadline));
+    var v3delete = root.getFilesByName(CAMPUS_FILE_V3_PREFIX + payload.key);
+    while (v3delete.hasNext()) { var v3doomed = v3delete.next(); if (!v3doomed.isTrashed()) v3doomed.setTrashed(true); }
+    return { ok: true };
+  }
   if (payload.operation === 'upload') {
     if (typeof payload.key !== 'string' || !/^[a-f0-9-]{36}$/.test(payload.key) ||
         typeof payload.name !== 'string' || payload.name.length < 1 || payload.name.length > 180 ||
@@ -146,7 +188,7 @@ function doPost(e) {
     if (properties.getProperty(nonceKey)) return campusJson_(campusError_('replay'));
     var existing = properties.getProperties();
     Object.keys(existing).forEach(function (key) {
-      if (key.indexOf(CAMPUS_NONCE_PREFIX) === 0 && Number(existing[key]) < Date.now()) properties.deleteProperty(key);
+      if ((key.indexOf(CAMPUS_NONCE_PREFIX) === 0 || key.indexOf(CAMPUS_DELETED_V3_PREFIX) === 0) && Number(existing[key]) < Date.now()) properties.deleteProperty(key);
     });
     properties.setProperty(nonceKey, String(envelope.timestamp + CAMPUS_WINDOW_MS + 1000));
     var payload = JSON.parse(envelope.payload);

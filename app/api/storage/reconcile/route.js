@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { reconcileProfilePhotos } from '@/lib/storage/profile-photo';
+import { reconcilePostAttachments } from '@/lib/storage/post-attachments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,8 @@ export async function GET(request) {
   }
   try {
     const result = await reconcileProfilePhotos();
-    return NextResponse.json({ ok: true, ...result }, { headers: { 'Cache-Control': 'no-store' } });
+    const attachments = await reconcilePostAttachments();
+    return NextResponse.json({ ok: true, ...result, attachments }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ ok: false }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }

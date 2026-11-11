@@ -22,6 +22,7 @@ function mockGateway() {
     files.push(f); return f;
   } };
   const context = {
+    Date,
     console: { error: vi.fn(), log: vi.fn() },
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: (text) => ({ text, setMimeType() { return this; } }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: (key) => props[key], getProperties: () => ({ ...props }), deleteProperty: (key) => { delete props[key]; }, setProperty: (key, value) => { props[key] = value; } }) },
@@ -175,5 +176,55 @@ describe('signed gateway', () => {
     const provider = createAppsScriptProvider({ url: 'https://script.google.com/macros/s/example/exec', secret, fetchImpl: async () => new Response('secret internal error', { status: 500 }) });
     await expect(provider.health()).rejects.toThrow('storage_unavailable');
     expect(() => createAppsScriptProvider({ url: 'https://example.com/exec', secret })).toThrow('storage_not_configured');
+  });
+});
+
+describe('versioned, deadline-bound gateway operations', () => {
+  it('blocks a delayed upload before and after a deletion marker expires', () => {
+    vi.useFakeTimers();
+    try {
+      const gateway = mockGateway();
+      const expiry = Date.now() + 5000;
+      const v3key = `${expiry}-${key}`;
+      const upload = { operation: 'upload_v3', key: v3key, name: 'image.png', mime: 'image/png', checksum, base64: bytes.toString('base64') };
+      const remove = { operation: 'delete_key_v3', key: v3key };
+      expect(gateway.request(signEnvelope(remove, secret)).ok).toBe(true);
+      expect(gateway.request(signEnvelope(upload, secret)).code).toBe('operation_deleted');
+      vi.advanceTimersByTime(5001);
+      expect(gateway.request(signEnvelope(upload, secret)).code).toBe('operation_expired');
+      expect(gateway.props[`campus-deleted-v3-${v3key}`]).toBeUndefined();
+      expect(gateway.request(signEnvelope(remove, secret)).ok).toBe(true);
+      expect(gateway.files).toHaveLength(0);
+    } finally { vi.useRealTimers(); }
+  });
+  it('isolates legacy names and idempotently deletes only the matching v3 key', () => {
+    const gateway = mockGateway();
+    const v3key = `${Date.now() + 10000}-${key}`;
+    const upload = { operation: 'upload_v3', key: v3key, name: 'image.png', mime: 'image/png', checksum, base64: bytes.toString('base64') };
+    const first = gateway.request(signEnvelope(upload, secret));
+    expect(first.ok).toBe(true);
+    expect(gateway.request(signEnvelope(upload, secret)).id).toBe(first.id);
+    expect(gateway.request(signEnvelope({ ...upload, operation: 'upload', key: v3key }, secret)).code).toBe('invalid_request');
+    expect(gateway.request(signEnvelope({ operation: 'download', id: first.id }, secret)).ok).toBe(true);
+    expect(gateway.request(signEnvelope({ operation: 'delete_key_v3', key: v3key }, secret)).ok).toBe(true);
+    expect(gateway.request(signEnvelope({ operation: 'delete_key_v3', key: v3key }, secret)).ok).toBe(true);
+    expect(gateway.files[0].trashed).toBe(true);
+  });
+  it('uses V3 transport with the simulated gateway', async () => {
+    const gateway = mockGateway();
+    const fetchImpl = async (_url, options) => new Response(JSON.stringify(gateway.request(JSON.parse(options.body))));
+    const provider = createAppsScriptProvider({ url: 'https://script.google.com/macros/s/example/exec', secret, fetchImpl });
+    const v3key = `${Date.now() + 10000}-${key}`;
+    const file = await provider.uploadV3({ key: v3key, name: 'image.png', mime: 'image/png', bytes });
+    expect(await provider.download(file.id, file)).toEqual(bytes);
+    await provider.deleteByKeyV3(v3key);
+    await expect(provider.uploadV3({ key: v3key, name: 'image.png', mime: 'image/png', bytes })).rejects.toThrow('storage_unavailable');
+  });
+  it('rejects invalid and excessively future-dated versioned keys', () => {
+    const gateway = mockGateway();
+    const upload = { operation: 'upload_v3', name: 'image.png', mime: 'image/png', checksum, base64: bytes.toString('base64') };
+    expect(gateway.request(signEnvelope({ ...upload, key: `${Date.now() + 3660000}-${key}` }, secret)).ok).toBe(false);
+    expect(gateway.request(signEnvelope({ ...upload, key }, secret)).ok).toBe(false);
+    expect(gateway.request(signEnvelope({ operation: 'delete_key_v3', key }, secret)).ok).toBe(false);
   });
 });

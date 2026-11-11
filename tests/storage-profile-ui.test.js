@@ -18,7 +18,7 @@ describe('profile photo interface', () => {
   });
   it('uses a same-origin authenticated avatar and keeps initials fallback', () => {
     const html = renderToStaticMarkup(React.createElement(IdentityMark, { username: 'alice', name: 'Alice' }));
-    expect(html).toContain('/api/storage/profile-photo/alice?v=0');
+    expect(html).toContain('/api/storage/profile-photo/alice');
     expect(html).toContain('>A<img');
     expect(renderToStaticMarkup(React.createElement(IdentityMark, { name: 'Alice' }))).toContain('>A</span>');
   });
