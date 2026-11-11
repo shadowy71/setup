@@ -1,3 +1,4 @@
+import { LostFoundGallery } from '@/components/campus/LostFoundGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -87,6 +88,7 @@ export default async function LostFoundDetailPage({ params }) {
         </span>
       </Card>
 
+      <LostFoundGallery reportId={id} />
       {isOwner ? <OwnBoardActions type="lostfound" id={item.id} editHref={`/campus/lost-found/${item.id}/edit`} /> : null}
 
       {item.resolved_at ? (

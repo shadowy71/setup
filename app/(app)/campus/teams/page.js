@@ -1,3 +1,4 @@
+import { TeamGallery } from '@/components/campus/TeamGallery';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
@@ -56,6 +57,7 @@ export default async function TeamsPage() {
           return (
             <ContentCard
               key={post.id}
+              media={<TeamGallery postId={post.id} coverOnly />}
               href={`/campus/teams/${post.id}`}
               title={post.project_name}
               description={post.description}

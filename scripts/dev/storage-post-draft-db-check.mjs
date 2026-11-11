@@ -1,4 +1,4 @@
-/** Disposable PostgreSQL draft, quota and atomic post publication checks. */
+/** Disposable PostgreSQL draft, authorization and atomic post publication checks. */
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';

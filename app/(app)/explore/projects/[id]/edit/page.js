@@ -1,3 +1,4 @@
+import { ProjectGallery } from '@/components/campus/ProjectGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -17,6 +18,7 @@ export default async function EditPage({ params }) {
   return <div className="flex flex-col gap-4">
     <PageHeader title="Edit project" back={{ href: '/explore/projects', label: 'Project' }} />
     {record.status !== 'published' ? <Notice tone="warning" icon="flag">Editing does not change this post’s moderation status.</Notice> : null}
+    <ProjectGallery postId={id} manage username={user.profile.username} />
     <ActionForm action={updateOwnCampusBoard} hidden={{ id, type: 'projects' }} submitLabel="Save changes" cancelHref="/explore/projects" resetOnSuccess={false} fields={[
           { name: 'title', label: 'Title', type: 'text', defaultValue: record.title ?? '', maxLength: 140, required: true },
           { name: 'description', label: 'What does it do?', type: 'textarea', defaultValue: record.description ?? '', maxLength: 2000, required: true },

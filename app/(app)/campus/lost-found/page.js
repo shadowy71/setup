@@ -1,3 +1,4 @@
+import { LostFoundGallery } from '@/components/campus/LostFoundGallery';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
@@ -72,6 +73,7 @@ export default async function LostFoundPage({ searchParams }) {
             <ContentCard
               key={item.id}
               href={`/campus/lost-found/${item.id}`}
+              media={<LostFoundGallery reportId={item.id} coverOnly />}
               title={item.title}
               description={item.description}
               icon={item.kind === 'lost' ? 'search' : 'check'}

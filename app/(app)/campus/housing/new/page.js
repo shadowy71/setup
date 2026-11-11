@@ -29,6 +29,7 @@ export default async function NewHousingPage() {
       />
       <ActionForm
         action={createHousingPost}
+        housingAttachments={user.profile.username}
         submitLabel="Publish post"
         successMessage="Published."
         redirectTo="/campus/housing"

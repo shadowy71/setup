@@ -1,3 +1,8 @@
+import { reconcileProjectFiles } from '@/lib/storage/project-attachments';
+import { reconcileTeamFiles } from '@/lib/storage/team-attachments';
+import { reconcileRideFiles } from '@/lib/storage/ride-attachments';
+import { reconcileHousingFiles } from '@/lib/storage/housing-attachments';
+import { reconcileReportImages } from '@/lib/storage/lost-found-images';
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { reconcileProfilePhotos } from '@/lib/storage/profile-photo';
@@ -19,7 +24,12 @@ export async function GET(request) {
     const result = await reconcileProfilePhotos();
     const attachments = await reconcilePostAttachments();
     const marketplace = await reconcileMarketplaceFiles();
-    return NextResponse.json({ ok: true, ...result, attachments, marketplace }, { headers: { 'Cache-Control': 'no-store' } });
+    const lostFound = await reconcileReportImages();
+    const housing = await reconcileHousingFiles();
+    const ride = await reconcileRideFiles();
+    const team = await reconcileTeamFiles();
+    const project = await reconcileProjectFiles();
+    return NextResponse.json({ ok: true, ...result, attachments, marketplace, lostFound, housing, ride, team, project }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ ok: false }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }

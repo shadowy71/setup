@@ -1,3 +1,4 @@
+import { HousingGallery } from '@/components/campus/HousingGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -22,6 +23,7 @@ export default async function DetailPage({ params }) {
     <PageHeader title={record.title} back={{ href: '/campus/housing', label: 'Housing' }} />
     <div className="flex flex-wrap gap-2">{record.status !== 'published' ? <Badge tone="danger">{record.status}</Badge> : null}{[record.area, record.room_type, record.budget ? `₹${record.budget}` : null, record.available_from ? `Available from ${record.available_from}` : null].filter(Boolean).map((item) => <Badge key={item}>{item}</Badge>)}</div>
     <Card className="p-4"><p className="user-text whitespace-pre-wrap"><LinkifiedText text={record.description} /></p></Card>
+    <HousingGallery postId={id} />
     <PostActionsRow creatorId={record.creator_id} isOwner={owner} canReport={can(actor, 'report_content')} canMessage={can(actor, 'send_messages')} reportType="housing_post" reportRef={id} />
     {owner ? <OwnBoardActions type="housing" id={id} editHref={`/campus/housing/${id}/edit`} /> : null}
   </div>;

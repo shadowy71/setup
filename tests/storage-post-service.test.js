@@ -16,7 +16,7 @@ describe('post attachment cleanup',()=>{
     rows.post_attachment_links = [{post_id:'post',file_id:'file'}];
     expect((await getPostAttachment('post','file')).id).toBe('file');
   });
-  it('does not release quota if the gateway delete fails and retries later',async()=>{
+  it('keeps deletion pending if the gateway delete fails and retries later',async()=>{
     rows.storage_files.push({id:'file',gateway_key:'key',resource_type:'post_attachment',status:'delete_pending'});
     m.remove.mockRejectedValueOnce(Error('offline'));
     expect(await cleanPostAttachment('file')).toBe(false);

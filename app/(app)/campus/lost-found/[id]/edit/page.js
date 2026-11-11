@@ -1,3 +1,4 @@
+import { LostFoundGallery } from '@/components/campus/LostFoundGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -17,6 +18,7 @@ export default async function EditReport({ params }) {
   return <div className="flex flex-col gap-4">
     <PageHeader title="Edit item report" back={{ href: `/campus/lost-found/${id}`, label: 'Report' }} />
     {item.status !== 'published' ? <Notice tone="warning">Editing does not change moderation status.</Notice> : null}
+    <LostFoundGallery reportId={id} manage username={user.profile.username} />
     <ActionForm action={updateOwnCampusBoard} hidden={{ id, type: 'lostfound', kind: item.kind }} resetOnSuccess={false} cancelHref={`/campus/lost-found/${id}`} fields={[
       { name: 'title', label: 'Item', required: true, maxLength: 140, defaultValue: item.title },
       { name: 'description', label: 'Details', type: 'textarea', required: true, maxLength: 1000, defaultValue: item.description },

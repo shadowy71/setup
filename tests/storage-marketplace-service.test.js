@@ -12,7 +12,7 @@ describe('marketplace image cleanup',()=>{
     expect(await marketplaceFile('listing','file')).toBeNull();
     rows.marketplace_attachment_links.push({listing_id:'listing',file_id:'file'}); expect((await marketplaceFile('listing','file')).id).toBe('file');
   });
-  it('does not release quota until deletion is confirmed and retries pending work',async()=>{
+  it('keeps deletion pending until confirmed and retries pending work',async()=>{
     rows.storage_files.push({id:'file',gateway_key:'key',resource_type:'marketplace_image',status:'delete_pending'});m.remove.mockRejectedValueOnce(Error('offline'));
     expect(await cleanupMarketplaceFile('file')).toBe(false);expect(calls).toEqual([]);
     expect(await reconcileMarketplaceFiles()).toEqual({processed:1,retryPending:false});

@@ -73,7 +73,7 @@ describe('profile photo lifecycle service (mocked Drive and ledger)', () => {
       expect(mocks.remove).not.toHaveBeenCalled();
     } finally { delete process.env.CAMPUS_STORAGE_V3_ENABLED; }
   });
-  it('rejects malformed data before reserving quota', async () => {
+  it('rejects malformed data before reserving an upload', async () => {
     await expect(run(Buffer.from('89504e470d0a1a0a0000', 'hex'), 'image/png', 'png')).rejects.toThrow('invalid_file');
     expect(admin.rpc).not.toHaveBeenCalled();
   });

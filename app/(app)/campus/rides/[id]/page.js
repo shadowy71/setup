@@ -1,3 +1,4 @@
+import { RideGallery } from '@/components/campus/RideGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -22,6 +23,7 @@ export default async function DetailPage({ params }) {
     <PageHeader title={`${record.origin} → ${record.destination}`} back={{ href: '/campus/rides', label: 'Ride' }} />
     <div className="flex flex-wrap gap-2">{record.status !== 'published' ? <Badge tone="danger">{record.status}</Badge> : null}{[record.ride_kind === 'offer' ? 'Offering a ride' : record.ride_kind === 'request' ? 'Looking for a ride' : null, record.ride_date, record.ride_time, record.seats ? `${record.seats} seats` : null].filter(Boolean).map((item) => <Badge key={item}>{item}</Badge>)}</div>
     <Card className="p-4"><p className="user-text whitespace-pre-wrap"><LinkifiedText text={record.description} /></p></Card>
+    <RideGallery postId={id} />
     <PostActionsRow creatorId={record.creator_id} isOwner={owner} canReport={can(actor, 'report_content')} canMessage={can(actor, 'send_messages')} reportType="ride_post" reportRef={id} />
     {owner ? <OwnBoardActions type="rides" id={id} editHref={`/campus/rides/${id}/edit`} /> : null}
   </div>;
