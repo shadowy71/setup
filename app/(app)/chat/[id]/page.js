@@ -5,7 +5,7 @@ import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
 import { getConversation, conversationTitle } from '@/lib/data/messaging';
 import { ROUTES, UUID_REGEX, PAGE_SIZE } from '@/lib/constants';
-import { PageHeader, Notice, LinkButton, Badge, StaffDot } from '@/components/ui';
+import { PageHeader, Notice, LinkButton, Badge, StaffDot, IdentityMark } from '@/components/ui';
 import { ChatThread } from '@/components/chat/ChatThread';
 import { ConversationActions } from '@/components/chat/ConversationActions';
 
@@ -77,6 +77,7 @@ export default async function ConversationPage({ params, searchParams }) {
 
       {isDirect && other ? (
         <p className="flex flex-wrap items-center gap-2 text-2xs text-muted">
+          <IdentityMark name={other.display_name || other.username} username={other.username} size={32} />
           <span>
             Direct message with{' '}
             <Link href={ROUTES.user(other.username)} className="text-ink underline">

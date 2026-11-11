@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Button, Input, Notice } from '@/components/ui';
+import { Button, IdentityMark, Input, Notice } from '@/components/ui';
 import { useFormAction } from '@/lib/forms';
 import { startConversation } from '@/lib/actions/messaging';
 import { ROUTES } from '@/lib/constants';
@@ -74,6 +74,7 @@ export function NewConversation({ canMessage = true }) {
             <ul className="divide-y divide-line">
               {visibleResults.map((person) => (
                 <li key={person.id} className="flex items-center justify-between gap-3 py-2">
+                  <IdentityMark name={person.subtitle || person.title} username={person.title} size={32} />
                   <span className="min-w-0">
                     <span className="block truncate text-[0.8125rem] font-medium">{person.title}</span>
                     {person.subtitle ? <span className="block truncate text-2xs text-muted">{person.subtitle}</span> : null}

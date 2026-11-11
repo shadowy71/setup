@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import { Button, Field, Input, Notice, Select, Switch, Textarea } from '@/components/ui';
 import { useFormAction } from '@/lib/forms';
-import { grantRole, revokeRole, setAccountStatus, setPlatformSetting, setFeatureFlag } from '@/lib/actions/admin';
+import { grantRole, revokeRole, setAccountStatus, setPlatformSetting, setFeatureFlag, setUploadPermission } from '@/lib/actions/admin';
 import { ACCOUNT_STATUS } from '@/lib/constants';
 
 const ACCOUNT_STATUS_LABELS = {
@@ -203,6 +203,20 @@ export function FeatureFlagToggle({ flagKey, enabled }) {
       </Button>
       {save.error ? <Notice tone="danger">{save.error}</Notice> : null}
       {save.success ? <Notice tone="success">Flag updated.</Notice> : null}
+    </form>
+  );
+}
+
+/** Changes permission only; student uploads remain unavailable until the feature is complete. */
+export function UploadPermissionForm({ userId, enabled }) {
+  const change = useFormAction(setUploadPermission, { resetOnSuccess: false });
+  return (
+    <form action={(data) => { data.set('user_id', userId); data.set('enabled', String(!enabled)); change.run(data); }}>
+      <Button type="submit" size="sm" variant="ghost" disabled={change.pending}>
+        {change.pending ? 'Saving…' : enabled ? 'Revoke upload access' : 'Grant upload access'}
+      </Button>
+      {change.error ? <Notice tone="danger">{change.error}</Notice> : null}
+      {change.success ? <Notice tone="success">Upload permission updated.</Notice> : null}
     </form>
   );
 }

@@ -21,11 +21,17 @@ export default async function NotificationsPage({ searchParams }) {
 
   const { data, error, count } = await supabase
     .from('notifications')
-    .select('id, type, title, body, url, reference_type, reference_id, read_at, created_at', { count: 'exact' })
+    .select('id, type, title, body, url, reference_type, reference_id, actor_id, read_at, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  const items = data || [];
+  // Only ordinary person-to-person activity gets an actor avatar. Moderation,
+  // system and official notifications never disclose a staff actor here.
+  const personTypes = new Set(['dm_new', 'mention', 'comment', 'reply', 'reaction', 'marketplace_message', 'marketplace_rating', 'community_activity', 'club_activity']);
+  const actorIds = [...new Set((data || []).filter((row) => personTypes.has(row.type) && row.actor_id).map((row) => row.actor_id))];
+  const { data: actors } = actorIds.length ? await supabase.from('public_profiles').select('id,username,display_name,is_active').in('id', actorIds).eq('is_active', true) : { data: [] };
+  const byId = new Map((actors || []).map((actor) => [actor.id, actor]));
+  const items = (data || []).map(({ actor_id, ...row }) => ({ ...row, actor: personTypes.has(row.type) ? byId.get(actor_id) || null : null }));
   const hasMore = typeof count === 'number' ? offset + items.length < count : items.length === limit;
 
   return (

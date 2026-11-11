@@ -99,8 +99,7 @@ and after every deployment.
 
 ## 5. Privacy by construction
 
-* No photos, no uploads, no file storage, no presence, no typing indicators, no
-  read receipts beyond `Sent`/`Seen`.
+* Profile-photo uploads are implemented behind default-off configuration; other attachments are not implemented. See `docs/GOOGLE-DRIVE-STORAGE.md` for verification blockers. No presence, typing indicators, or read receipts beyond `Sent`/`Seen`.
 * Public profile = `@username`, display name, bio, branch/year (if the student
   allows it), and staff marker. Email, account status, suspension reason and
   moderation history are never public.

@@ -2,8 +2,7 @@
 
 Campus+ is an unofficial, text-first digital layer for PCCOE campus life, built as
 a single Next.js (App Router) application on Supabase (Postgres + Auth +
-Realtime). It contains **no AI, no uploads, no images, no payments and no extra
-infrastructure**: one codebase, one database, one realtime provider.
+Realtime). It contains no AI or payments. The product direction is **text-first by design, with controlled media and document attachments wherever they add genuine value**. Profile-photo uploads are implemented behind default-off configuration; real Drive integration and production readiness remain unverified. See `docs/GOOGLE-DRIVE-STORAGE.md`.
 
 The guiding constraint is that the database is the source of truth for *what is
 allowed*, and the application is the source of truth for *what is offered*. Every
@@ -205,7 +204,7 @@ responsive codebase: desktop sidebar, mobile bottom navigation.
 
 * `npm test` — Vitest suites in `tests/`: authorization, validation, helpers,
   data-layer contracts, moderation map and architecture guards (no AI, no
-  uploads, no raw HTML, no presence, no secrets in the browser bundle, route
+  uncontrolled uploads, no raw HTML, no presence, no secrets in the browser bundle, route
   coverage).
 * `npm run verify:db` — spins up a throwaway Postgres and applies all migrations
   plus the database test suites.

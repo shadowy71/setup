@@ -33,6 +33,7 @@ export function PostComposer({
   defaultKind = 'post',
   compact = false,
   authorName = null,
+  authorUsername = null,
   onCreated = null,
 }) {
   const [kind, setKind] = useState(defaultKind);
@@ -139,7 +140,7 @@ export function PostComposer({
 
       <div className="p-4">
         <div className="flex gap-3">
-          <IdentityMark name={authorName || 'You'} size={36} tone="accent" square={false} className="mt-0.5 hidden sm:flex" />
+          <IdentityMark name={authorName || 'You'} username={authorUsername} size={36} tone="accent" square={false} className="mt-0.5 hidden sm:flex" />
           <div className="min-w-0 flex-1">
             {!compact && kind === 'post' ? (
               <p className="mb-1 text-[0.9375rem] font-semibold tracking-[-0.015em] text-ink">What&apos;s happening on campus?</p>

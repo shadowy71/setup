@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Badge, EmptyState } from '@/components/ui';
+import { Badge, EmptyState, IdentityMark } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { ROUTES } from '@/lib/constants';
 import { formatUnread } from '@/lib/notifications/format';
@@ -153,9 +153,9 @@ export function ConversationList({ initialConversations = [], currentUserId }) {
                 href={ROUTES.conversation(conversation.id)}
                 className={cn('flex items-start gap-3 p-3 hover:bg-canvas hover:no-underline', unread.visible && 'bg-canvas/40')}
               >
-                <span className="mt-0.5 shrink-0 text-muted">
-                  <Icon name={conversation.kind === 'direct' ? 'chat' : 'users'} size={16} />
-                </span>
+                {conversation.kind === 'direct' && conversation.other?.username ? (
+                  <IdentityMark name={title} username={conversation.other.username} size={32} />
+                ) : <span className="mt-0.5 shrink-0 text-muted"><Icon name={conversation.kind === 'direct' ? 'chat' : 'users'} size={16} /></span>}
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="truncate text-[0.875rem] font-medium">{title}</span>

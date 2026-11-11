@@ -208,7 +208,7 @@ export default async function ClubManagePage({ params, searchParams }) {
           {view === 'feed' ? (
             <Card className="flex flex-col gap-4 p-4">
               <SectionHeader title="Posts & feed" description="The existing Campus+ composer, comments, reactions and moderation apply here." />
-              {canPostHere ? <PostComposer communityId={club.id} /> : <Notice tone="neutral">Your account can manage this club but does not currently have permission to post in its feed.</Notice>}
+              {canPostHere ? <PostComposer communityId={club.id} authorName={user.profile.display_name} authorUsername={user.profile.username} /> : <Notice tone="neutral">Your account can manage this club but does not currently have permission to post in its feed.</Notice>}
               {posts.length ? posts.map((post) => (
                 <article key={post.id} className="border-t border-line pt-3">
                   <Link href={ROUTES.post(post.id)} className="text-[0.875rem] font-medium underline-offset-2 hover:underline">{post.title || truncate(post.body, 120)}</Link>

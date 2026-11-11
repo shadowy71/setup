@@ -9,7 +9,7 @@ import { ROUTES } from '@/lib/constants';
  *
  * Campus+ has hard, non-negotiable product rules. Rather than trusting review,
  * these tests read the source tree and fail when a rule is broken: no AI, no
- * uploads, no raw HTML, no presence, no secrets in the browser bundle.
+ * unguarded uploads, no raw HTML, no presence, no secrets in the browser bundle.
  */
 
 const ROOT = process.cwd();
@@ -67,28 +67,45 @@ describe('no artificial intelligence anywhere (spec §2)', () => {
   });
 });
 
-describe('text-first: no uploads, no images, no files (spec §3)', () => {
-  it('renders images in exactly two places: the GIF picker and the brand asset', () => {
+describe('controlled media and storage boundaries', () => {
+  it('limits image rendering to approved media surfaces', () => {
     const GIF_SURFACE = path.join('components', 'media', 'GifPicker.js');
-    // The brand mark is the one other <img> in the product, and only when the
-    // supplied logo asset is configured (LOGO_SRC); user content is never media.
+    // Future upload previews must be limited to the reviewed storage component.
     const BRAND_SURFACE = path.join('components', 'brand', 'Brand.js');
     const imageUsers = grep([...appFiles, ...componentFiles], /<img[\s>]|from 'next\/image'|from "next\/image"/);
-    expect(imageUsers.sort()).toEqual([BRAND_SURFACE, GIF_SURFACE].sort());
+    const allowed = [BRAND_SURFACE, GIF_SURFACE, path.join('components', 'storage', 'FileUpload.js'), path.join('components', 'storage', 'ProfileAvatar.js')];
+    expect(imageUsers.filter((file) => !allowed.includes(file))).toEqual([]);
+    expect(imageUsers).toContain(BRAND_SURFACE);
+    expect(imageUsers).toContain(GIF_SURFACE);
     // That single surface must point at the validated provider hosts.
     const picker = read(GIF_SURFACE);
     expect(picker).toMatch(/giphy/i);
   });
 
-  it('never renders a file input', () => {
-    expect(grep([...appFiles, ...componentFiles], /type=["']file["']|accept=["']image/)).toEqual([]);
+  it('restricts file pickers to the designated reusable upload component', () => {
+    // The allowlisted component does not exist yet; approval here is not an
+    // authorization check or a substitute for reviewing the upload lifecycle.
+    const controlledPicker = path.join('components', 'storage', 'FileUpload.js');
+    const offenders = grep([...appFiles, ...componentFiles], /<input\b[^>]*(?:type\s*=\s*(?:["']file["']|\{)|accept\s*=)|createElement\s*\(\s*["']input["']/s);
+    expect(offenders.filter((file) => file !== controlledPicker)).toEqual([]);
+    expect(read('components/ui/fields.js')).toMatch(/props\.type\.toLowerCase\(\) === 'file'/);
+  });
+
+  it('keeps the upload provider and its credentials server-only', () => {
+    const frontend = [...appFiles.filter((file) => !file.startsWith('app/api/')), ...componentFiles];
+    expect(grep(frontend, /(?:drive\.google\.com|googleapis\.com\/(?:upload\/)?drive|script\.google\.com|GOOGLE_APPS_SCRIPT_|provider_file_id|@\/lib\/storage(?:\/|['"]))/i)).toEqual([]);
+    expect(grep(allSource, /createAppsScriptProvider/).sort()).toEqual([
+      path.join('lib', 'storage', 'google-apps-script.js'), path.join('lib', 'storage', 'index.js'),
+    ].sort());
+    expect(read('lib/storage/index.js')).toMatch(/^import 'server-only';/m);
+    expect(read('lib/storage/google-apps-script.js')).toMatch(/^import 'server-only';/m);
   });
 
   it('never touches a storage bucket', () => {
     expect(grep(allSource, /\.storage\.|from\(['"][^'"]*bucket|supabase\.storage/)).toEqual([]);
   });
 
-  it('only accepts GIFs, and only from the validated provider hosts', () => {
+  it('keeps GIF references on the validated provider hosts', () => {
     // The picker and the composer both go through the single GIF client.
     expect(grep(allSource, /from '@\/lib\/giphy|@\/components\/media\/GifPicker/).length).toBeGreaterThan(0);
 

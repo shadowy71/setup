@@ -14,7 +14,7 @@
 import { useTransition } from 'react';
 import Link from 'next/link';
 import { cn, relativeTime } from '@/lib/utils';
-import { Badge, Button, EmptyState, Notice } from '@/components/ui';
+import { Badge, Button, EmptyState, IdentityMark, Notice } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { markNotificationRead, clearNotification, markAllNotificationsRead } from '@/lib/actions/notifications';
 
@@ -116,14 +116,14 @@ export function NotificationList({ items = [], emptyTitle = 'No notifications ye
           const tone = TONE_BY_TYPE[item.type];
           const body = (
             <span className="flex min-w-0 items-start gap-3 p-3.5">
-              <span
+              {item.actor?.username ? <IdentityMark name={item.actor.display_name || item.actor.username} username={item.actor.username} size={32} /> : <span
                 className={cn(
                   'mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border',
                   item.read_at ? 'border-line bg-surface-2 text-muted' : 'border-accent/30 bg-accent-soft text-accent-ink',
                 )}
               >
                 <Icon name={ICON_BY_TYPE[item.type] || 'bell'} size={15} />
-              </span>
+              </span>}
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
                   <span className={cn('truncate text-[0.875rem]', item.read_at ? 'font-normal text-ink-soft' : 'font-semibold text-ink')}>

@@ -7,9 +7,7 @@ import { relativeTime } from '@/lib/utils';
 /**
  * The single identity line used everywhere a person is shown.
  *
- * Text-first: the "avatar" is the display name's first letter in a quiet
- * material square — no uploaded images exist on Campus+ and none are invented
- * here. The staff marker comes from `public_profiles.is_staff`; students show
+ * A same-origin profile photo is shown when available, otherwise initials. The staff marker comes from `public_profiles.is_staff`; students show
  * nothing at all. There is intentionally no online/presence indicator.
  */
 export function IdentityLine({
@@ -27,7 +25,7 @@ export function IdentityLine({
 
   const body = (
     <>
-      <IdentityMark name={name} size={pixels} square={size === 'lg'} />
+      <IdentityMark name={name} username={username} size={pixels} square={size === 'lg'} />
       <span className="min-w-0">
         <span className="flex items-center gap-1.5">
           <span className={cn('truncate font-semibold text-ink', size === 'sm' ? 'text-[0.8125rem]' : 'text-[0.875rem]')}>

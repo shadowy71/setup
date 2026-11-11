@@ -147,7 +147,7 @@ export default async function CommunityPage({ params }) {
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <section aria-label="Community posts" className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold">Posts</h2>
-          {canPostHere ? <PostComposer communityId={community.id} compact /> : null}
+          {canPostHere ? <PostComposer communityId={community.id} compact authorName={user.profile.display_name} authorUsername={user.profile.username} /> : null}
           {posts.length === 0 ? (
             <EmptyState
               icon="comment"
