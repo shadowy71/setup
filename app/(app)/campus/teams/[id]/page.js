@@ -1,3 +1,4 @@
+import { TeamGallery } from '@/components/campus/TeamGallery';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
@@ -31,6 +32,7 @@ export default async function TeamPage({ params }) {
     <div className="flex flex-wrap gap-2"><Badge>{team.required_skills}</Badge>{team.team_size ? <Badge>{team.team_size} people</Badge> : null}{team.deadline ? <Badge>By {team.deadline}</Badge> : null}</div>
     {team.project_id ? <Link href={`/explore/projects/${team.project_id}`} className="text-sm underline">View linked project</Link> : null}
     <Card className="p-4"><p className="user-text whitespace-pre-wrap"><LinkifiedText text={team.description} /></p></Card>
+    <TeamGallery postId={id} />
     <PostActionsRow creatorId={team.creator_id} isOwner={owner} canMessage={can(actor, 'send_messages')} canReport={can(actor, 'report_content')} />
     {owner ? <OwnBoardActions type="teams" id={id} editHref={`/campus/teams/${id}/edit`} /> : null}
     {requestsError ? <p role="alert" className="text-sm text-danger">Requests could not be loaded. Refresh to retry.</p> : owner ? <Card className="flex flex-col gap-3 p-4">

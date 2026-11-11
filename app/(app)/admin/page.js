@@ -211,7 +211,7 @@ export default async function AdminPage({ searchParams }) {
             <StorageHealth />
             {storageSummary ? (
               <div className="flex flex-col gap-2">
-                <p className="text-sm">Ledger quota charged: {Number(storageSummary.charged_bytes).toLocaleString()} bytes · Ready: {storageSummary.ready_count} · Reserved: {storageSummary.reserved_count} · Cleanup pending: {storageSummary.delete_pending_count}</p>
+                <p className="text-sm">Ledger bytes (including pending cleanup): {Number(storageSummary.charged_bytes).toLocaleString()} bytes · Ready: {storageSummary.ready_count} · Reserved: {storageSummary.reserved_count} · Cleanup pending: {storageSummary.delete_pending_count}</p>
                 <p className="text-2xs text-muted">Campus+ ledger only, not total personal Drive usage. Up to 50 most recent records.</p>
                 {(storageSummary.recent || []).length ? (
                   <ul className="flex flex-col gap-2">
@@ -277,7 +277,7 @@ export default async function AdminPage({ searchParams }) {
               {storageUsage.has(row.id) ? (
                 <div className="text-2xs text-muted">
                   {storageUsage.get(row.id) ? (
-                    <>Upload permission: {storageUsage.get(row.id).upload_enabled ? 'enabled' : 'disabled'} · Campus+ storage: {storageUsage.get(row.id).used_bytes} / {storageUsage.get(row.id).quota_bytes} bytes. Profile uploads additionally require server configuration.</>
+                    <>Upload permission: {storageUsage.get(row.id).upload_enabled ? 'enabled' : 'disabled'} · Campus+ storage: {storageUsage.get(row.id).used_bytes} bytes in ledger. Profile uploads additionally require server configuration.</>
                   ) : 'Upload permission unavailable.'}
                 </div>
               ) : null}

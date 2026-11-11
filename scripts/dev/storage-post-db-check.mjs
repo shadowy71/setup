@@ -21,7 +21,9 @@ try {
   await assert.rejects(reserve(a,other,randomUUID()),/Post unavailable/);
   const requests = [randomUUID(), randomUUID()];
   const results = await Promise.allSettled([reserve(a,owner,requests[0]), reserve(b,owner,requests[1])]);
-  assert.equal(results.filter((r) => r.status === 'fulfilled').length,1);
+  assert.equal(results.filter((r) => r.status === 'fulfilled').length,2);
+  await client.query("update public.storage_files set status='deleted',deleted_at=now() where id=$1",[results[1].value.rows[0].id]);
+  await client.query('delete from public.post_attachment_links where file_id=$1',[results[1].value.rows[0].id]);
   const index = results.findIndex((r) => r.status === 'fulfilled'); const file = results[index].value.rows[0].id;
   assert.equal((await reserve(a,owner,requests[index])).rows[0].id,file);
   const row = (await client.query('select resource_type,resource_id,gateway_key,status from public.storage_files where id=$1', [file])).rows[0];
@@ -43,5 +45,5 @@ try {
   await client.query('select public.storage_complete_post_attachment_delete($1)',[file]);
   assert.equal((await client.query('select status from public.storage_files where id=$1',[file])).rows[0].status,'deleted');
   const backup = await client.query("select 1 from public.backup_tracked_tables where table_name='post_attachment_links' and capture and snapshot"); assert.equal(backup.rowCount,1);
-  console.log('PASS: post ownership, shared concurrent quota, retry idempotency, soft deletion and backup capture');
+  console.log('PASS: post ownership, concurrent reservations, retry idempotency, soft deletion and backup capture');
 } finally { await a?.end(); await b?.end(); await client.end(); await admin.end(); await pg.stop(); }

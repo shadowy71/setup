@@ -1,4 +1,14 @@
+vi.mock('@/lib/storage/ride-attachments', () => ({ reconcileRideFiles: vi.fn() }));
+import { reconcileRideFiles } from '@/lib/storage/ride-attachments';
+vi.mock('@/lib/storage/team-attachments', () => ({ reconcileTeamFiles: vi.fn() }));
+import { reconcileTeamFiles } from '@/lib/storage/team-attachments';
+vi.mock('@/lib/storage/project-attachments', () => ({ reconcileProjectFiles: vi.fn() }));
+import { reconcileProjectFiles } from '@/lib/storage/project-attachments';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('@/lib/storage/housing-attachments', () => ({ reconcileHousingFiles: vi.fn() }));
+import { reconcileHousingFiles } from '@/lib/storage/housing-attachments';
+vi.mock('@/lib/storage/lost-found-images', () => ({ reconcileReportImages: vi.fn() }));
+import { reconcileReportImages } from '@/lib/storage/lost-found-images';
 vi.mock('@/lib/storage/post-attachments', () => ({ reconcilePostAttachments: vi.fn() }));
 vi.mock('@/lib/storage/marketplace-attachments', () => ({ reconcileMarketplaceFiles: vi.fn() }));
 import { reconcileMarketplaceFiles } from '@/lib/storage/marketplace-attachments';
@@ -18,7 +28,12 @@ describe('profile photo reconciliation endpoint', () => {
     reconcileProfilePhotos.mockResolvedValueOnce({ processedOwners: 1, retryPending: false }).mockRejectedValueOnce(Error('private'));
     reconcilePostAttachments.mockResolvedValue({ processed: 0, retryPending: false });
     reconcileMarketplaceFiles.mockResolvedValue({ processed: 0, retryPending: false });
-    expect(await (await GET(req())).json()).toEqual({ ok: true, processedOwners: 1, retryPending: false, attachments: { processed: 0, retryPending: false }, marketplace: { processed: 0, retryPending: false } });
+    reconcileReportImages.mockResolvedValue({ processed: 0, retryPending: false });
+    reconcileHousingFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    reconcileRideFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    reconcileTeamFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    reconcileProjectFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    expect(await (await GET(req())).json()).toEqual({ ok: true, processedOwners: 1, retryPending: false, attachments: { processed: 0, retryPending: false }, marketplace: { processed: 0, retryPending: false }, lostFound: { processed: 0, retryPending: false }, housing: { processed: 0, retryPending: false }, ride: { processed: 0, retryPending: false }, team: { processed: 0, retryPending: false }, project: { processed: 0, retryPending: false } });
     const failure = await GET(req());
     expect(failure.status).toBe(503); expect(JSON.stringify(await failure.json())).not.toContain('private');
   });

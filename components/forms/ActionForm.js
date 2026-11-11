@@ -31,14 +31,21 @@ export function ActionForm({
   encTypeNote = null,
   intro = null,
   marketplaceImages = null,
+  lostFoundImages = null,
+  housingAttachments = null,
+  projectAttachments = null,
+  teamAttachments = null,
+  rideAttachments = null,
 }) {
+  const attachmentUser = marketplaceImages || lostFoundImages || housingAttachments || rideAttachments || teamAttachments || projectAttachments;
+  const attachmentScope = lostFoundImages ? 'lost_found' : housingAttachments ? 'housing' : rideAttachments ? 'ride' : teamAttachments ? 'team' : projectAttachments ? 'project' : 'marketplace';
   const formRef = useRef(null);
   const [gif, setGif] = useState(null);
   const [images, setImages] = useState([]); const [draftId, setDraftId] = useState(null);
   const draft = useRef(null); const created = useRef(false); const uploaded = useRef(new Map());
   const [uploading, setUploading] = useState(false); const [uploadError, setUploadError] = useState('');
-  const [recovery, setRecovery] = useState(null); const [checking, setChecking] = useState(Boolean(marketplaceImages));
-  const storageKey = marketplaceImages ? `marketplace:${marketplaceImages.toLowerCase()}` : null;
+  const [recovery, setRecovery] = useState(null); const [checking, setChecking] = useState(Boolean(attachmentUser));
+  const storageKey = attachmentUser ? `${attachmentScope}:${attachmentUser.toLowerCase()}` : null;
   useEffect(() => {
     let cancelled = false;
     if (!storageKey) return undefined;
@@ -57,7 +64,7 @@ export function ActionForm({
   async function discard(id) {
     setUploading(true);
     try {
-      const response=await fetch(`/api/storage/post-drafts/${id}?scope=marketplace`,{method:'DELETE'});
+      const response=await fetch(`/api/storage/post-drafts/${id}?scope=${attachmentScope}`,{method:'DELETE'});
       if (!response.ok) throw Error('Could not discard the draft. Retry.');
       await deletePostDraft(storageKey); draft.current=null; created.current=false; uploaded.current.clear(); setImages([]); setDraftId(null); setRecovery(null); setUploadError('');
     } catch (e) { setUploadError(e.message || 'Could not discard the draft.'); }
@@ -80,14 +87,14 @@ export function ActionForm({
       else if (gifCleared) formData.set(gifField.name, '');
       else formData.delete(gifField.name);
     }
-    if (!marketplaceImages || !images.length) { run(formData); return; }
+    if (!attachmentUser || !images.length) { run(formData); return; }
     setUploading(true); setUploadError('');
     if (!draft.current) { draft.current=crypto.randomUUID(); setDraftId(draft.current); }
     const id=draft.current; const snapshot={draft:id,created:created.current,items:images.map(({id: itemId,file})=>({id:itemId,file})),uploaded:[...uploaded.current],fields:[...formData.entries()]};
     try {
       await putPostDraft(storageKey,snapshot);
-      if (!created.current) { const response=await fetch(`/api/storage/post-drafts/${id}?scope=marketplace`,{method:'PUT'}); if (!response.ok) throw Error('Could not start upload. Retry.'); created.current=true; snapshot.created=true; await putPostDraft(storageKey,snapshot); }
-      const result=await uploadPostFiles(id,images.filter((item)=>!uploaded.current.has(item.id)),{endpoint:`/api/storage/post-drafts/${id}?scope=marketplace`,requireId:true,
+      if (!created.current) { const response=await fetch(`/api/storage/post-drafts/${id}?scope=${attachmentScope}`,{method:'PUT'}); if (!response.ok) throw Error('Could not start upload. Retry.'); created.current=true; snapshot.created=true; await putPostDraft(storageKey,snapshot); }
+      const result=await uploadPostFiles(id,images.filter((item)=>!uploaded.current.has(item.id)),{endpoint:`/api/storage/post-drafts/${id}?scope=${attachmentScope}`,requireId:true,
         onProgress:(itemId,progress)=>setImages((old)=>old.map((item)=>item.id===itemId?{...item,progress}:item)),
         onUploaded:async(itemId,fileId)=>{uploaded.current.set(itemId,fileId); snapshot.uploaded=[...uploaded.current]; await putPostDraft(storageKey,snapshot); setImages((old)=>old.map((item)=>item.id===itemId?{...item,progress:100}:item));},
       });
@@ -206,12 +213,12 @@ export function ActionForm({
         </Notice>
       ) : null}
 
-      {marketplaceImages ? <>
+      {attachmentUser ? <>
         {recovery ? <Notice tone="warning">An earlier submission is saved on this browser. <button type="button" className="underline" onClick={resume} disabled={uploading}>Resume</button> · <button type="button" className="underline" onClick={() => discard(recovery.draft)} disabled={uploading}>Discard</button></Notice> : null}
         {uploadError ? <Notice tone="warning">{uploadError}</Notice> : null}
-        {images.length && !draftId ? <p className="text-xs text-muted">The first image is the cover. On submit, files and listing details are stored in this browser for retry until published or discarded. Avoid shared devices.</p> : null}
+        {images.length && !draftId ? <p className="text-xs text-muted">On submit, files and form details are stored in this browser for retry until published or discarded. Avoid shared devices.</p> : null}
         {draftId ? <p className="text-xs text-muted">{uploading ? 'Uploading images…' : 'Submit to retry the private draft.'} {!uploading && !pending ? <button type="button" className="underline" onClick={() => discard(draftId)}>Discard images</button> : null}</p> : null}
-        <DraftAttachments scope="marketplace" imagesOnly items={images} setItems={setImages} disabled={pending || Boolean(draftId) || Boolean(recovery) || checking} busy={uploading} postId={draftId} submit={<Button type="submit" tone="accent" loading={pending || uploading} disabled={Boolean(recovery) || checking}>{uploading ? 'Uploading…' : pending ? pendingLabel : submitLabel}</Button>}>
+        <DraftAttachments scope={attachmentScope} imagesOnly={!housingAttachments && !rideAttachments && !teamAttachments && !projectAttachments} items={images} setItems={setImages} disabled={pending || Boolean(draftId) || Boolean(recovery) || checking} busy={uploading} postId={draftId} submit={<Button type="submit" tone="accent" loading={pending || uploading} disabled={Boolean(recovery) || checking}>{uploading ? 'Uploading…' : pending ? pendingLabel : submitLabel}</Button>}>
           {cancelHref ? <LinkButton href={cancelHref} variant="ghost" size="md">{cancelLabel}</LinkButton> : null}
         </DraftAttachments>
       </> : <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">

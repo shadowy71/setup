@@ -1,3 +1,4 @@
+import { ProjectGallery } from '@/components/campus/ProjectGallery';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
@@ -48,6 +49,7 @@ export default async function ProjectPage({ params }) {
     <div className="flex flex-col gap-4">
       <PageHeader title={project.title} back={{ href: '/explore/projects', label: 'Projects' }} />
 
+      <ProjectGallery postId={id} />
       {isCreator ? <OwnBoardActions type="projects" id={project.id} editHref={`/explore/projects/${project.id}/edit`} /> : null}
 
       <div className="flex flex-wrap items-center gap-2">

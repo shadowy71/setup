@@ -29,6 +29,7 @@ export default async function NewRidePage() {
       />
       <ActionForm
         action={createRidePost}
+        rideAttachments={user.profile.username}
         submitLabel="Publish ride"
         successMessage="Published. Interested students will message you."
         redirectTo="/campus/rides"

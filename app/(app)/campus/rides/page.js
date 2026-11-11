@@ -1,3 +1,4 @@
+import { RideGallery } from '@/components/campus/RideGallery';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
@@ -65,6 +66,7 @@ export default async function RidesPage({ searchParams }) {
           return (
             <ContentCard
               key={ride.id}
+              media={<RideGallery postId={ride.id} coverOnly />}
               href={`/campus/rides/${ride.id}`}
               title={`${ride.origin} → ${ride.destination}`}
               description={ride.description}

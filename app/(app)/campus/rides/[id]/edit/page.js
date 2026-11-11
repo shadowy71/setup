@@ -1,3 +1,4 @@
+import { RideGallery } from '@/components/campus/RideGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -17,6 +18,7 @@ export default async function EditPage({ params }) {
   return <div className="flex flex-col gap-4">
     <PageHeader title="Edit ride" back={{ href: '/campus/rides', label: 'Ride' }} />
     {record.status !== 'published' ? <Notice tone="warning" icon="flag">Editing does not change this post’s moderation status.</Notice> : null}
+    <RideGallery postId={id} manage username={user.profile.username} />
     <ActionForm action={updateOwnCampusBoard} hidden={{ id, type: 'rides' }} submitLabel="Save changes" cancelHref="/campus/rides" resetOnSuccess={false} fields={[
           { name: 'ride_kind', label: 'Ride type', type: 'select', defaultValue: record.ride_kind ?? '', options: [{ value: 'offer', label: 'Offering a ride' }, { value: 'request', label: 'Looking for a ride' }], placeholder: 'Not specified' },
           { name: 'origin', label: 'From', type: 'text', defaultValue: record.origin ?? '', maxLength: 120, required: true },

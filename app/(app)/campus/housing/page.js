@@ -1,3 +1,4 @@
+import { HousingGallery } from '@/components/campus/HousingGallery';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
@@ -53,6 +54,7 @@ export default async function HousingPage() {
             <ContentCard
               key={post.id}
               href={`/campus/housing/${post.id}`}
+              media={<HousingGallery postId={post.id} coverOnly />}
               title={post.title}
               description={post.description}
               icon="building"

@@ -29,7 +29,7 @@ export async function POST(request, { params }) {
   } catch (error) {
     const code = error.message;
     if (code === 'invalid_file') return json({ error: 'Choose a valid image or PDF up to 3 MiB.' }, 400);
-    if (code === 'quota_or_limit') return json({ error: 'Storage quota or eight-file limit reached.' }, 400);
+    if (code === 'attachment_limit') return json({ error: 'Invalid file or eight-file limit reached.' }, 400);
     if (code === 'permission_denied') return json({ error: 'Uploads are not enabled for this account.' }, 403);
     if (code === 'rate_limited') return json({ error: 'Too many uploads. Try again later.' }, 429);
     return json({ error: 'Upload failed. Retry the same file.' }, 503);

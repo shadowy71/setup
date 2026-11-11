@@ -1,3 +1,4 @@
+import { TeamGallery } from '@/components/campus/TeamGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -20,6 +21,7 @@ export default async function EditTeam({ params }) {
   return <div className="flex flex-col gap-4">
     <PageHeader title="Edit team request" back={{ href: `/campus/teams/${id}`, label: 'Team request' }} />
     {team.status !== 'published' ? <Notice tone="warning">Editing does not change moderation status.</Notice> : null}
+    <TeamGallery postId={id} manage username={user.profile.username} />
     <ActionForm action={updateOwnCampusBoard} hidden={{ id, type: 'teams' }} resetOnSuccess={false} cancelHref={`/campus/teams/${id}`} fields={[
       { name: 'project_id', label: 'Your published project (optional)', type: 'select', defaultValue: team.project_id || '', options },
       { name: 'project_name', label: 'Project or hackathon', required: true, maxLength: 140, defaultValue: team.project_name },

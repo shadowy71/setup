@@ -95,7 +95,7 @@ export default async function NewLostFoundPage({ searchParams }) {
     <div className="flex flex-col gap-4">
       <PageHeader
         title={kind === 'found' ? 'Report a found item' : 'Report a lost item'}
-        description="No photos — describe the item, where and when, and how to reach you."
+        description="Describe the item and where and when it was seen."
         back={{ href: ROUTES.lostFound, label: 'Lost & found' }}
       />
       <div className="flex items-center gap-2">
@@ -108,6 +108,7 @@ export default async function NewLostFoundPage({ searchParams }) {
       </div>
       <ActionForm
         action={createLostFound}
+        lostFoundImages={user.profile.username}
         hidden={{ kind }}
         submitLabel="Post report"
         successMessage="Posted. Anyone who recognises the item can message you."

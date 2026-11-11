@@ -43,7 +43,7 @@ export async function POST(request) {
     const mime = request.headers.get('content-type') || '';
     const bytes = await readBounded(request);
     // Stale reservations are retired before deletion. If cleanup is unavailable,
-    // they remain charged and the normal quota check still fails safely.
+    // cleanup remains pending for reconciliation.
     try { await cleanProfilePhotos(user.profile.id, { stale: true }); } catch { /* retry later */ }
     await uploadProfilePhoto({ owner: user.profile.id, requestId: id, name, mime, bytes });
     return json({ ok: true });
@@ -51,7 +51,7 @@ export async function POST(request) {
     if (error.message === 'rate_limited') return json({ error: 'Too many photo uploads. Please try again later.' }, 429);
     if (error.message === 'permission_denied') return json({ error: 'File uploads are currently available to selected contributors.' }, 403);
     if (error.message === 'invalid_file') return json({ error: 'Choose a valid JPEG, PNG or WebP image under 3 MiB.' }, 400);
-    if (error.message === 'quota_or_invalid') return json({ error: 'Storage quota exceeded or invalid file.' }, 400);
+    if (error.message === 'invalid_file') return json({ error: 'Invalid file.' }, 400);
     return json({ error: 'Upload could not be completed. Retry the same file.' }, 503);
   }
 }

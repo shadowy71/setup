@@ -29,6 +29,7 @@ export default async function NewProjectPage() {
       />
       <ActionForm
         action={createProject}
+        projectAttachments={user.profile.username}
         submitLabel="Publish project"
         successMessage="Published."
         redirectTo="/explore/projects"

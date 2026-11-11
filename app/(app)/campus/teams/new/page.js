@@ -33,6 +33,7 @@ export default async function NewTeamPage() {
       />
       <ActionForm
         action={createTeamPost}
+        teamAttachments={user.profile.username}
         submitLabel="Publish request"
         successMessage="Published."
         redirectTo="/campus/teams"

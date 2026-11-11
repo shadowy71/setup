@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getServerClient } from '@/lib/supabase/server';
 import { getActiveUser } from '@/lib/auth/session';
 import { sameOrigin } from '@/lib/storage/post-access';
 import { createPostDraft, abandonPostDraft, savePostAttachment } from '@/lib/storage/post-attachments';
@@ -14,8 +15,15 @@ async function authorize(request, params, write = true) {
   if (!user?.profile?.id || user.needsProfileSetup) return { status: 401 };
   const { id } = await params;
   if (!UUID_REGEX.test(id || '')) return { status: 404 };
-  const marketplace = new URL(request.url).searchParams.get('scope') === 'marketplace';
-  if (write && ((marketplace ? process.env.CAMPUS_MARKET_ATTACHMENTS_ENABLED : process.env.CAMPUS_POST_ATTACHMENTS_ENABLED) !== '1' || process.env.CAMPUS_STORAGE_V3_ENABLED !== '1')) return { status: 503 };
+  const scope = new URL(request.url).searchParams.get('scope');
+  const marketplace = scope === 'marketplace';
+  const lostFound = scope === 'lost_found';
+  const housing = scope === 'housing';
+  const project = scope === 'project';
+  const team = scope === 'team';
+  const ride = scope === 'ride';
+  if (write && ((marketplace ? process.env.CAMPUS_MARKET_ATTACHMENTS_ENABLED : lostFound ? process.env.CAMPUS_LOST_FOUND_ATTACHMENTS_ENABLED : housing ? process.env.CAMPUS_HOUSING_ATTACHMENTS_ENABLED : project ? process.env.CAMPUS_PROJECT_ATTACHMENTS_ENABLED : team ? process.env.CAMPUS_TEAM_ATTACHMENTS_ENABLED : ride ? process.env.CAMPUS_RIDE_ATTACHMENTS_ENABLED : process.env.CAMPUS_POST_ATTACHMENTS_ENABLED) !== '1' || process.env.CAMPUS_STORAGE_V3_ENABLED !== '1')) return { status: 503 };
+  if (write && (lostFound || housing || ride || team || project)) { const db = await getServerClient(); if (!db) return { status: 503 }; const flag = await db.rpc('feature_enabled', { p_key: lostFound ? 'lost_found_images' : housing ? 'housing_attachments' : ride ? 'ride_attachments' : team ? 'team_attachments' : 'project_attachments' }); if (flag.error || flag.data !== true) return { status: 503 }; }
   return { id, owner: user.profile.id };
 }
 export async function PUT(request, { params }) {
@@ -38,7 +46,7 @@ export async function POST(request, { params }) {
     return json({ id });
   } catch (error) {
     if (error.message === 'invalid_file') return json({ error: 'Choose a valid image or PDF up to 3 MiB.' },400);
-    if (error.message === 'quota_or_limit') return json({ error: 'Storage quota or eight-file limit reached.' },400);
+    if (error.message === 'attachment_limit') return json({ error: 'Invalid file or eight-file limit reached.' },400);
     if (error.message === 'upload_conflict') return json({ error: 'This upload expired or conflicts with an earlier attempt. Discard the draft and select the files again.' },409);
     if (error.message === 'permission_denied') return json({ error: 'Upload not permitted.' },403);
     if (error.message === 'rate_limited') return json({ error: 'Too many uploads. Try again later.' },429);

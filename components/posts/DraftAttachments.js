@@ -10,7 +10,7 @@ export function DraftAttachments({ items, setItems, disabled, postId, busy, chil
   const urls = useRef(new Set());
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`/api/storage/post-upload-availability${scope === 'marketplace' ? '?scope=marketplace' : ''}`, { signal: controller.signal, cache: 'no-store' })
+    fetch(`/api/storage/post-upload-availability${['ride', 'team', 'project', 'marketplace', 'lost_found', 'housing'].includes(scope) ? `?scope=${scope}` : ''}`, { signal: controller.signal, cache: 'no-store' })
       .then((response) => response.json()).then((data) => { setEnabled(data?.enabled === true); setAvailability(data?.reason || (data?.enabled ? 'enabled' : 'unavailable')); })
       .catch(() => { if (!controller.signal.aborted) setAvailability('unavailable'); });
     return () => controller.abort();

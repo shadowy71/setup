@@ -165,6 +165,7 @@ export default async function CommunityPage({ params }) {
               reactions={{ count: post.reaction_count || 0, mine: Boolean(post.reacted_by_me) }}
               poll={post.poll}
               showCommunity={false}
+              manageAttachments
             />
           ))}
         </section>

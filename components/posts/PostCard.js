@@ -49,6 +49,7 @@ export function PostCard({
   onPollVote = null,
   showCommunity = true,
   detail = false,
+  manageAttachments = false,
   variant = 'card',
 }) {
   // `card` is the default everywhere; `stream` is the Home feed's entry
@@ -134,7 +135,7 @@ export function PostCard({
           </div>
         ) : null}
 
-        {!isDeleted && !isHidden ? <PostAttachments postId={post.id} manage={Boolean(isOwner && detail)} /> : null}
+        {!isDeleted && !isHidden ? <PostAttachments postId={post.id} manage={Boolean(isOwner && (detail || manageAttachments))} /> : null}
 
         {poll && !isDeleted ? (
           <PollBlock postId={post.id} poll={poll} canVote={Boolean(currentUserId)} onVoteChange={onPollVote} />

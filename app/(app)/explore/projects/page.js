@@ -1,3 +1,4 @@
+import { ProjectGallery } from '@/components/campus/ProjectGallery';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
@@ -48,6 +49,7 @@ export default async function ProjectsPage() {
           return (
             <ContentCard
               key={project.id}
+              media={<ProjectGallery postId={project.id} coverOnly />}
               href={ROUTES.project(project.id)}
               title={project.title}
               description={project.description}
