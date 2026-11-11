@@ -54,6 +54,7 @@ const PATHS = {
   filter: 'M4 6h16l-6 7v5l-4 2v-7L4 6Z',
   image: 'M4 5h16v14H4V5Zm0 10 4-4 5 5m-1-2 3-3 5 5',
   file: 'M7 3h7l4 4v14H7V3Zm7 0v4h4',
+  paperclip: 'M8.5 12.5 14.8 6.2a3.5 3.5 0 1 1 5 5l-8.4 8.3a5 5 0 0 1-7.1-7.1l8.5-8.5M7.8 15.8l8.1-8.1',
   history: 'M12 5a7 7 0 1 1-6.5 4.4M12 5v0M4 5v5h5M12 8v4.5l3 1.8',
   trend: 'M4 17 10 11l3.5 3.5L20 8M20 8h-5m5 0v5',
   inbox: 'M4 13V6h16v7h-5l-1 2h-4l-1-2H4Zm0 0v5h16v-5',

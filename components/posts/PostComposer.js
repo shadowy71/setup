@@ -324,18 +324,16 @@ export function PostComposer({
             ) : null}
 
             {recovery ? <Notice tone="warning" className="mt-3">A previous attachment submission is saved on this browser. <button type="button" disabled={uploading} onClick={resumeDraft} className="underline">Resume</button>{' · '}<button type="button" disabled={uploading} onClick={discardRecovery} className="underline">Discard</button></Notice> : null}
-            <DraftAttachments items={attachments} setItems={setAttachments} disabled={pending || Boolean(draftId) || Boolean(recovery) || checkingRecovery} busy={uploading} postId={draftId} />
             {attachments.length && !draftId ? <p className="mt-2 text-xs text-muted">On submit, a recovery copy of these files and the submitted text is stored in this browser until published or discarded. Avoid shared devices.</p> : null}
             {uploadError && !draftId ? <p role="alert" className="mt-2 text-xs text-danger">{uploadError}</p> : null}
             {draftId ? <p role="status" className="mt-2 text-xs text-muted">{uploading ? 'Uploading before publication…' : 'Private upload draft saved; submit to retry.'} {uploadError ? <span className="text-danger">{uploadError}</span> : null} {!uploading && !pending ? <button type="button" className="underline" onClick={discardDraft}>Discard uploaded files</button> : null}</p> : null}
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <GifPicker value={gif} onPick={setGif} onRemove={() => setGif(null)} />
-              </div>
+            <DraftAttachments items={attachments} setItems={setAttachments} disabled={pending || Boolean(draftId) || Boolean(recovery) || checkingRecovery} busy={uploading} postId={draftId} submit={
               <Button type="submit" variant="warm" size="lg" icon="send" loading={pending} disabled={!canSubmit}>
                 {pending ? 'Posting…' : isPoll ? 'Publish poll' : kind === 'discussion' ? 'Start discussion' : 'Post'}
               </Button>
-            </div>
+            }>
+              <GifPicker value={gif} onPick={setGif} onRemove={() => setGif(null)} />
+            </DraftAttachments>
           </div>
         </div>
 
