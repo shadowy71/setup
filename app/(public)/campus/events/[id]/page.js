@@ -1,3 +1,4 @@
+import { EventGallery } from '@/components/campus/EventGallery';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -48,8 +49,7 @@ export async function generateMetadata({ params }) {
  * `status = 'published'` plus the `anon` column allow-list. Guest-visible
  * fields are title, description, dates, timings, location, organizer text,
  * official/student status, the linked public club (`/c/<slug>`) and the two
- * intentionally public registration fields. Campus+ is text-first and stores
- * no artwork or attachments on events, so there is no media to expose.
+ * intentionally public registration fields. Attachments are shown only to signed-in viewers through their session-authorized endpoint.
  *
  * RSVP, attendee identities, organizer profile lookup, staff review queues,
  * personal submissions and report controls are fetched and rendered only for a
@@ -188,6 +188,7 @@ export default async function EventPage({ params, searchParams }) {
         <p className="text-2xs text-muted">Campus+ is text-first: events have no uploaded artwork or attachments.</p>
       </Card>
 
+      {viewer ? <EventGallery postId={id} manage={event.status === 'draft'} username={viewer.profile.username} /> : null}
       {viewer ? (
         <Card className="flex flex-col gap-3 p-4">
           <h2 className="text-sm font-semibold">Your RSVP</h2>

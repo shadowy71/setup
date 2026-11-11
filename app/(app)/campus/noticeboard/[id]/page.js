@@ -1,3 +1,4 @@
+import { NoticeGallery } from '@/components/campus/NoticeGallery';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
@@ -59,6 +60,7 @@ export default async function NoticePage({ params }) {
         </p>
       </Card>
 
+      <NoticeGallery postId={id} />
       <div className="flex items-center justify-between">
         <Link href="/campus/noticeboard" className="text-2xs text-muted underline hover:text-ink">
           All notices

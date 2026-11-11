@@ -34,11 +34,17 @@ export function ActionForm({
   lostFoundImages = null,
   housingAttachments = null,
   projectAttachments = null,
+  noticeAttachments = null,
+  eventAttachments = null,
+  spaceAttachments = null,
+  spaceImagesOnly = false,
+  achievementAttachments = null,
+  gigAttachments = null,
   teamAttachments = null,
   rideAttachments = null,
 }) {
-  const attachmentUser = marketplaceImages || lostFoundImages || housingAttachments || rideAttachments || teamAttachments || projectAttachments;
-  const attachmentScope = lostFoundImages ? 'lost_found' : housingAttachments ? 'housing' : rideAttachments ? 'ride' : teamAttachments ? 'team' : projectAttachments ? 'project' : 'marketplace';
+  const attachmentUser = marketplaceImages || lostFoundImages || housingAttachments || rideAttachments || teamAttachments || projectAttachments || gigAttachments || achievementAttachments || noticeAttachments || eventAttachments || spaceAttachments;
+  const attachmentScope = lostFoundImages ? 'lost_found' : housingAttachments ? 'housing' : rideAttachments ? 'ride' : teamAttachments ? 'team' : projectAttachments ? 'project' : gigAttachments ? 'gig' : achievementAttachments ? 'achievement' : noticeAttachments ? 'notice' : eventAttachments ? 'event' : spaceAttachments ? 'space' : 'marketplace';
   const formRef = useRef(null);
   const [gif, setGif] = useState(null);
   const [images, setImages] = useState([]); const [draftId, setDraftId] = useState(null);
@@ -218,7 +224,7 @@ export function ActionForm({
         {uploadError ? <Notice tone="warning">{uploadError}</Notice> : null}
         {images.length && !draftId ? <p className="text-xs text-muted">On submit, files and form details are stored in this browser for retry until published or discarded. Avoid shared devices.</p> : null}
         {draftId ? <p className="text-xs text-muted">{uploading ? 'Uploading images…' : 'Submit to retry the private draft.'} {!uploading && !pending ? <button type="button" className="underline" onClick={() => discard(draftId)}>Discard images</button> : null}</p> : null}
-        <DraftAttachments scope={attachmentScope} imagesOnly={!housingAttachments && !rideAttachments && !teamAttachments && !projectAttachments} items={images} setItems={setImages} disabled={pending || Boolean(draftId) || Boolean(recovery) || checking} busy={uploading} postId={draftId} submit={<Button type="submit" tone="accent" loading={pending || uploading} disabled={Boolean(recovery) || checking}>{uploading ? 'Uploading…' : pending ? pendingLabel : submitLabel}</Button>}>
+        <DraftAttachments scope={attachmentScope} imagesOnly={!housingAttachments && !rideAttachments && !teamAttachments && !projectAttachments && !gigAttachments && !achievementAttachments && !noticeAttachments && !eventAttachments && (!spaceAttachments || spaceImagesOnly)} items={images} setItems={setImages} disabled={pending || Boolean(draftId) || Boolean(recovery) || checking} busy={uploading} postId={draftId} submit={<Button type="submit" tone="accent" loading={pending || uploading} disabled={Boolean(recovery) || checking}>{uploading ? 'Uploading…' : pending ? pendingLabel : submitLabel}</Button>}>
           {cancelHref ? <LinkButton href={cancelHref} variant="ghost" size="md">{cancelLabel}</LinkButton> : null}
         </DraftAttachments>
       </> : <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">

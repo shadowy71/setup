@@ -1,3 +1,4 @@
+import { SpaceGallery } from '@/components/campus/SpaceGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -34,7 +35,7 @@ export default async function EditClubPage({ params }) {
       {club.status !== 'published' ? (
         <Notice tone="warning" icon="flag">This club is {club.status}. It stays hidden from the board until staff publish it.</Notice>
       ) : null}
-      <ClubSettingsForm club={club} cancelHref={ROUTES.club(club.slug)} />
+      <SpaceGallery postId={club.id} manage username={user.profile.username} /><ClubSettingsForm club={club} cancelHref={ROUTES.club(club.slug)} />
     </div>
   );
 }

@@ -1,3 +1,13 @@
+vi.mock('@/lib/storage/space-attachments', () => ({ reconcileSpaceFiles: vi.fn() }));
+import { reconcileSpaceFiles } from '@/lib/storage/space-attachments';
+vi.mock('@/lib/storage/event-attachments', () => ({ reconcileEventFiles: vi.fn() }));
+import { reconcileEventFiles } from '@/lib/storage/event-attachments';
+vi.mock('@/lib/storage/notice-attachments', () => ({ reconcileNoticeFiles: vi.fn() }));
+import { reconcileNoticeFiles } from '@/lib/storage/notice-attachments';
+vi.mock('@/lib/storage/achievement-attachments', () => ({ reconcileAchievementFiles: vi.fn() }));
+import { reconcileAchievementFiles } from '@/lib/storage/achievement-attachments';
+vi.mock('@/lib/storage/gig-attachments', () => ({ reconcileGigFiles: vi.fn() }));
+import { reconcileGigFiles } from '@/lib/storage/gig-attachments';
 vi.mock('@/lib/storage/ride-attachments', () => ({ reconcileRideFiles: vi.fn() }));
 import { reconcileRideFiles } from '@/lib/storage/ride-attachments';
 vi.mock('@/lib/storage/team-attachments', () => ({ reconcileTeamFiles: vi.fn() }));
@@ -33,7 +43,12 @@ describe('profile photo reconciliation endpoint', () => {
     reconcileRideFiles.mockResolvedValue({ processed: 0, retryPending: false });
     reconcileTeamFiles.mockResolvedValue({ processed: 0, retryPending: false });
     reconcileProjectFiles.mockResolvedValue({ processed: 0, retryPending: false });
-    expect(await (await GET(req())).json()).toEqual({ ok: true, processedOwners: 1, retryPending: false, attachments: { processed: 0, retryPending: false }, marketplace: { processed: 0, retryPending: false }, lostFound: { processed: 0, retryPending: false }, housing: { processed: 0, retryPending: false }, ride: { processed: 0, retryPending: false }, team: { processed: 0, retryPending: false }, project: { processed: 0, retryPending: false } });
+    reconcileGigFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    reconcileAchievementFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    reconcileNoticeFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    reconcileEventFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    reconcileSpaceFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    expect(await (await GET(req())).json()).toEqual({ ok: true, processedOwners: 1, retryPending: false, attachments: { processed: 0, retryPending: false }, marketplace: { processed: 0, retryPending: false }, lostFound: { processed: 0, retryPending: false }, housing: { processed: 0, retryPending: false }, ride: { processed: 0, retryPending: false }, team: { processed: 0, retryPending: false }, project: { processed: 0, retryPending: false }, gig: { processed: 0, retryPending: false }, achievement: { processed: 0, retryPending: false }, notice: { processed: 0, retryPending: false }, event: { processed: 0, retryPending: false }, space: { processed: 0, retryPending: false } });
     const failure = await GET(req());
     expect(failure.status).toBe(503); expect(JSON.stringify(await failure.json())).not.toContain('private');
   });

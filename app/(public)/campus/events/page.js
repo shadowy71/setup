@@ -1,3 +1,4 @@
+import { EventGallery } from '@/components/campus/EventGallery';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -255,8 +256,9 @@ export default async function EventsPage({ searchParams }) {
             {items.map((event) => {
               const linkedClub = event.club_id ? publicClubs.get(event.club_id) : null;
               return (
+                <div key={event.id}>
+                {viewer ? <EventGallery postId={event.id} coverOnly /> : null}
                 <ContentCard
-                  key={event.id}
                   href={ROUTES.event(event.id)}
                   title={event.title}
                   description={event.description}
@@ -276,6 +278,7 @@ export default async function EventsPage({ searchParams }) {
                     </Link>
                   ) : null}
                 />
+                </div>
               );
             })}
           </section>

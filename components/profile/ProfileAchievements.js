@@ -1,3 +1,4 @@
+import { AchievementGallery } from '@/components/campus/AchievementGallery';
 import { Card, LinkButton, Notice } from '@/components/ui';
 import { AchievementControls } from '@/components/profile/AchievementControls';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
@@ -15,6 +16,7 @@ export async function ProfileAchievements({ db, profileId, owner = false, modera
       <h3 className="font-semibold">{item.title}</h3>
       <p className="text-xs text-muted">{item.category}{item.achieved_on ? ` · ${formatDate(item.achieved_on)}` : ''}{item.status !== 'published' ? ` · ${item.status}` : ''}</p>
       <p className="user-text whitespace-pre-wrap text-sm"><LinkifiedText text={item.description} /></p>
+      <AchievementGallery postId={item.id} />
       {owner || moderator ? <AchievementControls id={item.id} owner={owner} moderator={moderator} status={item.status} /> : null}
     </Card>)}
   </section>;

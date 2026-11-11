@@ -1,3 +1,4 @@
+import { GigGallery } from '@/components/campus/GigGallery';
 import Link from 'next/link';
 import { Badge } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
@@ -45,6 +46,7 @@ export function GigCard({ gig, creator = null, className = '' }) {
         )}
       </div>
 
+      <GigGallery postId={gig.id} coverOnly />
       <div className="flex flex-col gap-1">
         <h3 className="t-card leading-snug">
           <Link href={ROUTES.gig(gig.id)} className="line-clamp-2 break-anywhere hover:underline">

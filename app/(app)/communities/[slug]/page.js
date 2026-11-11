@@ -1,3 +1,4 @@
+import { SpaceGallery } from '@/components/campus/SpaceGallery';
 import { normalizeBranch } from '@/lib/branches';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -82,6 +83,7 @@ export default async function CommunityPage({ params }) {
           already-open page is not left showing the render it was given. Owns no
           data and renders nothing — see components/social/LiveFeedSync. */}
       <LiveFeedSync />
+      <SpaceGallery postId={community.id} />
       <PageHeader
         title={community.name}
         description={`${kindLabel} · ${community.member_count} member${community.member_count === 1 ? '' : 's'}`}

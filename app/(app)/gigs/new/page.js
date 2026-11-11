@@ -125,6 +125,7 @@ export default async function NewGigPage() {
 
       <ActionForm
         action={createGig}
+        gigAttachments={user.profile.username}
         submitLabel="Publish gig"
         pendingLabel="Publishing…"
         successMessage="Your gig is live on the board."

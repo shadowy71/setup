@@ -1,3 +1,4 @@
+import { SpaceGallery } from '@/components/campus/SpaceGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -25,6 +26,7 @@ export default async function ManageCommunity({ params }) {
   return <div className="flex flex-col gap-4">
     <PageHeader title={`Manage ${community.name}`} back={{ href: `/communities/${community.slug}`, label: 'Community' }} />
     <Notice tone="neutral">Changes do not alter the community’s link or moderation status.</Notice>
+    <SpaceGallery postId={community.id} manage username={user.profile.username} imagesOnly />
     <ActionForm action={updateCommunity} hidden={{ id: community.id }} resetOnSuccess={false} cancelHref={`/communities/${community.slug}`} fields={[
       { name: 'name', label: 'Name', required: true, maxLength: study ? LIMITS.studyGroup.name.max : LIMITS.community.name.max, defaultValue: community.name },
       { name: 'description', label: 'Description', type: 'textarea', required: true, maxLength: study ? LIMITS.studyGroup.description.max : LIMITS.community.description.max, defaultValue: community.description },

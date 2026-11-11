@@ -1,3 +1,4 @@
+import { GigGallery } from '@/components/campus/GigGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -40,6 +41,7 @@ export default async function EditGigPage({ params }) {
         </Notice>
       ) : null}
 
+      <GigGallery postId={id} manage username={user.profile.username} />
       <ActionForm
         action={updateGig}
         hidden={{ id: gig.id, category: gig.category }}

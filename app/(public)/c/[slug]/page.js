@@ -1,3 +1,4 @@
+import { SpaceGallery } from '@/components/campus/SpaceGallery';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
@@ -216,6 +217,7 @@ export default async function ClubPage({ params, searchParams }) {
         </Notice>
       ) : null}
 
+      {viewer ? <SpaceGallery postId={club.id} /> : null}
       <Card className="club-hero flex flex-col gap-4 p-4 sm:p-5">
         <ClubHeroIdentity club={club} isMember={isMember} />
 

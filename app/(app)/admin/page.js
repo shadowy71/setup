@@ -648,6 +648,7 @@ export default async function AdminPage({ searchParams }) {
         <section aria-label="Events" className="flex flex-col gap-3">
           <ActionForm
             action={saveEvent}
+            eventAttachments={user.profile.username}
             submitLabel="Publish event"
             pendingLabel="Publishing…"
             successMessage="Event saved."

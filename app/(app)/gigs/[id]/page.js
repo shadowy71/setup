@@ -1,3 +1,4 @@
+import { GigGallery } from '@/components/campus/GigGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -76,6 +77,7 @@ export default async function GigPage({ params }) {
         </Notice>
       ) : null}
 
+      <GigGallery postId={id} />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="flex flex-col gap-4">
           <Card className="flex flex-col gap-3 p-4 sm:p-5">
