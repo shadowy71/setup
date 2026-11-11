@@ -3,6 +3,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal } from '@/components/ui';
 
+/** Reuse the pixels already displayed while the authorized full-size image loads. */
+export function snapshotThumbnail(image) {
+  if (!image?.complete || !image.naturalWidth || !image.naturalHeight) return null;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d'); if (!context) return null;
+    context.drawImage(image, 0, 0);
+    return canvas.toDataURL('image/webp');
+  } catch { return null; }
+}
+export function FullImage({ postId, file, preview }) {
+  const [state, setState] = useState('loading');
+  const url = `/api/storage/posts/${postId}/${file.id}`;
+  return <>
+    <div className="relative mx-auto mt-3 flex min-h-40 w-fit max-w-full items-center justify-center">
+      <img src={preview || `${url}?size=thumb`} alt="" aria-hidden="true" className="block max-h-[70vh] max-w-full rounded object-contain" />
+      <img src={url} alt={file.original_name} onLoad={() => setState('loaded')} onError={() => setState('error')}
+        className={`absolute inset-0 h-full w-full rounded object-contain ${state === 'loaded' ? 'opacity-100' : 'opacity-0'}`} />
+    </div>
+    {state !== 'loaded' ? <p role="status" className="mt-2 text-xs text-muted">{state === 'error' ? 'Full image could not be loaded. The preview is shown.' : 'Loading full-quality image…'}</p> : null}
+  </>;
+}
+
 /** Post-scoped images and PDFs; the endpoint applies RLS on every request. */
 export function PostAttachments({ postId, manage = false }) {
   const [files, setFiles] = useState([]); const [canUpload, setCanUpload] = useState(false);
@@ -49,20 +73,24 @@ export function PostAttachments({ postId, manage = false }) {
       setFiles(next);
     } catch { setMessage('Could not reorder attachments. Refresh and retry.'); await load(); } finally { setBusy(false); }
   }
+  function openImage(file) {
+    const image = root.current?.querySelector(`img[data-attachment-id="${file.id}"]`);
+    setLightbox({ file, preview: snapshotThumbnail(image) });
+  }
   async function remove(file) { setBusy(true); try { const response = await fetch(`/api/storage/posts/${postId}/${file.id}`, { method: 'DELETE' }); if (!response.ok) throw Error(); await load(); } catch { setMessage('Removal failed. Please retry.'); } finally { setBusy(false); } }
   return <div ref={root} className={files.length || (manage && canUpload) ? 'mt-3' : ''}>
-    {files.length ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{files.map((file, index) => <div key={file.id} className="min-w-0 rounded border border-line p-1">
-      {file.mime_type.startsWith('image/') ? <button type="button" onClick={() => setLightbox(file)} aria-label={`View ${file.original_name}`} className="block w-full"><img src={`/api/storage/posts/${postId}/${file.id}?size=thumb`} alt={file.original_name} loading="lazy" decoding="async" className="aspect-square w-full rounded object-cover" /></button> : <a className="block break-all p-2 text-sm underline" href={`/api/storage/posts/${postId}/${file.id}`}>{file.original_name} · {(file.byte_size / 1024).toFixed(0)} KiB</a>}
+    {files.length ? <div className={files.length === 1 ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 gap-2 sm:grid-cols-3'}>{files.map((file, index) => <div key={file.id} className="min-w-0 rounded border border-line p-1">
+      {file.mime_type.startsWith('image/') ? <button type="button" onClick={() => openImage(file)} aria-label={`View ${file.original_name}`} className="block w-full"><img data-attachment-id={file.id} src={`/api/storage/posts/${postId}/${file.id}?size=thumb`} alt={file.original_name} loading="lazy" decoding="async" className="mx-auto block max-h-96 w-auto max-w-full rounded object-contain" /></button> : <a className="block break-all p-2 text-sm underline" href={`/api/storage/posts/${postId}/${file.id}`}>{file.original_name} · {(file.byte_size / 1024).toFixed(0)} KiB</a>}
       {manage ? <div className="flex flex-wrap gap-2 text-xs">{file.mime_type.startsWith('image/') ? <label className="p-1 underline">Replace<input aria-label={`Replace ${file.original_name}`} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={(event) => choose(event, file.id)} className="sr-only" /></label> : null}<button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} className="p-1 underline">Earlier</button><button type="button" disabled={busy || index === files.length - 1} onClick={() => move(index, 1)} className="p-1 underline">Later</button><button type="button" disabled={busy} onClick={() => remove(file)} className="p-1 text-muted underline">Remove</button></div> : null}
     </div>)}</div> : null}
     {manage && canUpload ? <div className="mt-2"><label className="text-xs text-muted">Add images or PDFs (up to eight; 3 MiB each)<input type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" disabled={busy} onChange={choose} className="block text-xs" /></label></div> : null}
     {selected.map((item) => <div key={item.id} className="mt-2 flex items-center gap-2 text-xs">{item.preview ? <img src={item.preview} alt="" className="h-10 w-10 rounded object-cover" /> : null}<span className="min-w-0 truncate">{item.file.name}</span><button type="button" disabled={busy} onClick={() => upload(item)} className="underline">Upload {item.progress ? `${item.progress}%` : ''}</button><button type="button" disabled={busy} onClick={() => { release(item); setSelected((old) => old.filter((entry) => entry.id !== item.id)); }} className="underline">Cancel</button></div>)}
     {message ? <p role="status" className="mt-2 text-xs text-danger">{message}</p> : null}
-    <Modal open={Boolean(lightbox)} onClose={closeLightbox} title={lightbox?.original_name || 'Image'} size="lg">
-      {lightbox ? <img src={`/api/storage/posts/${postId}/${lightbox.id}`} alt={lightbox.original_name} className="max-h-[75vh] w-full object-contain" /> : null}
+    <Modal open={Boolean(lightbox)} onClose={closeLightbox} title={lightbox?.file.original_name || 'Image'} size="lg">
+      {lightbox ? <FullImage key={lightbox.file.id} postId={postId} file={lightbox.file} preview={lightbox.preview} /> : null}
       {lightbox && files.filter((file) => file.mime_type.startsWith('image/')).length > 1 ? <div className="mt-2 flex justify-between text-sm">
-        <button type="button" onClick={() => { const images = files.filter((file) => file.mime_type.startsWith('image/')); const index = images.findIndex((file) => file.id === lightbox.id); setLightbox(images[(index - 1 + images.length) % images.length]); }}>Previous</button>
-        <button type="button" onClick={() => { const images = files.filter((file) => file.mime_type.startsWith('image/')); const index = images.findIndex((file) => file.id === lightbox.id); setLightbox(images[(index + 1) % images.length]); }}>Next</button>
+        <button type="button" onClick={() => { const images = files.filter((file) => file.mime_type.startsWith('image/')); const index = images.findIndex((file) => file.id === lightbox.file.id); openImage(images[(index - 1 + images.length) % images.length]); }}>Previous</button>
+        <button type="button" onClick={() => { const images = files.filter((file) => file.mime_type.startsWith('image/')); const index = images.findIndex((file) => file.id === lightbox.file.id); openImage(images[(index + 1) % images.length]); }}>Next</button>
       </div> : null}
     </Modal>
   </div>;
