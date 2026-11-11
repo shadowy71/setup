@@ -1,25 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
+import { avatarRevision, subscribeAvatar } from '@/lib/media/avatar-revisions';
 
-/** Same-origin image with a text fallback; image access is checked by the API. */
+/** Same-origin image; access is revalidated by the API on every cache reuse. */
 export function ProfileAvatar({ username, initial, className, style }) {
-  const [version, setVersion] = useState(0);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    function refresh(event) {
-      if (event.detail === username) { setFailed(false); setVersion((value) => value + 1); }
-    }
-    window.addEventListener('campus-avatar-changed', refresh);
-    return () => window.removeEventListener('campus-avatar-changed', refresh);
-  }, [username]);
+  const subscribe = useCallback((listener) => subscribeAvatar(username, listener), [username]);
+  const snapshot = useCallback(() => avatarRevision(username), [username]);
+  const revision = useSyncExternalStore(subscribe, snapshot, () => 0);
+  const [failedRevision, setFailedRevision] = useState(null);
+  const failureKey = `${username}:${revision}`;
+  const failed = failedRevision === failureKey;
+  const query = revision ? `?v=${revision}` : '';
   return (
     <span aria-hidden="true" className={className} style={{ ...style, overflow: 'hidden', position: 'relative' }}>
       {initial}
       {!failed && username ? (
-        // This is always a same-origin authenticated endpoint, not a Drive URL.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/api/storage/profile-photo/${encodeURIComponent(username)}?v=${version}`} alt="" onError={() => setFailed(true)}
+        <img src={`/api/storage/profile-photo/${encodeURIComponent(username)}${query}`} alt="" onError={() => setFailedRevision(failureKey)}
+          width={style?.width ? Number(style.width) || undefined : undefined} height={style?.height ? Number(style.height) || undefined : undefined} decoding="async" loading="lazy"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
       ) : null}
     </span>

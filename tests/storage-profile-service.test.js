@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ admin: vi.fn(), upload: vi.fn(), download: vi.fn(), remove: vi.fn() }));
+const mocks = vi.hoisted(() => ({ admin: vi.fn(), upload: vi.fn(), uploadV3: vi.fn(), removeV3: vi.fn(), download: vi.fn(), remove: vi.fn() }));
 vi.mock('@/lib/supabase/admin', () => ({ getAdminClient: mocks.admin }));
-vi.mock('@/lib/storage', () => ({ uploadFile: mocks.upload, downloadFile: mocks.download, deleteFileByUploadKey: mocks.remove }));
-import { uploadProfilePhoto, removeProfilePhoto, readProfilePhoto, reconcileProfilePhotos } from '@/lib/storage/profile-photo';
+vi.mock('@/lib/storage', () => ({ uploadFile: mocks.upload, uploadFileV3: mocks.uploadV3, deleteFileByUploadKeyV3: mocks.removeV3, downloadFile: mocks.download, deleteFileByUploadKey: mocks.remove }));
+import { uploadProfilePhoto, removeProfilePhoto, readProfilePhoto, downloadProfilePhoto, reconcileProfilePhotos } from '@/lib/storage/profile-photo';
 const owner = 'owner';
 const fileId = 'f4b5c514-200e-4cae-912f-6b8d03f71589';
 let rows, admin;
@@ -28,8 +28,8 @@ beforeEach(() => {
     from: () => query(),
     rpc: vi.fn(async (name, params) => {
       if (name === 'consume_rate_limit') return { data: { allowed: true }, error: null };
-      if (name === 'storage_reserve_profile_picture') {
-        if (!rows.length) rows.push({ id: fileId, owner_id: owner, resource_type: 'profile_picture', status: 'reserved', mime_type: params.p_mime_type, checksum: params.p_checksum });
+      if (name === 'storage_reserve_profile_picture' || name === 'storage_reserve_profile_picture_v3') {
+        if (!rows.length) rows.push({ id: fileId, owner_id: owner, resource_type: 'profile_picture', status: 'reserved', gateway_key: name.endsWith('_v3') ? `2000000000000-${fileId}` : null, mime_type: params.p_mime_type, checksum: params.p_checksum });
         return { data: fileId, error: null };
       }
       if (name === 'storage_finalize_profile_picture') {
@@ -44,7 +44,10 @@ beforeEach(() => {
   };
   mocks.admin.mockReturnValue(admin);
   mocks.upload.mockImplementation(async ({ bytes, mime }) => ({ id: 'drive_12345678', checksum: createHash('sha256').update(bytes).digest('hex'), size: bytes.length, mime }));
+  mocks.uploadV3.mockImplementation(async ({ bytes, mime }) => ({ id: 'drive_12345678', checksum: createHash('sha256').update(bytes).digest('hex'), size: bytes.length, mime }));
+  mocks.removeV3.mockResolvedValue(undefined);
   mocks.remove.mockResolvedValue(undefined);
+  delete process.env.CAMPUS_STORAGE_V3_ENABLED;
 });
 async function image(format) { return sharp({ create: { width: 2, height: 2, channels: 3, background: '#c09070' } })[format]().toBuffer(); }
 async function run(bytes, mime, ext) { return uploadProfilePhoto({ owner, requestId: fileId, name: `photo.${ext}`, mime, bytes }); }
@@ -57,6 +60,18 @@ describe('profile photo lifecycle service (mocked Drive and ledger)', () => {
     expect(admin.rpc).toHaveBeenCalledWith('storage_finalize_profile_picture', expect.objectContaining({ p_owner: owner, p_file: fileId }));
     await run(bytes, mime, ext);
     expect(mocks.upload).toHaveBeenCalledTimes(1);
+  });
+  it('uses a database-reserved V3 key for upload and cleanup after cutover', async () => {
+    process.env.CAMPUS_STORAGE_V3_ENABLED = '1';
+    try {
+      const bytes = await image('png'); await run(bytes, 'image/png', 'png');
+      expect(admin.rpc).toHaveBeenCalledWith('storage_reserve_profile_picture_v3', expect.any(Object));
+      expect(mocks.uploadV3).toHaveBeenCalledWith(expect.objectContaining({ key: `2000000000000-${fileId}` }));
+      expect(mocks.upload).not.toHaveBeenCalled();
+      expect(await removeProfilePhoto(owner)).toBe(true);
+      expect(mocks.removeV3).toHaveBeenCalledWith(`2000000000000-${fileId}`);
+      expect(mocks.remove).not.toHaveBeenCalled();
+    } finally { delete process.env.CAMPUS_STORAGE_V3_ENABLED; }
   });
   it('rejects malformed data before reserving quota', async () => {
     await expect(run(Buffer.from('89504e470d0a1a0a0000', 'hex'), 'image/png', 'png')).rejects.toThrow('invalid_file');
@@ -94,6 +109,20 @@ describe('profile photo lifecycle service (mocked Drive and ledger)', () => {
     expect(rows[0].status).toBe('delete_pending');
     expect(await removeProfilePhoto(owner)).toBe(true);
     expect(rows[0].status).toBe('deleted');
+  });
+  it('shares concurrent Drive reads and drops the entry after success or failure', async () => {
+    const metadata = { provider_file_id: 'drive_12345678', mime_type: 'image/png', checksum: 'a'.repeat(64) };
+    let resolve;
+    mocks.download.mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
+    const first = downloadProfilePhoto(metadata), second = downloadProfilePhoto(metadata);
+    expect(mocks.download).toHaveBeenCalledTimes(1);
+    resolve(Buffer.from('same'));
+    expect(await first).toEqual(await second);
+    mocks.download.mockRejectedValueOnce(new Error('unavailable'));
+    await expect(downloadProfilePhoto(metadata)).rejects.toThrow('unavailable');
+    mocks.download.mockResolvedValueOnce(Buffer.from('retry'));
+    expect((await downloadProfilePhoto(metadata)).bytes.toString()).toBe('retry');
+    expect(mocks.download).toHaveBeenCalledTimes(3);
   });
   it('returns downloaded bytes only after a ready association was resolved', async () => {
     const bytes = await image('png'); await run(bytes, 'image/png', 'png');

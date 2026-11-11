@@ -82,5 +82,25 @@ try {
  await client.query('select public.storage_complete_profile_delete($1,$2)',[user.profileId,id2]);
  assert.equal(Number((await a.query('select * from public.storage_account_usage($1)',[user.profileId])).rows[0].used_bytes),0);
 
+ // V3 reservations share the same account lock and quota as legacy files.
+ await client.query('update public.storage_accounts set quota_bytes=3145728 where profile_id=$1',[user.profileId]);
+ const v3reserve=(connection, requestId)=>connection.query('select public.storage_reserve_profile_picture_v3($1,$2,$3,$4,$5,$6) as id',[user.profileId,requestId,...args.slice(1)]);
+ const v3requests=[randomUUID(),randomUUID()];
+ await assert.rejects(v3reserve(a,v3requests[0]),/permission denied/);
+ const v3results=await Promise.allSettled([v3reserve(c,v3requests[0]),v3reserve(d,v3requests[1])]);
+ assert.equal(v3results.filter(r=>r.status==='fulfilled').length,1);
+ const v3index=v3results.findIndex(r=>r.status==='fulfilled');
+ const v3id=v3results[v3index].value.rows[0].id;
+ const v3row=(await client.query('select gateway_key,upload_expires_at from public.storage_files where id=$1',[v3id])).rows[0];
+ assert.match(v3row.gateway_key, new RegExp(`^[0-9]{13}-${v3id}$`));
+ assert.equal((await v3reserve(c,v3requests[v3index])).rows[0].id,v3id);
+ await assert.rejects(client.query('update public.storage_files set gateway_key=$2 where id=$1',[v3id,`1000000000000-${v3id}`]),/Upload operation key is immutable/);
+ await client.query('select public.storage_retire_profile_pictures($1,false)',[user.profileId]);
+ await assert.rejects(v3reserve(c,v3requests[v3index]),/conflicts/);
+ await assert.rejects(finish(v3id,'drive_id_0003'),/Operation no longer pending/);
+ await client.query('select public.storage_complete_profile_delete($1,$2)',[user.profileId,v3id]);
+ assert.equal(Number((await a.query('select * from public.storage_account_usage($1)',[user.profileId])).rows[0].used_bytes),0);
+ console.log('PASS: V3 service-role reservation, immutable key constraint, idempotency, concurrent quota, and retire-before-finalize');
+
  console.log('PASS: disabled default, self-grant denied, metadata/cross-user denied, concurrent quota serialized, idempotent reservation, backup capture, redacted admin summary, finalization, replacement and quota release');
 } finally { await a?.end(); await b?.end(); await c?.end(); await d?.end(); await client.end(); await admin.end(); await pg.stop(); }

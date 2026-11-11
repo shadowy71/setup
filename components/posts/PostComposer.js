@@ -6,6 +6,9 @@ import { createPost } from '@/lib/actions/social';
 import { LIMITS } from '@/lib/constants';
 import { Button, Field, IdentityMark, Input, Notice, Textarea } from '@/components/ui';
 import { GifPicker } from '@/components/media/GifPicker';
+import { DraftAttachments } from '@/components/posts/DraftAttachments';
+import { uploadPostFiles } from '@/lib/media/post-upload';
+import { getPostDraft, putPostDraft, deletePostDraft } from '@/lib/media/post-draft-store';
 import { Icon } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 
@@ -22,8 +25,7 @@ const KINDS = [
  * The one text composer.
  *
  * Text, an optional GIF, @mentions and — for discussions and polls — a title.
- * No file picker, no image upload, no attachment surface: those features do not
- * exist on Campus+ and the UI does not pretend otherwise.
+ * Files stay local until submit, then upload to a private expiring draft before publication.
  *
  * The surface opens with the question the product exists to ask: "What's
  * happening on campus?".
@@ -40,7 +42,95 @@ export function PostComposer({
   const [gif, setGif] = useState(null);
   const [options, setOptions] = useState(['', '']);
   const [body, setBody] = useState('');
+  const [title, setTitle] = useState('');
   const [focused, setFocused] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [draftId, setDraftId] = useState(null);
+  const draftRef = useRef(null); const draftCreatedRef = useRef(false); const uploadedRef = useRef(new Map());
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [recovery, setRecovery] = useState(null);
+  const [checkingRecovery, setCheckingRecovery] = useState(true);
+  const storageKey = authorUsername ? `${authorUsername.toLowerCase()}:${communityId || 'campus'}` : null;
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve().then(() => storageKey ? getPostDraft(storageKey) : null).then((saved) => { if (!cancelled && saved) setRecovery(saved); })
+      .catch(() => { if (!cancelled) setUploadError('Browser storage unavailable; attachment recovery is disabled.'); })
+      .finally(() => { if (!cancelled) setCheckingRecovery(false); });
+    return () => { cancelled = true; };
+  }, [storageKey]);
+  function resumeDraft() {
+    const saved = recovery;
+    draftRef.current = saved.draft; draftCreatedRef.current = saved.created;
+    uploadedRef.current = new Map(saved.uploaded || []);
+    setDraftId(saved.draft); setKind(saved.kind); setTitle(saved.title || ''); setBody(saved.body || '');
+    setOptions(saved.options || ['', '']); setGif(saved.gif || null);
+    setAttachments(saved.items.map((item) => ({ ...item, progress: uploadedRef.current.has(item.id) ? 100 : 0,
+      preview: item.file.type.startsWith('image/') ? URL.createObjectURL(item.file) : null })));
+    setRecovery(null);
+    setUploadError('Recovered the last submitted version. Submit to resume; server drafts expire after 24 hours.');
+  }
+  async function discardRecovery() {
+    setUploading(true);
+    try {
+      const response = await fetch(`/api/storage/post-drafts/${recovery.draft}`, { method: 'DELETE' });
+      if (!response.ok) { const payload = await response.json().catch(() => ({})); throw Error(payload.error || 'Could not discard the draft.'); }
+      await deletePostDraft(storageKey); setRecovery(null); setUploadError('');
+    } catch (error) { setUploadError(error.message || 'Could not discard the draft.'); }
+    finally { setUploading(false); }
+  }
+  async function publishWithAttachments(data) {
+    if (!attachments.length) { run(data); return; }
+    setUploading(true); setUploadError('');
+    let draft = draftRef.current;
+    if (!draft) {
+      draft = crypto.randomUUID(); draftRef.current = draft; setDraftId(draft);
+    }
+    // Keep a recoverable copy before contacting the server. Files and text remain
+    // on this browser until publication or explicit discard, not in localStorage.
+    const snapshot = { draft, created: draftCreatedRef.current, kind, title, body, options, gif,
+      items: attachments.map(({ id, file }) => ({ id, file })), uploaded: [...uploadedRef.current] };
+    try {
+      if (!storageKey) throw Error('Account identity unavailable.');
+      await putPostDraft(storageKey, snapshot);
+      if (!draftCreatedRef.current) {
+        const response = await fetch(`/api/storage/post-drafts/${draft}`, { method: 'PUT' });
+        if (!response.ok) throw Error('Could not start upload. Please retry.');
+        draftCreatedRef.current = true; snapshot.created = true;
+        await putPostDraft(storageKey, snapshot);
+      }
+      const remaining = attachments.filter((item) => !uploadedRef.current.has(item.id));
+      const result = await uploadPostFiles(draft, remaining, {
+        endpoint: `/api/storage/post-drafts/${draft}`, requireId: true,
+        onProgress: (id, progress) => setAttachments((old) => old.map((entry) => entry.id === id ? { ...entry, progress } : entry)),
+        onUploaded: async (id, fileId) => {
+          uploadedRef.current.set(id, fileId); snapshot.uploaded = [...uploadedRef.current];
+          await putPostDraft(storageKey, snapshot);
+          setAttachments((old) => old.map((entry) => entry.id === id ? { ...entry, progress: 100 } : entry));
+        },
+      });
+      if (!result.ok) { setUploadError(result.error); setUploading(false); return; }
+    } catch (error) { setUploadError(error.message || 'Could not save the recovery copy. Please retry.'); setUploading(false); return; }
+    data.set('attachment_draft_id', draft);
+    for (const item of attachments) data.append('attachment_file_id', uploadedRef.current.get(item.id));
+    setUploading(false); run(data);
+  }
+  async function discardDraft() {
+    setUploading(true);
+    try {
+      const response = await fetch(`/api/storage/post-drafts/${draftRef.current}`, { method: 'DELETE' });
+      if (!response.ok) { const body = await response.json().catch(() => ({})); throw Error(body.error || 'Could not discard the draft.'); }
+      await deletePostDraft(storageKey);
+      draftRef.current = null; draftCreatedRef.current = false; uploadedRef.current.clear(); setDraftId(null); setAttachments([]); setUploadError('');
+    } catch (error) { setUploadError(error.message || 'Could not discard the draft. Retry; abandoned files are also reconciled later.'); }
+    finally { setUploading(false); }
+  }
+  useEffect(() => {
+    if (!draftId) return undefined;
+    const warn = (event) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [draftId]);
   // Set only when the server confirmed the write but the row is not published —
   // i.e. moderation holds it. Nothing about it is guessed on the client.
   const [held, setHeld] = useState(null);
@@ -66,7 +156,9 @@ export function PostComposer({
       // The draft is cleared only here — after the action has confirmed a real row
       // — and a failed write returns before this callback ever runs, so the text,
       // the GIF and the poll options survive for another attempt.
+      if (draftRef.current && storageKey) deletePostDraft(storageKey).catch(() => setUploadError('The local recovery copy could not be deleted. Clear it from browser storage.'));
       setBody('');
+      setTitle('');
       setGif(null);
       setOptions(['', '']);
       setKind(defaultKind);
@@ -81,13 +173,14 @@ export function PostComposer({
             : 'Saved and sent for review. It appears on the feed once a moderator approves it.',
         );
       }
+      draftRef.current = null; draftCreatedRef.current = false; uploadedRef.current.clear(); setDraftId(null); setAttachments([]);
       onCreated?.(result);
     },
   });
 
   const isPoll = kind === 'poll';
   const needsTitle = kind !== 'post';
-  const canSubmit = !pending && (!isPoll || options.filter(Boolean).length >= 2);
+  const canSubmit = !pending && !uploading && !checkingRecovery && !recovery && (!isPoll || options.filter(Boolean).length >= 2);
 
   return (
     <form
@@ -110,7 +203,7 @@ export function PostComposer({
         } else {
           data.set('visibility', 'campus');
         }
-        run(data);
+        publishWithAttachments(data);
       }}
     >
       {!compact ? (
@@ -157,6 +250,8 @@ export function PostComposer({
                 <Input
                   id="post-title"
                   name="title"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
                   maxLength={140}
                   required
                   placeholder={isPoll ? 'What should we decide?' : 'What should the discussion cover?'}
@@ -228,6 +323,11 @@ export function PostComposer({
               </fieldset>
             ) : null}
 
+            {recovery ? <Notice tone="warning" className="mt-3">A previous attachment submission is saved on this browser. <button type="button" disabled={uploading} onClick={resumeDraft} className="underline">Resume</button>{' · '}<button type="button" disabled={uploading} onClick={discardRecovery} className="underline">Discard</button></Notice> : null}
+            <DraftAttachments items={attachments} setItems={setAttachments} disabled={pending || Boolean(draftId) || Boolean(recovery) || checkingRecovery} busy={uploading} postId={draftId} />
+            {attachments.length && !draftId ? <p className="mt-2 text-xs text-muted">On submit, a recovery copy of these files and the submitted text is stored in this browser until published or discarded. Avoid shared devices.</p> : null}
+            {uploadError && !draftId ? <p role="alert" className="mt-2 text-xs text-danger">{uploadError}</p> : null}
+            {draftId ? <p role="status" className="mt-2 text-xs text-muted">{uploading ? 'Uploading before publication…' : 'Private upload draft saved; submit to retry.'} {uploadError ? <span className="text-danger">{uploadError}</span> : null} {!uploading && !pending ? <button type="button" className="underline" onClick={discardDraft}>Discard uploaded files</button> : null}</p> : null}
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
               <div className="flex flex-wrap items-center gap-2">
                 <GifPicker value={gif} onPick={setGif} onRemove={() => setGif(null)} />

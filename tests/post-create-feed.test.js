@@ -506,3 +506,18 @@ describe('the page Home asks the database for', () => {
     expect(calls[0].p_offset).toBe(0);
   });
 });
+
+it('publishes a completed attachment draft through one transactional RPC', async () => {
+  vi.stubEnv('CAMPUS_POST_ATTACHMENTS_ENABLED', '1'); vi.stubEnv('CAMPUS_STORAGE_V3_ENABLED', '1');
+  try {
+    const supabase = fakeSupabase(); const original = supabase.rpc;
+    supabase.rpc = async (name, args) => name === 'publish_post_with_draft' ? (supabase.state.rpcs.push([name,args]), { data: POST_ID, error: null }) : original(name,args);
+    mocks.getServerClient.mockResolvedValue(supabase);
+    const data = form(); const draft = 'f4b5c514-200e-4cae-912f-6b8d03f71589'; const file = 'd6c50c2c-c061-497e-ae3a-0289944cd024';
+    data.set('attachment_draft_id',draft); data.append('attachment_file_id',file);
+    const result = await createPost(data);
+    expect(result.ok).toBe(true); expect(result.id).toBe(POST_ID);
+    expect(supabase.state.rpcs).toContainEqual(['publish_post_with_draft',expect.objectContaining({p_draft:draft,p_files:[file]})]);
+    expect(supabase.state.queries.some((q) => q.table === 'posts' && q.method === 'insert')).toBe(false);
+  } finally { vi.unstubAllEnvs(); }
+});

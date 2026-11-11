@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('@/lib/storage/post-attachments', () => ({ reconcilePostAttachments: vi.fn() }));
+import { reconcilePostAttachments } from '@/lib/storage/post-attachments';
 vi.mock('@/lib/storage/profile-photo', () => ({ reconcileProfilePhotos: vi.fn() }));
 import { reconcileProfilePhotos } from '@/lib/storage/profile-photo';
 import { GET } from '@/app/api/storage/reconcile/route';
@@ -12,7 +14,8 @@ describe('profile photo reconciliation endpoint', () => {
   it('returns a redacted result for the scheduler and hides errors', async () => {
     const req = () => new Request('https://pccoe.in/api/storage/reconcile', { headers: { authorization: `Bearer ${'x'.repeat(40)}` } });
     reconcileProfilePhotos.mockResolvedValueOnce({ processedOwners: 1, retryPending: false }).mockRejectedValueOnce(Error('private'));
-    expect(await (await GET(req())).json()).toEqual({ ok: true, processedOwners: 1, retryPending: false });
+    reconcilePostAttachments.mockResolvedValue({ processed: 0, retryPending: false });
+    expect(await (await GET(req())).json()).toEqual({ ok: true, processedOwners: 1, retryPending: false, attachments: { processed: 0, retryPending: false } });
     const failure = await GET(req());
     expect(failure.status).toBe(503); expect(JSON.stringify(await failure.json())).not.toContain('private');
   });

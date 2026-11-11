@@ -2,18 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Button, Card, IdentityMark, Notice } from '@/components/ui';
+import { invalidateAvatar } from '@/lib/media/avatar-revisions';
 
 export function FileUpload({ username, name, enabled, available }) {
   const [selected, setSelected] = useState(null);
   const [preview, setPreview] = useState(null);
   const [progress, setProgress] = useState(null);
   const [message, setMessage] = useState('');
-  const [version, setVersion] = useState(0);
   const input = useRef(null);
   const requestId = useRef(null);
   const previewRef = useRef(null);
   useEffect(() => () => { if (previewRef.current) URL.revokeObjectURL(previewRef.current); }, []);
-  function notify() { setVersion((v) => v + 1); window.dispatchEvent(new CustomEvent('campus-avatar-changed', { detail: username })); }
+  function notify() { invalidateAvatar(username); }
   function cancel() { if (previewRef.current) URL.revokeObjectURL(previewRef.current); previewRef.current = null; setSelected(null); setPreview(null); requestId.current = null; if (input.current) input.current.value = ''; }
   function choose(event) {
     const file = event.target.files?.[0];
@@ -60,7 +60,7 @@ export function FileUpload({ username, name, enabled, available }) {
         {preview && selected ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={preview} alt="Selected photo preview" className="h-16 w-16 rounded-full object-cover" />
-        ) : <IdentityMark key={version} name={name} username={username} size={64} />}
+        ) : <IdentityMark name={name} username={username} size={64} />}
         <p className="text-sm text-muted">JPEG, PNG or WebP, up to 3 MiB. Images may contain embedded metadata.</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">

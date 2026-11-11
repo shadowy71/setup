@@ -73,7 +73,7 @@ describe('controlled media and storage boundaries', () => {
     // Future upload previews must be limited to the reviewed storage component.
     const BRAND_SURFACE = path.join('components', 'brand', 'Brand.js');
     const imageUsers = grep([...appFiles, ...componentFiles], /<img[\s>]|from 'next\/image'|from "next\/image"/);
-    const allowed = [BRAND_SURFACE, GIF_SURFACE, path.join('components', 'storage', 'FileUpload.js'), path.join('components', 'storage', 'ProfileAvatar.js')];
+    const allowed = [BRAND_SURFACE, GIF_SURFACE, path.join('components', 'storage', 'FileUpload.js'), path.join('components', 'storage', 'ProfileAvatar.js'), path.join('components', 'posts', 'PostAttachments.js'), path.join('components', 'posts', 'DraftAttachments.js')];
     expect(imageUsers.filter((file) => !allowed.includes(file))).toEqual([]);
     expect(imageUsers).toContain(BRAND_SURFACE);
     expect(imageUsers).toContain(GIF_SURFACE);
@@ -85,9 +85,9 @@ describe('controlled media and storage boundaries', () => {
   it('restricts file pickers to the designated reusable upload component', () => {
     // The allowlisted component does not exist yet; approval here is not an
     // authorization check or a substitute for reviewing the upload lifecycle.
-    const controlledPicker = path.join('components', 'storage', 'FileUpload.js');
+    const controlledPickers = [path.join('components', 'storage', 'FileUpload.js'), path.join('components', 'posts', 'PostAttachments.js'), path.join('components', 'posts', 'DraftAttachments.js')];
     const offenders = grep([...appFiles, ...componentFiles], /<input\b[^>]*(?:type\s*=\s*(?:["']file["']|\{)|accept\s*=)|createElement\s*\(\s*["']input["']/s);
-    expect(offenders.filter((file) => file !== controlledPicker)).toEqual([]);
+    expect(offenders.filter((file) => !controlledPickers.includes(file))).toEqual([]);
     expect(read('components/ui/fields.js')).toMatch(/props\.type\.toLowerCase\(\) === 'file'/);
   });
 
