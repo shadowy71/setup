@@ -1,3 +1,4 @@
+import { SpaceGallery } from '@/components/campus/SpaceGallery';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
@@ -293,7 +294,7 @@ export default async function ClubManagePage({ params, searchParams }) {
           {view === 'settings' ? (
             <>
               <Notice tone="neutral" icon="lock">The stable link, catalogue key and source verification are protected. Public profile fields use the scoped update_club_profile RPC.</Notice>
-              <ClubSettingsForm club={club} />
+              <SpaceGallery postId={club.id} manage username={user.profile.username} /><ClubSettingsForm club={club} />
             </>
           ) : null}
         </div>

@@ -1,3 +1,8 @@
+import { reconcileSpaceFiles } from '@/lib/storage/space-attachments';
+import { reconcileEventFiles } from '@/lib/storage/event-attachments';
+import { reconcileNoticeFiles } from '@/lib/storage/notice-attachments';
+import { reconcileAchievementFiles } from '@/lib/storage/achievement-attachments';
+import { reconcileGigFiles } from '@/lib/storage/gig-attachments';
 import { reconcileProjectFiles } from '@/lib/storage/project-attachments';
 import { reconcileTeamFiles } from '@/lib/storage/team-attachments';
 import { reconcileRideFiles } from '@/lib/storage/ride-attachments';
@@ -29,7 +34,12 @@ export async function GET(request) {
     const ride = await reconcileRideFiles();
     const team = await reconcileTeamFiles();
     const project = await reconcileProjectFiles();
-    return NextResponse.json({ ok: true, ...result, attachments, marketplace, lostFound, housing, ride, team, project }, { headers: { 'Cache-Control': 'no-store' } });
+    const gig = await reconcileGigFiles();
+    const achievement = await reconcileAchievementFiles();
+    const notice = await reconcileNoticeFiles();
+    const event = await reconcileEventFiles();
+    const space = await reconcileSpaceFiles();
+    return NextResponse.json({ ok: true, ...result, attachments, marketplace, lostFound, housing, ride, team, project, gig, achievement, notice, event, space }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ ok: false }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }

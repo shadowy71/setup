@@ -1,3 +1,4 @@
+import { SpaceGallery } from '@/components/campus/SpaceGallery';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
@@ -147,8 +148,9 @@ export default async function CommunitiesPage({ searchParams }) {
 
       <section aria-label="Communities" className="flex flex-col gap-3">
         {items.map((community) => (
+          <div key={community.id}>
+          <SpaceGallery postId={community.id} coverOnly />
           <ContentCard
-            key={community.id}
             href={ROUTES.community(community.slug)}
             title={community.name}
             description={community.description}
@@ -166,6 +168,7 @@ export default async function CommunitiesPage({ searchParams }) {
               community.visibility === 'campus' ? 'PCCOE only' : community.visibility,
             ]}
           />
+          </div>
         ))}
       </section>
     </div>

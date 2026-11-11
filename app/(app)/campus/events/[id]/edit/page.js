@@ -1,3 +1,4 @@
+import { EventGallery } from '@/components/campus/EventGallery';
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -17,6 +18,7 @@ export default async function EditEvent({ params }) {
   return <div className="flex flex-col gap-4">
     <PageHeader title="Edit event" back={{ href: '/admin?tab=events', label: 'Events management' }} />
     {!event.is_official ? <Notice tone="neutral">This is a student-organized event. Editing it does not make it official.</Notice> : null}
+    <EventGallery postId={id} manage username={user.profile.username} />
     <ActionForm action={saveEvent} hidden={{ id, club_id: event.club_id || '' }} resetOnSuccess={false} cancelHref="/admin?tab=events" fields={[
       { name: 'title', label: 'Title', required: true, maxLength: 140, defaultValue: event.title },
       { name: 'description', label: 'Description', type: 'textarea', required: true, maxLength: 2000, defaultValue: event.description },

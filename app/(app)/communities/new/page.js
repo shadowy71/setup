@@ -66,6 +66,8 @@ export default async function NewCommunityPage({ searchParams }) {
 
       <ActionForm
         action={createCommunity}
+        spaceAttachments={user.profile.username}
+        spaceImagesOnly
         hidden={{ kind }}
         submitLabel={`Create ${kindLabel}`}
         pendingLabel="Creating…"

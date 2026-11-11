@@ -37,6 +37,7 @@ export default async function NewClubPage() {
       />
       <ActionForm
         action={createClub}
+        spaceAttachments={user.profile.username}
         submitLabel="Create club & assign admin"
         pendingLabel="Creating…"
         successMessage="Club created and initial administrator assigned."

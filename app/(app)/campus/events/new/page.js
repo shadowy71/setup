@@ -48,6 +48,7 @@ export default async function NewEventPage({ searchParams }) {
       {params?.club_id && !requestedClub ? <Notice tone="warning" icon="lock">The requested club is not one your account manages, so it was not preselected.</Notice> : null}
       <ActionForm
         action={submitEvent}
+        eventAttachments={user.profile.username}
         submitLabel="Submit for review"
         successMessage="Submitted. Staff will review it before it appears on the calendar."
         redirectTo={requestedClub ? ROUTES.clubManage(requestedClub, 'events') : '/campus/events'}

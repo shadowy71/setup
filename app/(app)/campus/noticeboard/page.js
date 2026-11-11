@@ -1,3 +1,4 @@
+import { NoticeGallery } from '@/components/campus/NoticeGallery';
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { can, toActor } from '@/lib/permissions/authorization';
@@ -71,8 +72,9 @@ export default async function NoticeboardPage({ searchParams }) {
 
       <section aria-label="Notices" className="flex flex-col gap-3">
         {items.map((notice) => (
+          <div key={notice.id}>
+          <NoticeGallery postId={notice.id} coverOnly />
           <ContentCard
-            key={notice.id}
             href={ROUTES.notice(notice.id)}
             title={notice.title}
             description={notice.body}
@@ -84,6 +86,7 @@ export default async function NoticeboardPage({ searchParams }) {
             ]}
             meta={[`Published ${formatDate(notice.published_at || notice.created_at)}`]}
           />
+          </div>
         ))}
       </section>
 

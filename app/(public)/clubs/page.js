@@ -1,3 +1,4 @@
+import { SpaceGallery } from '@/components/campus/SpaceGallery';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
@@ -228,6 +229,7 @@ export default async function ClubsPage({ searchParams }) {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((club) => (
           <div key={club.id} className="flex flex-col gap-1.5">
+            {viewer ? <SpaceGallery postId={club.id} coverOnly /> : null}
             <ClubCard club={club} joined={joined.has(club.id)} pending={pending.has(club.id)} viewer={Boolean(viewer)} />
             {club.slug ? (
               <div className="flex justify-end px-1">
