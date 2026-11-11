@@ -6,6 +6,7 @@ import { can, toActor } from '@/lib/permissions/authorization';
 import { listListings, listDeals, listCategories, getMarketSummary } from '@/lib/data/marketplace';
 import { ROUTES } from '@/lib/constants';
 import { Badge, Button, Card, EmptyState, LinkButton, Notice, PageHeader, SectionHeader, TiltCard } from '@/components/ui';
+import { MarketplaceGallery } from '@/components/marketplace/MarketplaceGallery';
 import { ContentCard } from '@/components/content/ContentCard';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { formatDate, formatPrice } from '@/lib/utils';
@@ -54,6 +55,7 @@ export default async function MarketPage({ searchParams }) {
     tab === 'deals' ? listDeals(supabase, { limit: 24 }) : Promise.resolve({ items: [], unavailable: false }),
   ]);
 
+  const marketImages = process.env.CAMPUS_MARKET_ATTACHMENTS_ENABLED === '1' && process.env.CAMPUS_STORAGE_V3_ENABLED === '1';
   const canSell = can(actor, 'create_marketplace_listing');
 
   // Seller identities for whichever list the tab loaded.
@@ -165,6 +167,7 @@ export default async function MarketPage({ searchParams }) {
                 title={listing.title}
                 description={listing.description}
                 icon="tag"
+                media={marketImages ? <MarketplaceGallery listingId={listing.id} coverOnly /> : null}
                 timestamp={listing.created_at}
                 badges={[
                   { label: listing.is_free ? 'Free' : formatPrice(listing.price), tone: 'accent' },

@@ -44,6 +44,7 @@ export function ContentCard({
   icon = null,
   className = '',
   footer = null,
+  media = null,
   emphasis = null,
   variant = 'card',
 }) {
@@ -81,6 +82,7 @@ export function ContentCard({
 
   const inner = (
     <>
+      {media ? <div className="block w-24 shrink-0 sm:w-32">{media}</div> : null}
       {icon ? (
         <span className={skin.glyph}>
           <Icon name={icon} size={15} />

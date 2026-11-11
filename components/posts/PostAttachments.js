@@ -14,9 +14,9 @@ export function snapshotThumbnail(image) {
     return canvas.toDataURL('image/webp');
   } catch { return null; }
 }
-export function FullImage({ postId, file, preview }) {
+export function FullImage({ postId, file, preview, basePath = '/api/storage/posts' }) {
   const [state, setState] = useState('loading');
-  const url = `/api/storage/posts/${postId}/${file.id}`;
+  const url = `${basePath}/${postId}/${file.id}`;
   return <>
     <div className="relative mx-auto mt-3 flex min-h-40 w-fit max-w-full items-center justify-center">
       <img src={preview || `${url}?size=thumb`} alt="" aria-hidden="true" className="block max-h-[70vh] max-w-full rounded object-contain" />

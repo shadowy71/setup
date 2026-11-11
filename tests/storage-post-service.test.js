@@ -32,3 +32,22 @@ describe('post attachment cleanup',()=>{
     expect(calls).toContainEqual(['storage_complete_post_attachment_delete',{p_file:'file'}]);
   });
 });
+
+describe('post upload preparation and retry compatibility', () => {
+  it('uses the original checksum for a reservation created before image optimization', async () => {
+    const { default: sharp } = await import('sharp');
+    const { createHash } = await import('node:crypto');
+    const { savePostAttachment } = await import('@/lib/storage/post-attachments');
+    const bytes = await sharp({create:{width:80,height:40,channels:3,background:'#ff0000'}}).jpeg().withMetadata({orientation:6}).toBuffer();
+    const checksum = createHash('sha256').update(bytes).digest('hex');
+    rows.storage_files.push({id:'file',owner_id:'owner',request_id:'request',checksum,byte_size:bytes.length,status:'ready',gateway_key:'key'});
+    m.client.mockReturnValue({from:builder,rpc:async (name,args) => {
+      calls.push([name,args]);
+      if (name === 'consume_rate_limit') return {data:{allowed:true},error:null};
+      if (name === 'storage_reserve_draft_attachment') return {data:'file',error:null};
+      throw Error('unexpected RPC');
+    }});
+    expect(await savePostAttachment({owner:'owner',draft:'draft',requestId:'request',name:'photo.jpg',mime:'image/jpeg',bytes})).toBe('file');
+    expect(calls).toContainEqual(['storage_reserve_draft_attachment',expect.objectContaining({p_checksum:checksum,p_size:bytes.length})]);
+  });
+});

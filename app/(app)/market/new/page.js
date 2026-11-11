@@ -41,12 +41,13 @@ export default async function NewListingPage({ searchParams }) {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Sell or give away"
-        description="Describe the item honestly. Text only — Campus+ has no photo uploads."
+        description="Describe the item honestly and add product photos if you like."
         back={{ href: ROUTES.market, label: 'Market' }}
       />
 
       <ActionForm
         action={createListing}
+        marketplaceImages={user.profile.username}
         submitLabel="Publish listing"
         pendingLabel="Publishing…"
         successMessage="Your listing is live. Interested students can now reach you."

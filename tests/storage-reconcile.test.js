@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/storage/post-attachments', () => ({ reconcilePostAttachments: vi.fn() }));
+vi.mock('@/lib/storage/marketplace-attachments', () => ({ reconcileMarketplaceFiles: vi.fn() }));
+import { reconcileMarketplaceFiles } from '@/lib/storage/marketplace-attachments';
 import { reconcilePostAttachments } from '@/lib/storage/post-attachments';
 vi.mock('@/lib/storage/profile-photo', () => ({ reconcileProfilePhotos: vi.fn() }));
 import { reconcileProfilePhotos } from '@/lib/storage/profile-photo';
@@ -15,7 +17,8 @@ describe('profile photo reconciliation endpoint', () => {
     const req = () => new Request('https://pccoe.in/api/storage/reconcile', { headers: { authorization: `Bearer ${'x'.repeat(40)}` } });
     reconcileProfilePhotos.mockResolvedValueOnce({ processedOwners: 1, retryPending: false }).mockRejectedValueOnce(Error('private'));
     reconcilePostAttachments.mockResolvedValue({ processed: 0, retryPending: false });
-    expect(await (await GET(req())).json()).toEqual({ ok: true, processedOwners: 1, retryPending: false, attachments: { processed: 0, retryPending: false } });
+    reconcileMarketplaceFiles.mockResolvedValue({ processed: 0, retryPending: false });
+    expect(await (await GET(req())).json()).toEqual({ ok: true, processedOwners: 1, retryPending: false, attachments: { processed: 0, retryPending: false }, marketplace: { processed: 0, retryPending: false } });
     const failure = await GET(req());
     expect(failure.status).toBe(503); expect(JSON.stringify(await failure.json())).not.toContain('private');
   });
