@@ -124,7 +124,7 @@ export function MobileMenuBody({
       {user ? (
         <div className="mt-4 border-t border-line pt-3">
           <Link href={ROUTES.profile} onClick={close} className="flex items-center gap-2.5 hover:no-underline">
-            <IdentityMark name={user.displayName} size={32} tone="accent" square={false} />
+            <IdentityMark name={user.displayName} username={user.username} size={32} tone="accent" square={false} />
             <span className="min-w-0">
               <span className="flex items-center gap-1.5 truncate text-[0.8125rem] font-semibold">
                 {user.displayName}

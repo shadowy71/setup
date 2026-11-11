@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (42 files):
+-- Contents (46 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -75,9 +75,13 @@
 --   40  20261102000002_040_busiest_trending.sql  (220 lines)
 --   41  20261103000001_041_public_discovery.sql  (276 lines)
 --   42  20261105000001_042_ai_ml_branch.sql  (40 lines)
+--   43  20261110000001_043_profile_storage_foundation.sql  (132 lines)
+--   44  20261110000002_044_storage_admin_summary.sql  (27 lines)
+--   45  20261110000003_045_backup_capture_late_tables.sql  (5 lines)
+--   46  20261110000004_046_profile_photo_lifecycle.sql  (89 lines)
 
 -- ==========================================================================
--- FILE 01/42  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/46  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -198,7 +202,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/42  20261005000002_002_identity_roles.sql
+-- FILE 02/46  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -790,7 +794,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/42  20261005000003_003_blocks.sql
+-- FILE 03/46  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -937,7 +941,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/42  20261005000004_004_communities.sql
+-- FILE 04/46  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1344,7 +1348,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/42  20261005000005_005_social.sql
+-- FILE 05/46  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1967,7 +1971,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/42  20261005000006_006_moderation_core.sql
+-- FILE 06/46  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2442,7 +2446,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/42  20261005000007_007_messaging.sql
+-- FILE 07/46  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3031,7 +3035,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/42  20261005000008_008_marketplace.sql
+-- FILE 08/46  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3553,7 +3557,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/42  20261005000009_009_campus.sql
+-- FILE 09/46  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4587,7 +4591,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/42  20261005000010_010_random.sql
+-- FILE 10/46  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5239,7 +5243,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/42  20261005000011_011_platform.sql
+-- FILE 11/46  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -5979,7 +5983,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/42  20261005000012_012_auth_hooks.sql
+-- FILE 12/46  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6436,7 +6440,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/42  20261005000013_013_reference_data.sql
+-- FILE 13/46  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6710,7 +6714,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/42  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/46  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6923,7 +6927,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/42  20261005000015_015_column_privileges.sql
+-- FILE 15/46  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7151,7 +7155,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/42  20261005000016_016_staff_actions.sql
+-- FILE 16/46  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7858,7 +7862,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/42  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/46  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8056,7 +8060,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/42  20261005000018_018_function_grants.sql
+-- FILE 18/46  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8171,7 +8175,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/42  20261005000019_019_staff_visibility.sql
+-- FILE 19/46  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8247,7 +8251,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/42  20261005000020_020_chat_inbox.sql
+-- FILE 20/46  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8341,7 +8345,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/42  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/46  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8679,7 +8683,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/42  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/46  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8752,7 +8756,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/42  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/46  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8782,7 +8786,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/42  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/46  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9255,7 +9259,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/42  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/46  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9549,7 +9553,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/42  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/46  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9669,7 +9673,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/42  20261025000001_027_backup_change_capture.sql
+-- FILE 27/46  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10935,7 +10939,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/42  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/46  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11262,7 +11266,7 @@ comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
--- FILE 29/42  20261026000001_029_feed_realtime_delivery.sql
+-- FILE 29/46  20261026000001_029_feed_realtime_delivery.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11379,7 +11383,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 30/42  20261027000001_030_random_channel_authorization.sql
+-- FILE 30/46  20261027000001_030_random_channel_authorization.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11572,7 +11576,7 @@ comment on function public.can_access_random_session is
   'can_access_own_random_session(uuid) instead.';
 
 -- ==========================================================================
--- FILE 31/42  20261028000001_031_club_governance.sql
+-- FILE 31/46  20261028000001_031_club_governance.sql
 -- ==========================================================================
 
 -- Campus+ migration 031 — club governance, requests and scoped management
@@ -12625,7 +12629,7 @@ grant execute on function public.remove_community_member(uuid, uuid) to authenti
 grant execute on function public.update_club_profile(uuid, jsonb) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 32/42  20261028000002_032_club_catalogue.sql
+-- FILE 32/46  20261028000002_032_club_catalogue.sql
 -- ==========================================================================
 
 -- Campus+ migration 032 — source-backed club catalogue
@@ -12839,7 +12843,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 33/42  20261029000001_033_unread_count_lookup.sql
+-- FILE 33/46  20261029000001_033_unread_count_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12897,7 +12901,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 34/42  20261029000002_034_inbox_membership_lookup.sql
+-- FILE 34/46  20261029000002_034_inbox_membership_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12989,7 +12993,7 @@ revoke all on function public.conversation_inbox(integer) from public, anon;
 grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 35/42  20261029000003_035_feed_visibility_reconciliation.sql
+-- FILE 35/46  20261029000003_035_feed_visibility_reconciliation.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13045,7 +13049,7 @@ revoke all on function public.campus_feed_post_visibility(uuid[]) from public, a
 grant execute on function public.campus_feed_post_visibility(uuid[]) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 36/42  20261029000004_036_admin_dashboard_counts.sql
+-- FILE 36/46  20261029000004_036_admin_dashboard_counts.sql
 -- ==========================================================================
 
 -- Campus+ 036: one authorized, RLS-scoped Admin count snapshot
@@ -13109,7 +13113,7 @@ revoke all on function public.campus_admin_dashboard_counts() from anon;
 grant execute on function public.campus_admin_dashboard_counts() to authenticated;
 
 -- ==========================================================================
--- FILE 37/42  20261029000005_037_realtime_authorization_grants.sql
+-- FILE 37/46  20261029000005_037_realtime_authorization_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 037 — reassert least-privilege Realtime function grants
@@ -13145,7 +13149,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 38/42  20261101000001_038_post_pin_ordering.sql
+-- FILE 38/46  20261101000001_038_post_pin_ordering.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13463,7 +13467,7 @@ comment on index public.posts_feed_replica_identity_idx is
   'Realtime update identity: old id/pin/status only, so pin transitions are distinguishable from counter-only writes without full-row replica identity.';
 
 -- ==========================================================================
--- FILE 39/42  20261102000001_039_poll_author_may_vote.sql
+-- FILE 39/46  20261102000001_039_poll_author_may_vote.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13504,7 +13508,7 @@ comment on policy poll_votes_insert_self on public.poll_votes is
   'Any active student may vote once in an open published poll, including the poll author; duplicates remain blocked by the unique (post_id, user_id) constraint.';
 
 -- ==========================================================================
--- FILE 40/42  20261102000002_040_busiest_trending.sql
+-- FILE 40/46  20261102000002_040_busiest_trending.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13728,7 +13732,7 @@ comment on function public.trending_posts(integer, integer) is
   'Deterministic recent-engagement trending score. Formula and defaults are published in lib/constants.js#TRENDING_FORMULA; bar normalization lives in lib/social/activity-scale.js. SECURITY INVOKER so RLS still decides visibility.';
 
 -- ==========================================================================
--- FILE 41/42  20261103000001_041_public_discovery.sql
+-- FILE 41/46  20261103000001_041_public_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 041 — public discovery: clubs by slug, public events
@@ -14008,7 +14012,7 @@ end $$;
 drop table __anon_exec_before_041;
 
 -- ==========================================================================
--- FILE 42/42  20261105000001_042_ai_ml_branch.sql
+-- FILE 42/46  20261105000001_042_ai_ml_branch.sql
 -- ==========================================================================
 
 -- Rename only complete, structured branch values. Identifiers, divisions,
@@ -14050,6 +14054,275 @@ where regexp_replace(lower(branch), '[^a-z0-9]', '', 'g') in (
   'aiml', 'aiandml', 'aimachinelearning', 'aiandmachinelearning',
   'artificialintelligencemachinelearning', 'artificialintelligenceandmachinelearning'
 ) and branch <> 'AI & ML';
+
+-- ==========================================================================
+-- FILE 43/46  20261110000001_043_profile_storage_foundation.sql
+-- ==========================================================================
+
+-- Storage ledger foundation only. No file endpoints are enabled by this migration.
+-- Keep Drive identifiers and operation state inaccessible to browser clients.
+create table public.storage_accounts (
+  profile_id uuid primary key references public.profiles(id) on delete restrict,
+  upload_enabled boolean not null default false,
+  quota_bytes bigint not null default 26214400 check (quota_bytes between 0 and 1073741824),
+  updated_at timestamptz not null default now()
+);
+
+create table public.storage_files (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.profiles(id) on delete restrict,
+  request_id uuid not null,
+  provider text not null default 'google_apps_script' check (provider = 'google_apps_script'),
+  provider_file_id text,
+  original_name text not null check (length(original_name) between 1 and 180),
+  mime_type text not null check (mime_type in ('image/jpeg', 'image/png', 'image/webp')),
+  byte_size bigint not null check (byte_size between 1 and 3145728),
+  checksum text not null check (checksum ~ '^[0-9a-f]{64}$'),
+  resource_type text not null default 'profile_picture' check (resource_type = 'profile_picture'),
+  resource_id uuid not null references public.profiles(id) on delete restrict,
+  status text not null default 'reserved' check (status in ('reserved', 'ready', 'delete_pending', 'deleted')),
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz,
+  unique (owner_id, request_id),
+  check (resource_id = owner_id),
+  check ((status = 'deleted') = (deleted_at is not null)),
+  check (status <> 'ready' or provider_file_id is not null)
+);
+create index storage_files_owner_status_idx on public.storage_files(owner_id, status);
+create unique index storage_files_provider_id_idx on public.storage_files(provider, provider_file_id) where provider_file_id is not null;
+
+alter table public.storage_accounts enable row level security;
+alter table public.storage_files enable row level security;
+revoke all on public.storage_accounts, public.storage_files from public, anon, authenticated;
+grant select, insert, update on public.storage_accounts, public.storage_files to service_role;
+
+-- The only authenticated write to a ledger is a bounded reservation. It never
+-- accepts a provider identifier, status, owner, or someone else's profile ID.
+-- Pending and delete-pending files keep consuming quota until reconciled.
+create function public.storage_reserve_profile_picture(
+  p_request_id uuid, p_original_name text, p_mime_type text, p_byte_size bigint, p_checksum text
+) returns uuid
+language plpgsql security definer set search_path = public, pg_temp
+as $$
+declare
+  v_user uuid := public.current_profile_id();
+  v_account public.storage_accounts%rowtype;
+  v_existing public.storage_files%rowtype;
+  v_used bigint;
+  v_id uuid;
+begin
+  if v_user is null or not public.is_active_profile(v_user) then
+    raise exception 'Active account required' using errcode = '42501';
+  end if;
+  if p_request_id is null or p_original_name is null or length(p_original_name) not between 1 and 180
+     or p_mime_type is null or p_mime_type not in ('image/jpeg', 'image/png', 'image/webp')
+     or p_byte_size is null or p_byte_size not between 1 and 3145728
+     or p_checksum is null or p_checksum !~ '^[0-9a-f]{64}$' then
+    raise exception 'Invalid file metadata' using errcode = '22023';
+  end if;
+  insert into public.storage_accounts(profile_id) values (v_user) on conflict (profile_id) do nothing;
+  select * into v_account from public.storage_accounts where profile_id = v_user for update;
+  if not v_account.upload_enabled then raise exception 'Uploads are not enabled' using errcode = '42501'; end if;
+  select * into v_existing from public.storage_files where owner_id = v_user and request_id = p_request_id;
+  if found then
+    if v_existing.original_name <> p_original_name or v_existing.mime_type <> p_mime_type
+       or v_existing.byte_size <> p_byte_size or v_existing.checksum <> p_checksum
+       or v_existing.status <> 'reserved' then
+      raise exception 'Upload request conflicts with an existing operation' using errcode = '23505';
+    end if;
+    return v_existing.id;
+  end if;
+  select coalesce(sum(byte_size), 0) into v_used from public.storage_files
+    where owner_id = v_user and status in ('reserved', 'ready', 'delete_pending');
+  if v_used + p_byte_size > v_account.quota_bytes then raise exception 'Storage quota exceeded' using errcode = '22023'; end if;
+  insert into public.storage_files(owner_id, request_id, original_name, mime_type, byte_size, checksum, resource_id)
+    values (v_user, p_request_id, p_original_name, p_mime_type, p_byte_size, p_checksum, v_user)
+    returning id into v_id;
+  return v_id;
+end;
+$$;
+revoke all on function public.storage_reserve_profile_picture(uuid,text,text,bigint,text) from public, anon;
+grant execute on function public.storage_reserve_profile_picture(uuid,text,text,bigint,text) to authenticated;
+
+-- Rank and permission mirror existing user administration. Trusted database
+-- maintenance may bootstrap the first administrator without embedding an ID.
+create function public.admin_set_upload_enabled(p_user uuid, p_enabled boolean)
+returns void language plpgsql security definer set search_path = public, pg_temp
+as $$
+declare v_actor uuid := public.current_profile_id();
+begin
+  if p_user is null or p_enabled is null then raise exception 'Invalid request' using errcode = '22023'; end if;
+  if not public.is_trusted_writer() then
+    if v_actor is null or not public.is_active_profile(v_actor) or not public.has_permission('manage_users')
+       or not (public.has_role('admin') or public.has_role('super_admin')) then
+      raise exception 'Not authorized' using errcode = '42501';
+    end if;
+    if p_user = v_actor or public.current_role_rank() <= public.role_rank(p_user) then
+      raise exception 'Cannot change your own or a peer account' using errcode = '42501';
+    end if;
+  end if;
+  if not exists (select 1 from public.profiles where id = p_user) then raise exception 'User not found' using errcode = '22023'; end if;
+  insert into public.storage_accounts(profile_id, upload_enabled) values(p_user, p_enabled)
+    on conflict (profile_id) do update set upload_enabled = excluded.upload_enabled, updated_at = now();
+  perform public.log_audit('admin.upload_permission_changed', 'user', p_user::text,
+    jsonb_build_object('upload_enabled', p_enabled), true, null, 'staff');
+end;
+$$;
+revoke all on function public.admin_set_upload_enabled(uuid,boolean) from public, anon;
+grant execute on function public.admin_set_upload_enabled(uuid,boolean) to authenticated, service_role;
+
+-- Safe counts for the owner or an administrator; no Drive IDs or checksums.
+create function public.storage_account_usage(p_user uuid)
+returns table(upload_enabled boolean, quota_bytes bigint, used_bytes bigint)
+language plpgsql stable security definer set search_path = public, pg_temp
+as $$
+declare v_actor uuid := public.current_profile_id();
+begin
+  if v_actor is null or not public.is_active_profile(v_actor) or
+     (p_user <> v_actor and not (public.has_permission('manage_users') and
+       (public.has_role('admin') or public.has_role('super_admin')))) then
+    raise exception 'Not authorized' using errcode = '42501';
+  end if;
+  return query select coalesce(a.upload_enabled, false), coalesce(a.quota_bytes, 26214400::bigint),
+    (select coalesce(sum(f.byte_size), 0)::bigint from public.storage_files f where f.owner_id = p_user and f.status in ('reserved', 'ready', 'delete_pending'))
+    from (select p_user as profile_id) target left join public.storage_accounts a on a.profile_id = target.profile_id;
+end;
+$$;
+revoke all on function public.storage_account_usage(uuid) from public, anon;
+grant execute on function public.storage_account_usage(uuid) to authenticated;
+
+-- ==========================================================================
+-- FILE 44/46  20261110000002_044_storage_admin_summary.sql
+-- ==========================================================================
+
+-- Read-only operational view of Campus+ ledger rows, never the Drive account.
+-- The ledger stays private; this function returns no provider IDs or checksums.
+create function public.admin_storage_summary()
+returns jsonb language plpgsql stable security definer set search_path = public, pg_temp
+as $$
+declare v_actor uuid := public.current_profile_id(); v_result jsonb;
+begin
+  if v_actor is null or not public.is_active_profile(v_actor)
+     or not (public.has_role('admin') or public.has_role('super_admin'))
+     or not public.has_permission('manage_backups') then
+    raise exception 'Not authorized' using errcode = '42501';
+  end if;
+  select jsonb_build_object(
+    'charged_bytes', coalesce(sum(byte_size) filter (where status in ('reserved', 'ready', 'delete_pending')), 0),
+    'ready_count', count(*) filter (where status = 'ready'),
+    'reserved_count', count(*) filter (where status = 'reserved'),
+    'delete_pending_count', count(*) filter (where status = 'delete_pending'),
+    'recent', coalesce((select jsonb_agg(row_to_json(r) order by r.created_at desc, r.id desc)
+      from (select id, owner_id, original_name, mime_type, byte_size, resource_type, status, created_at
+            from public.storage_files order by created_at desc, id desc limit 50) r), '[]'::jsonb)
+  ) into v_result from public.storage_files;
+  return v_result;
+end;
+$$;
+revoke all on function public.admin_storage_summary() from public, anon;
+grant execute on function public.admin_storage_summary() to authenticated;
+
+-- ==========================================================================
+-- FILE 45/46  20261110000003_045_backup_capture_late_tables.sql
+-- ==========================================================================
+
+-- Migration 027 installed capture before the club-request and storage tables
+-- existed. Refresh its existing catalogue and triggers; no backup configuration,
+-- credentials, worker, encryption, or existing contents are changed.
+select public.backup_sync_triggers();
+
+-- ==========================================================================
+-- FILE 46/46  20261110000004_046_profile_photo_lifecycle.sql
+-- ==========================================================================
+
+-- Profile photos use the existing ledger as the association. There is at most
+-- one ready photo; old files remain charged until Drive confirms deletion.
+alter table public.storage_files add column cleanup_attempted_at timestamptz;
+
+create unique index storage_one_ready_profile_photo on public.storage_files(owner_id)
+  where resource_type = 'profile_picture' and status = 'ready';
+
+-- Reservations must only come from the bounded upload API. Direct browser
+-- access could fill Script Properties with fake 1-byte cleanup tombstones.
+-- The API supplies the owner from its verified session, never from a client.
+drop function public.storage_reserve_profile_picture(uuid,text,text,bigint,text);
+create function public.storage_reserve_profile_picture(
+  p_owner uuid, p_request_id uuid, p_original_name text, p_mime_type text, p_byte_size bigint, p_checksum text
+) returns uuid language plpgsql security definer set search_path = public, pg_temp as $$
+declare v_user uuid := p_owner; v_account public.storage_accounts%rowtype;
+  v_existing public.storage_files%rowtype; v_used bigint; v_id uuid;
+begin
+  if v_user is null or not public.is_active_profile(v_user) then raise exception 'Active account required' using errcode='42501'; end if;
+  if p_request_id is null or p_original_name is null or length(p_original_name) not between 1 and 180
+     or p_mime_type is null or p_mime_type not in ('image/jpeg','image/png','image/webp')
+     or p_byte_size is null or p_byte_size not between 1 and 3145728
+     or p_checksum is null or p_checksum !~ '^[0-9a-f]{64}$' then raise exception 'Invalid file metadata' using errcode='22023'; end if;
+  insert into public.storage_accounts(profile_id) values(v_user) on conflict do nothing;
+  select * into v_account from public.storage_accounts where profile_id=v_user for update;
+  if not v_account.upload_enabled then raise exception 'Uploads are not enabled' using errcode='42501'; end if;
+  select * into v_existing from public.storage_files where owner_id=v_user and request_id=p_request_id;
+  if found then
+    if v_existing.original_name <> p_original_name or v_existing.mime_type <> p_mime_type
+       or v_existing.byte_size <> p_byte_size or v_existing.checksum <> p_checksum
+       or v_existing.status not in ('reserved','ready') then
+      raise exception 'Upload request conflicts with an existing operation' using errcode='23505';
+    end if;
+    return v_existing.id;
+  end if;
+  select coalesce(sum(byte_size),0) into v_used from public.storage_files
+    where owner_id=v_user and status in ('reserved','ready','delete_pending');
+  if v_used + p_byte_size > v_account.quota_bytes then raise exception 'Storage quota exceeded' using errcode='22023'; end if;
+  insert into public.storage_files(owner_id,request_id,original_name,mime_type,byte_size,checksum,resource_id)
+    values(v_user,p_request_id,p_original_name,p_mime_type,p_byte_size,p_checksum,v_user) returning id into v_id;
+  return v_id;
+end $$;
+revoke all on function public.storage_reserve_profile_picture(uuid,uuid,text,text,bigint,text) from public,anon,authenticated;
+grant execute on function public.storage_reserve_profile_picture(uuid,uuid,text,text,bigint,text) to service_role;
+
+-- Called only by the trusted server after the gateway verified stored bytes.
+-- The account lock serializes competing uploads/removals; association and
+-- previous-image retirement occur atomically in the same transaction.
+create function public.storage_finalize_profile_picture(p_owner uuid, p_file uuid, p_provider_id text, p_checksum text, p_size bigint, p_mime text)
+returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare f public.storage_files%rowtype; allowed boolean;
+begin
+  select upload_enabled into allowed from public.storage_accounts where profile_id=p_owner for update;
+  if not found or not allowed or not public.is_active_profile(p_owner) then raise exception 'Upload no longer allowed' using errcode='42501'; end if;
+  select * into f from public.storage_files where id=p_file and owner_id=p_owner and resource_type='profile_picture' for update;
+  if not found or p_provider_id is null or p_provider_id !~ '^[A-Za-z0-9_-]{10,200}$'
+    or f.checksum is distinct from p_checksum or f.byte_size is distinct from p_size or f.mime_type is distinct from p_mime then
+    raise exception 'Invalid operation'; end if;
+  if f.status='ready' and f.provider_file_id=p_provider_id then return; end if;
+  if f.status<>'reserved' then raise exception 'Operation no longer pending'; end if;
+  update public.storage_files set status='delete_pending' where owner_id=p_owner and resource_type='profile_picture' and status='ready';
+  update public.storage_files set status='ready',provider_file_id=p_provider_id where id=p_file;
+end $$;
+revoke all on function public.storage_finalize_profile_picture(uuid,uuid,text,text,bigint,text) from public,anon,authenticated;
+grant execute on function public.storage_finalize_profile_picture(uuid,uuid,text,text,bigint,text) to service_role;
+
+-- Cancelling first marks operations as deletion-pending, before touching Drive.
+-- The gateway's durable key tombstone prevents delayed uploads from reviving.
+create function public.storage_retire_profile_pictures(p_owner uuid, p_stale_only boolean default false)
+returns void language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  perform 1 from public.storage_accounts where profile_id=p_owner for update;
+  if not found then return; end if;
+  update public.storage_files set status='delete_pending'
+    where owner_id=p_owner and resource_type='profile_picture'
+      and ((not p_stale_only and status in ('reserved','ready'))
+        or (p_stale_only and status='reserved' and created_at < now() - interval '1 hour'));
+end $$;
+revoke all on function public.storage_retire_profile_pictures(uuid,boolean) from public,anon,authenticated;
+grant execute on function public.storage_retire_profile_pictures(uuid,boolean) to service_role;
+
+create function public.storage_complete_profile_delete(p_owner uuid,p_file uuid)
+returns void language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+  update public.storage_files set status='deleted',deleted_at=now()
+    where id=p_file and owner_id=p_owner and resource_type='profile_picture' and status='delete_pending';
+end $$;
+revoke all on function public.storage_complete_profile_delete(uuid,uuid) from public,anon,authenticated;
+grant execute on function public.storage_complete_profile_delete(uuid,uuid) to service_role;
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)

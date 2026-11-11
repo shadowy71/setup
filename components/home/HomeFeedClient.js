@@ -556,6 +556,7 @@ export function HomeFeedClient({
               {canPost ? (
                 <PostComposer
                   authorName={user.profile.display_name || user.profile.username}
+                  authorUsername={user.profile.username}
                   onCreated={applyCreatedPost}
                 />
               ) : (

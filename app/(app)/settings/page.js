@@ -7,6 +7,7 @@ import { Button, Card, EmptyState, LinkButton, Notice, PageHeader } from '@/comp
 import { ActionForm } from '@/components/forms/ActionForm';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { ProfileActions } from '@/components/profile/ProfileActions';
+import { FileUpload } from '@/components/storage/FileUpload';
 import { updateProfile, changeUsername, deactivateAccount, reactivateAccount } from '@/lib/actions/profile';
 import { markAllNotificationsRead } from '@/lib/actions/notifications';
 import { formatDate, daysBetween } from '@/lib/utils';
@@ -39,6 +40,9 @@ export default async function SettingsPage({ searchParams }) {
 
   // The session load already read this row (see lib/auth/session.js) — no second read.
   const profile = user.profile;
+  const storageUsage = tab === 'profile' ? await supabase.rpc('storage_account_usage', { p_user: profile.id }) : null;
+  const uploadEnabled = !storageUsage?.error && Boolean(storageUsage?.data?.[0]?.upload_enabled);
+  const uploadAvailable = process.env.CAMPUS_PROFILE_UPLOADS_ENABLED === '1' && !storageUsage?.error;
   const blocked =
     tab === 'blocked' ? await listBlockedUsers(supabase, user.profile.id, { limit: 100 }) : [];
 
@@ -81,6 +85,8 @@ export default async function SettingsPage({ searchParams }) {
       </Card>
 
       {tab === 'profile' ? (
+        <>
+        <FileUpload username={profile.username} name={profile.display_name || profile.username} enabled={uploadEnabled} available={uploadAvailable} />
         <ActionForm
           action={updateProfile}
           submitLabel="Save profile"
@@ -96,6 +102,7 @@ export default async function SettingsPage({ searchParams }) {
             { name: 'allow_dms_from_everyone', label: 'Allow any student to message me', type: 'switch', hint: 'Off means only people you have messaged before can start a conversation.', defaultChecked: profile.allow_dms_from_everyone !== false },
           ]}
         />
+        </>
       ) : null}
 
       {tab === 'username' ? (

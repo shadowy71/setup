@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
-import { can, toActor } from '@/lib/permissions/authorization';
+import { can, isAdmin, toActor } from '@/lib/permissions/authorization';
 import {
   listUsers,
   listRoles,
@@ -12,16 +12,19 @@ import {
   listAuditLogs,
   listOfficialContent,
   getAdminDashboardCounts,
+  getStorageUsageByUser,
+  getAdminStorageSummary,
 } from '@/lib/data/admin';
 import { listReports } from '@/lib/data/moderation';
 import { ROUTES, PAGE_SIZE, ROLE_ORDER, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
-import { Badge, Button, Card, EmptyState, LinkButton, Notice, PageHeader } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, IdentityMark, LinkButton, Notice, PageHeader } from '@/components/ui';
 import { ActionForm } from '@/components/forms/ActionForm';
 import { saveNotice, saveEvent, saveCampusContent } from '@/lib/actions/campus';
 import {
   GrantRoleForm,
   RevokeRoleForm,
   AccountStatusForm,
+  UploadPermissionForm,
   PlatformSettingForm,
   FeatureFlagToggle,
 } from '@/components/admin/AdminPanels';
@@ -30,6 +33,7 @@ import { formatDateTime, relativeTime } from '@/lib/utils';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { getBackupStatus, getBackupConfiguration } from '@/lib/data/backup';
 import { BackupActionButtons, RetryBackupButton } from '@/components/admin/BackupPanels';
+import { StorageHealth } from '@/components/admin/StorageHealth';
 import { listClubCreationRequests, listUnassignedClubs } from '@/lib/data/clubs';
 import { AssignClubAdminForm, ClubRequestReview } from '@/components/clubs/ClubRequestPanels';
 import { ExternalLink } from '@/components/content/ExternalLink';
@@ -62,6 +66,7 @@ const TABS = [
   { key: 'audit', label: 'Audit logs', permission: 'view_audit_logs' },
   { key: 'counts', label: 'Operational counts', permission: 'view_admin_overview' },
   { key: 'backups', label: 'Backups', permission: 'manage_backups' },
+  { key: 'storage', label: 'Upload storage', permission: 'manage_backups' },
 ];
 
 const CONTENT_TABLES = [
@@ -98,6 +103,7 @@ function isTabAllowed(actor, tab) {
   // Backups expose operational health and Drive connection state: only the
   // explicit manage_backups permission (Super Admin by default) opens it.
   // `moderate_all` must not implicitly grant access to backup tooling.
+  if (tab.key === 'storage') return isAdmin(actor) && can(actor, 'manage_backups');
   if (tab.permission === 'manage_backups') return can(actor, 'manage_backups');
   if (can(actor, 'moderate_all') && tab.permission !== 'view_admin_overview') return true;
   return can(actor, tab.permission);
@@ -137,6 +143,8 @@ export default async function AdminPage({ searchParams }) {
 
   const users =
     activeTab === 'users' ? await listUsers(supabase, { q, limit: PAGE_SIZE.admin, offset }) : null;
+  const storageUsage = users && isAdmin(actor) && can(actor, 'manage_users')
+    ? await getStorageUsageByUser(supabase, users.items) : new Map();
   const roles = activeTab === 'users' || activeTab === 'roles' ? await listRoles(supabase) : [];
   const permissions =
     activeTab === 'permissions' || activeTab === 'roles' ? await listPermissions(supabase) : [];
@@ -153,6 +161,7 @@ export default async function AdminPage({ searchParams }) {
   const counts = dashboardCounts;
   const backups = activeTab === 'backups' ? await getBackupStatus(supabase) : null;
   const backupConfig = activeTab === 'backups' ? getBackupConfiguration() : [];
+  const storageSummary = activeTab === 'storage' ? await getAdminStorageSummary(supabase) : null;
   const [pendingClubRequests, clubRequestHistory, unassignedClubs] = activeTab === 'clubs'
     ? await Promise.all([
         listClubCreationRequests(supabase, { status: 'pending', limit: 60 }),
@@ -194,6 +203,32 @@ export default async function AdminPage({ searchParams }) {
         ))}
       </Card>
 
+      {activeTab === 'storage' ? (
+        <section aria-label="Upload storage" className="flex flex-col gap-3">
+          <Card className="flex flex-col gap-3 p-4">
+            <h2 className="t-section">Upload storage health</h2>
+            <Notice tone="warning" icon="lock">Profile photos require explicit server configuration and per-user permission. Other student uploads are not implemented.</Notice>
+            <StorageHealth />
+            {storageSummary ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm">Ledger quota charged: {Number(storageSummary.charged_bytes).toLocaleString()} bytes · Ready: {storageSummary.ready_count} · Reserved: {storageSummary.reserved_count} · Cleanup pending: {storageSummary.delete_pending_count}</p>
+                <p className="text-2xs text-muted">Campus+ ledger only, not total personal Drive usage. Up to 50 most recent records.</p>
+                {(storageSummary.recent || []).length ? (
+                  <ul className="flex flex-col gap-2">
+                    {storageSummary.recent.map((file) => (
+                      <li key={file.id} className="rounded border border-line p-2 text-sm">
+                        <span>{file.original_name} · {file.mime_type} · {Number(file.byte_size).toLocaleString()} bytes</span>
+                        <p className="text-2xs text-muted">{file.status} · {file.resource_type} · owner {file.owner_id} · {formatDateTime(file.created_at)}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p className="text-sm text-muted">No ledger records.</p>}
+              </div>
+            ) : <Notice tone="warning">Storage ledger summary is unavailable. The database migration may not be installed.</Notice>}
+          </Card>
+        </section>
+      ) : null}
+
       {/* ---------------------------------------------------------------- users */}
       {activeTab === 'users' && users ? (
         <section aria-label="Users" className="flex flex-col gap-3">
@@ -224,6 +259,7 @@ export default async function AdminPage({ searchParams }) {
           {users.items.map((row) => (
             <Card key={row.id} className="flex flex-col gap-3 p-4">
               <div className="flex flex-wrap items-center gap-2">
+                <IdentityMark name={row.display_name || row.username} username={row.username} size={32} />
                 <Link href={ROUTES.user(row.username)} className="text-[0.875rem] font-medium underline-offset-2 hover:underline">
                   {row.display_name || `@${row.username}`}
                 </Link>
@@ -238,7 +274,15 @@ export default async function AdminPage({ searchParams }) {
                 {row.status_reason ? ` · ${row.status_reason}` : ''}
                 {row.suspended_until ? ` · until ${formatDateTime(row.suspended_until)}` : ''}
               </p>
+              {storageUsage.has(row.id) ? (
+                <div className="text-2xs text-muted">
+                  {storageUsage.get(row.id) ? (
+                    <>Upload permission: {storageUsage.get(row.id).upload_enabled ? 'enabled' : 'disabled'} · Campus+ storage: {storageUsage.get(row.id).used_bytes} / {storageUsage.get(row.id).quota_bytes} bytes. Profile uploads additionally require server configuration.</>
+                  ) : 'Upload permission unavailable.'}
+                </div>
+              ) : null}
               <div className="flex flex-wrap items-center gap-2">
+                {storageUsage.get(row.id) && row.id !== user.profile.id ? <UploadPermissionForm userId={row.id} enabled={storageUsage.get(row.id).upload_enabled} /> : null}
                 <GrantRoleForm userId={row.id} roles={roles} currentRoles={row.roles} />
                 {row.roles
                   .filter((role) => role !== 'student' && role !== 'super_admin')

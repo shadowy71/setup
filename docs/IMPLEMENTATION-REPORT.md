@@ -156,7 +156,7 @@ guards in `spec.test.js`).
 | `tests/utils.test.js` | usernames/handles, safe external URLs (rejects `javascript:`/`data:`), formatting, mention extraction and segmentation, GIF host validation |
 | `tests/data-contract.test.js` | read helpers never throw, never leak raw DB errors, apply visibility filters and paging in the query, Random reports carry no participant identity |
 | `tests/moderation.test.js` | moderator target map (deep links, no URL for Random, no `null` links), report/moderation target catalogues, permission keys |
-| `tests/spec.test.js` | architecture guards: no AI/vector code, no uploads or images (exactly one GIF surface), no raw HTML, no presence/typing, only public `NEXT_PUBLIC_*`, secrets stay server-only, every spec route exists, loading states present, palette and "no gradients" |
+| `tests/spec.test.js` | architecture guards: no AI/vector code, controlled media boundaries, no raw HTML, no presence/typing, only public `NEXT_PUBLIC_*`, secrets stay server-only, every spec route exists, loading states present, palette and "no gradients" |
 
 Plus the 10 SQL suites (`database/tests/`) run by `npm run verify:db`.
 

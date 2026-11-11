@@ -5,6 +5,7 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Icon } from '@/components/ui/icons';
+import { ProfileAvatar } from '@/components/storage/ProfileAvatar';
 
 export function Card({ className = '', as: Tag = 'div', interactive = false, children, ...props }) {
   return (
@@ -166,22 +167,13 @@ export function Notice({ tone = 'neutral', children, className = '', icon = null
  * The text-first avatar: the first letter, in a quiet material square.
  * `size` is in pixels; `tone="accent"` marks the signed-in student.
  */
-export function IdentityMark({ name, size = 32, tone = 'neutral', className = '', square = false }) {
+export function IdentityMark({ name, username = null, size = 32, tone = 'neutral', className = '', square = false }) {
   const initial = (name || '?').trim().slice(0, 1).toUpperCase() || '?';
-  return (
-    <span
-      aria-hidden="true"
-      className={cn('identity-mark', tone === 'accent' ? 'identity-mark-accent' : null, className)}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: square ? 'var(--radius-sm)' : 999,
-        fontSize: size <= 26 ? '0.6875rem' : size <= 34 ? '0.8125rem' : '0.9375rem',
-      }}
-    >
-      {initial}
-    </span>
-  );
+  const style = { width: size, height: size, borderRadius: square ? 'var(--radius-sm)' : 999,
+    fontSize: size <= 26 ? '0.6875rem' : size <= 34 ? '0.8125rem' : '0.9375rem' };
+  const classes = cn('identity-mark', tone === 'accent' ? 'identity-mark-accent' : null, className);
+  if (username) return <ProfileAvatar key={username} username={username} initial={initial} className={classes} style={style} />;
+  return <span aria-hidden="true" className={classes} style={style}>{initial}</span>;
 }
 
 /* -------------------------------------------------------------------------- */

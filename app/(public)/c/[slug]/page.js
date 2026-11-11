@@ -296,7 +296,7 @@ export default async function ClubPage({ params, searchParams }) {
                 <Link href={ROUTES.community(club.slug)} className="text-2xs text-muted underline hover:text-ink">Open club feed</Link>
               ) : null}
             />
-            {viewer && canPostHere ? <PostComposer communityId={club.id} compact /> : null}
+            {viewer && canPostHere ? <PostComposer communityId={club.id} compact authorName={viewer.profile.display_name} authorUsername={viewer.profile.username} /> : null}
             {posts.length ? (
               <ul className="flex flex-col divide-y divide-line">
                 {posts.map((post) => (

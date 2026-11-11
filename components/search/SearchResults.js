@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { SEARCH_SCOPES } from '@/lib/constants';
-import { Badge, Button, EmptyState, Notice, SkeletonList, WordLoader } from '@/components/ui';
+import { Badge, Button, EmptyState, IdentityMark, Notice, SkeletonList, WordLoader } from '@/components/ui';
 import { SearchField } from '@/components/ui/SearchField';
 import { Icon } from '@/components/ui/icons';
 
@@ -241,9 +241,9 @@ export function SearchResults({ initialQuery = '', initialScope = 'all', hint = 
               {group.items.map((item) => (
                 <li key={`${group.scope}-${item.id}`}>
                   <Link href={safeHref(item.url)} className="row-link hover:no-underline">
-                    <span className="mt-0.5 shrink-0 text-muted-soft">
-                      <Icon name={iconFor(group.scope)} size={15} />
-                    </span>
+                    {group.scope === 'people' && item.title ? <IdentityMark name={item.subtitle || item.title} username={item.title} size={32} /> : (
+                      <span className="mt-0.5 shrink-0 text-muted-soft"><Icon name={iconFor(group.scope)} size={15} /></span>
+                    )}
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-2">
                         <span className="truncate text-[0.875rem] font-semibold">{item.title || 'Untitled'}</span>

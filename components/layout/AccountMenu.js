@@ -38,14 +38,14 @@ export function AccountMenu({ user = null, isStaff = false }) {
           aria-label="Account menu"
           className="flex items-center gap-2 rounded-full border border-line bg-surface p-0.5 pr-2 text-[0.8125rem] font-medium text-ink shadow-[var(--shadow-inset-top)] transition-colors hover:border-line-strong"
         >
-          <IdentityMark name={name} size={30} square={false} />
+          <IdentityMark name={name} username={user?.username} size={30} square={false} />
           <span className="hidden max-w-24 truncate sm:block">{name}</span>
           <Icon name="chevronDown" size={14} className="text-muted" />
         </button>
       )}
     >
       <div className="flex items-center gap-2.5 border-b border-line px-3 py-2.5">
-        <IdentityMark name={name} size={34} tone="accent" square={false} />
+        <IdentityMark name={name} username={user?.username} size={34} tone="accent" square={false} />
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 truncate text-[0.8125rem] font-semibold text-ink">
             <span className="truncate">{name}</span>

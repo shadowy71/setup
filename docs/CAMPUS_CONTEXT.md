@@ -9,7 +9,7 @@
 
 ## 1. Overview and verified stack
 
-**What it is.** Campus+ is an unofficial, text-first campus layer for PCCOE students: feed, communities, direct messages, marketplace, events, notices, study and team finders, and campus information. There is no AI, no photo or file upload (GIFs from GIPHY are the only media), no presence indicator, human-only moderation, and permissions stored as database rows. Sources: `README.md`, `docs/ARCHITECTURE.md`.
+**What it is.** Campus+ is an unofficial, text-first campus layer for PCCOE students: feed, communities, direct messages, marketplace, events, notices, study and team finders, and campus information. There is no AI or presence indicator; moderation is human-only and permissions are stored as database rows. Profile-photo uploads are implemented behind default-off configuration; other attachments are not yet implemented (see `docs/GOOGLE-DRIVE-STORAGE.md`). Sources: `README.md`, `docs/ARCHITECTURE.md`.
 
 **Repository.** ✅ The workspace `origin` is `aminotkartik/setup`. `sitemango/setup` `main` (`cb16110`, merge of PR #8 from `aminotkartik/main`) has a **file tree identical** to this workspace's `main` (`c1e52b4`). The merge replaced the previous sitemango `main` (`a2db7ac`), which differed by 40 study-finder and discovery files that already exist here. No file was dropped. Merged sitemango PRs: #1 application layer, #2 Google OAuth replacing email OTP, #4 Random Chat removal, #5–#7 UI revamp, intro and contrast. This workspace is current with `sitemango/setup` `main`.
 
@@ -362,7 +362,7 @@ Status: ✅ present and statically consistent (no live database, so runtime is n
 5. New table: RLS on, explicit policies, column grants for UPDATE, indexes, realtime only when needed. Add a new migration file, regenerate the bundle, and add a database test.
 6. New permission or flag: add it to `lib/constants.js` and to the seeds in a new migration. Keep the role defaults in step. The parity check in §4 passed.
 7. Official content: keep `is_official` writes behind the `manage_*` permission and the database policy.
-8. UI: loading, empty and error states on every surface. No raw HTML, no presence or typing indicators, no AI, no uploads. Secrets stay server-side.
+8. UI: loading, empty and error states on every surface. No raw HTML, no presence or typing indicators, no AI, and no uncontrolled uploads. Secrets stay server-side.
 9. Before reporting: `npm run lint`, `npm test`, `npm run build`. For migrations or policies, also run `npm run verify:db` and `npm run audit:db` against a throwaway database. Report anything you could not run.
 10. Do not hand-edit `package-lock.json`, generated bundles or `.env*` values.
 

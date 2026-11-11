@@ -123,7 +123,7 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
       <div className="mt-auto pt-4">
         {user ? (
           <Link href={ROUTES.profile} className="side-panel__account flex items-center gap-2.5 rounded-[var(--radius-md)] border border-glass-border bg-surface p-2 shadow-[var(--shadow-inset-top)] transition-colors hover:border-line-strong hover:no-underline">
-            <IdentityMark name={user.displayName} size={32} tone="accent" square={false} />
+            <IdentityMark name={user.displayName} username={user.username} size={32} tone="accent" square={false} />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1.5 truncate text-[0.8125rem] font-semibold">
                 <span className="truncate">{user.displayName}</span>

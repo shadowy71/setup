@@ -34,6 +34,9 @@ export function Field({ label, htmlFor, hint, error, required = false, children,
 }
 
 export function Input({ className = '', invalid = false, ...props }) {
+  if (typeof props.type === 'string' && props.type.toLowerCase() === 'file') {
+    throw new Error('File inputs must use the dedicated upload component');
+  }
   return <input aria-invalid={invalid || props['aria-invalid'] || undefined} className={cn('control control-input', className)} {...props} />;
 }
 

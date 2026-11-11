@@ -8,6 +8,10 @@
     {
       "path": "/api/backup/snapshot",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/storage/reconcile",
+      "schedule": "0 3 * * *"
     }
   ]
 }

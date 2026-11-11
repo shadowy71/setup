@@ -55,7 +55,7 @@ export default async function ProfilePage() {
       <TiltCard intensity="soft">
       <Card className="card-elevated p-4 sm:p-5">
         <div className="flex items-start gap-4">
-          <IdentityMark name={name} size={48} tone="accent" square={false} />
+          <IdentityMark name={name} username={profile.username} size={48} tone="accent" square={false} />
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-[1.0625rem] font-semibold">
               <span className="truncate">{name}</span>

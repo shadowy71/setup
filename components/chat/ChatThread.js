@@ -9,7 +9,7 @@
  */
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, DeleteButton, GlassSurface, Notice, OrbLoader, Textarea } from '@/components/ui';
+import { Button, DeleteButton, GlassSurface, IdentityMark, Notice, OrbLoader, Textarea } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { GifAttachment, GifPicker } from '@/components/media/GifPicker';
 import { useFormAction } from '@/lib/forms';
@@ -49,6 +49,7 @@ const MessageItem = memo(function MessageItem({
   return (
     <article className={cn('chat-message flex flex-col gap-1', mine ? 'items-end' : 'items-start')}>
       <div className="flex items-center gap-2 text-2xs text-muted">
+        {author?.username ? <IdentityMark name={author.display_name || author.username} username={author.username} size={24} /> : null}
         <span className="font-medium text-ink">
           {mine ? 'You' : author?.display_name || (author?.username ? `@${author.username}` : 'Student')}
         </span>
