@@ -6,6 +6,7 @@ import { listPublishedNotices } from '@/lib/data/public-cache';
 import { ROUTES, PAGE_SIZE } from '@/lib/constants';
 import { PageHeader, EmptyState, Notice, LinkButton, Card } from '@/components/ui';
 import { ContentCard } from '@/components/content/ContentCard';
+import { NoticeboardViews } from '@/components/campus/NoticeArchive';
 import { formatDate } from '@/lib/utils';
 
 export const metadata = { title: 'Noticeboard' };
@@ -14,6 +15,10 @@ export const metadata = { title: 'Noticeboard' };
  * Noticeboard (spec §27). Official only: every row here was published by a role
  * with `manage_notices`. Student discussions never appear on the noticeboard —
  * they live on the feed.
+ *
+ * Current notices only. Historical records live in the archive view
+ * (`/campus/noticeboard/archive`) and are never listed here: this page reads
+ * `status = 'published'`, the archive reads `status = 'archived'`.
  */
 export default async function NoticeboardPage({ searchParams }) {
   const user = await requireUser();
@@ -36,7 +41,9 @@ export default async function NoticeboardPage({ searchParams }) {
         action={can(actor, 'manage_notices') ? <LinkButton href="/campus/noticeboard/manage" size="sm">Manage notices</LinkButton> : null}
       />
 
-      <Card className="flex flex-wrap gap-1.5 p-3">
+      <Card className="flex flex-wrap items-center gap-1.5 p-3">
+        <NoticeboardViews active="current" />
+        <span className="rule mx-1 h-5 w-px" aria-hidden="true" />
         <Link
           href="/campus/noticeboard"
           className="chip"
@@ -66,7 +73,8 @@ export default async function NoticeboardPage({ searchParams }) {
         <EmptyState
           icon="megaphone"
           title={category ? 'No notices in this category' : 'No notices yet'}
-          description="When the campus publishes an official notice it appears here."
+          description="When the campus publishes an official notice it appears here. Past activity is kept in the archive."
+          action={<LinkButton href={ROUTES.noticeArchive()} size="sm" variant="secondary" icon="archive">Open the archive</LinkButton>}
         />
       ) : null}
 

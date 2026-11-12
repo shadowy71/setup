@@ -87,6 +87,132 @@ async function main() {
     }
   }
 
+  // Migration 073 imports content only when its publisher profile exists, and a
+  // fresh database never has one: applying the history above exercises the
+  // manifest checks but not a single insert. Create that profile inside a
+  // transaction, run the real migration, run it again, then edit one record and
+  // delete another and run it a third time. Everything is rolled back, so the
+  // suites below still start from a database with no imported rows.
+  const archiveImport = '20261112000027_073_pccoe_noticeboard_archive.sql';
+  if (files.includes(archiveImport)) {
+    banner('Replaying the noticeboard archive import with its publisher present…');
+    try {
+      const importSql = await readFile(path.join(migrationsDir, archiveImport), 'utf8');
+      const publisher = /c_publisher\s+constant uuid := '([0-9a-f-]{36})'/.exec(importSql)?.[1];
+      const batch = /c_batch\s+constant text := '([a-z0-9-]+)'/.exec(importSql)?.[1];
+      if (!publisher || !batch) throw new Error('Migration 073 no longer declares its batch and publisher.');
+
+      const snapshot = async () =>
+        (
+          await client.query(
+            `
+            with entries as (
+              select e.*, n.id as live_id, n.title, n.body, n.status, n.pinned, n.published_at,
+                     n.expires_at, n.created_by, n.updated_by
+              from public.notice_archive_entries e
+              left join public.notices n on n.id = e.notice_id
+              where e.source_key like $1 || '/%'
+            )
+            select
+              (select count(*)::int from public.notices) as notices,
+              (select count(*)::int from public.notices where status = 'published') as published,
+              (select count(*)::int from public.events) as events,
+              (select count(*)::int from public.academic_calendar) as calendar,
+              (select count(*)::int from public.communities) as communities,
+              (select count(*)::int from public.community_members) as members,
+              count(*)::int as registered,
+              count(live_id)::int as attached,
+              count(*) filter (
+                where status = 'archived' and not pinned and published_at is null
+                  and expires_at is null and created_by = $2::uuid
+              )::int as archived,
+              count(*) filter (where md5(title || chr(10) || body) = source_checksum)::int as unchanged,
+              count(*) filter (where length(btrim(body)) < 100)::int as thin,
+              count(distinct sort_order)::int as positions,
+              coalesce(min(sort_order), 0)::int as first_position,
+              coalesce(max(sort_order), 0)::int as last_position,
+              count(distinct section_key)::int as sections,
+              count(period)::int as with_period,
+              count(source_note)::int as with_note,
+              count(*) filter (where attribution = 'institution')::int as institutional,
+              count(*) filter (
+                where section_key = 'itsa'
+                  and community_id = (select id from public.communities where catalogue_key = 'itsa')
+              )::int as itsa_linked,
+              count(*) filter (
+                where section_key in ('sports', 'alphabyte-hackathon', 'placement', 'departmental')
+                  and community_id is not null
+              )::int as institution_linked
+            from entries
+            `,
+            [batch, publisher],
+          )
+        ).rows[0];
+      const expect = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+
+      await client.query('begin');
+      const before = await snapshot();
+      expect(before.registered === 0, 'a fresh database must not contain imported archive records');
+      await client.query(
+        `insert into public.profiles (id, username, display_name) values ($1, 'archive_publisher', 'Archive Publisher')`,
+        [publisher],
+      );
+
+      await client.query(importSql);
+      const first = await snapshot();
+      expect(first.registered === 64 && first.attached === 64, `expected 64 imported records, found ${first.attached}`);
+      expect(first.notices === before.notices + 64, 'the import must add exactly 64 notices');
+      expect(first.archived === 64, 'every imported notice must be archived, unpinned, undated and owned by the publisher');
+      expect(first.published === before.published, 'the import must not publish anything as a current notice');
+      expect(first.unchanged === 64 && first.thin === 0, 'every record must carry its full source description');
+      expect(
+        first.positions === 64 && first.first_position === 1 && first.last_position === 64 && first.sections === 11,
+        'records must keep manifest order across the 11 sections',
+      );
+      expect(
+        first.with_period === 11 && first.with_note === 7 && first.institutional === 10,
+        'periods, source notes and institutional attribution must be stored as supplied',
+      );
+      expect(first.itsa_linked === 12, 'the ITSA section must link to the existing ITSA club');
+      expect(first.institution_linked === 0, 'institutional sections must not be linked to a club');
+      expect(
+        first.events === before.events && first.calendar === before.calendar &&
+          first.communities === before.communities && first.members === before.members,
+        'the import must not create events, calendar entries, organisations or memberships',
+      );
+
+      await client.query(importSql);
+      const second = await snapshot();
+      expect(JSON.stringify(second) === JSON.stringify(first), 'a second run must change nothing');
+
+      // Staff edit one record and delete another; a later run must respect both.
+      const { rows: picked } = await client.query(
+        `select notice_id from public.notice_archive_entries where source_key like $1 || '/%' order by sort_order limit 2`,
+        [batch],
+      );
+      await client.query(`update public.notices set body = 'Reworded by staff after the import.' where id = $1`, [picked[0].notice_id]);
+      await client.query(`delete from public.notices where id = $1`, [picked[1].notice_id]);
+      await client.query(importSql);
+      const third = await snapshot();
+      expect(third.registered === 64 && third.attached === 63, 'a deleted record must stay deleted and stay registered');
+      expect(third.notices === first.notices - 1, 'a third run must not restore the deleted record');
+      expect(third.unchanged === 62, 'a third run must not overwrite the staff edit');
+
+      await client.query('rollback');
+      console.log(
+        `  \x1b[32m✓\x1b[0m ${first.attached} records imported as archived; second run changed nothing; ` +
+          'a staff edit and a staff delete survived a third run; rolled back.',
+      );
+    } catch (error) {
+      await client.query('rollback').catch(() => {});
+      console.error(`  \x1b[31m✗\x1b[0m ${error.message}`);
+      await shutdown(pg, client);
+      process.exit(1);
+    }
+  }
+
   banner('Installing test helpers…');
   const { TEST_HELPER_SQL } = await import('./harness.mjs');
   await client.query(TEST_HELPER_SQL);
