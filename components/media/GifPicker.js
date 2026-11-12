@@ -84,7 +84,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
   const busy = loading || (open && !loadedOnce);
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-2">
+    <div ref={containerRef} className={cn('flex min-w-0 max-w-full flex-col gap-2', open && 'w-[22rem]')}>
       <div className="flex items-center gap-2">
         <Button
           type="button"
@@ -111,7 +111,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
       ) : null}
 
       {open ? (
-        <div className="card-flush p-3" role="region" aria-label="GIF search">
+        <div className="card-flush min-w-0 w-full max-w-full p-3" role="region" aria-label="GIF search">
           <Input
             type="search"
             value={query}
@@ -121,10 +121,10 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
             autoFocus
           />
 
-          {categories.length && !query.trim() ? (
-            <div className="mt-2 flex gap-2 overflow-x-auto" aria-label="GIF categories">
+          {categories.length > 0 && !query.trim() ? (
+            <div className="mt-2 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto" aria-label="GIF categories">
               {categories.map((category, index) => (
-                <Button key={index} type="button" size="sm" variant="subtle" onClick={() => { setHasNext(false); setQuery(String(category.query || category.category || '')); }}>
+                <Button key={index} type="button" size="sm" variant="subtle" className="shrink-0" onClick={() => { setHasNext(false); setQuery(String(category.query || category.category || '')); }}>
                   {category.category}
                 </Button>
               ))}
@@ -144,7 +144,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
           ) : null}
 
           {busy && items.length === 0 ? (
-            <ul className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-hidden sm:grid-cols-3">
+            <ul className="mt-3 grid w-full min-w-0 max-h-72 grid-cols-2 gap-2 overflow-hidden sm:grid-cols-3">
               {Array.from({ length: 6 }).map((_, index) => (
                 <li key={index}>
                   <Skeleton className="h-24 w-full rounded-[var(--radius-sm)]" />
@@ -168,9 +168,9 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
           ) : null}
 
           {items.length ? (
-            <ul className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
+            <ul className="mt-3 grid w-full min-w-0 max-h-72 grid-cols-2 gap-2 overflow-y-auto overflow-x-hidden sm:grid-cols-3">
               {items.map((gif, index) => (
-                <li key={`${gif.id}-${index}`}>
+                <li key={`${gif.id}-${index}`} className="min-w-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -191,7 +191,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
                       onPick(picked);
                       setOpen(false);
                     }}
-                    className="motion-control w-full overflow-hidden rounded-[var(--radius-sm)] border border-line text-left hover:border-accent/50 active:scale-[0.98]"
+                    className="motion-control block h-24 w-full overflow-hidden rounded-[var(--radius-sm)] border border-line text-left hover:border-accent/50 active:scale-[0.98]"
                     aria-label={gif.title ? `Attach GIF: ${gif.title}` : 'Attach GIF'}
                   >
                     {/* KLIPY preview, loaded directly from its CDN; the full GIF is only
@@ -202,7 +202,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
                       width={200}
                       height={96}
                       unoptimized
-                      className="h-24 w-full bg-surface-2 object-cover"
+                      className="h-full w-full bg-surface-2 object-cover"
                     />
                   </button>
                 </li>
