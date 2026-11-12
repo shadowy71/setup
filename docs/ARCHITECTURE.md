@@ -188,10 +188,7 @@ blocks, visibility and permissions, and the endpoint returns relative URLs only.
 
 ## 9. Media
 
-GIFs from GIPHY are the single media exception. The browser talks to
-`/api/giphy/search`, the key stays server-side, the rating is configured by
-`GIPHY_CONTENT_RATING`, attribution is rendered, and the stored reference is
-validated against the provider host list before it ever reaches the database.
+The shared picker calls KLIPY directly from the browser with a public app key. Search and trending preserve returned order, and category queries remain separate from the result grid. Preview and full media URLs are used without rewriting or proxying. New references are validated against KLIPY hosts; old GIPHY attachments remain renderable. Migration 078 must be reviewed and separately approved for production before KLIPY writes can work. The previous GIPHY proxy remains available as a rollback artifact until successful verification. Unsupported ad items fail the page; configure the partner key without ads pending compliant ad support.
 
 ## 10. Styling
 

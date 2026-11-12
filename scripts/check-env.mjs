@@ -47,9 +47,9 @@ const checks = [
     validate: (v) => (/^[a-z0-9.-]+(,[a-z0-9.-]+)*$/i.test(v) ? true : 'comma-separated domains, e.g. pccoepune.org'),
   },
   {
-    key: 'GIPHY_API_KEY',
+    key: 'NEXT_PUBLIC_KLIPY_APP_KEY',
     required: false,
-    hint: 'Optional until you want the GIF picker; becomes required by docs/DEPLOYMENT.md.',
+    hint: 'Public browser app key for GIF search; configure for each Vercel environment.',
   },
   {
     key: 'GIPHY_CONTENT_RATING',

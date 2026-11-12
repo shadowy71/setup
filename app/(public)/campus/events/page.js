@@ -109,15 +109,9 @@ export default async function EventsPage({ searchParams }) {
   // Club filter options: signed-in students keep their full visible set; guests
   // get the anonymous public catalogue only. `mapPublicClubSlugs` links each
   // event card back to `/c/<slug>` without a second private lookup.
-  const [clubOptions, publicClubs] = await Promise.all([
-    viewer && supabase
-      ? supabase.from('communities').select('id, name').eq('status', 'published').eq('kind', 'club').order('name', { ascending: true }).limit(100)
-      : Promise.resolve(null),
-    mapPublicClubSlugs(),
-  ]);
-  const clubs = viewer
-    ? (clubOptions?.data || [])
-    : (await listPublicClubOptions()).items;
+  const clubOptionsQuery = viewer && supabase
+    ? supabase.from('communities').select('id, name').eq('status', 'published').eq('kind', 'club').order('name', { ascending: true }).limit(100)
+    : Promise.resolve(null);
 
   const eventsQuery =
     view === 'calendar'
@@ -135,16 +129,27 @@ export default async function EventsPage({ searchParams }) {
             clubId: club || null, category: category || null, source: source || null,
           });
 
-  const [result, submissions, mine] = await Promise.all([
-    eventsQuery,
+  // Start the RSVP lookup as soon as its event IDs are available, independently
+  // of club options and moderation queues. All viewer-specific reads still use
+  // the session client; only the anonymous event catalogue is shared.
+  const eventAndRsvps = (async () => {
+    const result = await eventsQuery;
+    const rsvps = viewer && supabase && result.items.length
+      ? await listMyRsvps(supabase, result.items.map((event) => event.id), viewer.profile.id)
+      : new Map();
+    return { result, rsvps };
+  })();
+  const [clubOptions, publicClubs, guestClubs, { result, rsvps }, submissions, mine] = await Promise.all([
+    clubOptionsQuery,
+    mapPublicClubSlugs(),
+    viewer ? Promise.resolve(null) : listPublicClubOptions(),
+    eventAndRsvps,
     canReview && supabase ? listEventSubmissions(supabase) : Promise.resolve({ items: [], unavailable: false }),
     canSubmit && !canReview && supabase ? listMyEventSubmissions(supabase, viewer.profile.id) : Promise.resolve({ items: [], unavailable: false }),
   ]);
+  const clubs = viewer ? (clubOptions?.data || []) : guestClubs.items;
   const items = result.items;
   const unavailable = result.unavailable;
-  const rsvps = viewer && supabase && items.length
-    ? await listMyRsvps(supabase, items.map((event) => event.id), viewer.profile.id)
-    : new Map();
 
   const agendaQuery = (overrides) => {
     const query = new URLSearchParams({ view: 'agenda', when: past ? 'past' : 'upcoming', club, category, source, day, ...overrides });

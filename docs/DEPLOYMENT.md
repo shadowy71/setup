@@ -5,7 +5,7 @@ auth, Vercel and the first Super Admin. **No application code has to be written
 or edited to deploy Campus+.**
 
 Order of operations: Supabase project → environment variables → migrations →
-auth configuration → GIPHY (optional) → Vercel → first Super Admin → verification
+auth configuration → KLIPY (optional) → Vercel → first Super Admin → verification
 → moderation handover.
 
 ---
@@ -33,7 +33,8 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | Supabase → API Keys → Publishable key |
 | `SUPABASE_SECRET_KEY` | scripts only | Supabase → API Keys → Secret key |
 | `CAMPUS_ALLOWED_EMAIL_DOMAINS` | yes | comma-separated institutional domains, e.g. `pccoepune.org` |
-| `GIPHY_API_KEY` | optional | <https://developers.giphy.com/dashboard> → Create an App |
+| `NEXT_PUBLIC_KLIPY_APP_KEY` | optional | public browser key from <https://partner.klipy.com/> |
+| `GIPHY_API_KEY` | legacy; retain until verified | <https://developers.giphy.com/dashboard> → Create an App |
 | `GIPHY_CLIENT_ID` | optional | any non-secret app id, default `campus_plus` |
 | `GIPHY_CONTENT_RATING` | optional | `g` \| `pg` \| `pg-13` \| `r`, default `pg-13` |
 | `NEXT_PUBLIC_PLATFORM_NAME` | optional | display name, default `Campus+` |
@@ -157,21 +158,21 @@ Domain enforcement is server-side and lives in the database
 deployment default; `app/auth/callback/route.js` re-checks the Google-verified
 address before the session is used. Adding a second domain is a row update — see §8.
 
-## 5. GIPHY (optional)
+## 5. KLIPY (optional; rollout not yet verified)
 
-1. Create an app at <https://developers.giphy.com/dashboard> and copy the API key.
-2. Set `GIPHY_API_KEY` (server only) and, if required by your approval, a
-   `GIPHY_CLIENT_ID` and `GIPHY_CONTENT_RATING`.
-3. Nothing else to configure: the browser calls `/api/giphy/search`, the key never
-   ships, attribution is rendered, and the picker degrades to a configuration
-   notice when the key is absent.
+1. Obtain a web app key from <https://partner.klipy.com/>. Testing keys have provider-side limits. Configure appropriate content filtering in the partner panel and **disable ads** until a compliant ad rendering/tracking integration exists; unsupported ad responses currently show an error rather than silently dropping content.
+2. Set `NEXT_PUBLIC_KLIPY_APP_KEY` for **Production, Preview, and Development** in Vercel project settings; it is public and inlined at build time. Do not place a secret key in it. Redeploy each environment after setting it. Use a local untracked `.env.local` for development. Do not commit values.
+3. Database migration 078 is only a local draft: test against an isolated schema and inspect production drift/data before seeking separate approval to apply it. Do not blindly push the entire migration history to the existing project. Deploying the new picker before the migration will make KLIPY writes fail.
+4. Verify search, trending, categories, pagination, cancellation, errors, GIF sending, old GIPHY rendering, dark/light and mobile/desktop in a preview and then production. Verify official response shapes, branding, network/CORS, and partner terms with the actual key. Keep existing GIPHY environment variables and rollback artifacts until successful production verification.
+
+Search queries and media loads go directly from the browser to KLIPY. The public key can be used outside the application; Campus+ cannot enforce its former proxy-side search rate limit. Server-side writes remain subject to account and permission checks and normal write limits. No media is proxied or rehosted by this integration.
 
 ## 6. Vercel
 
 1. Import the repository (Framework preset: **Next.js**, build `npm run build`).
 2. Add the environment variables from §2 for **Production**, **Preview** and
-   **Development**. Only the two `NEXT_PUBLIC_*` values are inlined into the
-   bundle; the rest stay server-side.
+   **Development**. All `NEXT_PUBLIC_*` values are inlined into the
+   browser bundle; never use them for secrets.
 3. Deploy, then visit `/` — it routes to `/login`, `/setup` or `/home`
    depending on configuration and session state.
 4. Local production check:
@@ -327,7 +328,7 @@ sample or invented content.
 | Google shows "redirect_uri_mismatch" | Supabase's callback is not an authorized redirect URI in the Google OAuth client | add `https://<project-ref>.supabase.co/auth/v1/callback` (§4) |
 | Sign-in returns to /login with "could not complete the sign-in" | `/auth/callback` is missing from the Supabase *Redirect URLs*, or the PKCE verifier cookie was lost | add both callback URLs (§4) and start again from /login |
 | "Continue with Google" says sign-in is not configured | the Google provider is not enabled in Supabase | add the client ID and secret (§4) |
-| GIF search says "not configured" | `GIPHY_API_KEY` missing | optional — add the key to enable GIFs |
+| GIF search says "not configured" | `NEXT_PUBLIC_KLIPY_APP_KEY` missing at build time | configure the public web key and redeploy |
 | Moderator page shows the lock notice | the account holds no moderation permission | `npm run role:grant -- --username <name> --role moderator` |
 | Admin action returns "you do not have permission" | UI gate passed but the database disagreed | expected: the database is authoritative. Check the role's permission mapping (§8a) |
 | Build fails on a missing env var | only the public Supabase pair is required at build time | set `NEXT_PUBLIC_*` in Vercel for all environments |

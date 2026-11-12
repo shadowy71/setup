@@ -92,8 +92,7 @@ and after every deployment.
 * External links must be `http(s)://`. `javascript:`, `data:` and
   protocol-relative URLs are rejected in validation **and** by
   `isSafeExternalUrl()` at render time.
-* GIF references must name the GIPHY provider, carry a valid id, and use a URL on
-  the approved host list. Nothing else can enter a message, post or comment.
+* GIF references must name an approved provider, carry a valid id, and use a provider-matching URL. New KLIPY references require migration 078; old GIPHY references remain supported.
 * Raw Postgres errors never reach a student: `fromPostgresError()` maps them to
   human messages and the original is logged server-side only.
 
@@ -127,7 +126,7 @@ so they cannot be bypassed by calling the API directly:
 | `report_create` | reports (anti-brigading) |
 | `random_queue_join`, `random_message` | Random |
 | `username_change` | username changes (plus the cooldown setting) |
-| `gif_search` | the GIPHY proxy, protecting the shared provider quota |
+| `gif_search` | legacy GIPHY proxy only; direct KLIPY search is not protected by this bucket |
 | `admin_action` | administrative mutations |
 
 Sign-in itself has no bucket — see §2 for why Google OAuth does not need one.
@@ -139,6 +138,7 @@ Sign-in itself has no bucket — see §2 for why Google OAuth does not need one.
 | `NEXT_PUBLIC_SUPABASE_URL` | browser | public by design, protected by RLS |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | browser | publishable/anon key; the security boundary is RLS |
 | `SUPABASE_SECRET_KEY` | server only | maintenance scripts; never set as `NEXT_PUBLIC_*` |
+| `NEXT_PUBLIC_KLIPY_APP_KEY` | browser | public KLIPY app key; provider quota can be used outside Campus+ |
 | `GIPHY_API_KEY` | server only | used by `/api/giphy/search` |
 | `GIPHY_CONTENT_RATING` | server only | `g` / `pg` / `pg-13` / `r`, default `pg-13` |
 | `CAMPUS_ALLOWED_EMAIL_DOMAINS` | server only | deployment default for the domain gate |
