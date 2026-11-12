@@ -127,3 +127,22 @@ describe('gif reference keeps what the renderer needs', () => {
     expect(picker).toMatch(/picked\.height = Number\(gif\.height\)/);
   });
 });
+
+describe('GIF picker first-load sizing', () => {
+  it('bounds the open picker and its category scroller inside flex composers', () => {
+    const picker = read('components/media/GifPicker.js');
+    expect(picker).toContain("'flex min-w-0 max-w-full flex-col gap-2', open && 'w-[22rem]'");
+    expect(picker).toContain('card-flush min-w-0 w-full max-w-full p-3');
+    expect(picker).toContain('flex w-full min-w-0 max-w-full gap-2 overflow-x-auto');
+    expect(picker).toContain('className="shrink-0"');
+  });
+
+  it('keeps initial and searched GIF tiles within fixed-height grid cells', () => {
+    const picker = read('components/media/GifPicker.js');
+    expect(picker).toContain('grid w-full min-w-0 max-h-72 grid-cols-2');
+    expect(picker).toContain('overflow-y-auto overflow-x-hidden sm:grid-cols-3');
+    expect(picker).toContain('className="min-w-0"');
+    expect(picker).toContain('motion-control block h-24 w-full overflow-hidden');
+    expect(picker).toContain('h-full w-full bg-surface-2 object-cover');
+  });
+});
