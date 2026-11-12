@@ -47,6 +47,7 @@ export function ContentCard({
   media = null,
   emphasis = null,
   variant = 'card',
+  fullDescription = false,
 }) {
   // Two presentations, one component: the default card for grids and detail
   // pages, and the stream entry for a feed column (see app/styles/home.css).
@@ -72,7 +73,14 @@ export function ContentCard({
         stamp: 'shrink-0 self-center text-right',
       };
 
-  const displayDescription = description ? truncateForCard(description, stream ? 260 : 220) : null;
+  // Cards preview; they do not carry the whole text. `fullDescription` is for
+  // the few lists where the description *is* the record (the noticeboard
+  // archive), so nothing the reader came for is hidden behind a click.
+  const displayDescription = !description
+    ? null
+    : fullDescription
+      ? String(description)
+      : truncateForCard(description, stream ? 260 : 220);
   // A clickable card is one big <Link>; a URL inside its text can therefore
   // never be a nested <a>. When the text carries a link, the card renders as
   // an article and only the title navigates to the detail page, leaving the

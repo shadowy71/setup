@@ -97,6 +97,9 @@ export default async function CampusPage() {
           <Link href="/campus/noticeboard" className="text-2xs text-muted underline hover:text-ink">
             All notices
           </Link>
+          <Link href={ROUTES.noticeArchive()} className="text-2xs text-muted underline hover:text-ink">
+            Archive
+          </Link>
         </h2>
         {notices.length ? (
           notices.map((notice) => (
