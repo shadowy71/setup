@@ -29,6 +29,7 @@ try {
  await become(a,user); await become(b,user);
  const limit = await c.query("select public.consume_rate_limit('profile_photo_upload',$1,20,3600) as result",[user.profileId]);
  assert.equal(limit.rows[0].result.allowed,true);
+ await client.query('select public.admin_set_upload_enabled($1,false)',[user.profileId]);
  const args=[randomUUID(),'photo.png','image/png',3145728,'a'.repeat(64)];
  const reserve = (connection, id) => connection.query('select public.storage_reserve_profile_picture($1,$2,$3,$4,$5,$6) as id',[user.profileId,id,...args.slice(1)]);
  await assert.rejects(reserve(c,args[0]),/Uploads are not enabled/);
@@ -115,5 +116,5 @@ try {
  console.log('PASS: legacy, V3, post and draft reservations above 25 MiB; per-file limit retained');
  console.log('PASS: V3 service-role reservation, immutable key constraint, idempotency, concurrent reservations, and retire-before-finalize');
 
- console.log('PASS: disabled default, self-grant denied, metadata/cross-user denied, concurrent reservations serialized, idempotent reservation, backup capture, redacted admin summary, finalization, replacement and ledger cleanup');
+ console.log('PASS: explicit revocation, self-grant denied, metadata/cross-user denied, concurrent reservations serialized, idempotent reservation, backup capture, redacted admin summary, finalization, replacement and ledger cleanup');
 } finally { await a?.end(); await b?.end(); await c?.end(); await d?.end(); await client.end(); await admin.end(); await pg.stop(); }
