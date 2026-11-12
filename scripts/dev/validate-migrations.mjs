@@ -188,6 +188,7 @@ async function main() {
       expect(JSON.stringify(second) === JSON.stringify(first), 'a second run must change nothing');
 
       // Staff edit one record and delete another; a later run must respect both.
+      await client.query('savepoint imported');
       const { rows: picked } = await client.query(
         `select notice_id from public.notice_archive_entries where source_key like $1 || '/%' order by sort_order limit 2`,
         [batch],
@@ -199,11 +200,144 @@ async function main() {
       expect(third.registered === 64 && third.attached === 63, 'a deleted record must stay deleted and stay registered');
       expect(third.notices === first.notices - 1, 'a third run must not restore the deleted record');
       expect(third.unchanged === 62, 'a third run must not overwrite the staff edit');
+      await client.query('rollback to savepoint imported');
+
+      // Migrations 075 and 077 found no imported records when the history above
+      // was applied, so they are replayed here on the real batch.
+      const returnFile = '20261112000029_075_return_pccoe_noticeboard_to_archive.sql';
+      const datesFile = '20261112000031_077_pccoe_noticeboard_dates.sql';
+      let laterSummary = '';
+      if (files.includes(returnFile) && files.includes(datesFile)) {
+        const returnSql = await readFile(path.join(migrationsDir, returnFile), 'utf8');
+        const datesSql = await readFile(path.join(migrationsDir, datesFile), 'utf8');
+        for (const [name, sql] of [['075', returnSql], ['077', datesSql]]) {
+          expect(
+            /c_batch\s+constant text := '([a-z0-9-]+)'/.exec(sql)?.[1] === batch,
+            `Migration ${name} must address the batch that migration 073 imports.`,
+          );
+        }
+        // What the batch looks like to every "current" reader, and what its
+        // records carry. `current` counts everything that reads published
+        // notices: the noticeboard, the latest-notice lists and the home feed.
+        const state = async () =>
+          (
+            await client.query(
+              `
+              with entries as (
+                select e.*, n.id as live_id, n.title, n.body, n.status, n.published_at, n.updated_by
+                from public.notice_archive_entries e
+                left join public.notices n on n.id = e.notice_id
+                where e.source_key like $1 || '/%'
+              )
+              select
+                count(*) filter (where status = 'archived' and published_at is null)::int as archived,
+                count(*) filter (where status = 'published')::int as current,
+                count(*) filter (where md5(title || chr(10) || body) = source_checksum)::int as unchanged,
+                (select count(*)::int from public.campus_feed(50, 0, 'newest') f
+                   join public.notice_archive_entries a on a.notice_id = f.id) as in_feed,
+                (select count(*)::int from public.notifications) as notifications,
+                (select count(*)::int from public.events) as events,
+                (select count(*)::int from public.academic_calendar) as calendar,
+                count(*) filter (where occurred_on is not null and not date_is_approximate)::int as exact,
+                count(occurred_until)::int as ranges,
+                count(*) filter (where date_is_approximate)::int as year_only,
+                count(*) filter (
+                  where date_is_approximate and to_char(occurred_on, 'MM-DD') = '01-01' and occurred_until is null
+                )::int as placeholders,
+                count(*) filter (where occurred_on is null and period is not null)::int as labelled,
+                count(*) filter (where occurred_on is null and period is null)::int as undated,
+                count(date_note)::int as noted,
+                count(period)::int as with_period,
+                greatest(max(occurred_until), max(occurred_on))::text as latest,
+                md5(string_agg(
+                  source_key || '|' || coalesce(occurred_on::text, '-') || '|' || coalesce(occurred_until::text, '-') || '|' ||
+                  date_is_approximate::text || '|' || coalesce(period, '-') || '|' || coalesce(date_note, '-') || '|' ||
+                  section_key || '|' || organization || '|' || source_category || '|' || coalesce(source_note, '-') || '|' ||
+                  sort_order::text || '|' || source_checksum || '|' || coalesce(title, '-') || '|' || coalesce(body, '-'),
+                  chr(10) order by sort_order)) as digest
+              from entries
+              `,
+              [batch],
+            )
+          ).rows[0];
+        const changes = async () =>
+          (await client.query('select count(*)::int as n from public.backup_change_log')).rows[0].n;
+
+        const imported = await state();
+        expect(imported.archived === 64 && imported.current === 0 && imported.in_feed === 0, 'the import must leave nothing current');
+        expect(imported.exact + imported.year_only === 0 && imported.noted === 0, 'the import itself must record no dates');
+
+        // 075. Publish the batch the way it was published on the connected
+        // project, let staff save one record, then return the batch.
+        const publish = `
+          update public.notices n
+             set status = 'published', published_at = now() - (e.sort_order - 1) * interval '1 millisecond'
+            from public.notice_archive_entries e
+           where e.notice_id = n.id and e.source_key like $1 || '/%'`;
+        await client.query(publish, [batch]);
+        const flooded = await state();
+        expect(flooded.current === 64 && flooded.in_feed > 0, 'published, the batch reaches the current feed');
+        await client.query('savepoint published');
+        await client.query(
+          `update public.notices set body = 'Kept current by staff.', updated_by = $2
+            where id = (select notice_id from public.notice_archive_entries where source_key like $1 || '/%' order by sort_order limit 1)`,
+          [batch, publisher],
+        );
+        await client.query(returnSql);
+        const kept = await state();
+        expect(kept.archived === 63 && kept.current === 1, 'a record staff saved while it was published must stay as staff left it');
+        expect(kept.unchanged === 63, 'returning records to the archive must not alter their text');
+        await client.query('rollback to savepoint published');
+
+        await client.query(returnSql);
+        const returned = await state();
+        expect(returned.archived === 64 && returned.current === 0 && returned.in_feed === 0, 'every untouched record must return to the archive');
+        expect(returned.digest === imported.digest, 'returning the batch must restore exactly what was imported');
+        const beforeSecondReturn = await changes();
+        await client.query(returnSql);
+        expect((await changes()) === beforeSecondReturn, 'a second return must write nothing');
+
+        // 077. Record the dates, twice, then once more over a date that is
+        // already there.
+        await client.query(datesSql);
+        const dated = await state();
+        expect(dated.exact === 27 && dated.ranges === 3, `expected 27 exact dates, 3 of them over two days; found ${dated.exact} and ${dated.ranges}`);
+        expect(dated.year_only === 7 && dated.placeholders === 7, 'a year alone must be stored as a flagged 1 January and nothing else');
+        expect(dated.labelled === 7 && dated.undated === 23, 'a record without a date keeps its period label, or nothing');
+        expect(dated.noted === 5 && dated.with_period === 14, 'date notes and period labels must be stored as supplied');
+        expect(dated.latest === '2026-03-16', `no date may be later than the last one on the boards; found ${dated.latest}`);
+        expect(
+          dated.archived === 64 && dated.current === 0 && dated.in_feed === 0 && dated.unchanged === 64,
+          'recording dates must not make a record current or alter its text',
+        );
+        expect(
+          dated.notifications === imported.notifications && dated.events === imported.events && dated.calendar === imported.calendar,
+          'recording dates must not notify anyone or create events or calendar entries',
+        );
+        expect(dated.events === before.events && dated.calendar === before.calendar, 'the batch must never create events or calendar entries');
+
+        const beforeSecondDates = await changes();
+        await client.query(datesSql);
+        const datedAgain = await state();
+        expect(datedAgain.digest === dated.digest, 'a second run of the dates must change nothing');
+        expect((await changes()) === beforeSecondDates, 'a second run of the dates must write nothing');
+
+        await client.query(
+          `update public.notice_archive_entries set occurred_on = '2025-07-22' where source_key = $1 || '/itsa/ai-workshop'`,
+          [batch],
+        );
+        const corrected = await state();
+        await client.query(datesSql);
+        expect((await state()).digest === corrected.digest, 'a date that is already recorded must never be overwritten');
+        laterSummary =
+          ' Published and returned: 64 back in the archive, a record saved by staff left alone. ' +
+          'Dates: 27 exact, 7 years as flagged placeholders, 30 with none; re-runs wrote nothing and kept an existing date.';
+      }
 
       await client.query('rollback');
       console.log(
         `  \x1b[32m✓\x1b[0m ${first.attached} records imported as archived; second run changed nothing; ` +
-          'a staff edit and a staff delete survived a third run; rolled back.',
+          `a staff edit and a staff delete survived a third run.${laterSummary} Rolled back.`,
       );
     } catch (error) {
       await client.query('rollback').catch(() => {});

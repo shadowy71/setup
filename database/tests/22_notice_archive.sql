@@ -9,6 +9,7 @@
 --   * a notice that staff archive by hand stays staff-only;
 --   * no archive record can reach campus_feed(), the "current" read path;
 --   * provenance is read-only for clients and closed to anon;
+--   * a record's date is exact, a flagged 1 January placeholder, or absent;
 --   * deleting a record keeps its source key registered;
 --   * the new table is covered by transactional backup capture.
 --
@@ -143,6 +144,51 @@ insert into public.notice_archive_entries
 values ('suite-22/records/shape-check', 'records', 'Suite records', 'Suite organisation', 'institution', 'Other', 9, md5('x'));
 delete from public.notice_archive_entries where source_key = 'suite-22/records/shape-check';
 
+-- Dates (migration 076). Only a year is known: the placeholder is 1 January of
+-- that year, flagged, and can be nothing more precise.
+select public.test_assert_denied(
+  $sql$update public.notice_archive_entries set occurred_on = '2025-03-04', date_is_approximate = true
+        where source_key = 'suite-22/records/registered'$sql$,
+  '2. a placeholder date must be 1 January of the known year'
+);
+select public.test_assert_denied(
+  $sql$update public.notice_archive_entries set date_is_approximate = true
+        where source_key = 'suite-22/records/registered'$sql$,
+  '2. a placeholder date needs a year'
+);
+select public.test_assert_denied(
+  $sql$update public.notice_archive_entries
+          set occurred_on = '2025-01-01', occurred_until = '2025-01-02', date_is_approximate = true
+        where source_key = 'suite-22/records/registered'$sql$,
+  '2. a placeholder date cannot have a last day'
+);
+select public.test_assert_denied(
+  $sql$update public.notice_archive_entries set occurred_until = '2025-09-17'
+        where source_key = 'suite-22/records/registered'$sql$,
+  '2. a last day needs a first day'
+);
+select public.test_assert_denied(
+  $sql$update public.notice_archive_entries set occurred_on = '2025-09-17', occurred_until = '2025-09-16'
+        where source_key = 'suite-22/records/registered'$sql$,
+  '2. a last day must come after the first'
+);
+
+-- The three shapes a date may take: a flagged year, exact days, or nothing.
+update public.notice_archive_entries
+   set occurred_on = '2025-01-01', date_is_approximate = true
+ where source_key = 'suite-22/records/registered';
+update public.notice_archive_entries
+   set occurred_on = '2025-09-16', occurred_until = '2025-09-17',
+       date_note = 'The year comes from the edition title.'
+ where source_key = 'suite-22/records/draft';
+
+select public.test_assert(
+  (select count(*) from public.notice_archive_entries
+    where source_key like 'suite-22/%' and occurred_on is null
+      and occurred_until is null and not date_is_approximate and date_note is null) = 2,
+  '2. a record with no recoverable date carries none'
+);
+
 -- -----------------------------------------------------------------------------
 -- 3. A student reads registered archive records, and nothing else that is hidden
 -- -----------------------------------------------------------------------------
@@ -171,6 +217,11 @@ begin
     public.notice_archive_listed('a2200000-0000-4000-b000-000000000002')
     and not public.notice_archive_listed('a2200000-0000-4000-b000-000000000003'),
     '3. the archive predicate is true for registered notices only');
+
+  perform public.test_assert(
+    (select occurred_on = date '2025-01-01' and date_is_approximate and occurred_until is null
+       from public.notice_archive_entries where source_key = 'suite-22/records/registered'),
+    '3. a student reads a record''s date and that it is a placeholder for the year');
 end;
 $$;
 
@@ -218,6 +269,11 @@ select public.test_assert_denied(
   $sql$update public.notice_archive_entries set organization = 'Someone else'
         where source_key = 'suite-22/records/registered'$sql$,
   '5. a student must not rewrite the attribution of a record'
+);
+select public.test_assert_denied(
+  $sql$update public.notice_archive_entries set occurred_on = '2026-11-12', date_is_approximate = false
+        where source_key = 'suite-22/records/registered'$sql$,
+  '5. a student must not change the date of a record'
 );
 select public.test_assert_denied(
   $sql$delete from public.notice_archive_entries where source_key = 'suite-22/records/registered'$sql$,

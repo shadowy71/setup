@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (74 files):
+-- Contents (77 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -107,9 +107,12 @@
 --   72  20261112000026_072_notice_archive.sql  (114 lines)
 --   73  20261112000027_073_pccoe_noticeboard_archive.sql  (351 lines)
 --   74  20261112000028_074_upload_access_default.sql  (35 lines)
+--   75  20261112000029_075_return_pccoe_noticeboard_to_archive.sql  (41 lines)
+--   76  20261112000030_076_notice_archive_dates.sql  (59 lines)
+--   77  20261112000031_077_pccoe_noticeboard_dates.sql  (142 lines)
 
 -- ==========================================================================
--- FILE 01/74  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/77  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -230,7 +233,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/74  20261005000002_002_identity_roles.sql
+-- FILE 02/77  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -822,7 +825,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/74  20261005000003_003_blocks.sql
+-- FILE 03/77  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -969,7 +972,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/74  20261005000004_004_communities.sql
+-- FILE 04/77  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1376,7 +1379,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/74  20261005000005_005_social.sql
+-- FILE 05/77  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -1999,7 +2002,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/74  20261005000006_006_moderation_core.sql
+-- FILE 06/77  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2474,7 +2477,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/74  20261005000007_007_messaging.sql
+-- FILE 07/77  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3063,7 +3066,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/74  20261005000008_008_marketplace.sql
+-- FILE 08/77  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3585,7 +3588,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/74  20261005000009_009_campus.sql
+-- FILE 09/77  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4619,7 +4622,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/74  20261005000010_010_random.sql
+-- FILE 10/77  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5271,7 +5274,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/74  20261005000011_011_platform.sql
+-- FILE 11/77  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -6011,7 +6014,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/74  20261005000012_012_auth_hooks.sql
+-- FILE 12/77  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6468,7 +6471,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/74  20261005000013_013_reference_data.sql
+-- FILE 13/77  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6742,7 +6745,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/74  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/77  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6955,7 +6958,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/74  20261005000015_015_column_privileges.sql
+-- FILE 15/77  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7183,7 +7186,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/74  20261005000016_016_staff_actions.sql
+-- FILE 16/77  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7890,7 +7893,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/74  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/77  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8088,7 +8091,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/74  20261005000018_018_function_grants.sql
+-- FILE 18/77  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8203,7 +8206,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/74  20261005000019_019_staff_visibility.sql
+-- FILE 19/77  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8279,7 +8282,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/74  20261005000020_020_chat_inbox.sql
+-- FILE 20/77  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8373,7 +8376,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/74  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/77  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8711,7 +8714,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/74  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/77  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8784,7 +8787,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/74  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/77  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8814,7 +8817,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/74  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/77  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9287,7 +9290,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/74  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/77  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9581,7 +9584,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/74  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/77  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9701,7 +9704,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/74  20261025000001_027_backup_change_capture.sql
+-- FILE 27/77  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10967,7 +10970,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/74  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/77  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11294,7 +11297,7 @@ comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
--- FILE 29/74  20261026000001_029_feed_realtime_delivery.sql
+-- FILE 29/77  20261026000001_029_feed_realtime_delivery.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11411,7 +11414,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 30/74  20261027000001_030_random_channel_authorization.sql
+-- FILE 30/77  20261027000001_030_random_channel_authorization.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11604,7 +11607,7 @@ comment on function public.can_access_random_session is
   'can_access_own_random_session(uuid) instead.';
 
 -- ==========================================================================
--- FILE 31/74  20261028000001_031_club_governance.sql
+-- FILE 31/77  20261028000001_031_club_governance.sql
 -- ==========================================================================
 
 -- Campus+ migration 031 — club governance, requests and scoped management
@@ -12657,7 +12660,7 @@ grant execute on function public.remove_community_member(uuid, uuid) to authenti
 grant execute on function public.update_club_profile(uuid, jsonb) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 32/74  20261028000002_032_club_catalogue.sql
+-- FILE 32/77  20261028000002_032_club_catalogue.sql
 -- ==========================================================================
 
 -- Campus+ migration 032 — source-backed club catalogue
@@ -12871,7 +12874,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 33/74  20261029000001_033_unread_count_lookup.sql
+-- FILE 33/77  20261029000001_033_unread_count_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12929,7 +12932,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 34/74  20261029000002_034_inbox_membership_lookup.sql
+-- FILE 34/77  20261029000002_034_inbox_membership_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13021,7 +13024,7 @@ revoke all on function public.conversation_inbox(integer) from public, anon;
 grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 35/74  20261029000003_035_feed_visibility_reconciliation.sql
+-- FILE 35/77  20261029000003_035_feed_visibility_reconciliation.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13077,7 +13080,7 @@ revoke all on function public.campus_feed_post_visibility(uuid[]) from public, a
 grant execute on function public.campus_feed_post_visibility(uuid[]) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 36/74  20261029000004_036_admin_dashboard_counts.sql
+-- FILE 36/77  20261029000004_036_admin_dashboard_counts.sql
 -- ==========================================================================
 
 -- Campus+ 036: one authorized, RLS-scoped Admin count snapshot
@@ -13141,7 +13144,7 @@ revoke all on function public.campus_admin_dashboard_counts() from anon;
 grant execute on function public.campus_admin_dashboard_counts() to authenticated;
 
 -- ==========================================================================
--- FILE 37/74  20261029000005_037_realtime_authorization_grants.sql
+-- FILE 37/77  20261029000005_037_realtime_authorization_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 037 — reassert least-privilege Realtime function grants
@@ -13177,7 +13180,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 38/74  20261101000001_038_post_pin_ordering.sql
+-- FILE 38/77  20261101000001_038_post_pin_ordering.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13495,7 +13498,7 @@ comment on index public.posts_feed_replica_identity_idx is
   'Realtime update identity: old id/pin/status only, so pin transitions are distinguishable from counter-only writes without full-row replica identity.';
 
 -- ==========================================================================
--- FILE 39/74  20261102000001_039_poll_author_may_vote.sql
+-- FILE 39/77  20261102000001_039_poll_author_may_vote.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13536,7 +13539,7 @@ comment on policy poll_votes_insert_self on public.poll_votes is
   'Any active student may vote once in an open published poll, including the poll author; duplicates remain blocked by the unique (post_id, user_id) constraint.';
 
 -- ==========================================================================
--- FILE 40/74  20261102000002_040_busiest_trending.sql
+-- FILE 40/77  20261102000002_040_busiest_trending.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13760,7 +13763,7 @@ comment on function public.trending_posts(integer, integer) is
   'Deterministic recent-engagement trending score. Formula and defaults are published in lib/constants.js#TRENDING_FORMULA; bar normalization lives in lib/social/activity-scale.js. SECURITY INVOKER so RLS still decides visibility.';
 
 -- ==========================================================================
--- FILE 41/74  20261103000001_041_public_discovery.sql
+-- FILE 41/77  20261103000001_041_public_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 041 — public discovery: clubs by slug, public events
@@ -14040,7 +14043,7 @@ end $$;
 drop table __anon_exec_before_041;
 
 -- ==========================================================================
--- FILE 42/74  20261105000001_042_ai_ml_branch.sql
+-- FILE 42/77  20261105000001_042_ai_ml_branch.sql
 -- ==========================================================================
 
 -- Rename only complete, structured branch values. Identifiers, divisions,
@@ -14084,7 +14087,7 @@ where regexp_replace(lower(branch), '[^a-z0-9]', '', 'g') in (
 ) and branch <> 'AI & ML';
 
 -- ==========================================================================
--- FILE 43/74  20261110000001_043_profile_storage_foundation.sql
+-- FILE 43/77  20261110000001_043_profile_storage_foundation.sql
 -- ==========================================================================
 
 -- Storage ledger foundation only. No file endpoints are enabled by this migration.
@@ -14220,7 +14223,7 @@ revoke all on function public.storage_account_usage(uuid) from public, anon;
 grant execute on function public.storage_account_usage(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 44/74  20261110000002_044_storage_admin_summary.sql
+-- FILE 44/77  20261110000002_044_storage_admin_summary.sql
 -- ==========================================================================
 
 -- Read-only operational view of Campus+ ledger rows, never the Drive account.
@@ -14251,7 +14254,7 @@ revoke all on function public.admin_storage_summary() from public, anon;
 grant execute on function public.admin_storage_summary() to authenticated;
 
 -- ==========================================================================
--- FILE 45/74  20261110000003_045_backup_capture_late_tables.sql
+-- FILE 45/77  20261110000003_045_backup_capture_late_tables.sql
 -- ==========================================================================
 
 -- Migration 027 installed capture before the club-request and storage tables
@@ -14260,7 +14263,7 @@ grant execute on function public.admin_storage_summary() to authenticated;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 46/74  20261110000004_046_profile_photo_lifecycle.sql
+-- FILE 46/77  20261110000004_046_profile_photo_lifecycle.sql
 -- ==========================================================================
 
 -- Profile photos use the existing ledger as the association. There is at most
@@ -14353,7 +14356,7 @@ revoke all on function public.storage_complete_profile_delete(uuid,uuid) from pu
 grant execute on function public.storage_complete_profile_delete(uuid,uuid) to service_role;
 
 -- ==========================================================================
--- FILE 47/74  20261112000001_047_profile_storage_v3.sql
+-- FILE 47/77  20261112000001_047_profile_storage_v3.sql
 -- ==========================================================================
 
 -- V3 keys are immutable and separate from legacy V2 keys. Existing rows stay V2.
@@ -14418,7 +14421,7 @@ revoke all on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,
 grant execute on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,text,bigint,text) to service_role;
 
 -- ==========================================================================
--- FILE 48/74  20261112000002_048_post_attachments.sql
+-- FILE 48/77  20261112000002_048_post_attachments.sql
 -- ==========================================================================
 
 -- The existing storage ledger remains the single quota and operation ledger.
@@ -14542,7 +14545,7 @@ revoke all on function public.can_view_post_attachment(uuid) from public,anon;
 grant execute on function public.can_view_post_attachment(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 49/74  20261112000003_049_post_attachment_order.sql
+-- FILE 49/77  20261112000003_049_post_attachment_order.sql
 -- ==========================================================================
 
 -- Reorder only an exact snapshot of this owner's current ready attachments.
@@ -14574,7 +14577,7 @@ revoke all on function public.storage_reorder_post_attachments(uuid,uuid,uuid[])
 grant execute on function public.storage_reorder_post_attachments(uuid,uuid,uuid[]) to service_role;
 
 -- ==========================================================================
--- FILE 50/74  20261112000004_050_post_attachment_drafts.sql
+-- FILE 50/77  20261112000004_050_post_attachment_drafts.sql
 -- ==========================================================================
 
 -- Private, expiring upload drafts. Nothing is visible as a post until the
@@ -14748,7 +14751,7 @@ grant execute on function public.publish_post_with_draft(uuid,uuid,public.post_k
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 51/74  20261112000005_051_marketplace_attachments.sql
+-- FILE 51/77  20261112000005_051_marketplace_attachments.sql
 -- ==========================================================================
 
 insert into public.feature_flags(key,label,description,group_name,enabled) values ('marketplace_images','Marketplace images','Allow entitled users to attach images to marketplace listings.','marketplace',false) on conflict (key) do nothing;
@@ -14898,7 +14901,7 @@ grant execute on function public.can_view_marketplace_images(uuid) to authentica
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 52/74  20261112000006_052_team_request_integrity.sql
+-- FILE 52/77  20261112000006_052_team_request_integrity.sql
 -- ==========================================================================
 
 -- Team requests are private to the applicant and the team-post owner. Prevent
@@ -14927,7 +14930,7 @@ create trigger guard_team_post_request before insert or update on public.team_po
 for each row execute function public.guard_team_post_request();
 
 -- ==========================================================================
--- FILE 53/74  20261112000007_053_profile_achievements.sql
+-- FILE 53/77  20261112000007_053_profile_achievements.sql
 -- ==========================================================================
 
 -- Student-submitted profile achievements are distinct from system-awarded,
@@ -14984,7 +14987,7 @@ create trigger guard_profile_achievement_status before update on public.profile_
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 54/74  20261112000008_054_ride_kinds.sql
+-- FILE 54/77  20261112000008_054_ride_kinds.sql
 -- ==========================================================================
 
 -- Existing posts remain unclassified rather than being guessed as offers.
@@ -14993,7 +14996,7 @@ grant update (ride_kind) on public.ride_posts to authenticated;
 create index ride_posts_kind_date_idx on public.ride_posts (ride_kind, ride_date) where status = 'published';
 
 -- ==========================================================================
--- FILE 55/74  20261112000009_055_notice_delete.sql
+-- FILE 55/77  20261112000009_055_notice_delete.sql
 -- ==========================================================================
 
 -- Delete and audit as one operation; do not grant notice permissions to new roles.
@@ -15014,7 +15017,7 @@ revoke all on function public.delete_official_notice(uuid) from public,anon;
 grant execute on function public.delete_official_notice(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 56/74  20261112000010_056_event_rsvp_guard.sql
+-- FILE 56/77  20261112000010_056_event_rsvp_guard.sql
 -- ==========================================================================
 
 -- A previously saved RSVP cannot be changed after an event stops accepting
@@ -15026,7 +15029,7 @@ alter policy event_registrations_update_own on public.event_registrations
               and exists (select 1 from public.events e where e.id = event_id and e.status = 'published'));
 
 -- ==========================================================================
--- FILE 57/74  20261112000011_057_team_invitations.sql
+-- FILE 57/77  20261112000011_057_team_invitations.sql
 -- ==========================================================================
 
 -- Invitations are private, and all mutations run through narrowly scoped RPCs.
@@ -15108,7 +15111,7 @@ grant execute on function public.remove_team_member(uuid) to authenticated;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 58/74  20261112000012_058_team_project_link.sql
+-- FILE 58/77  20261112000012_058_team_project_link.sql
 -- ==========================================================================
 
 -- An optional association: existing team requests stay unchanged.
@@ -15129,7 +15132,7 @@ create trigger team_project_link_guard before insert or update of project_id on 
 for each row execute function public.guard_team_project_link();
 
 -- ==========================================================================
--- FILE 59/74  20261112000013_059_board_staff_visibility.sql
+-- FILE 59/77  20261112000013_059_board_staff_visibility.sql
 -- ==========================================================================
 
 -- Moderators can inspect hidden board reports without granting student access.
@@ -15137,7 +15140,7 @@ create policy housing_select_staff on public.housing_posts for select to authent
 create policy rides_select_staff on public.ride_posts for select to authenticated using (public.has_permission('moderate_all'));
 
 -- ==========================================================================
--- FILE 60/74  20261112000014_060_event_rsvp_capacity.sql
+-- FILE 60/77  20261112000014_060_event_rsvp_capacity.sql
 -- ==========================================================================
 
 -- Keep capacity accounting private even when attendee visibility is disabled.
@@ -15180,7 +15183,7 @@ for each row execute function public.sync_event_rsvp_capacity();
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 61/74  20261112000015_061_remove_storage_quota.sql
+-- FILE 61/77  20261112000015_061_remove_storage_quota.sql
 -- ==========================================================================
 
 -- Remove aggregate per-user storage limits while retaining operation reservations,
@@ -15323,7 +15326,7 @@ end $$;
 -- it no longer controls any upload path.
 
 -- ==========================================================================
--- FILE 62/74  20261112000016_062_lost_found_attachments.sql
+-- FILE 62/77  20261112000016_062_lost_found_attachments.sql
 -- ==========================================================================
 
 -- Private image links for lost-and-found reports; uploads use existing V3 drafts.
@@ -15414,7 +15417,7 @@ grant execute on function public.storage_complete_lost_found_image_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 63/74  20261112000017_063_housing_attachments.sql
+-- FILE 63/77  20261112000017_063_housing_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for housing posts; uploads use existing V3 drafts.
@@ -15505,7 +15508,7 @@ grant execute on function public.storage_complete_housing_attachment_delete(uuid
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 64/74  20261112000018_064_ride_attachments.sql
+-- FILE 64/77  20261112000018_064_ride_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for ride posts; uploads use existing V3 drafts.
@@ -15596,7 +15599,7 @@ grant execute on function public.storage_complete_ride_attachment_delete(uuid) t
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 65/74  20261112000019_065_team_attachments.sql
+-- FILE 65/77  20261112000019_065_team_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for team posts; uploads use existing V3 drafts.
@@ -15687,7 +15690,7 @@ grant execute on function public.storage_complete_team_attachment_delete(uuid) t
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 66/74  20261112000020_066_project_attachments.sql
+-- FILE 66/77  20261112000020_066_project_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for project posts; uploads use existing V3 drafts.
@@ -15778,7 +15781,7 @@ grant execute on function public.storage_complete_project_attachment_delete(uuid
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 67/74  20261112000021_067_gig_attachments.sql
+-- FILE 67/77  20261112000021_067_gig_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for gig posts; uploads use existing V3 drafts.
@@ -15879,7 +15882,7 @@ create trigger gig_retire_soft_deleted after update of status on public.gigs for
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 68/74  20261112000022_068_achievement_attachments.sql
+-- FILE 68/77  20261112000022_068_achievement_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for achievement posts; uploads use existing V3 drafts.
@@ -15972,7 +15975,7 @@ grant execute on function public.storage_complete_achievement_attachment_delete(
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 69/74  20261112000023_069_notice_attachments.sql
+-- FILE 69/77  20261112000023_069_notice_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for notice posts; uploads use existing V3 drafts.
@@ -16065,7 +16068,7 @@ grant execute on function public.storage_complete_notice_attachment_delete(uuid)
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 70/74  20261112000024_070_event_attachments.sql
+-- FILE 70/77  20261112000024_070_event_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for event posts; uploads use existing V3 drafts.
@@ -16158,7 +16161,7 @@ grant execute on function public.storage_complete_event_attachment_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 71/74  20261112000025_071_space_attachments.sql
+-- FILE 71/77  20261112000025_071_space_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for space posts; uploads use existing V3 drafts.
@@ -16272,7 +16275,7 @@ grant execute on function public.storage_complete_space_attachment_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 72/74  20261112000026_072_notice_archive.sql
+-- FILE 72/77  20261112000026_072_notice_archive.sql
 -- ==========================================================================
 
 -- Campus+ migration 072 — noticeboard archive
@@ -16390,7 +16393,7 @@ grant all on public.notice_archive_entries to service_role;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 73/74  20261112000027_073_pccoe_noticeboard_archive.sql
+-- FILE 73/77  20261112000027_073_pccoe_noticeboard_archive.sql
 -- ==========================================================================
 
 -- Campus+ migration 073 — PCCOE noticeboard archive (batch pccoe-noticeboard-2026-11)
@@ -16745,7 +16748,7 @@ end
 $import$;
 
 -- ==========================================================================
--- FILE 74/74  20261112000028_074_upload_access_default.sql
+-- FILE 74/77  20261112000028_074_upload_access_default.sql
 -- ==========================================================================
 
 -- Give current active profiles upload access and enable it for new accounts.
@@ -16782,6 +16785,260 @@ begin
     perform public.admin_set_upload_enabled(p.id, true);
   end loop;
 end $$;
+
+-- ==========================================================================
+-- FILE 75/77  20261112000029_075_return_pccoe_noticeboard_to_archive.sql
+-- ==========================================================================
+
+-- Campus+ migration 075 — return the PCCOE noticeboard batch to the archive
+-- =============================================================================
+-- The 64 records imported by migration 073 are historical. On the connected
+-- project they were published as current notices on 12 November 2026 (history
+-- entry 074_publish_pccoe_noticeboard, which has no file in this repository).
+-- Published, they led the noticeboard, the latest-notice lists and the home
+-- feed as if they were new announcements.
+--
+-- Every record of the batch that is still as that step left it (published, with
+-- a publication time, never saved by staff) goes back to
+--
+--   status        'archived'
+--   published_at  null
+--
+-- which is how migration 073 writes it. Nothing else is written: titles,
+-- descriptions, categories and provenance are untouched.
+--
+-- A record that staff have saved since keeps the state staff gave it. Where the
+-- batch was never published nothing matches, and a second run changes nothing.
+-- =============================================================================
+
+do $archive$
+declare
+  c_batch    constant text := 'pccoe-noticeboard-2026-11';
+  v_returned integer;
+begin
+  update public.notices as n
+     set status = 'archived',
+         published_at = null
+    from public.notice_archive_entries as e
+   where e.notice_id = n.id
+     and e.source_key like c_batch || '/%'
+     and n.status = 'published'
+     and n.published_at is not null
+     and n.updated_by is null;
+  get diagnostics v_returned = row_count;
+
+  raise notice 'Noticeboard batch %: % records returned to the archive.', c_batch, v_returned;
+end
+$archive$;
+
+-- ==========================================================================
+-- FILE 76/77  20261112000030_076_notice_archive_dates.sql
+-- ==========================================================================
+
+-- Campus+ migration 076 — dates for noticeboard archive records
+-- =============================================================================
+-- An archive record describes something that happened in the past, and its
+-- source, a poster on a noticeboard, often says when. Four columns on
+-- notice_archive_entries hold that:
+--
+--   occurred_on          the day it happened, or its first day
+--   occurred_until       its last day, when it ran for more than one
+--   date_is_approximate  true when only the year is known. occurred_on is then
+--                        1 January of that year: a placeholder that keeps the
+--                        year in a date column, not a day on which anything
+--                        happened. It is shown as the year alone.
+--   date_note            where the date comes from, when that needs saying
+--                        (a year taken from an edition title, for example)
+--
+-- A record with no recoverable date leaves all four empty. The period column
+-- keeps the labels that are not calendar dates, such as an academic year.
+--
+-- Nothing reads these columns to decide what is current. Archive records are
+-- archived notices, which no latest list, feed, event calendar or notification
+-- includes; the date is provenance, shown beside the record.
+--
+-- No policy, grant or trigger changes. The table stays read-only for clients,
+-- and backup capture records whole rows, so the new columns are captured.
+-- =============================================================================
+
+alter table public.notice_archive_entries
+  add column occurred_on         date,
+  add column occurred_until      date,
+  add column date_is_approximate boolean not null default false,
+  add column date_note           text;
+
+alter table public.notice_archive_entries
+  -- A last day needs a first day before it.
+  add constraint notice_archive_entries_date_range_check
+    check (occurred_until is null or (occurred_on is not null and occurred_until > occurred_on)),
+  -- A placeholder is 1 January of the known year and nothing more precise.
+  add constraint notice_archive_entries_date_placeholder_check
+    check (
+      not date_is_approximate
+      or (
+        occurred_on is not null
+        and occurred_until is null
+        and extract(month from occurred_on) = 1
+        and extract(day from occurred_on) = 1
+      )
+    ),
+  add constraint notice_archive_entries_date_note_check
+    check (date_note is null or length(btrim(date_note)) between 5 and 400);
+
+comment on column public.notice_archive_entries.occurred_on is
+  'Day the recorded activity happened (its first day). When date_is_approximate is true this is 1 January of the known year: a placeholder, never a real day.';
+comment on column public.notice_archive_entries.occurred_until is
+  'Last day of an activity that ran for more than one day. Exact dates only.';
+comment on column public.notice_archive_entries.date_is_approximate is
+  'True when only the year is known. occurred_on then holds 1 January of that year and must be shown as the year alone.';
+comment on column public.notice_archive_entries.date_note is
+  'Where the date comes from, when that needs saying.';
+
+-- ==========================================================================
+-- FILE 77/77  20261112000031_077_pccoe_noticeboard_dates.sql
+-- ==========================================================================
+
+-- Campus+ migration 077 — dates of the PCCOE noticeboard batch
+-- =============================================================================
+-- Dates read from the original noticeboard posters, for the records imported by
+-- migration 073. Each line of the manifest names one record by its source key
+-- (<section>/<slug> inside the batch) and gives what the poster gives:
+--
+--   day, last_day   an exact date, or the first and last day of an activity
+--   year            the year alone. Stored as 1 January of that year with
+--                   date_is_approximate = true: a placeholder, never the day
+--   period          a label that is not a calendar date (an academic year, a
+--                   span of years). Stored as text; no date is derived from it
+--   note            where the date comes from, when that needs saying
+--
+-- Rules the manifest follows:
+--   * a date is recorded only where the poster states it;
+--   * a year is never turned into a day, and no date is inferred from a title,
+--     from another record or from the current year;
+--   * an academic-year label is not a date;
+--   * a record that is not listed keeps no date. It stays in the archive in
+--     full, as undated material. 27 records are not listed.
+--
+-- One date on the boards is not recorded: a framed webinar record of the
+-- Entrepreneurship & Innovation Cell dated 13 October 2023 could not be matched
+-- to any one of that section's seven records.
+--
+-- Only records that carry no date yet are written, so a date that is already
+-- there is never changed and a second run writes nothing. Titles, descriptions,
+-- categories, organisations and notices are not touched. Where the batch is not
+-- registered, nothing is written.
+-- =============================================================================
+
+do $dates$
+declare
+  c_batch constant text := 'pccoe-noticeboard-2026-11';
+  c_dates constant jsonb := $json$[
+    {"key": "itsa/ai-workshop", "day": "2025-07-21"},
+    {"key": "itsa/induction-25", "day": "2025-07-30"},
+    {"key": "itsa/techpulse-2k25", "day": "2025-07-30"},
+    {"key": "itsa/techroom-2-0", "day": "2025-08-18"},
+    {"key": "itsa/teachers-day", "day": "2025-09-09"},
+    {"key": "itsa/swc-meditation", "day": "2025-09-12"},
+    {"key": "itsa/abhidnya-2-0-bruteforge", "day": "2025-09-16", "last_day": "2025-09-17"},
+    {"key": "itsa/akshardhara", "day": "2025-10-13"},
+    {"key": "itsa/praxis", "day": "2026-01-23", "last_day": "2026-01-24"},
+    {"key": "itsa/innoveda-24", "day": "2024-10-22", "last_day": "2024-10-23"},
+    {"key": "itsa/farewell-25", "day": "2025-04-17", "note": "The day and month are from the poster; the year comes from the edition title."},
+    {"key": "itsa/induction-24", "day": "2024-08-29"},
+
+    {"key": "mlsc/techroom", "day": "2025-08-25"},
+    {"key": "mlsc/aiquest", "day": "2025-09-17"},
+    {"key": "mlsc/project-development", "day": "2025-11-11"},
+    {"key": "mlsc/bluebit-4-0", "day": "2026-03-16"},
+
+    {"key": "higher-studies/gre-readiness", "day": "2025-08-05"},
+    {"key": "higher-studies/mock-gate", "day": "2025-09-17"},
+    {"key": "higher-studies/higher-education-lecture-on-ai", "day": "2025-09-20"},
+
+    {"key": "ieee/invent-pitch", "day": "2025-08-07"},
+    {"key": "ieee/iot-workshop", "day": "2025-01-22", "note": "The day and month are from the poster; the year comes from the edition title, IoT Workshop '25."},
+    {"key": "ieee/membership-drive", "day": "2025-09-24"},
+    {"key": "ieee/resume-building-interview-skills", "day": "2026-02-16"},
+    {"key": "ieee/ieee-awards-and-achievements", "period": "2022–2025", "note": "Award years: Nupur Kulkarni — 2022; Rakshit Jain — 2024; Disha Kamalskar — 2024; Vaishnavi Nimse — 2025; Darrel Chong Student Activity Award — 2025."},
+
+    {"key": "nss-isr/energy-conservation", "day": "2025-08-13"},
+    {"key": "nss-isr/donation-initiatives", "day": "2025-08-24", "note": "Date of the Community Donation & E-Waste Collection Drive."},
+    {"key": "nss-isr/e-waste-collection", "day": "2025-08-24", "note": "Date of the Community Donation & E-Waste Collection Drive."},
+    {"key": "nss-isr/road-safety-awareness", "day": "2025-08-24"},
+
+    {"key": "art-circle/firodiya-karandak-2024", "year": 2024},
+    {"key": "art-circle/vinodattam", "year": 2024},
+    {"key": "art-circle/akshardhara", "year": 2025},
+    {"key": "art-circle/social-activity-workshop", "year": 2025},
+    {"key": "art-circle/firodiya-karandak-2026", "year": 2026},
+    {"key": "art-circle/diya-painting", "period": "AY 2025–26"},
+    {"key": "art-circle/digital-poster-drawing-competition", "period": "AY 2025–26"},
+    {"key": "art-circle/kavi-sammelan", "year": 2026},
+    {"key": "art-circle/swartarang", "year": 2026}
+  ]$json$::jsonb;
+  v_registered integer;
+  v_written    integer;
+begin
+  -- The manifest is checked as a whole before anything is written.
+  if exists (
+    select 1
+    from jsonb_to_recordset(c_dates) as d(key text, day date, last_day date, year integer, period text, note text)
+    where d.key is null
+       or d.key !~ '^[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*$'
+       -- a day or a year, never both
+       or (d.day is not null and d.year is not null)
+       or (d.last_day is not null and (d.day is null or d.last_day <= d.day))
+       or (d.year is not null and d.year not between 1990 and 2100)
+       -- a line that says nothing
+       or (d.day is null and d.year is null and d.period is null and d.note is null)
+  ) then
+    raise exception 'The noticeboard date manifest is malformed.';
+  end if;
+
+  if (select count(*) <> count(distinct d.key) from jsonb_to_recordset(c_dates) as d(key text)) then
+    raise exception 'The noticeboard date manifest names a record twice.';
+  end if;
+
+  select count(*) into v_registered
+  from public.notice_archive_entries
+  where source_key like c_batch || '/%';
+
+  if v_registered = 0 then
+    raise notice 'Noticeboard batch % is not registered here: no dates recorded.', c_batch;
+    return;
+  end if;
+
+  if exists (
+    select 1
+    from jsonb_to_recordset(c_dates) as d(key text)
+    where not exists (
+      select 1 from public.notice_archive_entries e where e.source_key = c_batch || '/' || d.key
+    )
+  ) then
+    raise exception 'The noticeboard date manifest names a record that is not registered.';
+  end if;
+
+  update public.notice_archive_entries as e
+     set occurred_on = coalesce(d.day, make_date(d.year, 1, 1)),
+         occurred_until = d.last_day,
+         date_is_approximate = d.year is not null,
+         period = coalesce(e.period, d.period),
+         date_note = d.note
+    from jsonb_to_recordset(c_dates) as d(key text, day date, last_day date, year integer, period text, note text)
+   where e.source_key = c_batch || '/' || d.key
+     -- only a record that carries no date yet
+     and e.occurred_on is null
+     and e.occurred_until is null
+     and not e.date_is_approximate
+     and e.date_note is null
+     -- and only when there is something to write
+     and (d.day is not null or d.year is not null or d.note is not null or e.period is null);
+  get diagnostics v_written = row_count;
+
+  raise notice 'Noticeboard batch %: dates recorded for % of % registered records.',
+    c_batch, v_written, v_registered;
+end
+$dates$;
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)
