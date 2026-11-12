@@ -47,8 +47,13 @@ const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/
  * `/sitemap.xml` is generated from published public records only, so it must
  * be reachable by crawlers without a session. `robots.txt` is already excluded
  * by the matcher below.
+ *
+ * `/home-preview` is exact-only for the opposite reason: the signed-in Home
+ * demo must be reviewable without a session locally, so the proxy lets the
+ * exact path through and the page itself answers 404 outside development.
+ * It carries only sample data and grants no access to `/home` or any API.
  */
-const PUBLIC_EXACT_PATHS = ['/clubs', '/campus/events', '/campus/clubs', '/sitemap.xml'];
+const PUBLIC_EXACT_PATHS = ['/clubs', '/campus/events', '/campus/clubs', '/sitemap.xml', '/home-preview'];
 
 /** Protected single-segment children of `/clubs`. Static routes win in Next,
  * but the proxy must agree with that decision, not guess. */
