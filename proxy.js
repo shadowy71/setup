@@ -28,9 +28,12 @@ import { isKnownRoute } from '@/lib/auth/proxy-routes';
  * account, and it changes nothing about any other route's protection. `/guide`
  * joins `/legal` and `/rules` as a public *document*: the first-visit guide is
  * static text with no query, no session data and nothing private in it, and a
- * student deciding whether to make a profile is the reader it exists for. It
+ * student deciding whether to make a profile is the reader it exists for.
+ * `/map` joins the public set for the same reason as `/timetable`: the campus
+ * plan is surveyed, public information a prospective student can be linked
+ * straight to, and the page reads no session data of its own. It
  * grants no access to any other route — the pages themselves still re-check. */
-const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules', '/guide', '/timetable'];
+const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules', '/guide', '/timetable', '/map'];
 
 /**
  * Public discovery (migration 041 / docs/PUBLIC-DISCOVERY.md).
