@@ -9,6 +9,7 @@ import { PROXY_ROUTES } from '@/lib/auth/proxy-routes';
 import { getNoticeArchiveEntry, listNoticeArchive } from '@/lib/data/campus';
 import { ContentCard } from '@/components/content/ContentCard';
 import { NoticeArchiveList, NoticeArchiveRecord, NoticeboardViews } from '@/components/campus/NoticeArchive';
+import { DATE_UNAVAILABLE, formatDate, formatRecordDate } from '@/lib/utils';
 
 /**
  * The noticeboard archive.
@@ -22,12 +23,19 @@ import { NoticeArchiveList, NoticeArchiveRecord, NoticeboardViews } from '@/comp
  *   2. the boundary with current notices: the archive reads only
  *      `status = 'archived'` records that are registered, the noticeboard reads
  *      only `published`, and the two are never merged;
- *   3. the presentation: full text, labelled as archive, no image, no date.
+ *   3. the presentation: full text, labelled as archive, no image;
+ *   4. the dates: only what the original posters give. An exact date is kept
+ *      and shown in full; a year alone is stored as a flagged 1 January
+ *      placeholder and shown as the year; a record with neither says
+ *      "Date unavailable". No date decides what is current.
  */
 
 const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const SCHEMA_SQL = read('supabase/migrations/20261112000026_072_notice_archive.sql');
 const IMPORT_SQL = read('supabase/migrations/20261112000027_073_pccoe_noticeboard_archive.sql');
+const RETURN_SQL = read('supabase/migrations/20261112000029_075_return_pccoe_noticeboard_to_archive.sql');
+const DATE_SCHEMA_SQL = read('supabase/migrations/20261112000030_076_notice_archive_dates.sql');
+const DATES_SQL = read('supabase/migrations/20261112000031_077_pccoe_noticeboard_dates.sql');
 
 const md5 = (text) => createHash('md5').update(text, 'utf8').digest('hex');
 const SEP = '\x1f';
@@ -311,6 +319,230 @@ describe('noticeboard archive schema (migration 072)', () => {
   });
 });
 
+describe('return to the archive (migration 075)', () => {
+  const sql = statements(RETURN_SQL);
+
+  it('addresses the batch that migration 073 imports', () => {
+    const batch = (text) => /c_batch\s+constant text := '([a-z0-9-]+)'/.exec(text)?.[1];
+    expect(batch(RETURN_SQL)).toBe('pccoe-noticeboard-2026-11');
+    expect(batch(RETURN_SQL)).toBe(batch(IMPORT_SQL));
+  });
+
+  it('writes status and publication time on notices, and nothing else', () => {
+    expect([...sql.matchAll(/\bupdate\s+([a-z_.]+)/gi)].map((match) => match[1])).toEqual(['public.notices']);
+    expect(sql).not.toMatch(/\b(insert\s+into|delete\s+from|truncate|alter|drop|create|grant|revoke)\b/i);
+    expect(sql).not.toMatch(/disable\s+trigger|session_replication_role|row_security|storage\./i);
+    const assignments = /\bset\s+([\s\S]*?)\s+from\s+public\.notice_archive_entries/.exec(sql)[1];
+    expect(assignments.split(/,\s*\n/).map((line) => line.trim())).toEqual(["status = 'archived'", 'published_at = null']);
+    expect(sql).not.toMatch(/\b(title|body|category|importance|pinned|expires_at|created_by)\b/);
+  });
+
+  it('returns only records that were published and never saved by staff', () => {
+    expect(sql).toMatch(
+      /where e\.notice_id = n\.id\s+and e\.source_key like c_batch \|\| '\/%'\s+and n\.status = 'published'\s+and n\.published_at is not null\s+and n\.updated_by is null;/,
+    );
+  });
+});
+
+describe('archive record dates: schema (migration 076)', () => {
+  const sql = statements(DATE_SCHEMA_SQL);
+
+  it('adds four columns to the provenance table and touches nothing else', () => {
+    expect([...sql.matchAll(/alter table (\S+)/g)].map((match) => match[1])).toEqual([
+      'public.notice_archive_entries',
+      'public.notice_archive_entries',
+    ]);
+    expect([...sql.matchAll(/add column (\w+)\s+([a-z ]+?)[,;]/g)].map((match) => `${match[1]} ${match[2].trim()}`)).toEqual([
+      'occurred_on date',
+      'occurred_until date',
+      'date_is_approximate boolean not null default false',
+      'date_note text',
+    ]);
+    expect(sql).not.toMatch(/\b(policy|grant|revoke|trigger|insert\s+into|update|delete\s+from|truncate|drop)\b/i);
+    expect(sql).not.toMatch(/public\.notices\b/);
+  });
+
+  it('lets a placeholder be 1 January of the known year and nothing more precise', () => {
+    const check = /add constraint notice_archive_entries_date_placeholder_check\s+check \(([\s\S]*?)\n    \),/.exec(sql)[1];
+    expect(check.replace(/\s+/g, ' ').trim()).toBe(
+      'not date_is_approximate or ( occurred_on is not null and occurred_until is null ' +
+        'and extract(month from occurred_on) = 1 and extract(day from occurred_on) = 1 )',
+    );
+    expect(sql).toContain(
+      'check (occurred_until is null or (occurred_on is not null and occurred_until > occurred_on))',
+    );
+  });
+});
+
+// The dates exactly as they were supplied, in words. The manifest in migration
+// 077 holds the same dates as ISO days, so a slip in either shows up here.
+const SUPPLIED_DATES = {
+  'itsa/ai-workshop': '21 July 2025',
+  'itsa/induction-25': '30 July 2025',
+  'itsa/techpulse-2k25': '30 July 2025',
+  'itsa/techroom-2-0': '18 August 2025',
+  'itsa/teachers-day': '9 September 2025',
+  'itsa/swc-meditation': '12 September 2025',
+  'itsa/abhidnya-2-0-bruteforge': '16–17 September 2025',
+  'itsa/akshardhara': '13 October 2025',
+  'itsa/praxis': '23–24 January 2026',
+  'itsa/innoveda-24': '22–23 October 2024',
+  'itsa/farewell-25': '17 April 2025',
+  'itsa/induction-24': '29 August 2024',
+  'mlsc/techroom': '25 August 2025',
+  'mlsc/aiquest': '17 September 2025',
+  'mlsc/project-development': '11 November 2025',
+  'mlsc/bluebit-4-0': '16 March 2026',
+  'higher-studies/gre-readiness': '5 August 2025',
+  'higher-studies/mock-gate': '17 September 2025',
+  'higher-studies/higher-education-lecture-on-ai': '20 September 2025',
+  'ieee/invent-pitch': '7 August 2025',
+  'ieee/iot-workshop': '22 January 2025',
+  'ieee/membership-drive': '24 September 2025',
+  'ieee/resume-building-interview-skills': '16 February 2026',
+  'nss-isr/energy-conservation': '13 August 2025',
+  'nss-isr/donation-initiatives': '24 August 2025',
+  'nss-isr/e-waste-collection': '24 August 2025',
+  'nss-isr/road-safety-awareness': '24 August 2025',
+};
+// Only the year is known.
+const SUPPLIED_YEARS = {
+  'art-circle/firodiya-karandak-2024': 2024,
+  'art-circle/vinodattam': 2024,
+  'art-circle/akshardhara': 2025,
+  'art-circle/social-activity-workshop': 2025,
+  'art-circle/firodiya-karandak-2026': 2026,
+  'art-circle/kavi-sammelan': 2026,
+  'art-circle/swartarang': 2026,
+};
+// Not calendar dates: an academic year, and a span of award years.
+const SUPPLIED_LABELS = {
+  'ieee/ieee-awards-and-achievements': '2022–2025',
+  'art-circle/diya-painting': 'AY 2025–26',
+  'art-circle/digital-poster-drawing-competition': 'AY 2025–26',
+};
+// The year of these two comes from the edition title, not from the poster.
+const YEAR_FROM_EDITION_TITLE = ['itsa/farewell-25', 'ieee/iot-workshop'];
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function spokenDate(text) {
+  const [, first, last, month, year] = /^(\d{1,2})(?:–(\d{1,2}))? ([A-Z][a-z]+) (\d{4})$/.exec(text);
+  const iso = (day) => `${year}-${String(MONTHS.indexOf(month) + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return last ? { day: iso(first), last_day: iso(last) } : { day: iso(first) };
+}
+
+describe('archive record dates: the PCCOE batch (migration 077)', () => {
+  const sql = statements(DATES_SQL);
+  const dates = JSON.parse(/\$json\$(\[[\s\S]*?\])\$json\$/.exec(DATES_SQL)[1]);
+  const byKey = new Map(dates.map((line) => [line.key, line]));
+  const recordKeys = entries.map((entry) => `${entry.section}/${entry.slug}`);
+  const withoutNote = ({ key: _key, note: _note, ...rest }) => rest;
+
+  it('names each record once, and only records that migration 073 imports', () => {
+    expect(byKey.size).toBe(dates.length);
+    for (const key of byKey.keys()) expect(recordKeys).toContain(key);
+    expect(/c_batch constant text := '([a-z0-9-]+)'/.exec(DATES_SQL)[1]).toBe('pccoe-noticeboard-2026-11');
+    expect(sql).toContain("where e.source_key = c_batch || '/' || d.key");
+  });
+
+  it('holds every exact date as it was supplied, day for day', () => {
+    const exact = dates.filter((line) => line.day);
+    expect(exact.map((line) => line.key).sort()).toEqual(Object.keys(SUPPLIED_DATES).sort());
+    for (const [key, text] of Object.entries(SUPPLIED_DATES)) expect(withoutNote(byKey.get(key)), key).toEqual(spokenDate(text));
+    expect(exact.filter((line) => line.last_day).map((line) => line.key)).toEqual([
+      'itsa/abhidnya-2-0-bruteforge', 'itsa/praxis', 'itsa/innoveda-24',
+    ]);
+  });
+
+  it('never gives a day or a month to a record whose year is all that is known', () => {
+    const years = dates.filter((line) => 'year' in line);
+    expect(Object.fromEntries(years.map((line) => [line.key, line.year]))).toEqual(SUPPLIED_YEARS);
+    for (const line of years) expect(Object.keys(line).sort()).toEqual(['key', 'year']);
+    // The placeholder is built in one place: 1 January of the year, flagged.
+    expect(sql).toContain('set occurred_on = coalesce(d.day, make_date(d.year, 1, 1)),');
+    expect(sql).toContain('date_is_approximate = d.year is not null,');
+    expect(DATES_SQL).not.toMatch(/"\d{4}-01-01"/);
+  });
+
+  it('keeps an academic year and a span of years as labels, never as dates', () => {
+    const labels = dates.filter((line) => !line.day && !('year' in line));
+    expect(Object.fromEntries(labels.map((line) => [line.key, line.period]))).toEqual(SUPPLIED_LABELS);
+    for (const line of dates) if (line.day || 'year' in line) expect(line.period, line.key).toBeUndefined();
+    // The four placement records already carry their academic year and get no date.
+    for (const key of recordKeys.filter((key) => key.startsWith('placement/'))) expect(byKey.has(key)).toBe(false);
+  });
+
+  it('leaves every other record undated instead of guessing', () => {
+    const undated = recordKeys.filter((key) => !byKey.has(key));
+    expect(undated).toHaveLength(27);
+    for (const section of ['entrepreneurship-innovation', 'sports', 'alphabyte-hackathon', 'placement', 'departmental']) {
+      expect(dates.filter((line) => line.key.startsWith(`${section}/`)), section).toEqual([]);
+    }
+    expect(undated).toEqual(expect.arrayContaining([
+      'mlsc/datathon', 'mlsc/miniscape', 'mlsc/problemathon', 'mlsc/ai-canvas', 'mlsc/recurring-mlsc-sessions',
+      'higher-studies/alumni-information', 'nss-isr/campus-and-environmental-drives', 'nss-isr/waste-segregation',
+      'nss-isr/anti-drug-awareness', 'art-circle/dhc-4',
+    ]));
+    // Nothing is derived from today's date or from a title: outside the manifest,
+    // the statement reads neither.
+    const logic = sql.replace(/\$json\$[\s\S]*?\$json\$/, '');
+    expect(logic).not.toBe(sql);
+    expect(logic).not.toMatch(/now\(\)|current_date|current_timestamp|clock_timestamp|\btitle\b/i);
+  });
+
+  it('records where a year comes from when the poster does not give it', () => {
+    const noted = dates.filter((line) => line.note).map((line) => line.key);
+    expect(noted.sort()).toEqual([
+      ...YEAR_FROM_EDITION_TITLE, 'ieee/ieee-awards-and-achievements', 'nss-isr/donation-initiatives', 'nss-isr/e-waste-collection',
+    ].sort());
+    for (const key of YEAR_FROM_EDITION_TITLE) expect(byKey.get(key).note).toContain('the year comes from the edition title');
+    expect(byKey.get('ieee/ieee-awards-and-achievements').note).toBe(
+      'Award years: Nupur Kulkarni — 2022; Rakshit Jain — 2024; Disha Kamalskar — 2024; Vaishnavi Nimse — 2025; ' +
+        'Darrel Chong Student Activity Award — 2025.',
+    );
+  });
+
+  it('writes dates on provenance only, and never over a date that is already there', () => {
+    expect([...sql.matchAll(/\bupdate\s+([a-z_.]+)/gi)].map((match) => match[1])).toEqual(['public.notice_archive_entries']);
+    expect(sql).not.toMatch(/\b(insert\s+into|delete\s+from|truncate|alter|drop|create|grant|revoke)\b/i);
+    expect(sql).not.toMatch(/public\.(notices|events|academic_calendar|notifications)\b/);
+    expect(sql).toMatch(
+      /and e\.occurred_on is null\s+and e\.occurred_until is null\s+and not e\.date_is_approximate\s+and e\.date_note is null/,
+    );
+    expect(sql).toContain('period = coalesce(e.period, d.period),');
+  });
+});
+
+describe('formatRecordDate', () => {
+  it('shows an exact date in full, and both days of a longer activity', () => {
+    expect(formatRecordDate({ on: '2025-07-21' })).toBe(formatDate('2025-07-21'));
+    expect(formatRecordDate({ on: '2025-07-21' })).toMatch(/^21 \S+ 2025$/);
+    const range = formatRecordDate({ on: '2025-09-16', until: '2025-09-17' });
+    expect(range).toBe(`${formatDate('2025-09-16')} – ${formatDate('2025-09-17')}`);
+    expect(range).toMatch(/^16 \S+ 2025 – 17 \S+ 2025$/);
+  });
+
+  it('shows a placeholder date as the year alone, never as 1 January', () => {
+    expect(formatRecordDate({ on: '2025-01-01', approximate: true })).toBe('2025');
+    expect(formatRecordDate({ on: '2026-01-01', approximate: true, period: '2026' })).toBe('2026');
+    expect(formatRecordDate({ on: '2024-01-01', until: '2024-01-02', approximate: true })).toBe('2024');
+    // A real 1 January is an exact date like any other.
+    expect(formatRecordDate({ on: '2025-01-01' })).toBe(formatDate('2025-01-01'));
+    expect(formatRecordDate({ on: '2025-01-01' })).toMatch(/^1 \S+ 2025$/);
+  });
+
+  it('falls back to the stated period, then to "Date unavailable"', () => {
+    expect(DATE_UNAVAILABLE).toBe('Date unavailable');
+    expect(formatRecordDate({ period: 'AY 2025–26' })).toBe('AY 2025–26');
+    expect(formatRecordDate({ on: null, until: null, approximate: false, period: null })).toBe('Date unavailable');
+    expect(formatRecordDate({})).toBe('Date unavailable');
+    expect(formatRecordDate()).toBe('Date unavailable');
+    expect(formatRecordDate({ on: 'not a date' })).toBe('Date unavailable');
+    // A flag without a date says nothing about the year.
+    expect(formatRecordDate({ approximate: true })).toBe('Date unavailable');
+  });
+});
+
 /* -------------------------------------------------------------------------- */
 /* Read model                                                                 */
 /* -------------------------------------------------------------------------- */
@@ -368,6 +600,10 @@ const entry = (overrides) => ({
   source_note: null,
   sort_order: 1,
   created_at: '2026-11-11T18:00:00Z',
+  occurred_on: null,
+  occurred_until: null,
+  date_is_approximate: false,
+  date_note: null,
   ...overrides,
 });
 
@@ -378,8 +614,9 @@ const TABLES = {
       source_category: 'Placement / Academic', period: 'AY 2022–23',
       source_note: 'Exact numerical statistics were not retained. This entry is not a numerical placement report.',
       sort_order: 57 }),
-    entry({ source_key: 'batch/itsa/induction-25', notice_id: 'n2', source_category: 'Club / Cultural', period: '2025', sort_order: 2 }),
-    entry({}),
+    entry({ source_key: 'batch/itsa/induction-25', notice_id: 'n2', source_category: 'Club / Cultural', period: '2025', sort_order: 2,
+      occurred_on: '2025-01-01', date_is_approximate: true }),
+    entry({ occurred_on: '2025-09-16', occurred_until: '2025-09-17', date_note: 'The year comes from the edition title.' }),
     // Registered, but staff re-published it: it is a current notice now.
     entry({ source_key: 'batch/itsa/republished', notice_id: 'n4', sort_order: 3 }),
     // Registered, but staff deleted the notice: the key stays, the record is gone.
@@ -412,6 +649,19 @@ describe('listNoticeArchive', () => {
     expect(result.sections[0].records.map((record) => record.title)).toEqual(['AI Workshop', "Induction '25"]);
     expect(result.sections[0].records[0].body).toBe(LONG_BODY);
     expect(result.sections[0].records[1].period).toBe('2025');
+    // Dates travel as stored; the flag says the 1 January is only a placeholder.
+    expect(result.sections[0].records[0]).toMatchObject({
+      occurredOn: '2025-09-16', occurredUntil: '2025-09-17', dateIsApproximate: false,
+      dateNote: 'The year comes from the edition title.',
+    });
+    expect(result.sections[0].records[1]).toMatchObject({ occurredOn: '2025-01-01', occurredUntil: null, dateIsApproximate: true, dateNote: null });
+    expect(result.sections[1].records[0]).toMatchObject({ occurredOn: null, occurredUntil: null, dateIsApproximate: false, dateNote: null });
+    // The archive keeps its recorded order: no read is ordered or filtered by a date.
+    for (const call of db.calls) {
+      expect(call.order.map(([column]) => column).filter((column) => /occurred|date/.test(column))).toEqual([]);
+      expect(call.eq.map(([column]) => column).filter((column) => /occurred|date/.test(column))).toEqual([]);
+    }
+    expect(db.calls[0].columns).toContain('occurred_on, occurred_until, date_is_approximate, date_note');
     expect(result.sections[1]).toMatchObject({ name: 'Placement Statistics Archive', organization: 'PCCOE', club: null });
     expect(result.sections[1].records[0]).toMatchObject({
       sourceCategory: 'Placement / Academic',
@@ -497,8 +747,8 @@ describe('archive presentation', () => {
       key: 'itsa', label: 'ITSA — Information Technology Student Association', name: 'ITSA', organization: 'ITSA',
       club: { id: 'c1', name: 'ITSA', slug: 'itsa' },
       records: [
-        { id: 'n1', title: 'AI Workshop', body: LONG_BODY, organization: 'ITSA', sourceCategory: 'Technical / Workshop', period: null, note: null, sourceKey: 'batch/itsa/ai-workshop' },
-        { id: 'n2', title: "Induction '25", body: 'The ITSA induction programme for the 2025 student intake.', organization: 'ITSA', sourceCategory: 'Club / Cultural', period: '2025', note: null, sourceKey: 'batch/itsa/induction-25' },
+        { id: 'n1', title: 'AI Workshop', body: LONG_BODY, organization: 'ITSA', sourceCategory: 'Technical / Workshop', period: null, note: null, sourceKey: 'batch/itsa/ai-workshop', occurredOn: '2025-07-21' },
+        { id: 'n2', title: "Induction '25", body: 'The ITSA induction programme for the 2025 student intake.', organization: 'ITSA', sourceCategory: 'Club / Cultural', period: '2025', note: null, sourceKey: 'batch/itsa/induction-25', occurredOn: '2025-09-16', occurredUntil: '2025-09-17' },
       ],
     },
     {
@@ -506,6 +756,16 @@ describe('archive presentation', () => {
       records: [
         { id: 'n3', title: 'Placement Overview — AY 2022–23', body: 'Institutional placement information displayed for the academic year 2022–23.', organization: 'PCCOE', sourceCategory: 'Placement / Academic', period: 'AY 2022–23',
           note: 'Exact numerical statistics were not retained. This entry is not a numerical placement report.', sourceKey: 'batch/placement/ay-2022-23' },
+      ],
+    },
+    {
+      key: 'art-circle', label: 'Art Circle', name: 'Art Circle', organization: 'Art Circle', club: null,
+      records: [
+        // Only the year is known: stored as 1 January 2026, flagged.
+        { id: 'n5', title: 'Kavi Sammelan', body: 'A poetry gathering organised by the Art Circle.', organization: 'Art Circle', sourceCategory: 'Cultural',
+          period: null, note: null, sourceKey: 'batch/art-circle/kavi-sammelan', occurredOn: '2026-01-01', dateIsApproximate: true },
+        { id: 'n6', title: 'DHC-4', body: 'A named Art Circle programme identified by the title DHC-4.', organization: 'Art Circle', sourceCategory: 'Cultural',
+          period: null, note: null, sourceKey: 'batch/art-circle/dhc-4' },
       ],
     },
   ];
@@ -536,11 +796,26 @@ describe('archive presentation', () => {
     expect(markup).toContain('1 record · PCCOE');
     expect(markup).toContain('href="/c/itsa"');
     expect(markup.match(/href="\/c\//g)).toHaveLength(1);
-    expect(markup).toContain('ITSA · 2025');
+    expect(markup).toContain(`ITSA · ${formatDate('2025-07-21')}`);
+    expect(markup).toContain(`ITSA · ${formatDate('2025-09-16')} – ${formatDate('2025-09-17')}`);
     expect(markup).toContain('PCCOE · AY 2022–23');
     expect(markup).toContain('Source note: Exact numerical statistics were not retained. This entry is not a numerical placement report.');
     expect(markup).toContain('Technical / Workshop');
     for (const id of ['n1', 'n2', 'n3']) expect(markup).toContain(`href="/campus/noticeboard/${id}"`);
+  });
+
+  it('shows a year alone for a placeholder date and says when a date is unavailable', () => {
+    const markup = html(React.createElement(NoticeArchiveList, { sections }));
+    expect(markup).toContain('Art Circle · 2026');
+    expect(markup).toContain('Art Circle · Date unavailable');
+    // The stored placeholder day never reaches the page, in any spelling.
+    expect(markup).not.toContain(formatDate('2026-01-01'));
+    expect(markup).not.toMatch(/\b0?1 Jan(uary)? 2026|2026-01-01|January/);
+    expect(markup).toContain('where only the year could be read, only the year is shown');
+    // Records stay in the order they were recorded, not in date order.
+    const order = ['AI Workshop', 'Induction &#x27;25', 'Placement Overview', 'Kavi Sammelan', 'DHC-4'].map((title) => markup.indexOf(title));
+    expect(order.every((position) => position > 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
   it('narrows to one section and ignores a section that does not exist', () => {
@@ -592,6 +867,7 @@ describe('archive presentation', () => {
     expect(markup).toContain('This entry is not a numerical placement report.');
     expect(markup).toContain('Placement Statistics Archive');
     expect(markup).toContain('AY 2022–23');
+    expect(markup).toMatch(/>When<\/dt><dd>AY 2022–23<\/dd>/);
     // The exact title is repeated in the details, where case is preserved.
     expect(markup).toContain('<dd>Placement Overview — AY 2022–23</dd>');
     expect(markup).not.toContain('href="/c/');
@@ -606,7 +882,19 @@ describe('archive presentation', () => {
     expect(linked).toContain('href="/c/itsa"');
     expect(linked).toContain(LONG_BODY);
     expect(linked).not.toContain('Source note');
-    expect(linked).not.toContain('>Period<');
+    expect(linked).toMatch(/>When<\/dt><dd>Date unavailable<\/dd>/);
+
+    const record = (dates) => html(
+      React.createElement(NoticeArchiveRecord, { notice: { id: 'n1', title: 'AI Workshop', body: LONG_BODY }, entry: entry({ club: null, ...dates }) }),
+    );
+    expect(record({ occurred_on: '2025-07-21' })).toContain(`>When</dt><dd>${formatDate('2025-07-21')}</dd>`);
+    const yearOnly = record({ occurred_on: '2024-01-01', date_is_approximate: true, period: '2024' });
+    expect(yearOnly).toMatch(/>When<\/dt><dd>2024<\/dd>/);
+    expect(yearOnly).not.toContain(formatDate('2024-01-01'));
+    expect(yearOnly).not.toMatch(/2024-01-01|January/);
+    const noted = record({ occurred_on: '2025-04-17', date_note: 'The day and month are from the poster; the year comes from the edition title.' });
+    expect(noted).toContain(formatDate('2025-04-17'));
+    expect(noted).toContain('the year comes from the edition title.');
   });
 });
 

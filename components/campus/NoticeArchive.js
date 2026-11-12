@@ -3,7 +3,7 @@ import { Badge, Card, EmptyState, LinkButton, Notice, SectionHeader } from '@/co
 import { ContentCard } from '@/components/content/ContentCard';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { ROUTES } from '@/lib/constants';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatRecordDate } from '@/lib/utils';
 
 /**
  * The noticeboard archive (historical records) is a separate view from the
@@ -15,12 +15,29 @@ import { formatDate } from '@/lib/utils';
  *   NoticeArchiveRecord  one record, with its attribution
  *
  * Text only. A record shows what it was given — a title, a written summary, an
- * organisation and a category — and never a date, venue or image it was not.
+ * organisation and a category — and never a venue or image it was not.
+ *
+ * Its date is the one on the original poster, shown by `formatRecordDate`: the
+ * full date when the poster gives one, the year alone when only the year is
+ * known (the stored 1 January is a placeholder and is never shown), and
+ * "Date unavailable" otherwise. Records keep their recorded order; nothing
+ * here sorts by date or reads a date to decide what is recent.
  */
 
+const DATE_RULE =
+  'A date is the one printed on the poster; where only the year could be read, only the year is shown.';
 const SUMMARY_NOTE =
-  'These are written summaries of what the noticeboards displayed, not copies of the original posters. ' +
-  'A date, venue or name appears only where a record itself gives one.';
+  `These are written summaries of what the noticeboards displayed, not copies of the original posters. ${DATE_RULE}`;
+
+/** The date label of a list record or of a provenance row. */
+function recordDate(source) {
+  return formatRecordDate({
+    on: source.occurredOn ?? source.occurred_on,
+    until: source.occurredUntil ?? source.occurred_until,
+    approximate: (source.dateIsApproximate ?? source.date_is_approximate) === true,
+    period: source.period,
+  });
+}
 
 /** Current notices and the archive: the only way between the two views. */
 export function NoticeboardViews({ active = 'current' }) {
@@ -126,7 +143,7 @@ export function NoticeArchiveList({ sections = [], activeSection = null, unavail
               fullDescription
               icon="archive"
               badges={[{ label: 'Archive' }, { label: record.sourceCategory }]}
-              meta={[record.organization, record.period]}
+              meta={[record.organization, recordDate(record)]}
               footer={
                 record.note ? (
                   <span className="mt-1.5 block text-2xs text-muted">Source note: {record.note}</span>
@@ -154,8 +171,7 @@ export function NoticeArchiveRecord({ notice, entry }) {
 
       <Notice tone="info" icon="history">
         <strong className="text-ink">Archive record, not a current announcement.</strong> This is a written
-        summary of a noticeboard display, not a copy of the original poster. A date, venue or name appears only where
-        the record itself gives one.
+        summary of a noticeboard display, not a copy of the original poster. {DATE_RULE}
       </Notice>
 
       <Card className="flex flex-col gap-4 p-4">
@@ -186,12 +202,11 @@ export function NoticeArchiveRecord({ notice, entry }) {
           <dd>{entry.section_label}</dd>
           <dt className="text-muted">Category</dt>
           <dd>{entry.source_category}</dd>
-          {entry.period ? (
-            <>
-              <dt className="text-muted">Period</dt>
-              <dd>{entry.period}</dd>
-            </>
-          ) : null}
+          <dt className="text-muted">When</dt>
+          <dd>
+            {recordDate(entry)}
+            {entry.date_note ? <span className="block text-2xs text-muted">{entry.date_note}</span> : null}
+          </dd>
           <dt className="text-muted">Added to the archive</dt>
           <dd>{formatDate(entry.created_at)}</dd>
         </dl>
