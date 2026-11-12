@@ -5,12 +5,13 @@ const nextConfig = {
   // The framework's floating development badge is not part of the product
   // surface; it overlaps the bottom-left of the rail in local preview.
   devIndicators: false,
-  // Campus+ is text-first: user uploads do not exist and the only external media
-  // is a GIF from GIPHY, whose URL is validated against this same host list
-  // before it is ever stored (lib/giphy). `unoptimized` keeps GIF animation and
-  // avoids proxying third-party media through the deployment.
+  // GIF media is loaded directly, not through the Next image proxy. GIPHY
+  // hosts remain available for historical attachments.
   images: {
     remotePatterns: [
+      { protocol: 'https', hostname: 'static.klipy.com' },
+      { protocol: 'https', hostname: 'static1.klipy.com' },
+      { protocol: 'https', hostname: 'static2.klipy.com' },
       { protocol: 'https', hostname: 'media.giphy.com' },
       { protocol: 'https', hostname: 'media0.giphy.com' },
       { protocol: 'https', hostname: 'media1.giphy.com' },

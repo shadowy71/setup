@@ -114,7 +114,6 @@ describe('controlled media and storage boundaries', () => {
     const allowed = [
       path.join('lib', 'validation', 'schemas.js'),
       path.join('lib', 'giphy', 'index.js'),
-      path.join('lib', 'config.server.js'),
     ];
     const hosts = grep(allSource, /giphy\.com/).sort();
     expect(hosts).toEqual([...allowed].sort());
@@ -166,6 +165,7 @@ describe('secrets never reach the browser bundle (spec §74, §93)', () => {
     // NEXT_PUBLIC_ variable would be shipped to the browser.
     expect([...publicVars].sort()).toEqual([
       'NEXT_PUBLIC_COLLEGE_NAME',
+      'NEXT_PUBLIC_KLIPY_APP_KEY',
       'NEXT_PUBLIC_LEGAL_CONTACT_EMAIL',
       'NEXT_PUBLIC_LOCAL_PREVIEW',
       'NEXT_PUBLIC_PLATFORM_NAME',

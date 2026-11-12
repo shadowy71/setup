@@ -5,17 +5,12 @@ import Image from 'next/image';
 import { Button, Input, Notice, Skeleton } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
+import { klipyRequest, parseKlipyPage } from '@/lib/klipy';
 
-/**
- * The one GIF picker.
- *
- * Talks only to `/api/giphy/search` — the GIPHY key stays on the server — and
- * stores just the validated `{ provider, id, url, title }` ref that the database
- * accepts. Attribution is rendered with the results, as the provider requires.
- *
- * If GIPHY is not configured the component shows a configuration message and
- * everything else keeps working: GIFs are a garnish, never a dependency.
- */
+const KLIPY_KEY = process.env.NEXT_PUBLIC_KLIPY_APP_KEY || '';
+
+
+/** GIF discovery is performed directly from the end-user browser. */
 export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF' }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -23,65 +18,63 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
   const [loading, setLoading] = useState(false);
   const [loadedOnce, setLoadedOnce] = useState(false);
   const [error, setError] = useState(null);
-  const [attribution, setAttribution] = useState(null);
-  const [unconfigured, setUnconfigured] = useState(false);
-  const debounce = useRef(null);
-  const containerRef = useRef(null);
-  // Responses can arrive out of order while someone types. Only the newest
-  // request may touch state; older results are dropped instead of flickering
-  // over the correct ones.
+  const [categories, setCategories] = useState([]);
+  const [hasNext, setHasNext] = useState(false);
+  const [page, setPage] = useState(1);
+  const unconfigured = !KLIPY_KEY || /^YOUR_/i.test(KLIPY_KEY);
+  const controller = useRef(null);
   const requestSeq = useRef(0);
+  const containerRef = useRef(null);
 
-  const search = useCallback(async (term) => {
-    requestSeq.current += 1;
-    const seq = requestSeq.current;
+  const search = useCallback(async (term, nextPage = 1) => {
+    if (unconfigured) { setLoadedOnce(true); return; }
+    controller.current?.abort();
+    const active = new AbortController();
+    controller.current = active;
+    const seq = ++requestSeq.current;
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ limit: '24' });
-      if (term) params.set('q', term);
-      const response = await fetch(`/api/giphy/search?${params.toString()}`);
-      const payload = await response.json();
+      const params = { page: String(nextPage), per_page: '24', locale: 'in' };
+      if (term) params.q = term;
+      const payload = await klipyRequest({ key: KLIPY_KEY, endpoint: term ? 'search' : 'trending', params, signal: active.signal });
+      const result = parseKlipyPage(payload);
       if (seq !== requestSeq.current) return;
-      if (!response.ok) {
-        if (payload?.code === 'configuration') {
-          setUnconfigured(true);
-          setItems([]);
-          return;
-        }
-        throw new Error(payload?.error || 'GIF search is unavailable right now.');
-      }
-      setItems(payload.results || []);
-      setAttribution(payload.attribution || null);
+      setItems((current) => nextPage === 1 ? result.items : [...current, ...result.items]);
+      setHasNext(result.hasNext);
+      setPage(nextPage);
     } catch (thrown) {
-      if (seq !== requestSeq.current) return;
+      if (seq !== requestSeq.current || thrown.name === 'AbortError') return;
+      if (nextPage === 1) { setItems([]); setHasNext(false); }
       setError(thrown.message || 'GIF search failed.');
     } finally {
-      if (seq === requestSeq.current) {
-        setLoading(false);
-        setLoadedOnce(true);
-      }
+      if (seq === requestSeq.current) { setLoading(false); setLoadedOnce(true); }
     }
-  }, []);
+  }, [unconfigured]);
 
   useEffect(() => {
     if (!open) return undefined;
+    // Invalidate immediately, including during the debounce interval.
+    controller.current?.abort();
+    requestSeq.current += 1;
     const term = query.trim();
-    clearTimeout(debounce.current);
-    debounce.current = setTimeout(() => search(term.length >= 2 ? term : ''), 320);
-    return () => clearTimeout(debounce.current);
+    const timer = setTimeout(() => search(term.length >= 2 ? term : ''), 320);
+    return () => { clearTimeout(timer); controller.current?.abort(); requestSeq.current += 1; };
   }, [open, query, search]);
 
   useEffect(() => {
-    if (!open) {
-      // Closing abandons any in-flight search: its result must not populate
-      // the picker when it is opened again.
-      requestSeq.current += 1;
-      return undefined;
-    }
-    const onKey = (event) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
+    if (!open || unconfigured) return undefined;
+    const active = new AbortController();
+    klipyRequest({ key: KLIPY_KEY, endpoint: 'categories', params: { locale: 'in' }, signal: active.signal })
+      .then((payload) => {
+        if (Array.isArray(payload.data?.categories)) setCategories(payload.data.categories);
+      }).catch(() => {});
+    return () => active.abort();
+  }, [open, unconfigured]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event) => { if (event.key === 'Escape') setOpen(false); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
@@ -122,16 +115,25 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
           <Input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search GIFs"
-            aria-label="Search GIFs"
+            onChange={(event) => { setHasNext(false); setQuery(event.target.value); }}
+            placeholder="Search KLIPY"
+            aria-label="Search KLIPY"
             autoFocus
           />
 
+          {categories.length && !query.trim() ? (
+            <div className="mt-2 flex gap-2 overflow-x-auto" aria-label="GIF categories">
+              {categories.map((category, index) => (
+                <Button key={index} type="button" size="sm" variant="subtle" onClick={() => { setHasNext(false); setQuery(String(category.query || category.category || '')); }}>
+                  {category.category}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+
           {unconfigured ? (
             <Notice tone="warning" className="mt-3" icon="settings">
-              GIF search is not configured on this deployment. An administrator can enable it by adding a GIPHY API key
-              to the server environment.
+              GIF search is not configured on this deployment. An administrator can enable it by configuring the public KLIPY app key.
             </Notice>
           ) : null}
 
@@ -167,8 +169,8 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
 
           {items.length ? (
             <ul className="mt-3 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
-              {items.map((gif) => (
-                <li key={gif.id}>
+              {items.map((gif, index) => (
+                <li key={`${gif.id}-${index}`}>
                   <button
                     type="button"
                     onClick={() => {
@@ -176,7 +178,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
                       // renders it reserves the real aspect ratio up front, so a
                       // GIF can never resize a post or message when it loads.
                       const picked = {
-                        provider: 'giphy',
+                        provider: 'klipy',
                         id: gif.id,
                         url: gif.url,
                         preview: gif.preview || gif.url,
@@ -192,7 +194,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
                     className="motion-control w-full overflow-hidden rounded-[var(--radius-sm)] border border-line text-left hover:border-accent/50 active:scale-[0.98]"
                     aria-label={gif.title ? `Attach GIF: ${gif.title}` : 'Attach GIF'}
                   >
-                    {/* Validated GIPHY preview (lib/giphy); the full GIF is only
+                    {/* KLIPY preview, loaded directly from its CDN; the full GIF is only
                         fetched once it is actually attached. */}
                     <Image
                       src={gif.preview || gif.url}
@@ -208,14 +210,12 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
             </ul>
           ) : null}
 
-          {attribution ? (
-            <p className="mt-3 text-2xs text-muted">
-              Powered by{' '}
-              <a href={attribution.providerUrl} target="_blank" rel="noreferrer noopener" className="underline">
-                {attribution.provider}
-              </a>
-            </p>
+          {hasNext && !busy && !error ? (
+            <Button type="button" variant="subtle" size="sm" onClick={() => search(query.trim().length >= 2 ? query.trim() : '', page + 1)}>
+              Load more GIFs
+            </Button>
           ) : null}
+          <p className="mt-3 text-2xs text-muted">Powered by <a href="https://klipy.com" target="_blank" rel="noreferrer noopener" className="underline">KLIPY</a></p>
         </div>
       ) : null}
     </div>
@@ -223,7 +223,7 @@ export function GifPicker({ onPick, onRemove = null, value = null, label = 'GIF'
 }
 
 /**
- * Renders a stored GIF ref. Only validated GIPHY URLs reach the database.
+ * Renders stored KLIPY and historical GIPHY references.
  *
  * A GIF is an external image whose real size is only known once it has
  * downloaded, so it must never be allowed to dictate its own layout:
