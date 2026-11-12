@@ -384,8 +384,8 @@ export function CampusMap({
             ))}
           </g>
 
-          {/* North indicator, left side of the plan */}
-          <g className="cm-north" transform="translate(185 1010) scale(1.3)">
+          {/* North indicator, west of the hostel column as on the board plan */}
+          <g className="cm-north" transform="translate(952 602) scale(1.3)">
             <text className="cm-north-letter" y="-46">
               N
             </text>
