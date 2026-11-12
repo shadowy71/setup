@@ -102,7 +102,7 @@ describe('contextual navigation help', () => {
     expect(read('components/layout/Sidebar.js')).toContain('<NavigationHelp');
     expect(read('components/layout/MobileMenu.js')).toContain('<NavigationHelp');
     expect(read('components/layout/BottomNav.js')).not.toContain('NavigationHelp');
-    expect(PRIMARY_NAV).toHaveLength(8);
+    expect(PRIMARY_NAV).toHaveLength(9);
     expect(MOBILE_NAV).toHaveLength(5);
     const css = read('app/styles/navigation.css');
     expect(css).toContain('.sheet-destination .nav-help__trigger');
@@ -124,6 +124,7 @@ describe('the primary rail order', () => {
       'Communities',
       'Campus',
       'Timetable',
+      'Map',
       'Profile',
     ]);
     expect(items.find((item) => item.label === 'Timetable').href).toBe('/timetable/o');

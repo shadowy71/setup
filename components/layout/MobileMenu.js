@@ -89,6 +89,7 @@ export function MobileMenuBody({
         <SheetLink href={ROUTES.communities} icon="users" label="Communities" onNavigate={close} />
         <SheetLink href={ROUTES.campus} icon="building" label="Campus" onNavigate={close} />
         <SheetLink href={getTimetableHref(user?.division)} icon="calendar" label="Timetable" helpTopic={ROUTES.timetable} onNavigate={close} />
+        <SheetLink href={ROUTES.map} icon="mapPin" label="Map" onNavigate={close} />
         <SheetLink href={ROUTES.study} icon="book" label="Study finder" onNavigate={close} />
         <SheetLink href={ROUTES.notifications} icon="bell" label="Notifications" unread={unread} onNavigate={close} />
         <SheetLink href={ROUTES.settings} icon="settings" label="Settings" onNavigate={close} />

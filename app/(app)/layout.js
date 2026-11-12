@@ -86,6 +86,7 @@ export default async function AppLayout({ children }) {
     { section: 'Navigation', label: 'Gigs', href: ROUTES.gigs, icon: 'briefcase' },
     { section: 'Navigation', label: 'Clubs', href: ROUTES.clubs, icon: 'star' },
     { section: 'Navigation', label: 'Noticeboard', href: '/campus/noticeboard', icon: 'megaphone' },
+    { section: 'Navigation', label: 'Campus map', href: ROUTES.map, icon: 'mapPin', keywords: 'map campus buildings location grounds gates' },
     // Timetable is public; the saved profile division only personalises
     // where this shortcut lands (division page vs. selector).
     { section: 'Navigation', label: 'Timetable', href: getTimetableHref(user.profile?.division), icon: 'calendar', keywords: 'schedule classes lectures division' },

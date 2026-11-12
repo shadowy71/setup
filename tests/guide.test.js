@@ -361,7 +361,7 @@ describe('the guide is public, and public means empty', () => {
     const list = [...publicPaths.matchAll(/'([^']+)'/g)].map((match) => match[1]);
     // An exact pin: this array is the whole of what unauthenticated visitors may
     // reach, so an addition here has to be a deliberate edit, never a side effect.
-    expect(list).toEqual(['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules', '/guide', '/timetable']);
+    expect(list).toEqual(['/login', '/login/verify', '/auth', '/setup', '/legal', '/rules', '/guide', '/timetable', '/map']);
     // `/guide` is matched as a path and a prefix, like its two neighbours: no
     // `/guide/admin`-style surprise exists, and the page itself renders no data.
     expect(proxy).toMatch(/pathname === prefix \|\| pathname\.startsWith\(`\$\{prefix\}\/`\)/);
@@ -573,7 +573,7 @@ describe('the guide is reachable from where students already are', () => {
   });
 
   it('does not enlarge either navigation set', () => {
-    expect(PRIMARY_NAV).toHaveLength(8);
+    expect(PRIMARY_NAV).toHaveLength(9);
     expect(MOBILE_NAV).toHaveLength(5);
   });
 
