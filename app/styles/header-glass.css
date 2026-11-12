@@ -1,63 +1,104 @@
-/* Header-only material refinements. The solid tinted backing keeps chrome
-   legible over scrolling content; the translucent layers provide the glass. */
+/*
+ * Header-only material refinements.
+ *
+ * The local palette stays inside `.shell-header`: a softened Campus+ blue
+ * gradient, a quiet inset search well and calm controls that sit in the same
+ * material rather than reading as a stack of floating capsules. No shared
+ * theme tokens or non-header surfaces are changed here.
+ */
 :root .shell-header {
-  --header-ink: var(--color-ink);
-  --header-ink-soft: var(--color-ink-2);
-  --header-rim: color-mix(in oklab, var(--color-ink) 14%, transparent);
-  --header-rim-strong: color-mix(in oklab, var(--color-ink) 28%, transparent);
-  --header-face: color-mix(in oklab, var(--color-ink) 4%, transparent);
-  --header-face-strong: color-mix(in oklab, var(--color-ink) 8%, transparent);
-  --header-search: color-mix(in oklab, var(--color-paper-3) 70%, transparent);
-  --header-search-rim: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --header-ink: var(--color-accent-ink);
+  --header-ink-soft: color-mix(in oklab, var(--header-ink) 78%, #3d5369);
+  --header-tone-steel: color-mix(in oklab, var(--color-accent) 70%, #60788f);
+  --header-tone-mid: color-mix(in oklab, var(--color-accent) 82%, #728ba1);
+  --header-tone-powder: color-mix(in oklab, var(--color-accent) 88%, #e7eff6);
+  --header-tone-deep: color-mix(in oklab, var(--color-accent) 66%, #435a70);
+  --header-rim: color-mix(in oklab, var(--header-ink) 17%, transparent);
+  --header-rim-strong: color-mix(in oklab, var(--header-ink) 28%, transparent);
+  --header-face: color-mix(in oklab, #ffffff 14%, transparent);
+  --header-face-strong: color-mix(in oklab, #ffffff 25%, transparent);
+  --header-search: color-mix(in oklab, #233c53 16%, transparent);
+  --header-search-hover: color-mix(in oklab, #233c53 20%, transparent);
+  --header-search-focus: color-mix(in oklab, #233c53 18%, transparent);
+  --header-search-rim: color-mix(in oklab, var(--header-ink) 18%, transparent);
+
+  /* Keep the existing faint halo local to the sticky header wrapper. */
   background: radial-gradient(circle at center, rgba(120, 180, 255, 0.08), transparent 70%);
 }
 
 :root .shell-header__bar {
-  border: 1px solid var(--header-rim);
-  background-color: color-mix(in oklab, var(--color-paper-2) 96%, transparent);
-  background-image: linear-gradient(180deg, rgba(180, 220, 255, 0.14) 0%, rgba(120, 180, 255, 0.08) 50%, rgba(50, 90, 150, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 18px;
+  background-color: var(--header-tone-mid);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.045) 48%, rgba(22, 38, 54, 0.07) 100%),
+    radial-gradient(120% 170% at 8% -48%, rgba(255, 255, 255, 0.24), transparent 62%),
+    linear-gradient(
+      116deg,
+      var(--header-tone-steel) 0%,
+      color-mix(in oklab, var(--header-tone-steel) 42%, var(--header-tone-mid)) 25%,
+      color-mix(in oklab, var(--header-tone-mid) 46%, var(--header-tone-powder)) 52%,
+      color-mix(in oklab, var(--header-tone-mid) 62%, var(--header-tone-deep)) 78%,
+      var(--header-tone-deep) 100%
+    );
   color: var(--header-ink);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
-  -webkit-backdrop-filter: blur(24px);
-  backdrop-filter: blur(24px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(22, 38, 54, 0.10),
+    0 12px 30px -20px rgba(0, 0, 0, 0.54),
+    0 3px 10px -7px rgba(25, 45, 64, 0.38);
+  -webkit-backdrop-filter: blur(20px) saturate(1.12);
+  backdrop-filter: blur(20px) saturate(1.12);
 }
 
-:root[data-theme='dark'] .shell-header {
-  --header-rim: rgba(255, 255, 255, 0.12);
-  --header-rim-strong: rgba(255, 255, 255, 0.24);
-  --header-face: rgba(255, 255, 255, 0.04);
-  --header-face-strong: rgba(255, 255, 255, 0.08);
-  --header-search: rgba(0, 0, 0, 0.16);
-  --header-search-rim: rgba(255, 255, 255, 0.08);
+:root .shell-header .brand-word {
+  color: var(--header-ink);
 }
 
+:root .shell-header .brand-sub {
+  color: var(--header-ink-soft);
+}
+
+/* The search field is a shallow, inset well in the header's own blue range. */
 :root .shell-header .search-pill__shell {
   border: 1px solid var(--header-search-rim);
   border-radius: 12px;
   padding: 0 2px 0 0;
-  background: var(--header-search);
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  background-color: var(--header-search);
+  background-image: none;
+  box-shadow:
+    inset 0 1px 2px rgba(22, 38, 54, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 200ms ease;
 }
 
 :root .shell-header .search-pill__shell:hover {
   border-color: var(--header-rim-strong);
+  background-color: var(--header-search-hover);
 }
 
 :root .shell-header .search-pill__shell:focus-within {
-  border-color: var(--color-focus);
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.15);
+  border-color: color-mix(in oklab, var(--header-ink) 30%, rgba(255, 255, 255, 0.42));
+  outline: none;
+  background-color: var(--header-search-focus);
+  box-shadow:
+    inset 0 1px 2px rgba(22, 38, 54, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 2px rgba(255, 255, 255, 0.22);
 }
 
 :root .shell-header .search-pill__input,
 :root .shell-header .search-pill__input:focus {
+  padding-left: 1rem;
+  border: 0;
+  outline: none;
   background: transparent;
   color: var(--header-ink);
-}
-
-:root .shell-header .search-pill__input {
-  padding-left: 1rem;
+  caret-color: var(--header-ink);
+  box-shadow: none;
 }
 
 :root .shell-header .search-pill__input::placeholder {
@@ -68,31 +109,38 @@
 :root .shell-header .search-pill__icon,
 :root .shell-header .search-pill__shell:hover .search-pill__icon,
 :root .shell-header .search-pill__shell:focus-within .search-pill__icon {
+  width: 40px;
+  height: 40px;
   border: 0;
-  color: var(--header-ink-soft);
+  border-radius: 10px;
   background: transparent;
+  color: var(--header-ink-soft);
   transform: none;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
 }
 
-/* A quiet submit affordance stays inside the recessed search layer. */
 :root .shell-header .search-pill__icon svg {
   width: 18px;
   height: 18px;
-  margin-left: 0;
+  margin: 0;
 }
 
 :root .shell-header .search-pill__icon:hover:not(:disabled) {
+  background: var(--header-face);
   color: var(--header-ink);
 }
 
 :root .shell-header .shell-header__divider {
   width: 1px;
   height: 24px;
-  margin: 0 2px;
+  margin: 0 3px;
   flex: none;
+  background-image: linear-gradient(180deg, transparent, rgba(27, 46, 64, 0.24), transparent);
 }
 
-/* 44px targets keep the compact visual treatment comfortable on touch. */
+/* Quiet 44px targets keep icons aligned and comfortable on touch screens. */
 :root .shell-header .icon-btn,
 :root .shell-header .icon-btn--glass,
 :root .shell-header .icon-btn.theme-toggle {
@@ -100,77 +148,81 @@
   min-width: 44px;
   height: 44px;
   min-height: 44px;
-  border: 1px solid var(--header-rim);
+  border: 1px solid transparent;
   border-radius: 12px;
-  background: var(--header-face);
+  background: transparent;
   color: var(--header-ink-soft);
   box-shadow: none;
-  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   :root .shell-header .icon-btn:hover:not(:disabled):not([aria-disabled='true']) {
-    transform: translateY(-2px);
-    border-color: var(--header-rim-strong);
-    background: var(--header-face-strong);
+    transform: translateY(-1px);
+    border-color: var(--header-rim);
+    background: var(--header-face);
     color: var(--header-ink);
-    box-shadow: 0 6px 18px rgba(100, 170, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
   }
 }
 
 :root .shell-header button[aria-label='Account menu'] {
   min-height: 44px;
-  padding: 4px 8px 4px 4px;
+  padding: 3px 10px 3px 4px;
   border: 1px solid var(--header-rim);
-  border-radius: 12px;
-  background: var(--header-face);
+  border-radius: 13px;
+  background-color: var(--header-face);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.055));
   color: var(--header-ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 :root .shell-header button[aria-label='Account menu'] .identity-mark {
-  box-shadow: 0 0 0 1px var(--header-rim), 0 2px 5px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.36),
+    0 2px 5px rgba(18, 34, 49, 0.20);
+}
+
+:root .shell-header button[aria-label='Account menu'] .text-muted {
+  color: var(--header-ink-soft);
 }
 
 :root .shell-header button[aria-label='Account menu']:hover,
 :root .shell-header button[aria-label='Account menu']:focus-visible {
   border-color: var(--header-rim-strong);
-  background: var(--header-face-strong);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background-color: var(--header-face-strong);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.10));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 3px 9px -6px rgba(25, 45, 64, 0.34);
+}
+
+:root .shell-header button[aria-label='Account menu']:active {
+  transform: translateY(0);
 }
 
 :root .shell-header .notification-badge {
-  box-shadow: 0 0 0 2px var(--color-paper-2);
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--header-tone-mid) 72%, var(--header-tone-powder)),
+    0 2px 5px rgba(25, 41, 56, 0.24);
 }
 
-:root .shell-header :focus-visible {
-  outline: 2px solid var(--color-focus);
+:root .shell-header :focus-visible:not(.search-pill__input) {
+  outline: 2px solid color-mix(in oklab, var(--header-ink) 70%, #ffffff);
   outline-offset: 2px;
 }
 
-/* Keep the existing mobile performance guard against backdrop sampling. */
-@media (pointer: coarse), (max-width: 767px) {
-  :root .shell-header__bar {
-    background-color: var(--color-paper-2);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}
-
-/* On very narrow phones preserve the controls and their touch targets. The
-   brand link retains its accessible name when the wordmark is hidden. */
-@media (max-width: 380px) {
-  :root .shell-header .brand-word { display: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root .shell-header .icon-btn,
-  :root .shell-header button[aria-label='Account menu'] { transition: none; }
-  :root .shell-header .icon-btn:hover:not(:disabled):not([aria-disabled='true']) { transform: none; }
-}
-
-/* Mobile search replaces the menu, brand and search trigger while the
-   notification, theme and account controls remain in place. */
+/* Mobile search replaces the brand and trigger but keeps the same inset well. */
 :root .shell-header__search-inline {
   display: flex;
   align-items: center;
@@ -183,4 +235,32 @@
   min-width: 0;
   flex: 1 1 0%;
   max-width: none;
+}
+
+/* Preserve the existing no-backdrop-sampling guard on touch and small screens. */
+@media (pointer: coarse), (max-width: 767px) {
+  :root .shell-header__bar {
+    background-color: var(--header-tone-mid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* The brand link retains its accessible name when its wordmark is hidden. */
+@media (max-width: 380px) {
+  :root .shell-header .brand-word { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root .shell-header .icon-btn,
+  :root .shell-header .search-pill__shell,
+  :root .shell-header .search-pill__icon,
+  :root .shell-header button[aria-label='Account menu'] {
+    transition: none;
+  }
+
+  :root .shell-header .icon-btn:hover:not(:disabled):not([aria-disabled='true']),
+  :root .shell-header button[aria-label='Account menu']:active {
+    transform: none;
+  }
 }
