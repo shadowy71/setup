@@ -277,6 +277,19 @@
     --orb-size: 2.75rem;
   }
 
+  /* Keep route transitions calm without changing inline action loaders. */
+  .route-loading .orb-loader__dot {
+    animation-duration: 1.5s;
+  }
+
+  .route-loading .orb-loader__dot:nth-child(2) {
+    animation-duration: 2.1s;
+  }
+
+  .route-loading .orb-loader__dot:nth-child(3) {
+    animation-duration: 2.7s;
+  }
+
   /* Inline dot spinner used inside buttons and rows. */
   .dot-spin {
     display: inline-block;
