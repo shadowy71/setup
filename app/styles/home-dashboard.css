@@ -162,3 +162,7 @@
   :root .home-pulse__stat { flex: 1 1 0; padding: .65rem .75rem; }
 }
 @media (prefers-reduced-motion: reduce) { :root .home-explore-link { transition: none; } }
+.home-feed-nav button { cursor: pointer; color: inherit; background: transparent; border: 0; padding: 0; }
+.home-feed-nav button.home-feed-nav__current { color: var(--color-accent-text); }
+.home-feed-nav button:disabled { cursor: not-allowed; color: var(--color-muted); }
+.home-feed-nav button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }

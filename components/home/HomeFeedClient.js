@@ -581,10 +581,7 @@ export function HomeFeedClient({
               onCreated={applyCreatedPost}
             />
 
-            <div className="flex flex-wrap gap-2" aria-label="Feed selection">
-              <Button variant={feedMode === 'for-you' ? 'primary' : 'secondary'} size="sm" aria-pressed={feedMode === 'for-you'} onClick={() => chooseFeed('for-you')}>For You</Button>
-              <Button variant={feedMode === 'following' ? 'primary' : 'secondary'} size="sm" aria-pressed={feedMode === 'following'} onClick={() => chooseFeed('following')}>Following</Button>
-            </div>
+            <HomeFeedNavigation mode={feedMode} onChange={chooseFeed} />
 
             {feedMode === 'for-you' && unavailable ? (
               <div className="flex flex-col items-start gap-2">
@@ -600,7 +597,6 @@ export function HomeFeedClient({
               aria-labelledby="home-stream-title"
               aria-busy={!snapshot && loading}
             >
-              <HomeFeedNavigation />
               <HomeZone
                 id="home-stream-title"
                 eyebrow="Campus feed"
