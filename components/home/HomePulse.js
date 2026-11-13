@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
-import { LinkButton } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { HandWave } from '@/components/home/HandWave';
 
@@ -52,11 +51,8 @@ export function HomePulse({ user, stats = [], children }) {
           </h1>
           <p className="home-pulse__lead">{context}</p>
 
-          <div className="home-pulse__actions">
-            <LinkButton href={ROUTES.explore} size="md" variant="sheen" icon="search">
-              Explore campus
-            </LinkButton>
-          </div>
+          <Link href={ROUTES.explore} className="home-explore-link">Explore campus →</Link>
+          {children}
           {stats.length ? (
             <dl
               className="home-pulse__stats"
@@ -73,7 +69,6 @@ export function HomePulse({ user, stats = [], children }) {
           ) : null}
         </div>
 
-        {children}
       </div>
 
       <span className="home-pulse__horizon" aria-hidden="true" />

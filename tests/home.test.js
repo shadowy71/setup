@@ -30,7 +30,7 @@ describe('home quick-access tiles', () => {
     expect(page).toContain('afterFeed={<HomeAreas />}');
     const hero = feedClient.indexOf('<HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>');
     expect(hero).toBeGreaterThan(-1);
-    expect(feedClient.indexOf('home-composer')).toBeGreaterThan(hero);
+    expect(feedClient.indexOf('<HomeComposer')).toBeGreaterThan(hero);
     expect(feedClient.indexOf('id="home-stream-title"')).toBeGreaterThan(hero);
     expect(pulse).toContain("href: ROUTES.gigs, label: 'Gigs'");
     expect(page).toContain("href: ROUTES.gigs, label: 'Gigs'");

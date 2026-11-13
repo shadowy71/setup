@@ -1,10 +1,11 @@
+import { HomeFeedNavigation } from '@/components/home/HomeFeedNavigation';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
 import { toShellUser } from '@/lib/identity/shell-user';
 import { AppShell } from '@/components/layout/AppShell';
 import { Notice } from '@/components/ui';
-import { PostComposer } from '@/components/posts/PostComposer';
+import { HomeComposer } from '@/components/home/HomeComposer';
 import { IslandMotion } from '@/components/home/IslandMotion';
 import { HomePulse, HomeZone, HomeAreas, HomeCoda } from '@/components/home/HomePulse';
 import { HomeFeatureTiles } from '@/components/home/HomeFeatureTiles';
@@ -115,9 +116,8 @@ const DEMO_RAIL = {
 };
 
 const DEMO_STATS = [
-  { label: 'Events coming up', value: DEMO_RAIL.events.length },
-  { label: 'New notices', value: DEMO_RAIL.notices.length },
-  { label: 'Feed entries', value: DEMO_FEED.length },
+  { label: 'On the feed', value: DEMO_FEED.length },
+  { label: 'Notices shown', value: DEMO_RAIL.notices.length },
 ];
 
 const DEMO_CREATE_ITEMS = [{ href: '/home-preview', label: 'Post or poll (demo)', icon: 'comment' }];
@@ -157,26 +157,18 @@ export default function HomePreviewPage() {
           </Notice>
         </div>
 
-        <HomePulse user={DEMO_USER} stats={DEMO_STATS}>
-          <HomeFeatureTiles division={DEMO_USER.profile.division} />
-        </HomePulse>
-
         <IslandMotion>
           <div className="home-body">
             <div className="home-body__main">
-              <div className="home-composer">
-                <p className="home-composer__label">
-                  New on campus
-                  <span aria-hidden="true">·</span>
-                  <span className="text-muted-soft">Posts, discussions and polls</span>
-                </p>
-                {/* Inert in the demo: the real composer, visible but unable to publish. */}
-                <div inert>
-                  <PostComposer authorName={DEMO_USER.profile.display_name} authorUsername={DEMO_USER.profile.username} />
-                </div>
+              <HomePulse user={DEMO_USER} stats={DEMO_STATS}>
+                <HomeFeatureTiles division={DEMO_USER.profile.division} />
+              </HomePulse>
+              <div inert>
+                <HomeComposer authorName={DEMO_USER.profile.display_name} authorUsername={DEMO_USER.profile.username} />
               </div>
 
               <section className="flex flex-col gap-4" aria-labelledby="home-stream-title">
+                <HomeFeedNavigation />
                 <HomeZone
                   id="home-stream-title"
                   eyebrow="Campus feed"
