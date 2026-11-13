@@ -82,20 +82,20 @@ describe('canonical slug-based club URLs', () => {
 
 describe('public pages live outside the authenticated route group', () => {
   const publicPages = [
-    'app/(public)/layout.js',
-    'app/(public)/clubs/page.js',
-    'app/(public)/clubs/[id]/page.js',
-    'app/(public)/c/[slug]/page.js',
-    'app/(public)/campus/events/page.js',
-    'app/(public)/campus/events/[id]/page.js',
+    'app/(shell)/(public)/layout.js',
+    'app/(shell)/(public)/clubs/page.js',
+    'app/(shell)/(public)/clubs/[id]/page.js',
+    'app/(shell)/(public)/c/[slug]/page.js',
+    'app/(shell)/(public)/campus/events/page.js',
+    'app/(shell)/(public)/campus/events/[id]/page.js',
   ];
   const protectedPages = [
-    'app/(app)/clubs/new/page.js',
-    'app/(app)/clubs/request/page.js',
-    'app/(app)/clubs/[id]/manage/page.js',
-    'app/(app)/clubs/[id]/edit/page.js',
-    'app/(app)/campus/events/new/page.js',
-    'app/(app)/admin/page.js',
+    'app/(shell)/(app)/clubs/new/page.js',
+    'app/(shell)/(app)/clubs/request/page.js',
+    'app/(shell)/(app)/clubs/[id]/manage/page.js',
+    'app/(shell)/(app)/clubs/[id]/edit/page.js',
+    'app/(shell)/(app)/campus/events/new/page.js',
+    'app/(shell)/(app)/admin/page.js',
   ];
 
   it('ships exactly one page per public path', () => {
@@ -105,12 +105,12 @@ describe('public pages live outside the authenticated route group', () => {
       'app/clubs/page.js',
       'app/c/[slug]/page.js',
       'app/campus/events/page.js',
-      'app/(app)/clubs/page.js',
-      'app/(app)/clubs/[id]/page.js',
-      'app/(app)/campus/events/page.js',
-      'app/(app)/campus/events/[id]/page.js',
-      'app/(public)/clubs/new/page.js',
-      'app/(public)/campus/events/new/page.js',
+      'app/(shell)/(app)/clubs/page.js',
+      'app/(shell)/(app)/clubs/[id]/page.js',
+      'app/(shell)/(app)/campus/events/page.js',
+      'app/(shell)/(app)/campus/events/[id]/page.js',
+      'app/(shell)/(public)/clubs/new/page.js',
+      'app/(shell)/(public)/campus/events/new/page.js',
     ]) {
       expect(exists(duplicate), `duplicate route ${duplicate}`).toBe(false);
     }
@@ -118,7 +118,7 @@ describe('public pages live outside the authenticated route group', () => {
 
   it('keeps every creation and management page in the protected group', () => {
     for (const file of protectedPages) expect(exists(file), file).toBe(true);
-    expect(read('app/(app)/layout.js')).toContain('requireUser()');
+    expect(read('app/(shell)/(app)/layout.js')).toContain('requireUser()');
   });
 
   it('never calls requireUser() on a public page, and resolves the viewer optionally', () => {
@@ -126,27 +126,28 @@ describe('public pages live outside the authenticated route group', () => {
       expect(codeOnly(file), `${file} must not require a session`).not.toMatch(/requireUser\(/);
     }
     for (const file of [
-      'app/(public)/clubs/page.js',
-      'app/(public)/c/[slug]/page.js',
-      'app/(public)/campus/events/page.js',
-      'app/(public)/campus/events/[id]/page.js',
+      'app/(shell)/(public)/clubs/page.js',
+      'app/(shell)/(public)/c/[slug]/page.js',
+      'app/(shell)/(public)/campus/events/page.js',
+      'app/(shell)/(public)/campus/events/[id]/page.js',
     ]) {
       expect(read(file), `${file} must be viewer-aware`).toContain('getCurrentUser()');
       expect(read(file)).not.toContain('getAdminClient');
     }
   });
 
-  it('keeps the public frame free of student navigation and data', () => {
-    const frame = codeOnly('components/layout/PublicFrame.js');
-    expect(frame).not.toMatch(/AppShell|unread|CreateMenu|CommandPalette|listMyRsvps/);
-    expect(frame).toContain('PublicFrame');
-    expect(frame).toContain('SignInLink');
+  it('uses the shared optional shell while keeping public content and disclaimer', () => {
+    const layout = read('app/(shell)/(public)/layout.js');
+    const frame = read('components/layout/PublicFrame.js');
+    const optional = read('components/layout/OptionalAppFrame.js');
+    expect(read('app/(shell)/layout.js')).toContain('OptionalAppFrame');
+    expect(layout).toContain('PublicFrame');
+    expect(optional).toContain('getCurrentUser()');
+    expect(optional).toContain('<AppShell>');
+    expect(optional).toContain('<AppLayout>');
     expect(frame).toContain('CollegeCrest');
-    expect(read('app/(public)/layout.js')).toContain('PublicFrame');
-    for (const sheet of ['sections.css', 'calendar.css', 'lumen.css']) {
-      expect(read('app/(public)/layout.js')).toContain(sheet);
-    }
-    expect(exists('app/(app)/clubs/layout.js')).toBe(true);
+    for (const sheet of ['sections.css', 'calendar.css', 'lumen.css']) expect(layout).toContain(sheet);
+    expect(exists('app/(shell)/(app)/clubs/layout.js')).toBe(true);
   });
 });
 
@@ -195,8 +196,8 @@ describe('proxy matching is explicit, not prefix-based', () => {
       expect(read(file), `${file} must authenticate writes`).toContain('getActiveUser()');
     }
     for (const file of [
-      'app/(app)/clubs/new/page.js', 'app/(app)/clubs/request/page.js',
-      'app/(app)/clubs/[id]/manage/page.js', 'app/(app)/campus/events/new/page.js',
+      'app/(shell)/(app)/clubs/new/page.js', 'app/(shell)/(app)/clubs/request/page.js',
+      'app/(shell)/(app)/clubs/[id]/manage/page.js', 'app/(shell)/(app)/campus/events/new/page.js',
     ]) {
       expect(read(file), `${file} must enforce its own auth`).toMatch(/requireUser\(|getActiveUser\(/);
     }
@@ -204,7 +205,7 @@ describe('proxy matching is explicit, not prefix-based', () => {
 });
 
 describe('legacy UUID addresses redirect to the canonical slug', () => {
-  for (const file of ['app/(public)/clubs/[id]/page.js', 'app/(public)/campus/clubs/[id]/page.js']) {
+  for (const file of ['app/(shell)/(public)/clubs/[id]/page.js', 'app/(shell)/(public)/campus/clubs/[id]/page.js']) {
     it(`${file} resolves the stored slug and issues a permanent redirect`, () => {
       const source = read(file);
       expect(source).toContain('UUID_REGEX.test(id)');
@@ -220,7 +221,7 @@ describe('legacy UUID addresses redirect to the canonical slug', () => {
 
   it('keeps /clubs/<id>/manage UUID-addressed and protected', () => {
     expect(isPublicPath('/clubs/15fe0000-0000-4000-a000-000000000001/manage')).toBe(false);
-    const page = read('app/(app)/clubs/[id]/manage/page.js');
+    const page = read('app/(shell)/(app)/clubs/[id]/manage/page.js');
     expect(page).toContain('requireUser()');
     expect(page).toContain('UUID_REGEX');
   });
@@ -261,10 +262,10 @@ describe('guest sign-in prompts preserve the destination and intended action', (
     expect(prompt).not.toMatch(/action=\{/);
     expect(prompt).toContain('data-testid="guest-action-prompt"');
     for (const file of [
-      'app/(public)/clubs/page.js',
-      'app/(public)/c/[slug]/page.js',
-      'app/(public)/campus/events/page.js',
-      'app/(public)/campus/events/[id]/page.js',
+      'app/(shell)/(public)/clubs/page.js',
+      'app/(shell)/(public)/c/[slug]/page.js',
+      'app/(shell)/(public)/campus/events/page.js',
+      'app/(shell)/(public)/campus/events/[id]/page.js',
     ]) {
       expect(read(file), `${file} needs a guest prompt`).toContain('<GuestActionPrompt');
     }
@@ -274,7 +275,7 @@ describe('guest sign-in prompts preserve the destination and intended action', (
   });
 
   it('completes the intended action after return with a small confirmation', () => {
-    for (const file of ['app/(public)/c/[slug]/page.js', 'app/(public)/campus/events/[id]/page.js']) {
+    for (const file of ['app/(shell)/(public)/c/[slug]/page.js', 'app/(shell)/(public)/campus/events/[id]/page.js']) {
       expect(read(file)).toContain('readIntent(');
       expect(read(file)).toMatch(/intent && viewer/);
       expect(read(file)).toContain('<IntentNotice');
@@ -307,7 +308,7 @@ describe('SEO and sharing metadata', () => {
   });
 
   it('derives metadata for club/event pages from the anonymous projection only', () => {
-    const club = read('app/(public)/c/[slug]/page.js');
+    const club = read('app/(shell)/(public)/c/[slug]/page.js');
     const clubMeta = club.slice(
       club.indexOf('export async function generateMetadata'),
       club.indexOf('export default async function ClubPage'),
@@ -316,7 +317,7 @@ describe('SEO and sharing metadata', () => {
     expect(clubMeta).toContain('noindexMetadata');
     expect(clubMeta).not.toMatch(/getServerClient|getCurrentUser|getCommunityBySlug/);
 
-    const event = read('app/(public)/campus/events/[id]/page.js');
+    const event = read('app/(shell)/(public)/campus/events/[id]/page.js');
     const eventMeta = event.slice(
       event.indexOf('export async function generateMetadata'),
       event.indexOf('export default async function EventPage'),
@@ -346,14 +347,14 @@ describe('SEO and sharing metadata', () => {
 
   it('shares the canonical relative path, never a UUID or off-site URL', () => {
     for (const file of [
-      'app/(public)/clubs/page.js',
-      'app/(public)/c/[slug]/page.js',
-      'app/(public)/campus/events/[id]/page.js',
+      'app/(shell)/(public)/clubs/page.js',
+      'app/(shell)/(public)/c/[slug]/page.js',
+      'app/(shell)/(public)/campus/events/[id]/page.js',
     ]) {
       expect(read(file)).toContain('<ShareButton');
     }
-    expect(read('app/(public)/clubs/page.js')).toContain('path={ROUTES.club(club.slug)}');
-    expect(read('app/(public)/c/[slug]/page.js')).toContain('path={canonicalPath}');
+    expect(read('app/(shell)/(public)/clubs/page.js')).toContain('path={ROUTES.club(club.slug)}');
+    expect(read('app/(shell)/(public)/c/[slug]/page.js')).toContain('path={canonicalPath}');
     expect(read('components/social/ShareButton.js')).toContain('absoluteUrl(path)');
     expect(read('components/social/ShareButton.js')).not.toContain('process.env');
   });

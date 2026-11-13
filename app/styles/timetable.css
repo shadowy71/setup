@@ -1208,46 +1208,6 @@
   padding: 1.25rem 1.25rem 1.4rem;
 }
 
-.tt-shell__details {
-  margin-top: 1rem;
-  font-size: 0.8125rem;
-  color: var(--cp-text-muted);
-}
-
-.tt-shell__details summary {
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.tt-shell__all {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.6rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tt-shell__all a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.25rem;
-  min-height: 2.25rem;
-  padding: 0 0.5rem;
-  border: 1px solid var(--cp-border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--cp-text-secondary);
-  font-weight: 650;
-  text-decoration: none;
-}
-
-.tt-shell__all a:hover {
-  border-color: var(--cp-border-control);
-  color: var(--cp-text-primary);
-  text-decoration: none;
-}
-
 .tt-shell__batches {
   display: grid;
   gap: 0.5rem;

@@ -12,6 +12,7 @@ import { ShareButton } from '@/components/social/ShareButton';
 import { PostCard } from '@/components/posts/PostCard';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { ProfileActions } from '@/components/profile/ProfileActions';
+import { FollowButton } from '@/components/profile/FollowButton';
 import { formatDate } from '@/lib/utils';
 import { ProfileAchievements } from '@/components/profile/ProfileAchievements';
 
@@ -48,10 +49,11 @@ export default async function UserProfilePage({ params }) {
 
   const isSelf = profile.id === user.profile.id;
 
-  const [posts, counts, blockedByMe] = await Promise.all([
+  const [posts, counts, blockedByMe, followResult] = await Promise.all([
     getPostsByAuthor(supabase, profile.id, { limit: 20, currentProfileId: user.profile.id }),
     getProfileCounts(supabase, profile.id),
     isBlockingProfile(supabase, user.profile.id, profile.id),
+    isSelf ? Promise.resolve({ data: null, error: null }) : supabase.from('user_follows').select('followed_id').eq('follower_id', user.profile.id).eq('followed_id', profile.id).maybeSingle(),
   ]);
 
   const name = profile.display_name || `@${profile.username}`;
@@ -67,6 +69,7 @@ export default async function UserProfilePage({ params }) {
         back={{ href: ROUTES.home, label: 'Home' }}
         action={
           <div className="flex flex-wrap items-center justify-end gap-2">
+            {!isSelf && !blockedByMe ? <FollowButton key={`${profile.id}:${Boolean(followResult.data)}`} currentUserId={user.profile.id} profileId={profile.id} username={profile.username} initialFollowing={Boolean(followResult.data)} unavailable={Boolean(followResult.error)} /> : null}
             <ShareButton path={`/user/${profile.username}`} title={`@${profile.username} on Campus+`} />
             <ProfileActions
               profileId={profile.id}

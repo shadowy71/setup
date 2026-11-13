@@ -134,7 +134,7 @@ describe('no presence, no typing indicators (spec §8, §22)', () => {
   it('has no presence or typing code in the chat surface', () => {
     const chatFiles = [
       ...walk('components/chat', (f) => f.endsWith('.js')),
-      ...walk('app/(app)/chat', (f) => f.endsWith('.js')),
+      ...walk('app/(shell)/(app)/chat', (f) => f.endsWith('.js')),
     ];
     // Channels are private broadcast only: no presence events, no typing state.
     for (const file of chatFiles) {
@@ -205,8 +205,8 @@ describe('route surface (spec §5, §6)', () => {
   const exists = (route) => {
     const candidates = [
       path.join(ROOT, 'app', route, 'page.js'),
-      path.join(ROOT, 'app', '(app)', route, 'page.js'),
-      path.join(ROOT, 'app', '(public)', route, 'page.js'),
+      path.join(ROOT, 'app', '(shell)', '(app)', route, 'page.js'),
+      path.join(ROOT, 'app', '(shell)', '(public)', route, 'page.js'),
     ];
     return candidates.some((candidate) => fs.existsSync(candidate));
   };
@@ -231,20 +231,20 @@ describe('route surface (spec §5, §6)', () => {
     // (the application serves `/communities/<slug>` and aliases the short form).
     expect(
       fs.existsSync(path.join(ROOT, 'app', 'community', '[slug]', 'page.js')) ||
-        fs.existsSync(path.join(ROOT, 'app', '(app)', 'community', '[slug]', 'page.js')),
+        fs.existsSync(path.join(ROOT, 'app', '(shell)', '(app)', 'community', '[slug]', 'page.js')),
     ).toBe(true);
   });
 
   it('never gives a Random session a public url', () => {
-    expect(fs.existsSync(path.join(ROOT, 'app', '(app)', 'random', '[id]'))).toBe(false);
-    expect(fs.existsSync(path.join(ROOT, 'app', '(app)', 'random', '[session]'))).toBe(false);
+    expect(fs.existsSync(path.join(ROOT, 'app', '(shell)', '(app)', 'random', '[id]'))).toBe(false);
+    expect(fs.existsSync(path.join(ROOT, 'app', '(shell)', '(app)', 'random', '[session]'))).toBe(false);
     expect(typeof ROUTES.random === 'function' && ROUTES.random.length > 0).toBe(false);
   });
 
   it('ships loading states for the primary surfaces', () => {
     const withLoading = ['home', 'explore', 'market', 'gigs', 'clubs', 'communities', 'campus', 'chat', 'notifications', 'settings', 'moderator', 'admin', 'profile'];
     const missing = withLoading.filter(
-      (route) => !fs.existsSync(path.join(ROOT, 'app', '(app)', route, 'loading.js')),
+      (route) => !fs.existsSync(path.join(ROOT, 'app', '(shell)', '(app)', route, 'loading.js')),
     );
     expect(missing).toEqual([]);
   });

@@ -24,14 +24,14 @@
  *     `start_url` and the student's bookmark both point at.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import TimetableLive from '@/components/timetable/TimetableLive';
 import { TimetableInstallSheet, TimetableOfflinePill } from '@/components/timetable/TimetableOfflineUi';
 import { TimetableOfflineProvider } from '@/components/timetable/TimetableOfflineProvider';
 import { Button } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
-import { batchName, listBatches } from '@/lib/timetable/batch';
+import { batchName } from '@/lib/timetable/batch';
 import { formatSavedAgo } from '@/lib/timetable/offline';
 import { listSavedBatches, loadBatch } from '@/lib/timetable/offline-store';
 import { getCampusTime } from '@/lib/timetable/clock';
@@ -114,8 +114,6 @@ export default function TimetableOfflineShell() {
     window.location.reload();
   }, []);
 
-  const knownBatches = useMemo(() => listBatches(), []);
-
   if (state === 'reading') {
     return (
       <div className="tt-shell__panel card">
@@ -150,16 +148,6 @@ export default function TimetableOfflineShell() {
             All divisions
           </Button>
         </div>
-        <details className="tt-shell__details">
-          <summary>Every division Campus+ can show</summary>
-          <ul className="tt-shell__all">
-            {knownBatches.map((entry) => (
-              <li key={entry.division}>
-                <a href={entry.href}>{entry.division}</a>
-              </li>
-            ))}
-          </ul>
-        </details>
       </div>
     );
   }

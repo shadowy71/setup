@@ -9,7 +9,7 @@ vi.mock('@/lib/data/public', () => ({ listPublicClubs: mocks.listClubs, getPubli
 vi.mock('@/lib/data/public-cache', () => ({ listPublishedEvents: mocks.listEvents }));
 vi.mock('@/components/social/LiveFeedSync', () => ({ LiveFeedSync: () => null }));
 vi.mock('@/components/search/SearchResults', () => ({ SearchResults: (props) => { mocks.searchProps.push(props); return createElement('div', { 'data-search': props.initialQuery }); } }));
-const { default: ExplorePage } = await import('@/app/(app)/explore/page');
+const { default: ExplorePage } = await import('@/app/(shell)/(app)/explore/page');
 
 describe('existing Explore page integration', () => {
   beforeEach(() => {
@@ -28,7 +28,8 @@ describe('existing Explore page integration', () => {
     expect(mocks.listClubs).toHaveBeenCalledWith({ order: 'name', limit: 8, hasRecruitment: true });
     expect(mocks.listEvents).toHaveBeenCalledWith({ limit: 30, upcoming: true });
     expect(mocks.rpc).toHaveBeenCalledWith('trending_posts', expect.any(Object));
-    expect(mocks.searchProps[0].hint).toContain('clubs, events');
+    expect(mocks.searchProps).toHaveLength(0);
+    expect(html).toContain('Use the search in the header');
     for (const text of ['more happening on campus', 'Clubs worth exploring', 'Recruitment information', 'Upcoming campus events', 'Trending now', 'Browse']) expect(html).toContain(text);
     expect(html).toContain('href="/clubs"');
   });

@@ -88,7 +88,7 @@ describe('secrets never reach the browser', () => {
   it('does not expose backup secrets through NEXT_PUBLIC_* or the admin status reader', async () => {
     const envExample = await read('.env.example');
     const statusReader = await read('lib/data/backup.js');
-    const adminPage = await read('app/(app)/admin/page.js');
+    const adminPage = await read('app/(shell)/(app)/admin/page.js');
     const runtime = await read('lib/backup/runtime.js');
 
     expect(envExample).not.toMatch(/NEXT_PUBLIC_[A-Z_]*(GOOGLE_DRIVE|BACKUP_ENCRYPTION|BACKUP_CRON|BACKUP_DATABASE)/);

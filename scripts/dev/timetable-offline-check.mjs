@@ -627,7 +627,9 @@ await installedPage.goto(`${BASE}/timetable/${FIRST}`, { waitUntil: 'domcontentl
 await installedPage.waitForTimeout(2400);
 const installed = await offerView(installedPage);
 check('an installed app is never interrupted again', !installed.dialog && installed.offer === 'installed', String(installed.offer));
-check('and the card already says what is true', /is on your Home Screen/.test(await installedPage.locator('.tt-install').innerText()));
+check('and the card already says what is true',
+  (await installedPage.locator('.tt-install').getAttribute('data-state')) === 'installed' &&
+  /is on your Home Screen/.test(await installedPage.locator('.tt-install').textContent()));
 await installedContext.close();
 
 // 9c — the event, the suppression, the click, the answer.

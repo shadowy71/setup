@@ -14,6 +14,7 @@ import { ReportDialog } from '@/components/social/ReportDialog';
 import { renderTextWithMentions } from '@/components/posts/richText';
 import { segmentTextLinks } from '@/lib/linkify';
 import { LinkifiedText } from '@/components/content/LinkifiedText';
+import { FollowButton } from '@/components/profile/FollowButton';
 
 /** Feed truncation that never cuts through a URL. */
 function truncateFeedBody(text) {
@@ -84,6 +85,9 @@ export function PostCard({
           timestamp={post.created_at}
         />
         <div className="flex shrink-0 items-center gap-1.5">
+          {!isOwner && currentUserId && post.author_id && post.author_username && post.following_by_me !== undefined ? (
+            <FollowButton currentUserId={currentUserId} profileId={post.author_id} username={post.author_username} initialFollowing={post.following_by_me === true} unavailable={post.following_by_me === null} />
+          ) : null}
           {post.is_official ? <OfficialBadge /> : null}
           {post.pinned ? <Badge tone="accent">Pinned</Badge> : null}
           {kindLabel ? (

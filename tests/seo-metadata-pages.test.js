@@ -6,10 +6,10 @@ vi.mock('@/lib/data/public', async (importOriginal) => {
   return { ...original, getPublicClubBySlug: async () => ({ item: fixture.club }), getPublicEventById: async () => ({ item: fixture.event }), getPublicClubIdentityById: async () => ({ item: fixture.club }) };
 });
 
-const { generateMetadata: clubPageMetadata } = await import('@/app/(public)/c/[slug]/page');
-const { generateMetadata: eventPageMetadata } = await import('@/app/(public)/campus/events/[id]/page');
-const { generateMetadata: clubDirectoryMetadata } = await import('@/app/(public)/clubs/page');
-const { generateMetadata: eventDirectoryMetadata } = await import('@/app/(public)/campus/events/page');
+const { generateMetadata: clubPageMetadata } = await import('@/app/(shell)/(public)/c/[slug]/page');
+const { generateMetadata: eventPageMetadata } = await import('@/app/(shell)/(public)/campus/events/[id]/page');
+const { generateMetadata: clubDirectoryMetadata } = await import('@/app/(shell)/(public)/clubs/page');
+const { generateMetadata: eventDirectoryMetadata } = await import('@/app/(shell)/(public)/campus/events/page');
 const id = '15fe0000-0000-4000-a000-000000000001';
 
 describe('public page metadata boundaries', () => {

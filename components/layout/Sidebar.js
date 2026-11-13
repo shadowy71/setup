@@ -3,13 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ROUTES } from '@/lib/constants';
-import { IdentityMark, StaffDot } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { BrandLockup, CollegeCrest } from '@/components/brand/Brand';
 import { CreateMenu } from '@/components/layout/CreateMenu';
 import { getTimetableHref } from '@/lib/timetable/meta';
 import { formatUnread } from '@/lib/notifications/format';
-import { handleOf } from '@/lib/identity/shell-user';
 import { resolveActiveHref } from '@/lib/navigation/active';
 import { primaryNavigation } from '@/lib/navigation/primary';
 import { MessageUnreadBadge } from '@/components/layout/MessageUnreadBadge';
@@ -18,8 +16,7 @@ import { NavigationHelp } from '@/components/navigation/NavigationHelp';
 /**
  * Desktop navigation: a suspended sheet of frosted glass carrying the Campus+
  * identity at the top, one clear primary group, the secondary destinations
- * (messages, notifications, staff panels) and the signed-in student at the
- * bottom.
+ * (messages, notifications and staff panels). Account access lives in the header.
  *
  * The panel floats (it is inset from the viewport edges, with its own rounded
  * corners and shadow) so the ambient teal and sunset light reads *behind* it:
@@ -29,7 +26,7 @@ import { NavigationHelp } from '@/components/navigation/NavigationHelp';
  * It is a client component only because it highlights the active route; it
  * renders no data of its own.
  */
-export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false, canModerate = false, canAdmin = false, createItems = [] }) {
+export function Sidebar({ user = null, unreadNotifications = 0, canModerate = false, canAdmin = false, createItems = [] }) {
   const pathname = usePathname();
 
   const unread = formatUnread(unreadNotifications);
@@ -38,7 +35,7 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
     { href: ROUTES.notifications, label: 'Notifications', icon: 'bell', unread },
   ];
   const timetableHref = getTimetableHref(user?.division);
-  // One ordered list: the sections, then Timetable, then Profile. The order
+  // One ordered list of campus destinations. The order
   // lives in `primaryNavigation()` so it is asserted once and reused.
   const primary = primaryNavigation(timetableHref);
 
@@ -121,23 +118,11 @@ export function Sidebar({ user = null, unreadNotifications = 0, isStaff = false,
       </nav>
 
       <div className="mt-auto pt-4">
-        {user ? (
-          <Link href={ROUTES.profile} className="side-panel__account flex items-center gap-2.5 rounded-[var(--radius-md)] border border-glass-border bg-surface p-2 shadow-[var(--shadow-inset-top)] transition-colors hover:border-line-strong hover:no-underline">
-            <IdentityMark name={user.displayName} username={user.username} size={32} tone="accent" square={false} />
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-1.5 truncate text-[0.8125rem] font-semibold">
-                <span className="truncate">{user.displayName}</span>
-                {isStaff ? <StaffDot label={user.staffLabel || 'Staff member'} /> : null}
-              </span>
-              <span className="block truncate text-2xs text-muted">{handleOf(user)}</span>
-            </span>
-            <Icon name="chevronRight" size={14} className="text-muted-soft" />
-          </Link>
-        ) : (
+        {!user ? (
           <Link href="/login" className="nav-item">
             Sign in
           </Link>
-        )}
+        ) : null}
         <div className="flex items-start gap-3 px-2 pt-3">
           <CollegeCrest size={44} />
           <p className="text-2xs leading-relaxed text-muted-soft">

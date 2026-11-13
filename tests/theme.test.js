@@ -176,7 +176,7 @@ describe('two-theme appearance architecture', () => {
   });
 
   it('removes device-specific customization and leaves only the two-theme control', () => {
-    const settings = read('app/(app)/settings/page.js');
+    const settings = read('app/(shell)/(app)/settings/page.js');
     expect(settings).not.toContain("key: 'appearance'");
     expect(settings).not.toContain('DeviceColorSettings');
     const account = read('components/layout/AccountMenu.js');

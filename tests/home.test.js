@@ -7,7 +7,7 @@ const read = (file) => fs.readFileSync(file, 'utf8');
 
 describe('home quick-access tiles', () => {
   const tiles = read('components/home/HomeFeatureTiles.js');
-  const page = read('app/(app)/home/page.js');
+  const page = read('app/(shell)/(app)/home/page.js');
   const feedClient = read('components/home/HomeFeedClient.js');
   const pulse = read('components/home/HomePulse.js');
   const css = read('app/styles/home.css');
