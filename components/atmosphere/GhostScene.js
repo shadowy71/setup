@@ -55,7 +55,7 @@ function GhostFallback() {
   );
 }
 
-export function GhostScene({ className = '' }) {
+export function GhostScene({ className = '', placement = 'login' }) {
   const containerRef = useRef(null);
   const [mode, setMode] = useState('loading');
 
@@ -75,7 +75,7 @@ export function GhostScene({ className = '' }) {
           return;
         }
         try {
-          dispose = createGhostScene(container, { reducedMotion });
+          dispose = createGhostScene(container, { reducedMotion, placement });
           setMode('webgl');
         } catch (error) {
           // Remove any half-built canvas so only the static ghost remains.
@@ -93,7 +93,7 @@ export function GhostScene({ className = '' }) {
       cancelled = true;
       dispose?.();
     };
-  }, []);
+  }, [placement]);
 
   return (
     <div

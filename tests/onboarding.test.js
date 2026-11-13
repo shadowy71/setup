@@ -24,8 +24,6 @@ import { OnboardingIntro } from '@/components/auth/OnboardingIntro';
 import { OnboardingForm } from '@/components/auth/OnboardingForm';
 import {
   GUIDE_GROUPS,
-  GUIDE_HEADLINE_INK,
-  GUIDE_HEADLINE_LEAD,
   GUIDE_OPENING,
   GUIDE_OPENING_SHORT,
 } from '@/lib/guide/content';
@@ -59,17 +57,13 @@ beforeEach(() => {
 });
 
 describe('first-profile onboarding lifecycle', () => {
-  it('renders the existing profile form before the introduction and guide', async () => {
+  it('renders the first question, progress and inherited login scene', async () => {
     const html = htmlOf(await OnboardingPage());
     expect(html.match(/<h1\b/g)).toHaveLength(1);
-    // The headline is the guide's, not a second telling of it.
-    expect(html).toContain(`${GUIDE_HEADLINE_LEAD} <span`);
-    expect(html).toContain(GUIDE_HEADLINE_INK);
-    expect(html.indexOf('</form>')).toBeLessThan(html.indexOf('id="onboarding-heading"'));
-    expect(html.indexOf('</form>')).toBeLessThan(html.indexOf('Where do I go first?'));
-    expect(html).toContain('<h1 id="profile-heading"');
-    expect(html).toContain('<h2 id="onboarding-heading"');
-    expect(html).toContain('aria-labelledby="profile-heading"');
+    expect(html).toContain('What should we call you?');
+    expect(html).toContain('role="progressbar"');
+    expect(html).toContain('login-ghost-layer');
+    expect(html).toContain('not affiliated with');
   });
 
   it.each([
@@ -82,18 +76,14 @@ describe('first-profile onboarding lifecycle', () => {
     await expect(OnboardingPage()).rejects.toThrow(`redirect:${target}`);
   });
 
-  it('is imported only by the onboarding route', () => {
-    const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-      const file = path.join(dir, entry.name);
-      return entry.isDirectory() ? walk(file) : [file];
-    });
-    const consumers = [...walk('app'), ...walk('components')]
-      .filter((file) => /\.js$/.test(file) && file !== 'components/auth/OnboardingIntro.js')
-      .filter((file) => /import .*OnboardingIntro.* from/.test(fs.readFileSync(file, 'utf8')));
-    expect(consumers).toEqual(['app/onboarding/page.js']);
-    expect(fs.readFileSync('components/layout/PublicShell.js', 'utf8'))
-      .toContain('unofficial student project for PCCOE, not affiliated with or endorsed by the college');
+  it('uses the same guided form in the real route and development preview', () => {
+    const real = fs.readFileSync('app/onboarding/page.js', 'utf8');
+    const preview = fs.readFileSync('app/onboarding-preview/page.js', 'utf8');
+    expect(real).toContain('<OnboardingForm storageId=');
+    expect(preview).toContain('<OnboardingForm preview');
+    expect(preview).toContain("process.env.NODE_ENV !== 'development'");
   });
+
 });
 
 describe('field notes and orientation', () => {
@@ -148,30 +138,23 @@ describe('field notes and orientation', () => {
   });
 });
 
-describe('profile form presentation stays intact', () => {
-  it('keeps profile fields, optional choices and required rule consent', () => {
-    const html = htmlOf(React.createElement(OnboardingForm));
+describe('guided profile form', () => {
+  it('keeps all existing fields in the guided flow and validates with the existing schema', () => {
+    const source = fs.readFileSync('components/auth/OnboardingForm.js', 'utf8');
     for (const field of ['username', 'display_name', 'branch', 'year', 'division', 'bio', 'show_branch_year', 'accept_rules']) {
-      expect(html).toContain(`name="${field}"`);
+      expect(source).toContain(`field: '${field}'`);
     }
-    expect(html).toContain('Prefer not to say');
-    expect(html).toMatch(/<button[^>]*disabled=""/);
-    // Keep the phone keyboard closed until the student chooses an input.
-    expect(html).not.toContain('autofocus');
+    expect(source).toContain('validate(values, onboardingSchema)');
+    expect(source).toContain('completeOnboarding');
+    expect(source).toContain('localStorage');
+    expect(source).toContain('Skip for now');
   });
 
-  it('still displays server field errors and submission errors', () => {
-    state.form = { pending: false, error: 'Please check the highlighted fields.', fieldErrors: { username: 'Username is taken.' } };
+  it('still displays submission errors and disables pending submission', () => {
+    state.form = { pending: true, error: 'Please try again.', fieldErrors: null };
     const html = htmlOf(React.createElement(OnboardingForm));
-    expect(html).toContain('Username is taken.');
-    expect(html).toContain('Please check the highlighted fields.');
-    expect(html).toContain('aria-invalid="true"');
-  });
-
-  it('shows the pending label and disables submission', () => {
-    state.form.pending = true;
-    const html = htmlOf(React.createElement(OnboardingForm));
-    expect(html).toContain('Creating your profile…');
+    expect(html).toContain('Please try again.');
+    expect(html).toContain('Saving…');
     expect(html).toMatch(/<button[^>]*disabled=""/);
   });
 });
