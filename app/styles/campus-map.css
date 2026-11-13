@@ -2,6 +2,12 @@
    route inherits a rule. All colours resolve through the Halo design
    tokens in `app/tokens.css`; no independent palette is defined here. */
 
+/* The shell normally uses a reading-width column. The map needs the same
+   wider canvas as other dashboard pages, without changing other routes. */
+.shell-content:has(.cm-page) {
+  max-width: 78rem;
+}
+
 .cm-page {
   position: relative;
   min-height: 100dvh;
@@ -213,6 +219,7 @@
 .cm-shell {
   margin: 18px 46px 0;
   padding: 14px;
+  container: campus-map / inline-size;
   border-radius: var(--radius-card);
   border: 1px solid var(--color-rule);
   background-color: var(--color-paper-2);
@@ -222,7 +229,7 @@
 
 .cm-grid {
   display: grid;
-  grid-template-columns: 64fr 36fr;
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 1fr);
   gap: 16px;
   align-items: stretch;
 }
@@ -965,7 +972,7 @@
 
 .cm-feats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-radius: var(--radius-card);
   border: 1px solid var(--color-rule);
   background-color: var(--color-paper-2);
@@ -1108,10 +1115,15 @@
 
 /* ── Responsive ─────────────────────────────────────────────────────── */
 
-@media (max-width: 1180px) {
+/* Respond to the space inside the app shell, not the browser viewport:
+   the sidebar can leave a desktop viewport with a narrow map column. */
+@container campus-map (max-width: 800px) {
   .cm-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
+}
+
+@media (max-width: 1180px) {
 
   .cm-mapbody {
     min-height: 480px;

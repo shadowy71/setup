@@ -80,7 +80,7 @@ export function CampusMapDashboard() {
               }}
             />
 
-            <BuildingInformation entry={selectedEntry} onClose={clear} onLocate={() => selectedNo && command('focus', selectedNo)} />
+            <BuildingInformation entry={selectedEntry} onClose={clear} onLocate={() => selectedNo && mapRef.current?.focus(selectedNo)} />
           </div>
         </section>
 
