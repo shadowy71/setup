@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Icon } from '@/components/ui/icons';
 import { LinkButton } from '@/components/ui';
 import { PublicShell } from '@/components/layout/PublicShell';
@@ -51,9 +50,6 @@ export default function RulesPage() {
         <LinkButton href="/login" variant="primary" icon="chevronRight">
           Back to sign-in
         </LinkButton>
-        <Link href="/guide" className="text-[0.8125rem] font-medium text-muted underline hover:text-ink">
-          What is Campus+?
-        </Link>
       </div>
     </PublicShell>
   );

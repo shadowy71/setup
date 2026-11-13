@@ -33,12 +33,18 @@ const KINDS = [
 export function PostComposer({
   communityId = null,
   defaultKind = 'post',
+  requestedKind = null,
   compact = false,
   authorName = null,
   authorUsername = null,
   onCreated = null,
 }) {
   const [kind, setKind] = useState(defaultKind);
+  useEffect(() => {
+    if (!requestedKind) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setKind(requestedKind.kind);
+  }, [requestedKind]);
   const [gif, setGif] = useState(null);
   const [options, setOptions] = useState(['', '']);
   const [body, setBody] = useState('');
@@ -135,6 +141,13 @@ export function PostComposer({
   // i.e. moderation holds it. Nothing about it is guessed on the client.
   const [held, setHeld] = useState(null);
   const formRef = useRef(null);
+  useEffect(() => {
+    if (!requestedKind || kind !== requestedKind.kind) return undefined;
+    const frame = requestAnimationFrame(() => {
+      formRef.current?.querySelector(kind === 'post' ? '#post-body' : '#post-title')?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [requestedKind, kind]);
   const timerRef = useRef(null);
 
   useEffect(() => () => {
@@ -236,7 +249,7 @@ export function PostComposer({
           <IdentityMark name={authorName || 'You'} username={authorUsername} size={36} tone="accent" square={false} className="mt-0.5 hidden sm:flex" />
           <div className="min-w-0 flex-1">
             {!compact && kind === 'post' ? (
-              <p className="mb-1 text-[0.9375rem] font-semibold tracking-[-0.015em] text-ink">What&apos;s happening on campus?</p>
+              <p className="mb-1 text-[0.9375rem] font-semibold tracking-[-0.015em] text-ink">Post what&apos;s happening on campus...</p>
             ) : null}
 
             {needsTitle ? (

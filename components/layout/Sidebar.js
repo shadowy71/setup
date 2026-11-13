@@ -11,7 +11,6 @@ import { formatUnread } from '@/lib/notifications/format';
 import { resolveActiveHref } from '@/lib/navigation/active';
 import { primaryNavigation } from '@/lib/navigation/primary';
 import { MessageUnreadBadge } from '@/components/layout/MessageUnreadBadge';
-import { NavigationHelp } from '@/components/navigation/NavigationHelp';
 
 /**
  * Desktop navigation: a suspended sheet of frosted glass carrying the Campus+
@@ -26,7 +25,7 @@ import { NavigationHelp } from '@/components/navigation/NavigationHelp';
  * It is a client component only because it highlights the active route; it
  * renders no data of its own.
  */
-export function Sidebar({ user = null, unreadNotifications = 0, canModerate = false, canAdmin = false, createItems = [] }) {
+export function Sidebar({ user = null, unreadNotifications = 0, canModerate = false, canAdmin = false, createItems = [], onNavigate, mobile = false, onClose }) {
   const pathname = usePathname();
 
   const unread = formatUnread(unreadNotifications);
@@ -51,8 +50,11 @@ export function Sidebar({ user = null, unreadNotifications = 0, canModerate = fa
   const active = (href) => current === href;
 
   return (
-    <aside className="side-panel glass-floating fixed inset-y-3 left-3 z-30 hidden w-[15.5rem] flex-col overflow-y-auto rounded-[var(--radius-glass)] px-3 pb-4 pt-4 lg:flex">
+    <aside id="app-sidebar" aria-label="Campus navigation" role={mobile ? "dialog" : undefined} aria-modal={mobile ? "true" : undefined} tabIndex={-1} className="side-panel glass-floating fixed inset-y-3 left-3 z-50 flex w-[15.5rem] flex-col overflow-y-auto" onClick={(event) => {
+      if (event.target.closest('a[href]')) onNavigate?.();
+    }}>
       <span className="side-panel__glow" aria-hidden="true" />
+      {mobile ? <button type="button" className="sidebar-close" aria-label="Close sidebar" onClick={onClose}><Icon name="close" size={18} /></button> : null}
       <BrandLockup className="px-2" />
 
       <div className="mt-4">
@@ -67,9 +69,6 @@ export function Sidebar({ user = null, unreadNotifications = 0, canModerate = fa
               <Icon name={item.icon} size={18} className="nav-icon" />
               {item.label}
             </Link>
-            {/* Timetable keeps its public-selector explanation even when the
-                row opens a saved division; every other topic is its own href. */}
-            <NavigationHelp topic={item.helpTopic} label={item.label} />
           </div>
         ))}
       </nav>
@@ -90,7 +89,6 @@ export function Sidebar({ user = null, unreadNotifications = 0, canModerate = fa
                 </span>
               ) : null}
             </Link>
-            <NavigationHelp topic={item.href} label={item.label} />
           </div>
         ))}
 
@@ -102,7 +100,6 @@ export function Sidebar({ user = null, unreadNotifications = 0, canModerate = fa
               <Icon name="shield" size={18} className="nav-icon" />
               Moderation
             </Link>
-            <NavigationHelp topic={ROUTES.moderator} label="Moderation" />
           </div>
         ) : null}
 
@@ -112,7 +109,6 @@ export function Sidebar({ user = null, unreadNotifications = 0, canModerate = fa
               <Icon name="eye" size={18} className="nav-icon" />
               Admin
             </Link>
-            <NavigationHelp topic={ROUTES.admin} label="Admin" />
           </div>
         ) : null}
       </nav>

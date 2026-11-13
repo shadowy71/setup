@@ -48,13 +48,13 @@ describe('Home presentation refinement', () => {
 
   it('renders only supplied statistics, with equal tracks for their actual count', () => {
     expect(render()).not.toContain('<dl');
-    const stats = [{ label: 'On the feed', value: 10 }, { label: 'Events ahead', value: 3 }];
+    const stats = [{ label: 'Posts in feed', value: 10 }, { label: 'Notices published', value: 3 }];
     const html = render({ stats });
     expect(html).toContain('style="--home-stat-count:2"');
     expect(html).toContain('aria-label="Campus right now"');
-    expect(html).toContain('<dt>On the feed</dt><dd>10</dd>');
+    expect(html).toContain('<dt>Posts in feed</dt><dd>10</dd>');
     expect(html).not.toContain('Market listings');
-    expect(render({ stats: [{ label: 'On the feed', value: 0 }] })).toContain('data-empty="true"');
+    expect(render({ stats: [{ label: 'Posts in feed', value: 0 }] })).toContain('data-empty="true"');
   });
 
   it('uses real local bold weights, a centered non-wrapping heading, and shared columns', () => {

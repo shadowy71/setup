@@ -98,9 +98,9 @@ describe('contextual navigation help', () => {
     expect(component).toContain("triggerRef.current?.focus({ preventScroll: true })");
   });
 
-  it('is wired into desktop and touch navigation without changing either destination set', () => {
-    expect(read('components/layout/Sidebar.js')).toContain('<NavigationHelp');
-    expect(read('components/layout/MobileMenu.js')).toContain('<NavigationHelp');
+  it('is removed from desktop and touch navigation without changing either destination set', () => {
+    expect(read('components/layout/Sidebar.js')).not.toContain('<NavigationHelp');
+    expect(read('components/layout/MobileMenu.js')).not.toContain('<NavigationHelp');
     expect(read('components/layout/BottomNav.js')).not.toContain('NavigationHelp');
     expect(PRIMARY_NAV).toHaveLength(8);
     expect(MOBILE_NAV).toHaveLength(5);
@@ -163,7 +163,7 @@ describe('the primary rail order', () => {
     expect(sidebar).toContain('className="nav-item"');
     expect(sidebar).toContain('className="nav-icon"');
     expect(sidebar).toContain('prefetch={item.href === ROUTES.home ? false : undefined}');
-    expect(sidebar).toContain('<NavigationHelp topic={item.helpTopic} label={item.label} />');
+    expect(sidebar).not.toContain('<NavigationHelp');
   });
 
   it('keeps Timetable ahead of Profile on mobile, and the dock at five tabs', () => {
@@ -240,7 +240,7 @@ describe('the optional navigation tour', () => {
     expect(shouldOfferNavigationTour()).toBe(false);
   });
 
-  it('opens only from an explicit choice and can be reopened from existing menus', () => {
+  it('is no longer mounted or offered from navigation', () => {
     const host = read('components/navigation/NavigationTour.js');
     expect(host).toContain('useState(false)');
     expect(host).toContain('onClick={start}');
@@ -248,9 +248,9 @@ describe('the optional navigation tour', () => {
     expect(host).toContain('Skip tour');
     expect(host).toContain('Finish');
     expect(host).toContain('window.addEventListener(NAVIGATION_TOUR_EVENT');
-    expect(read('components/layout/AppShell.js')).toContain('<NavigationTour');
-    expect(read('components/layout/AccountMenu.js')).toContain('onClick={requestNavigationTour}');
-    expect(read('components/layout/MobileMenu.js')).toContain('window.setTimeout(requestNavigationTour, 0)');
+    expect(read('components/layout/AppShell.js')).not.toContain('<NavigationTour');
+    expect(read('components/layout/AccountMenu.js')).not.toContain('onClick={requestNavigationTour}');
+    expect(read('components/layout/MobileMenu.js')).not.toContain('window.setTimeout(requestNavigationTour, 0)');
     expect(NAVIGATION_TOUR_EVENT).toBe('campusplus:open-navigation-tour');
     // This remains a device concern; no schema or account setting was added.
     expect(fs.readdirSync(path.join(ROOT, 'supabase/migrations')).some((file) => /tour/iu.test(file))).toBe(false);

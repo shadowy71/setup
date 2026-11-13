@@ -46,8 +46,9 @@ export default async function AppLayout({ children }) {
   const createItems = [
     ...(can(actor, 'create_posts')
       ? [
-          { href: '/home', label: 'Post or poll', icon: 'comment' },
-          { href: '/home?kind=discussion', label: 'Discussion', icon: 'chat' },
+          { href: '/home?compose=post', label: 'Post', icon: 'comment' },
+          { href: '/home?compose=poll', label: 'Poll', icon: 'trend' },
+          { href: '/home?compose=discussion', label: 'Discussion', icon: 'chat' },
         ]
       : []),
     ...(can(actor, 'create_marketplace_listing') ? [{ href: '/market/new', label: 'Marketplace listing', icon: 'tag' }] : []),
@@ -96,7 +97,6 @@ export default async function AppLayout({ children }) {
     { section: 'Navigation', label: 'Market', href: '/market', icon: 'tag' },
     { section: 'Navigation', label: 'Profile', href: '/profile', icon: 'user' },
     { section: 'Navigation', label: 'Settings', href: '/settings', icon: 'settings' },
-    { section: 'Navigation', label: 'First-visit guide', href: ROUTES.guide, icon: 'mapPin', keywords: 'new here orientation what is campus plus where is everything' },
     ...(canModerate ? [{ section: 'Navigation', label: 'Moderation', href: '/moderator', icon: 'shield' }] : []),
     ...(canAdmin ? [{ section: 'Navigation', label: 'Admin', href: '/admin', icon: 'eye' }] : []),
     ...createItems.map((item) => ({ ...item, section: 'Create' })),

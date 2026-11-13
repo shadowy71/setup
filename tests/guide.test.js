@@ -335,24 +335,9 @@ describe('the guide is public, and public means empty', () => {
   const page = read('app/guide/page.js');
   const stripped = page.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
-  it('is reachable signed out, and does not require a session', () => {
-    expect(page).not.toMatch(/requireUser|redirect\(/);
-    expect(page).toMatch(/getCurrentUser\(\)/);
-    // It must answer even when the deployment has no configuration at all.
-    expect(page).toContain('isSupabaseConfigured()');
-  });
-
-  it('cannot reach a table: no client, no query, no profile fields', () => {
-    // `isSupabaseConfigured` is allowed to appear (it is the guard); a client, a
-    // query or an RPC is not.
-    expect(stripped).not.toMatch(/getServerClient|getAdminClient|createClient|@supabase|\.from\(|\.rpc\(/);
-    expect(stripped).not.toMatch(/user\.email|user\.profile|profile\.|cookies\(\)/);
-    // The only thing taken from the session is which question to answer first.
-    expect(stripped).toMatch(/user\.needsProfileSetup/);
-  });
-
-  it('is never a cached prerender, so the state cannot belong to the wrong reader', () => {
-    expect(page).toContain("export const dynamic = 'force-dynamic'");
+  it('retires the guide safely for existing bookmarks without reading private data', () => {
+    expect(page).toContain("redirect('/')");
+    expect(stripped).not.toMatch(/requireUser|getCurrentUser|getServerClient|getAdminClient|createClient|@supabase|\.from\(|\.rpc\(|cookies\(/);
   });
 
   it('is added to the proxy list and to nothing else', () => {
@@ -371,7 +356,7 @@ describe('the guide is public, and public means empty', () => {
     // The strip is mounted by Home, not by /guide, so it cannot borrow the
     // guide's sheet: without its own import the offer would render as a bare
     // sentence under the header. Home's layout keeps it out of other routes.
-    expect(read('app/(shell)/(app)/home/layout.js')).toContain("@/app/styles/guide-strip.css");
+    expect(read('app/(shell)/(app)/home/layout.js')).not.toContain("@/app/styles/guide-strip.css");
     expect(read('components/layout/AuthenticatedAppFrame.js')).not.toContain("@/app/styles/guide-strip.css");
     expect(read('app/styles/guide-strip.css')).toContain('.guide-strip__dismiss');
     expect(read('app/styles/guide-strip.css')).toMatch(/prefers-reduced-motion/);
@@ -445,8 +430,8 @@ describe('the first-visit flag, on the device', () => {
     expect(runPrehydration({ throws: true })).toEqual([]);
 
     const home = read('app/(shell)/(app)/home/page.js');
-    expect(home).toContain('{GUIDE_SEEN_PREHYDRATION_SCRIPT}</script>');
-    expect(home.indexOf('{GUIDE_SEEN_PREHYDRATION_SCRIPT}</script>')).toBeLessThan(home.indexOf('<GuideWelcomeStrip />'));
+    expect(home).not.toContain('GUIDE_SEEN_PREHYDRATION_SCRIPT');
+    expect(home).not.toContain('<GuideWelcomeStrip />');
     expect(read('app/layout.js')).not.toContain('GUIDE_SEEN_PREHYDRATION_SCRIPT');
     expect(read('components/layout/AppShell.js')).not.toContain('GuideWelcomeStrip');
     const strip = read('components/guide/GuideWelcomeStrip.js');
@@ -528,8 +513,8 @@ describe('the first-visit flag, on the device', () => {
 });
 
 describe('one onboarding, not two', () => {
-  it('sends a new profile to the guide, and the guide sends them on to Home', () => {
-    expect(read('components/auth/OnboardingForm.js')).toContain("redirectTo: '/guide?welcome=1'");
+  it('sends a new profile directly to Home', () => {
+    expect(read('components/auth/OnboardingForm.js')).toContain("redirectTo: '/home'");
     expect(render({ state: 'welcome' })).toContain('href="/home"');
   });
 
@@ -542,7 +527,7 @@ describe('one onboarding, not two', () => {
     expect(intro).toContain('GUIDE_OPENING_SHORT');
     expect(intro).toContain('GUIDE_GROUPS.filter');
     // …and it still links the whole thing.
-    expect(intro).toContain('ROUTES.guide');
+    expect(intro).not.toContain('ROUTES.guide');
   });
 
   it('keeps the onboarding guards exactly where they were', () => {
@@ -565,11 +550,10 @@ describe('one onboarding, not two', () => {
 });
 
 describe('the guide is reachable from where students already are', () => {
-  it('sits in the account menu, the mobile sheet and the actions list', () => {
-    expect(read('components/layout/AccountMenu.js')).toMatch(/href=\{ROUTES\.guide\}[\s\S]*First-visit guide/);
-    expect(read('components/layout/MobileMenu.js')).toContain('href={ROUTES.guide}');
-    const layout = read('components/layout/AuthenticatedAppFrame.js');
-    expect(layout).toMatch(/label: 'First-visit guide', href: ROUTES\.guide/);
+  it('removes guide links from account, mobile and quick actions', () => {
+    expect(read('components/layout/AccountMenu.js')).not.toContain('ROUTES.guide');
+    expect(read('components/layout/MobileMenu.js')).not.toContain('ROUTES.guide');
+    expect(read('components/layout/AuthenticatedAppFrame.js')).not.toContain('ROUTES.guide');
   });
 
   it('does not enlarge either navigation set', () => {
@@ -577,15 +561,9 @@ describe('the guide is reachable from where students already are', () => {
     expect(MOBILE_NAV).toHaveLength(5);
   });
 
-  it('answers the two public places that already asked about it', () => {
-    const login = read('app/login/page.js');
-    expect(login).toContain('href="/guide"');
-    expect(login).toMatch(/first-visit guide/i);
-    const rules = read('app/rules/page.js');
-    // "What is Campus+?" used to point at `/`, which answers with a redirect to
-    // sign-in. Now the question has an answer.
-    expect(rules).toMatch(/href="\/guide"[^>]*>[\s\S]{0,80}What is Campus\+/);
-    expect(rules).not.toMatch(/href="\/"[^>]*>\s*\n?\s*What is Campus\+/);
+  it('removes guide links from public entry points', () => {
+    expect(read('app/login/page.js')).not.toContain('href="/guide"');
+    expect(read('app/rules/page.js')).not.toContain('href="/guide"');
   });
 
   it('keeps the guide out of the guide as a second navigation', () => {

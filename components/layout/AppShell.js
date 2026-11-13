@@ -1,11 +1,9 @@
-import { Sidebar } from '@/components/layout/Sidebar';
-import { ShellHeader } from '@/components/layout/ShellHeader';
+import { ShellFrame } from '@/components/layout/ShellFrame';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { CommandPaletteHost } from '@/components/search/CommandPalette';
 import { isStaffRoles } from '@/lib/identity/shell-user';
 import { MessagingProvider } from '@/components/layout/MessagingProvider';
 import { LiveFeedProvider } from '@/components/layout/LiveFeedProvider';
-import { NavigationTour } from '@/components/navigation/NavigationTour';
 
 /**
  * The one application frame.
@@ -58,41 +56,18 @@ export function AppShell({
             Skip to content
           </a>
 
-          <Sidebar
+          <ShellFrame
             user={user}
             unreadNotifications={unreadNotifications}
+            isStaff={isStaff}
             canModerate={canModerate}
             canAdmin={canAdmin}
             createItems={createItems}
-          />
-
-          {/* The kept shell supplies every destination and provider; Lumen
-              changes only its material, not its composition or behavior. */}
-          <div className="shell-root lg:pl-[17rem]">
-            <ShellHeader
-              user={user}
-              unreadNotifications={unreadNotifications}
-              isStaff={isStaff}
-              canModerate={canModerate}
-              canAdmin={canAdmin}
-              createItems={createItems}
-            />
-
-            <main
-              id="content"
-              className="shell-content shell-main mx-auto w-full px-4 pb-28 pt-4 sm:px-6 lg:pb-16 lg:pt-5"
-            >
-              {children}
-            </main>
-          </div>
+          >
+            {children}
+          </ShellFrame>
 
           <BottomNav />
-          <NavigationTour
-            canModerate={canModerate}
-            canAdmin={canAdmin}
-            canCreate={createItems.length > 0}
-            isStaff={isStaff}
-          />
           <CommandPaletteHost actions={paletteActions} />
         </div>
       </LiveFeedProvider>

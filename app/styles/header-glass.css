@@ -22,8 +22,8 @@
   --header-search-focus: color-mix(in oklab, #233c53 18%, transparent);
   --header-search-rim: color-mix(in oklab, var(--header-ink) 18%, transparent);
 
-  /* Keep the existing faint halo local to the sticky header wrapper. */
-  background: radial-gradient(circle at center, rgba(120, 180, 255, 0.08), transparent 70%);
+  /* The header sheet floats over the same canvas as the rest of the shell. */
+  background: transparent;
 }
 
 :root .shell-header__bar {

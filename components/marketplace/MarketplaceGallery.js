@@ -2,6 +2,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Modal } from '@/components/ui';
+import { MarketPlaceholder } from '@/components/marketplace/MarketPlaceholder';
 import { DraftAttachments } from '@/components/posts/DraftAttachments';
 import { FullImage, snapshotThumbnail } from '@/components/posts/PostAttachments';
 import { uploadPostFiles } from '@/lib/media/post-upload';
@@ -10,7 +11,7 @@ import { getPostDraft, putPostDraft, deletePostDraft } from '@/lib/media/post-dr
 /** Gallery metadata and image bytes both come from listing-authorized endpoints. */
 export function MarketplaceGallery({ listingId, manage=false, coverOnly=false, username=null }) {
   const [files,setFiles]=useState([]); const [canEdit,setCanEdit]=useState(false); const [visible,setVisible]=useState(manage);
-  const [loaded,setLoaded]=useState(false); const [message,setMessage]=useState(''); const [busy,setBusy]=useState(false);
+  const [loaded,setLoaded]=useState(false); const [coverFailed,setCoverFailed]=useState(false); const [message,setMessage]=useState(''); const [busy,setBusy]=useState(false);
   const [selected,setSelected]=useState([]); const [draftId,setDraftId]=useState(null); const draft=useRef(null); const uploaded=useRef(new Map());
   const [replaceId,setReplaceId]=useState(null); const [lightbox,setLightbox]=useState(null); const close=useCallback(()=>setLightbox(null),[]);
   const root=useRef(null); const input=useRef(null); const replacement=useRef(null);
@@ -55,11 +56,11 @@ export function MarketplaceGallery({ listingId, manage=false, coverOnly=false, u
     if(!['image/jpeg','image/png','image/webp'].includes(file.type)||!file.size||file.size>3*1024*1024){setMessage('Choose a JPEG, PNG or WebP image up to 3 MiB.');return;}
     setReplaceId(replacement.current);setSelected([{id:crypto.randomUUID(),file,preview:URL.createObjectURL(file),progress:0}]);setMessage('');
   }
-  return <div ref={root} className={coverOnly?'mb-3':''}>
-    {!loaded && (visible || coverOnly) ? <div aria-label="Loading images" className="aspect-video w-full animate-pulse rounded bg-surface-2"/> : null}
-    {loaded && !files.length && coverOnly ? <div className="grid aspect-video place-items-center rounded bg-surface-2 text-xs text-muted">No photo</div> : null}
-    {files.length && coverOnly ? <img src={`${base}/${files[0].id}?size=thumb`} alt="" loading="lazy" decoding="async" className="aspect-video w-full rounded object-cover"/> : null}
-    {!coverOnly && files.length ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{files.map((file,index)=><div key={file.id} className="min-w-0 rounded border border-line p-1">
+  return <div ref={root} className={coverOnly?'market-cover':''}>
+    {!loaded && (visible || coverOnly) ? <MarketPlaceholder label="Loading photo" /> : null}
+    {loaded && (!files.length || coverFailed) && coverOnly ? <MarketPlaceholder label={message || coverFailed ? "Photo unavailable" : "No photo provided"} /> : null}
+    {files.length > 0 && coverOnly && !coverFailed ? <img src={`${base}/${files[0].id}?size=thumb`} alt="" loading="lazy" decoding="async" onError={()=>setCoverFailed(true)} className="market-cover__image"/> : null}
+    {!coverOnly && files.length > 0 ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{files.map((file,index)=><div key={file.id} className="min-w-0 rounded border border-line p-1">
       <button type="button" className="block w-full" aria-label={`View ${file.original_name}`} onClick={()=>openImage(file)}><img data-file-id={file.id} src={`${base}/${file.id}?size=thumb`} alt={file.original_name} loading="lazy" decoding="async" className="mx-auto max-h-80 w-auto max-w-full rounded object-contain"/></button>
       {index===0?<span className="text-xs text-muted">Cover</span>:null}
       {manage && canEdit ? <div className="flex flex-wrap gap-2 text-xs"><button type="button" disabled={busy||!!draftId||index===0} onClick={()=>reorder([file,...files.filter((f)=>f.id!==file.id)])} className="underline">Make cover</button><button type="button" disabled={busy||!!draftId||index===0} onClick={()=>{const next=[...files];[next[index-1],next[index]]=[next[index],next[index-1]];reorder(next);}} className="underline">Earlier</button><button type="button" disabled={busy||!!draftId||index===files.length-1} onClick={()=>{const next=[...files];[next[index+1],next[index]]=[next[index],next[index+1]];reorder(next);}} className="underline">Later</button><button type="button" disabled={busy||checking||!!recovery||!!draftId||!!selected.length} onClick={()=>{replacement.current=file.id;input.current?.click();}} className="underline">Replace</button><button type="button" disabled={busy||!!draftId} onClick={()=>remove(file)} className="underline">Remove</button></div>:null}

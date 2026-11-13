@@ -1,14 +1,16 @@
 import Link from 'next/link';
+import '@/app/styles/market-grid.css';
+import { Icon } from '@/components/ui/icons';
+import { MarketPlaceholder } from '@/components/marketplace/MarketPlaceholder';
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { can, toActor } from '@/lib/permissions/authorization';
 import { listListings, listDeals, listCategories, getMarketSummary } from '@/lib/data/marketplace';
 import { ROUTES } from '@/lib/constants';
-import { Badge, Button, Card, EmptyState, LinkButton, Notice, PageHeader, SectionHeader, TiltCard } from '@/components/ui';
+import { Button, Card, EmptyState, LinkButton, Notice, PageHeader } from '@/components/ui';
 import { MarketplaceGallery } from '@/components/marketplace/MarketplaceGallery';
 import { ContentCard } from '@/components/content/ContentCard';
-import { LinkifiedText } from '@/components/content/LinkifiedText';
 import { formatDate, formatPrice } from '@/lib/utils';
 
 export const metadata = { title: 'Market' };
@@ -70,7 +72,7 @@ export default async function MarketPage({ searchParams }) {
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Market"
-        description="Buy, sell, give away and hire — text first, meet on campus."
+        description="Find something useful, give it a new home, and connect with students on campus."
         action={
           <div className="flex items-center gap-2">
             <LinkButton href={ROUTES.gigs} size="sm" variant="secondary" icon="briefcase">
@@ -129,58 +131,27 @@ export default async function MarketPage({ searchParams }) {
         </Notice>
       ) : null}
 
-      {tab === 'listings' && !q && !categoryId && featuredListing ? (
-        <section aria-label="Featured listing" className="flex flex-col gap-2">
-          <SectionHeader title="Just listed" description="The newest item on the campus marketplace." />
-          <TiltCard intensity="soft">
-            <div className="glass glass-sheen card-glass flex flex-wrap items-end justify-between gap-4 p-5">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone="accent">{featuredListing.is_free ? 'Free' : formatPrice(featuredListing.price)}</Badge>
-                  {featuredListing.condition && featuredListing.condition !== 'not_applicable' ? (
-                    <Badge>{featuredListing.condition.replace(/_/g, ' ')}</Badge>
-                  ) : null}
-                  {featuredListing.location ? <Badge>{featuredListing.location}</Badge> : null}
-                </div>
-                <h3 className="t-section mt-2">{featuredListing.title}</h3>
-                {featuredListing.description ? (
-                  <p className="user-text t-secondary mt-1.5 max-w-xl"><LinkifiedText text={featuredListing.description} /></p>
-                ) : null}
-                {featuredSeller ? <p className="t-caption mt-2">Listed by @{featuredSeller.username}</p> : null}
-              </div>
-              <LinkButton href={ROUTES.listing(featuredListing.id)} variant="sheen" icon="arrowUpRight">
-                View listing
-              </LinkButton>
-            </div>
-          </TiltCard>
-        </section>
-      ) : null}
-
       {!listings.unavailable && listings.items.length ? (
-        <section aria-label="Listings" className="flex flex-col gap-3">
+        <section aria-label="Listings" className="market-grid">
           {listings.items.map((listing) => {
             const seller = sellers.get(listing.seller_id);
             return (
-              <ContentCard
-                key={listing.id}
-                href={ROUTES.listing(listing.id)}
-                title={listing.title}
-                description={listing.description}
-                icon="tag"
-                media={marketImages ? <MarketplaceGallery listingId={listing.id} coverOnly /> : null}
-                timestamp={listing.created_at}
-                badges={[
-                  { label: listing.is_free ? 'Free' : formatPrice(listing.price), tone: 'accent' },
-                  ...(listing.condition && listing.condition !== 'not_applicable'
-                    ? [{ label: listing.condition.replace(/_/g, ' ') }]
-                    : []),
-                  ...(listing.status === 'reserved' ? [{ label: 'Reserved', tone: 'warning' }] : []),
-                ]}
-                meta={[
-                  seller ? `@${seller.username}` : null,
-                  listing.location || null,
-                ]}
-              />
+              <Link key={listing.id} href={ROUTES.listing(listing.id)} className="market-product">
+                <div className="market-product__image">
+                  {marketImages ? <MarketplaceGallery listingId={listing.id} coverOnly /> : <MarketPlaceholder />}
+                  {listing.status === 'reserved' ? <span className="market-product__reserved">Reserved</span> : null}
+                </div>
+                <div className="market-product__body">
+                  <span className="market-product__price">{listing.is_free ? 'Free' : formatPrice(listing.price)}</span>
+                  <h2>{listing.title}</h2>
+                  {listing.description ? <p className="market-product__description">{listing.description}</p> : null}
+                  <div className="market-product__meta">
+                    {listing.condition && listing.condition !== 'not_applicable' ? <span>{listing.condition.replace(/_/g, ' ')}</span> : null}
+                    {listing.location ? <span><Icon name="mapPin" size={13} />{listing.location}</span> : null}
+                  </div>
+                  {seller ? <p className="market-product__seller">Listed by @{seller.username}</p> : null}
+                </div>
+              </Link>
             );
           })}
         </section>
@@ -211,7 +182,7 @@ export default async function MarketPage({ searchParams }) {
           title={q ? 'Nothing matched that search' : 'The marketplace is empty'}
           description={
             canSell
-              ? 'Nothing has been listed yet. Sell something or give something away — text and a price, that is all it takes.'
+              ? 'Nothing has been listed yet. Sell something or give something away to another student.'
               : 'Nothing has been listed yet.'
           }
           action={canSell ? <LinkButton href="/market/new" variant="primary" size="sm">Create the first listing</LinkButton> : null}
@@ -219,7 +190,7 @@ export default async function MarketPage({ searchParams }) {
       ) : null}
 
       <p className="pb-2 text-center text-2xs text-muted">
-        Listings are text only — no photos, no file uploads, no payments. Meet on campus and settle directly.
+        Meet on campus and settle directly. Campus+ does not process payments.
       </p>
     </div>
   );

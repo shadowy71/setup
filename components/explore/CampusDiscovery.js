@@ -11,7 +11,7 @@ export function CampusDiscovery({ clubs, recruitment, events, hosts, interests, 
     <>
       <section aria-label="Clubs worth exploring" className="flex flex-col gap-3">
         <SectionHeader title="Clubs worth exploring" description="A selection from the public club directory." action={<Link href={ROUTES.clubs} className="text-2xs text-muted underline hover:text-ink">All clubs</Link>} />
-        {clubs.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{clubs.map((club) => <ClubCard key={club.slug} club={club} showRecruitmentStatus={false} />)}</div> : <p className="card p-4 text-sm text-muted">{clubsUnavailable ? 'Clubs are temporarily unavailable.' : 'No public clubs to show yet.'}</p>}
+        {clubs.length ? <div className="explore-clubs-grid grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{clubs.map((club) => <ClubCard key={club.slug} club={club} showRecruitmentStatus={false} />)}</div> : <p className="card p-4 text-sm text-muted">{clubsUnavailable ? 'Clubs are temporarily unavailable.' : 'No public clubs to show yet.'}</p>}
       </section>
 
       <section aria-label="Recruitment information" className="card flex flex-col gap-3 p-4">

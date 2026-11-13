@@ -765,9 +765,6 @@
     box-shadow: var(--depth-2);
   }
 
-  :root .shell-root {
-    padding-left: 16rem;
-  }
 }
 
 :root .shell-header {

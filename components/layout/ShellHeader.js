@@ -46,7 +46,7 @@ function NotificationBell({ unreadNotifications = 0 }) {
   );
 }
 
-export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = false, canModerate = false, canAdmin = false, createItems = [] }) {
+export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = false, canModerate = false, canAdmin = false, createItems = [], sidebarOpen, onToggleSidebar }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchId = useId();
   const searchTriggerRef = useRef(null);
@@ -69,12 +69,22 @@ export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = fa
     requestAnimationFrame(() => searchTriggerRef.current?.focus());
   };
 
+  const sidebarToggle = (
+    <button type="button" className="icon-btn sidebar-toggle" aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} aria-expanded={sidebarOpen} aria-controls="app-sidebar" onClick={onToggleSidebar}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="16" rx="3" />
+        <path d="M9 4v16" />
+      </svg>
+    </button>
+  );
+
   return (
     /* Level-2 floating glass — the header is chrome, not a page surface. */
     <div className="shell-header sticky top-0 z-30 px-3 pt-3 lg:px-4 lg:pt-4">
       <GlassSurface as="header" tone="floating" className="shell-header__bar mx-auto w-full">
         {/* Mobile */}
         <div className="flex h-14 items-center gap-1.5 px-2 lg:hidden">
+          {sidebarToggle}
           {!searchOpen ? (
             <>
               <MobileMenu
@@ -128,6 +138,7 @@ export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = fa
 
         {/* Desktop */}
         <div className="hidden h-16 items-center gap-3 px-4 lg:flex">
+          {sidebarToggle}
           <ShellSearch />
           <div className="ml-auto flex items-center gap-2">
             <div className="flex items-center gap-2" role="group" aria-label="Quick actions">
