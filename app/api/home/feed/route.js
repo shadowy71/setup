@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { BLOCKED_STATUSES, getCurrentUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
-import { getCampusFeed, getTrendingPosts } from '@/lib/data/feed';
+import { getCampusFeed, getTrendingPosts, hydratePosts } from '@/lib/data/feed';
 import {
   HOME_FEED_MAX_OFFSET,
   HOME_FEED_PAGE_SIZE,
@@ -56,6 +56,19 @@ async function serveFeed(request, { reconcile = false } = {}) {
   const supabase = await getServerClient();
   if (!supabase) {
     return NextResponse.json({ ok: false, error: 'Campus+ data is not configured.' }, { status: 503, headers: PRIVATE_HEADERS });
+  }
+
+  const followingMode = new URL(request.url).searchParams.get('mode') === 'following';
+  if (followingMode) {
+    if (request.method !== 'GET') return NextResponse.json({ ok: false }, { status: 405, headers: PRIVATE_HEADERS });
+    const { data: rows, error } = await supabase.rpc('following_feed', { p_limit: HOME_FEED_PAGE_SIZE, p_offset: offset });
+    if (error) return NextResponse.json({ ok: false, error: 'Following feed is temporarily unavailable.' }, { status: 503, headers: PRIVATE_HEADERS });
+    try {
+      const posts = await hydratePosts(supabase, rows || [], { currentProfileId: user.profile.id });
+      return NextResponse.json({ ok: true, posts, page: { offset, limit: HOME_FEED_PAGE_SIZE, hasMore: posts.length === HOME_FEED_PAGE_SIZE && offset + posts.length < HOME_FEED_MAX_OFFSET } }, { headers: PRIVATE_HEADERS });
+    } catch {
+      return NextResponse.json({ ok: false, error: 'Following feed is temporarily unavailable.' }, { status: 503, headers: PRIVATE_HEADERS });
+    }
   }
 
   let postIds = [];
@@ -115,6 +128,16 @@ async function serveFeed(request, { reconcile = false } = {}) {
         ? getTrendingPosts(supabase, { limit: TRENDING_RAIL_LIMIT, hours: TRENDING_WINDOW_HOURS })
         : Promise.resolve(null),
     ]);
+
+    // One viewer-scoped read for the page, never one request per card.
+    const authorIds = [...new Set(feed.map((item) => item.post?.author_id).filter((id) => id && id !== user.profile.id))];
+    if (authorIds.length) {
+      const { data: follows, error: followError } = await supabase.from('user_follows').select('followed_id').eq('follower_id', user.profile.id).in('followed_id', authorIds);
+      const following = new Set((follows || []).map((row) => row.followed_id));
+      for (const item of feed) if (item.post && item.post.author_id !== user.profile.id) {
+        item.post.following_by_me = followError ? null : following.has(item.post.author_id);
+      }
+    }
 
     const visible = new Set((visibleRows || []).map((row) => row.id));
     const payload = {

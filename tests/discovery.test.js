@@ -124,10 +124,10 @@ describe('study routes', () => {
 
   it('ships the pages the routes promise', () => {
     for (const page of [
-      'app/(app)/campus/study/page.js',
-      'app/(app)/campus/study/new/page.js',
-      'app/(app)/campus/study/[id]/page.js',
-      'app/(app)/campus/events/new/page.js',
+      'app/(shell)/(app)/campus/study/page.js',
+      'app/(shell)/(app)/campus/study/new/page.js',
+      'app/(shell)/(app)/campus/study/[id]/page.js',
+      'app/(shell)/(app)/campus/events/new/page.js',
     ]) {
       expect(fs.existsSync(path.join(process.cwd(), page)), page).toBe(true);
     }

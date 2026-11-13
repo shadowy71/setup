@@ -71,7 +71,8 @@ const PUBLIC_ROUTES = [
   '/login',
   '/rules',
   '/legal',
-  '/community',
+  // The alias takes a slug; /community alone has never been a page.
+  '/community/placements-2027',
   '/setup',
 ];
 

@@ -179,7 +179,7 @@ describe('client surface: nothing reaches for the retired random channel', () =>
       }
     }
     // The Random Chat route stays retired (migration 023).
-    await expect(read('app/(app)/random/page.js')).rejects.toBeTruthy();
+    await expect(read('app/(shell)/(app)/random/page.js')).rejects.toBeTruthy();
   });
 
   it('does not expose the oracle to a client-side query', async () => {

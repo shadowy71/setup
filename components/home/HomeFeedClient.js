@@ -11,6 +11,7 @@ import { HomeInstallCard } from '@/components/install/HomeInstallCard';
 import { HomePulse, HomeZone } from '@/components/home/HomePulse';
 import { StreamItem, StreamSlot } from '@/components/home/StreamItem';
 import { HomeRail } from '@/components/home/HomeRail';
+import { FollowingFeed } from '@/components/home/FollowingFeed';
 import {
   clearHomeFeedCache,
   patchHomeFeedCache,
@@ -146,6 +147,18 @@ export function HomeFeedClient({
   // that. `revision()` is a getter over the same live counter either way.
   const { subscribe: subscribeToFeed, revision: feedRevision, invalidate: invalidateFeed } = useLiveFeed();
   const [snapshot, setSnapshot] = useState(null);
+  const [feedMode, setFeedMode] = useState('for-you');
+  useEffect(() => {
+    try {
+      // Restore a non-sensitive per-tab preference after hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (sessionStorage.getItem(`campus:feed-mode:${userId}`) === 'following') setFeedMode('following');
+    } catch {}
+  }, [userId]);
+  const chooseFeed = (mode) => {
+    setFeedMode(mode);
+    try { sessionStorage.setItem(`campus:feed-mode:${userId}`, mode); } catch {}
+  };
   // Essential readiness, not a mount/timer flag: the feed and its rail arrive
   // in one authoritative payload. It remains pending until that payload (or a
   // terminal error) settles; cached real content may render during revalidation.
@@ -458,6 +471,20 @@ export function HomeFeedClient({
     };
   }, [feedRevision, refresh, userId]);
 
+  useEffect(() => {
+    const onFollow = (event) => {
+      const { profileId, following } = event.detail || {};
+      if (!profileId) return;
+      const patch = (payload) => ({ ...payload, feed: (payload.feed || []).map((item) => item.post?.author_id === profileId
+        ? { ...item, post: { ...item.post, following_by_me: following } } : item) });
+      const updated = patchHomeFeedCache(userId, patch, feedRevision());
+      if (updated) setSnapshot(updated);
+      else setSnapshot((current) => current ? patch(current) : current);
+    };
+    window.addEventListener('campus:follow-change', onFollow);
+    return () => window.removeEventListener('campus:follow-change', onFollow);
+  }, [feedRevision, userId]);
+
   const feed = snapshot?.feed || [];
   const events = snapshot?.events || [];
   const notices = snapshot?.notices || [];
@@ -566,7 +593,12 @@ export function HomeFeedClient({
               )}
             </div>
 
-            {unavailable ? (
+            <div className="flex flex-wrap gap-2" aria-label="Feed selection">
+              <Button variant={feedMode === 'for-you' ? 'primary' : 'secondary'} size="sm" aria-pressed={feedMode === 'for-you'} onClick={() => chooseFeed('for-you')}>For You</Button>
+              <Button variant={feedMode === 'following' ? 'primary' : 'secondary'} size="sm" aria-pressed={feedMode === 'following'} onClick={() => chooseFeed('following')}>Following</Button>
+            </div>
+
+            {feedMode === 'for-you' && unavailable ? (
               <div className="flex flex-col items-start gap-2">
                 <Notice tone="warning" icon="flag">
                   The feed is temporarily unavailable. {feed.length ? 'Showing the last cached entries.' : 'Try again shortly.'}
@@ -575,7 +607,7 @@ export function HomeFeedClient({
               </div>
             ) : null}
 
-            <section
+            {feedMode === 'for-you' ? <section
               className="flex flex-col gap-4"
               aria-labelledby="home-stream-title"
               aria-busy={!snapshot && loading}
@@ -668,7 +700,7 @@ export function HomeFeedClient({
                   More on Explore →
                 </Link>
               ) : null}
-            </section>
+            </section> : <FollowingFeed currentUserId={currentUserId} canModerate={canModerate} />}
 
             {afterFeed}
           </div>

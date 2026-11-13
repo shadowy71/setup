@@ -29,7 +29,7 @@ describe('Home sea/depth-field removal', () => {
       .filter((file) => /DepthField|createDepthField|depth-field|depth-drift|--cp-depth-/i.test(read(file)));
     expect(offenders).toEqual([]);
 
-    const home = read('app/(app)/home/page.js');
+    const home = read('app/(shell)/(app)/home/page.js');
     expect(home).toContain('<HomeFeedClient');
     expect(home).not.toContain('<canvas');
   });

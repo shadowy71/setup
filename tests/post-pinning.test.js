@@ -89,7 +89,7 @@ describe('optimistic moderator pin confirmation', () => {
 
   it('keeps the control on the staff page and invalidates only after confirmation', () => {
     const panel = read('components/moderation/ModerationPanels.js');
-    const page = read('app/(app)/moderator/page.js');
+    const page = read('app/(shell)/(app)/moderator/page.js');
     expect(panel).toContain('settlePostPin({ previous, requested, result })');
     expect(panel).toContain("feed.invalidate('local', [targetRef])");
     expect(panel.indexOf('settlePostPin({ previous, requested, result })')).toBeLessThan(panel.indexOf("feed.invalidate('local', [targetRef])"));

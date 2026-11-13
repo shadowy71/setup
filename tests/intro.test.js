@@ -6,7 +6,7 @@ const read = (file) => fs.readFileSync(file, 'utf8');
 const source = read('components/layout/GalacticIntro.js');
 const css = read('components/layout/GalacticIntro.module.css');
 const layout = read('app/layout.js');
-const homeLayout = read('app/(app)/home/layout.js');
+const homeLayout = read('app/(shell)/(app)/home/layout.js');
 
 // Minimal TrueType/OpenType reader: the table directory plus the `fvar` weight
 // axis. Enough to prove whether these files are variable and what their real
@@ -47,7 +47,7 @@ describe('document-level galactic intro architecture', () => {
     expect(layout).toContain("import { LandingIntro } from '@/components/layout/GalacticIntro'");
     expect(layout).toContain('<LandingIntro>{children}</LandingIntro>');
     expect(layout).not.toContain('<GalacticIntro');
-    expect(read('app/(app)/home/layout.js')).not.toContain('HomeLaunchGate');
+    expect(read('app/(shell)/(app)/home/layout.js')).not.toContain('HomeLaunchGate');
   });
 
   it('shows the animation only on the home page reached as the landing route', () => {

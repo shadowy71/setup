@@ -17,7 +17,7 @@ import { noindexMetadata } from '@/lib/seo';
  * It never looks up a club by slug and never invents a slug from a name. It
  * does not render club content, so there is no duplicate page competing with
  * the canonical URL. `/clubs/<id>/manage` and `/clubs/<id>/edit` remain
- * separate, UUID-addressed authenticated routes in `app/(app)/`.
+ * separate, UUID-addressed authenticated routes in `app/(shell)/(app)/`.
  *
  * Unlisted (campus/private) clubs that a signed-in student may view under the
  * existing RLS policy also resolve, so their old links keep working; a guest

@@ -182,7 +182,7 @@ describe('division-aware shortcut', () => {
   });
 
   it('is wired through layout, sidebar, mobile menu and the palette', () => {
-    const layout = read('app/(app)/layout.js');
+    const layout = read('components/layout/AuthenticatedAppFrame.js');
     // The shell's division now comes from the one identity adapter; the palette
     // built on the server keeps reading the session directly.
     expect(layout).toContain('toShellUser(user)');

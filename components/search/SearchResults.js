@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { SEARCH_SCOPES } from '@/lib/constants';
 import { Badge, Button, EmptyState, IdentityMark, Notice, SkeletonList, WordLoader } from '@/components/ui';
-import { SearchField } from '@/components/ui/SearchField';
 import { Icon } from '@/components/ui/icons';
 
 /**
@@ -57,7 +56,7 @@ function readAddress() {
   };
 }
 
-export function SearchResults({ initialQuery = '', initialScope = 'all', hint = 'Search people, posts, communities, events, listings…' }) {
+export function SearchResults({ initialQuery = '', initialScope = 'all' }) {
   const [query, setQuery] = useState(initialQuery);
   const [scope, setScope] = useState(initialScope);
   const [groups, setGroups] = useState([]);
@@ -143,14 +142,6 @@ export function SearchResults({ initialQuery = '', initialScope = 'all', hint = 
 
   // Clearing the box clears the address immediately (an event handler, not a
   // render), while the rows disappear by derivation above.
-  const onChange = (value) => {
-    setQuery(value);
-    if (value.trim().length < 2) {
-      requestId.current += 1; // a pending search for the old term must not land
-      syncAddress('', scope);
-    }
-  };
-
   const loadMore = () => {
     const next = offset.current + PAGE_SIZE;
     setLoading(true);
@@ -159,20 +150,6 @@ export function SearchResults({ initialQuery = '', initialScope = 'all', hint = 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative">
-        <SearchField
-          value={query}
-          onChange={onChange}
-          onSubmit={(term) => {
-            clearTimeout(debounce.current);
-            offset.current = 0;
-            run(term.trim(), scope, 0);
-            syncAddress(term.trim(), scope);
-          }}
-          hint={hint}
-          autoFocus
-        />
-      </div>
 
       <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Search scope">
         {SEARCH_SCOPES.map((item) => (

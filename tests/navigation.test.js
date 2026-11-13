@@ -102,7 +102,7 @@ describe('contextual navigation help', () => {
     expect(read('components/layout/Sidebar.js')).toContain('<NavigationHelp');
     expect(read('components/layout/MobileMenu.js')).toContain('<NavigationHelp');
     expect(read('components/layout/BottomNav.js')).not.toContain('NavigationHelp');
-    expect(PRIMARY_NAV).toHaveLength(9);
+    expect(PRIMARY_NAV).toHaveLength(8);
     expect(MOBILE_NAV).toHaveLength(5);
     const css = read('app/styles/navigation.css');
     expect(css).toContain('.sheet-destination .nav-help__trigger');
@@ -112,7 +112,7 @@ describe('contextual navigation help', () => {
 });
 
 describe('the primary rail order', () => {
-  it('shows Timetable where Profile used to be, and Profile directly after it', () => {
+  it('keeps campus destinations together without a Profile sidebar row', () => {
     const items = primaryNavigation('/timetable/o');
 
     expect(items.map((item) => item.label)).toEqual([
@@ -125,10 +125,11 @@ describe('the primary rail order', () => {
       'Campus',
       'Timetable',
       'Map',
-      'Profile',
     ]);
     expect(items.find((item) => item.label === 'Timetable').href).toBe('/timetable/o');
-    expect(items.find((item) => item.label === 'Profile').href).toBe(ROUTES.profile);
+    expect(items.some((item) => item.href === ROUTES.profile)).toBe(false);
+    expect(read('components/layout/Sidebar.js')).not.toContain('side-panel__account');
+    expect(read('components/layout/AccountMenu.js')).toContain('href={ROUTES.profile}');
 
     // A reorder, not a redesign: every destination keeps its label and icon,
     // and nothing is added or lost.

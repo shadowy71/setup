@@ -245,11 +245,11 @@ describe('every other surface that lists posts is told to re-read', () => {
 
   it('is mounted on each server-rendered board that lists posts', () => {
     const pages = [
-      'app/(app)/explore/page.js',
-      'app/(app)/profile/page.js',
-      'app/(app)/communities/[slug]/page.js',
-      'app/(public)/c/[slug]/page.js',
-      'app/(app)/user/[username]/page.js',
+      'app/(shell)/(app)/explore/page.js',
+      'app/(shell)/(app)/profile/page.js',
+      'app/(shell)/(app)/communities/[slug]/page.js',
+      'app/(shell)/(public)/c/[slug]/page.js',
+      'app/(shell)/(app)/user/[username]/page.js',
     ];
 
     for (const page of pages) {
@@ -259,7 +259,7 @@ describe('every other surface that lists posts is told to re-read', () => {
 
   it('owns one channel per signed-in profile in the shell', () => {
     const shell = read('components/layout/AppShell.js');
-    const layout = read('app/(app)/layout.js');
+    const layout = read('components/layout/AuthenticatedAppFrame.js');
 
     // The profile id, from the session the layout already resolves — never a uid,
     // because the channel topic is authorized against `current_profile_id()`.

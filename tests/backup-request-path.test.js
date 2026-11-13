@@ -65,7 +65,7 @@ describe('normal user writes never wait for Google Drive', () => {
     for (const file of appRoutes) {
       const relative = path.relative(root, file).replace(/\\/g, '/');
       if (relative.startsWith('app/api/backup/')) continue; // cron + OAuth routes only
-      if (relative === 'app/(app)/admin/page.js') continue; // admin Backups tab
+      if (relative === 'app/(shell)/(app)/admin/page.js') continue; // admin Backups tab
       const source = await readFile(file, 'utf8');
       if (BACKUP_IO_MODULES.test(source) || GOOGLE_CALLS.test(source)) offenders.push(relative);
     }
