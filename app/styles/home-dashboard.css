@@ -1,0 +1,168 @@
+/* Home composition only: inherit the existing Campus+ materials and colors. */
+.shell-content:has(.home-stage) { max-width: 78rem; }
+:root .home-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+  padding-top: 0;
+}
+:root .home-body__main { gap: 1rem; }
+:root .home-body__rail { gap: 1rem; position: static; max-height: none; overflow: visible; }
+:root .rail-island--notices { order: 1; }
+:root .rail-island--activity { order: 2; }
+:root .rail-island--events { order: 3; }
+:root .rail-island--market { order: 4; }
+@media (min-width: 1100px) {
+  :root .home-body { grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem); }
+}
+:root .home-pulse { padding: .5rem 0 0; gap: 1rem; }
+:root .home-pulse__grid { display: block; }
+:root .home-pulse__title { margin-top: .5rem; }
+:root .home-pulse__greet { display: inline; font-size: 1.15rem; }
+:root .home-pulse__name { display: inline-flex; margin: 0 0 0 .35rem; font-size: clamp(1.65rem, 2.3vw, 2.4rem); vertical-align: baseline; }
+:root .home-pulse__name .home-pulse__wave { width: 1.5rem; height: 1.5rem; }
+:root .home-pulse__lead { margin-top: .35rem; }
+:root .home-pulse__horizon { display: none; }
+:root .home-features { margin-top: 1rem; }
+:root .home-features__title { margin-bottom: .5rem; }
+:root .home-features__grid { display: flex; flex-wrap: wrap; gap: .5rem; }
+:root .feature-tile { flex: 1 1 auto; min-width: 0; flex-direction: row; align-items: center; justify-content: center; gap: .45rem; padding: .55rem .7rem; }
+:root .feature-tile__top { display: flex; }
+:root .feature-tile__icon { width: 1.4rem; height: 1.4rem; border: 0; background: none; box-shadow: none; }
+:root .feature-tile__icon svg { width: 1rem; height: 1rem; }
+:root .feature-tile__title { margin: 0; font-size: .8rem; white-space: nowrap; }
+:root .feature-tile__copy, :root .feature-tile__arrow { display: none; }
+:root .home-pulse__stats { margin-top: 1rem; display: flex; max-width: none; }
+:root .home-pulse__stat { flex: 1; padding: .65rem 1rem; }
+:root .home-pulse__stat dd { font-size: 1.15rem; }
+:root .home-composer { padding: 1rem; }
+.home-composer__open { display: block; width: 100%; text-align: left; padding: .75rem 1rem; border: 1px solid var(--color-rule); border-radius: var(--radius-md); color: var(--color-muted); background: var(--color-paper); cursor: pointer; }
+.home-composer__open:hover { border-color: var(--color-accent); color: var(--color-ink); }
+.home-composer__open:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.home-feed-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--color-rule); padding: 0 0 .75rem; font-size: .8125rem; color: var(--color-ink-2); }
+.home-feed-nav a:hover { color: var(--color-accent-text); }
+.home-feed-nav__current { color: var(--color-accent-text); font-weight: 600; }
+.home-feed-nav__unavailable { color: var(--color-muted); opacity: .7; }
+.home-feed-nav__sort { margin-left: auto; color: var(--color-muted); font-size: .75rem; }
+@media (max-width: 639px) {
+  :root .feature-tile { flex: 1 1 29%; }
+  :root .home-pulse__name { font-size: 1.75rem; }
+  .home-feed-nav { gap: .75rem; }
+}
+.home-explore-link { display: inline-block; margin-top: .35rem; font-size: .75rem; color: var(--color-accent-text); }
+
+/* Keep shortcuts on one line; retain accessible names when space is tight. */
+:root .home-pulse__lead { font-size: .8125rem; line-height: 1.45; }
+:root .home-features__grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .375rem;
+}
+:root .feature-tile { width: 100%; min-height: 44px; padding: .5rem .25rem; gap: .3rem; }
+:root .feature-tile__title { font-size: .75rem; }
+@container home-features (max-width: 42rem) {
+  :root .feature-tile__title { display: none; }
+  :root .feature-tile { min-width: 0; }
+  :root .feature-tile__icon { width: 1.5rem; height: 1.5rem; }
+  :root .feature-tile__icon svg { width: 1.125rem; height: 1.125rem; }
+}
+
+/* A quiet inline summary, rather than oversized dashboard counters. */
+:root .home-pulse__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.25rem;
+  margin-top: .75rem;
+  padding: .65rem 0;
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-rule);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+:root .home-pulse__stat {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: baseline;
+  gap: .35rem;
+  padding: 0;
+  border: 0;
+}
+:root .home-pulse__stat dt { font-family: var(--font-body); font-size: .75rem; text-transform: none; letter-spacing: 0; }
+:root .home-pulse__stat dd { font-family: var(--font-body); font-size: .875rem; font-weight: 600; }
+
+/* Focused greeting and statistics treatment: distinct shapes, stronger type,
+   and the existing Campus+ accent rather than a new site-wide palette. */
+:root .home-pulse {
+  padding: clamp(1.25rem, 2.5vw, 1.875rem);
+  border: 1px solid var(--color-rule);
+  border-radius: 8px 24px 8px 24px;
+  background: var(--color-paper-2);
+  box-shadow: var(--depth-1);
+}
+:root .home-pulse__title { margin-top: .75rem; }
+:root .home-pulse__greet {
+  font-family: var(--font-body);
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 700;
+  color: var(--color-ink);
+}
+:root .home-pulse__name {
+  font-size: clamp(2rem, 3.5vw, 2.9rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+:root .home-explore-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: .8rem;
+  padding: .6rem 1rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 6px 14px 6px 6px;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-size: .8125rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: filter 160ms ease, box-shadow 160ms ease;
+}
+:root .home-explore-link:hover { filter: brightness(1.05); box-shadow: var(--depth-1); }
+:root .home-explore-link:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+:root .home-pulse__stats {
+  display: flex;
+  gap: .75rem;
+  margin-top: 1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+:root .home-pulse__stat {
+  flex: 0 1 12rem;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: .2rem;
+  min-width: 0;
+  padding: .75rem 1rem;
+  border: 1px solid var(--color-rule);
+  border-radius: 4px 14px 4px 4px;
+  background: var(--color-paper);
+}
+:root .home-pulse__stat:first-child { flex-basis: 15rem; border-left: 3px solid var(--color-accent); }
+:root .home-pulse__stat dt { font-size: .75rem; color: var(--color-muted); }
+:root .home-pulse__stat dd { font-size: 1.35rem; font-weight: 700; line-height: 1.1; color: var(--color-ink); }
+@media (max-width: 639px) {
+  :root .home-pulse { padding: 1rem; }
+  :root .home-pulse__name { font-size: 2rem; }
+  :root .home-pulse__stat { flex: 1 1 0; padding: .65rem .75rem; }
+}
+@media (prefers-reduced-motion: reduce) { :root .home-explore-link { transition: none; } }
+.home-feed-nav button { cursor: pointer; color: inherit; background: transparent; border: 0; padding: 0; }
+.home-feed-nav button.home-feed-nav__current { color: var(--color-accent-text); }
+.home-feed-nav button:disabled { cursor: not-allowed; color: var(--color-muted); }
+.home-feed-nav button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }

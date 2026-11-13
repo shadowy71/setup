@@ -1,11 +1,13 @@
 'use client';
 
+import { HomeFeedNavigation } from '@/components/home/HomeFeedNavigation';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { HOME_FEED_PAGE_SIZE, HOME_FEED_RECONCILE_LIMIT, ROUTES } from '@/lib/constants';
 import { Button, CascadeLoader, EmptyState, Notice, WordLoader } from '@/components/ui';
-import { PostComposer } from '@/components/posts/PostComposer';
+import { HomeComposer } from '@/components/home/HomeComposer';
 import { IslandMotion } from '@/components/home/IslandMotion';
 import { HomeInstallCard } from '@/components/install/HomeInstallCard';
 import { HomePulse, HomeZone } from '@/components/home/HomePulse';
@@ -501,10 +503,8 @@ export function HomeFeedClient({
   const stats = snapshot
     ? [
         { label: 'On the feed', value: feedTotal },
-        { label: 'Events ahead', value: events.length },
-        { label: 'Notices pinned', value: notices.length },
-        { label: 'Market listings', value: marketplace.length },
-      ].filter((stat) => stat.value > 0)
+        { label: 'Notices shown', value: notices.length },
+      ]
     : [];
 
   const canPageBack = Boolean(snapshot?.page?.hasMore) && feed.length > 0 && !unavailable;
@@ -569,34 +569,19 @@ export function HomeFeedClient({
   return (
     <>
       <HomeInstallCard />
-      <HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>
 
       <IslandMotion>
         <div className="home-body">
           <div className="home-body__main">
-            <div className="home-composer">
-              <p className="home-composer__label">
-                New on campus
-                <span aria-hidden="true">·</span>
-                <span className="text-muted-soft">Posts, discussions and polls</span>
-              </p>
-              {canPost ? (
-                <PostComposer
-                  authorName={user.profile.display_name || user.profile.username}
-                  authorUsername={user.profile.username}
-                  onCreated={applyCreatedPost}
-                />
-              ) : (
-                <Notice tone="neutral" icon="lock">
-                  Your account cannot publish posts right now.
-                </Notice>
-              )}
-            </div>
+            <HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>
+            <HomeComposer
+              canPost={canPost}
+              authorName={user.profile.display_name || user.profile.username}
+              authorUsername={user.profile.username}
+              onCreated={applyCreatedPost}
+            />
 
-            <div className="flex flex-wrap gap-2" aria-label="Feed selection">
-              <Button variant={feedMode === 'for-you' ? 'primary' : 'secondary'} size="sm" aria-pressed={feedMode === 'for-you'} onClick={() => chooseFeed('for-you')}>For You</Button>
-              <Button variant={feedMode === 'following' ? 'primary' : 'secondary'} size="sm" aria-pressed={feedMode === 'following'} onClick={() => chooseFeed('following')}>Following</Button>
-            </div>
+            <HomeFeedNavigation mode={feedMode} onChange={chooseFeed} />
 
             {feedMode === 'for-you' && unavailable ? (
               <div className="flex flex-col items-start gap-2">

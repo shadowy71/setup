@@ -34,14 +34,28 @@ export function HomeFeatureTiles({ division }) {
       icon: 'users',
       tone: 'clubs',
     },
+    {
+      href: ROUTES.market,
+      name: 'Market',
+      copy: 'Buy and sell on campus.',
+      icon: 'tag',
+      tone: 'market',
+    },
+    {
+      href: ROUTES.gigs,
+      name: 'Gigs',
+      copy: 'Find campus opportunities.',
+      icon: 'briefcase',
+      tone: 'gigs',
+    },
   ];
 
   return (
     <section className="home-features" aria-labelledby="home-features-title">
-      <h2 id="home-features-title" className="home-features__title">Your campus, at a glance</h2>
+      <h2 id="home-features-title" className="home-features__title">Quick navigation</h2>
       <div className="home-features__grid">
         {tiles.map((tile) => (
-          <Link key={tile.name} href={tile.href} className={`feature-tile feature-tile--${tile.tone}`}>
+          <Link key={tile.name} href={tile.href} aria-label={tile.name} title={tile.name} className={`feature-tile feature-tile--${tile.tone}`}>
             <span className="feature-tile__top" aria-hidden="true">
               <span className="feature-tile__icon"><Icon name={tile.icon} size={19} /></span>
               <Icon name="arrowUpRight" size={15} className="feature-tile__arrow" />

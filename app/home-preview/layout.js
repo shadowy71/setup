@@ -9,6 +9,7 @@ import '@/app/styles/home.css';
 import '@/app/styles/guide-strip.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
+import '@/app/styles/home-dashboard.css';
 
 export default function HomePreviewLayout({ children }) {
   preload('/fonts/Syne.ttf', {

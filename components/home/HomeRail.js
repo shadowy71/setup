@@ -85,7 +85,7 @@ export function HomeRail({ events = [], notices = [], trending = [], marketplace
           title="Noticeboard"
           action={
             <Link href="/campus/noticeboard" className="text-2xs font-semibold text-muted hover:text-ink">
-              All
+              View all
             </Link>
           }
         >
