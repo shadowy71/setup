@@ -8,7 +8,7 @@ import { toShellUser } from '@/lib/identity/shell-user';
  * The unread indicator.
  *
  * One count is measured per request (the RLS-scoped `notifications` head count
- * in app/(app)/layout.js) and every surface — header bell, sidebar row, mobile
+ * in app/(shell)/(app)/layout.js) and every surface — header bell, sidebar row, mobile
  * menu row — renders it through `formatUnread()`. These tests pin the badge
  * rules (0 = none, 1 and 99 exact, 100 = `99+`) and the accessible names, then
  * render the real components to prove the same number reaches all three.
@@ -113,8 +113,8 @@ describe('structural guarantees', () => {
       .split('\n')
       .filter(Boolean);
     // The layout owns the count; lib/notifications/index.js writes rows.
-    expect(hits).toContain('app/(app)/layout.js');
-    const layout = await fs.readFile('app/(app)/layout.js', 'utf8');
+    expect(hits).toContain('components/layout/AuthenticatedAppFrame.js');
+    const layout = await fs.readFile('components/layout/AuthenticatedAppFrame.js', 'utf8');
     expect(layout.match(/\.from\('notifications'\)/g)).toHaveLength(1);
     expect(layout).toContain("select('id', { count: 'exact', head: true })");
     expect(layout).toContain(".is('read_at', null)");

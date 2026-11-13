@@ -1,5 +1,4 @@
 import '@/app/styles/campus-map.css';
-import { OptionalAppFrame } from '@/components/layout/OptionalAppFrame';
 
 export const metadata = {
   title: 'Campus Map',
@@ -8,5 +7,5 @@ export const metadata = {
 
 /** Map content uses the same session-aware chrome as other app routes. */
 export default function MapLayout({ children }) {
-  return <OptionalAppFrame><div className="cm-page">{children}</div></OptionalAppFrame>;
+  return <div className="cm-page">{children}</div>;
 }

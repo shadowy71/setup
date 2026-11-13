@@ -86,21 +86,21 @@ describe('gig and club routes', () => {
   });
 
   it('keeps the old addresses reachable as redirects, not as second pages', () => {
-    const legacyGig = read('app/(app)/market/gigs/[id]/page.js');
+    const legacyGig = read('app/(shell)/(app)/market/gigs/[id]/page.js');
     expect(legacyGig).toContain('redirect(ROUTES.gig(id))');
 
-    const legacyClubs = read('app/(public)/campus/clubs/page.js');
+    const legacyClubs = read('app/(shell)/(public)/campus/clubs/page.js');
     expect(legacyClubs).toContain('redirect(ROUTES.clubs)');
 
-    const legacyClub = read('app/(public)/campus/clubs/[id]/page.js');
+    const legacyClub = read('app/(shell)/(public)/campus/clubs/[id]/page.js');
     expect(legacyClub).toContain('permanentRedirect(ROUTES.club(club.slug))');
 
     // Old tab links land on the dedicated boards instead of rendering a
     // second, slightly different list.
-    expect(read('app/(app)/market/page.js')).toContain("params?.tab === 'gigs'");
-    expect(read('app/(app)/communities/page.js')).toContain("params?.tab === 'clubs'");
-    expect(read('app/(app)/market/new/page.js')).toContain("params?.type === 'gig'");
-    expect(read('app/(app)/communities/new/page.js')).toContain("params?.kind === 'club'");
+    expect(read('app/(shell)/(app)/market/page.js')).toContain("params?.tab === 'gigs'");
+    expect(read('app/(shell)/(app)/communities/page.js')).toContain("params?.tab === 'clubs'");
+    expect(read('app/(shell)/(app)/market/new/page.js')).toContain("params?.type === 'gig'");
+    expect(read('app/(shell)/(app)/communities/new/page.js')).toContain("params?.kind === 'club'");
   });
 });
 
@@ -327,7 +327,7 @@ describe('the two boards are not the marketplace', () => {
     expect(css).toContain('.club-monogram');
     // `sections.css` is route CSS now: it ships with the two trees whose cards
     // it styles, not with every page in the app.
-    for (const layout of ['app/(app)/clubs/layout.js', 'app/(app)/gigs/layout.js']) {
+    for (const layout of ['app/(shell)/(app)/clubs/layout.js', 'app/(shell)/(app)/gigs/layout.js']) {
       expect(read(layout)).toContain("@/app/styles/sections.css");
     }
     expect(read('app/globals.css')).not.toContain('styles/sections.css');
@@ -343,7 +343,7 @@ describe('Campus hub tiles', () => {
    * duplicated card on screen and a duplicate-key warning in the console.
    */
   const tileHrefs = () => {
-    const source = read('app/(app)/campus/page.js');
+    const source = read('app/(shell)/(app)/campus/page.js');
     const block = /const SECTIONS = \[([\s\S]*?)\n\];/.exec(source)[1];
     return Array.from(block.matchAll(/href:\s*(?:'([^']+)'|ROUTES\.(\w+))/g)).map(
       ([, literal, key]) => literal ?? ROUTES[key],

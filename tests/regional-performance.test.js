@@ -8,7 +8,7 @@ vi.mock('@/lib/data/campus', () => ({ listEventSubmissions: vi.fn(), listMyEvent
 vi.mock('@/lib/data/public-cache', () => ({ listPublishedEvents: mocks.events }));
 vi.mock('@/lib/data/public', () => ({ listPublicClubOptions: mocks.options, mapPublicClubSlugs: mocks.slugs }));
 
-const { default: EventsPage } = await import('@/app/(public)/campus/events/page');
+const { default: EventsPage } = await import('@/app/(shell)/(public)/campus/events/page');
 const { getMarketSummary } = await import('@/lib/data/marketplace');
 
 describe('regional performance changes', () => {

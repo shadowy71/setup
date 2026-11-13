@@ -9,7 +9,7 @@ vi.mock('@/lib/data/public', () => ({ listPublicClubs: mocks.listClubs, getPubli
 vi.mock('@/lib/data/public-cache', () => ({ listPublishedEvents: mocks.listEvents }));
 vi.mock('@/components/social/LiveFeedSync', () => ({ LiveFeedSync: () => null }));
 vi.mock('@/components/search/SearchResults', () => ({ SearchResults: (props) => { mocks.searchProps.push(props); return createElement('div', { 'data-search': props.initialQuery }); } }));
-const { default: ExplorePage } = await import('@/app/(app)/explore/page');
+const { default: ExplorePage } = await import('@/app/(shell)/(app)/explore/page');
 
 describe('existing Explore page integration', () => {
   beforeEach(() => {

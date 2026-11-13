@@ -899,7 +899,7 @@ describe('archive presentation', () => {
 });
 
 describe('archive routing and the boundary with current notices', () => {
-  const page = (file) => read(`app/(app)/campus/noticeboard/${file}`);
+  const page = (file) => read(`app/(shell)/(app)/campus/noticeboard/${file}`);
 
   it('addresses the archive under the noticeboard and classifies the route', () => {
     expect(ROUTES.noticeboard).toBe('/campus/noticeboard');

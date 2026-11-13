@@ -152,7 +152,7 @@ describe('shell surfaces render the adapter identity', () => {
 
 describe('layout forwards the adapter, not the session', () => {
   it('derives the shell identity once and passes no email or permissions', async () => {
-    const source = await import('node:fs/promises').then((fs) => fs.readFile('app/(app)/layout.js', 'utf8'));
+    const source = await import('node:fs/promises').then((fs) => fs.readFile('components/layout/AuthenticatedAppFrame.js', 'utf8'));
     expect(source).toContain("import { toShellUser } from '@/lib/identity/shell-user'");
     expect(source).toMatch(/const shellUser = toShellUser\(user\);/);
     expect(source).toContain('user={shellUser}');
@@ -163,7 +163,7 @@ describe('layout forwards the adapter, not the session', () => {
 
   it('keeps one identity adapter in the codebase', async () => {
     const fs = await import('node:fs/promises');
-    const files = ['app/(app)/layout.js', 'components/layout/Sidebar.js', 'components/layout/MobileMenu.js', 'components/layout/AccountMenu.js', 'components/layout/ShellHeader.js', 'components/layout/AppShell.js'];
+    const files = ['app/(shell)/(app)/layout.js', 'components/layout/Sidebar.js', 'components/layout/MobileMenu.js', 'components/layout/AccountMenu.js', 'components/layout/ShellHeader.js', 'components/layout/AppShell.js'];
     for (const file of files) {
       const source = await fs.readFile(file, 'utf8');
       // No surface normalizes `display_name` or invents its own name fallback.

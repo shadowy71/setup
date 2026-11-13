@@ -138,7 +138,7 @@ describe('the manifest Chrome reads', () => {
     const all = await Promise.all([
       read('app/timetable/layout.js'),
       read('app/layout.js'),
-      read('app/(app)/layout.js'),
+      read('app/(shell)/(app)/layout.js'),
     ]);
     for (const source of all) {
       expect(source).not.toMatch(/rel=["']manifest["']/);

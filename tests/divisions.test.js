@@ -52,7 +52,7 @@ describe('DIVISIONS constant', () => {
   it('is the list every division workflow consumes (no hardcoded copies)', () => {
     for (const file of [
       'components/auth/OnboardingForm.js',
-      'app/(app)/settings/page.js',
+      'app/(shell)/(app)/settings/page.js',
       'lib/validation/schemas.js',
     ]) {
       const source = fs.readFileSync(path.join(process.cwd(), file), 'utf8');

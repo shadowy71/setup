@@ -1,5 +1,5 @@
 import { getCurrentUser, BLOCKED_STATUSES } from '@/lib/auth/session';
-import AppLayout from '@/app/(app)/layout';
+import AppLayout from '@/components/layout/AuthenticatedAppFrame';
 import { AppShell } from '@/components/layout/AppShell';
 
 /** Shared chrome for public routes without changing their anonymous access. */

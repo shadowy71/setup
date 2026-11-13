@@ -371,8 +371,8 @@ describe('the guide is public, and public means empty', () => {
     // The strip is mounted by Home, not by /guide, so it cannot borrow the
     // guide's sheet: without its own import the offer would render as a bare
     // sentence under the header. Home's layout keeps it out of other routes.
-    expect(read('app/(app)/home/layout.js')).toContain("@/app/styles/guide-strip.css");
-    expect(read('app/(app)/layout.js')).not.toContain("@/app/styles/guide-strip.css");
+    expect(read('app/(shell)/(app)/home/layout.js')).toContain("@/app/styles/guide-strip.css");
+    expect(read('components/layout/AuthenticatedAppFrame.js')).not.toContain("@/app/styles/guide-strip.css");
     expect(read('app/styles/guide-strip.css')).toContain('.guide-strip__dismiss');
     expect(read('app/styles/guide-strip.css')).toMatch(/prefers-reduced-motion/);
     // …and the page sheet keeps the page, so nothing else downloads it.
@@ -382,7 +382,7 @@ describe('the guide is public, and public means empty', () => {
 
   it('lives outside the authenticated route group', () => {
     expect(fs.existsSync(path.join(ROOT, 'app/guide/page.js'))).toBe(true);
-    expect(fs.existsSync(path.join(ROOT, 'app/(app)/guide'))).toBe(false);
+    expect(fs.existsSync(path.join(ROOT, 'app/(shell)/(app)/guide'))).toBe(false);
     // …and it owns its stylesheet the way Home owns home.css.
     expect(read('app/guide/layout.js')).toContain("@/app/styles/guide.css");
     expect(read('app/globals.css')).not.toContain('guide.css');
@@ -444,7 +444,7 @@ describe('the first-visit flag, on the device', () => {
     }
     expect(runPrehydration({ throws: true })).toEqual([]);
 
-    const home = read('app/(app)/home/page.js');
+    const home = read('app/(shell)/(app)/home/page.js');
     expect(home).toContain('{GUIDE_SEEN_PREHYDRATION_SCRIPT}</script>');
     expect(home.indexOf('{GUIDE_SEEN_PREHYDRATION_SCRIPT}</script>')).toBeLessThan(home.indexOf('<GuideWelcomeStrip />'));
     expect(read('app/layout.js')).not.toContain('GUIDE_SEEN_PREHYDRATION_SCRIPT');
@@ -568,7 +568,7 @@ describe('the guide is reachable from where students already are', () => {
   it('sits in the account menu, the mobile sheet and the actions list', () => {
     expect(read('components/layout/AccountMenu.js')).toMatch(/href=\{ROUTES\.guide\}[\s\S]*First-visit guide/);
     expect(read('components/layout/MobileMenu.js')).toContain('href={ROUTES.guide}');
-    const layout = read('app/(app)/layout.js');
+    const layout = read('components/layout/AuthenticatedAppFrame.js');
     expect(layout).toMatch(/label: 'First-visit guide', href: ROUTES\.guide/);
   });
 
