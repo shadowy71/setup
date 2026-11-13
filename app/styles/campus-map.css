@@ -11,18 +11,9 @@
 .cm-page {
   position: relative;
   min-height: 100dvh;
-  background-color: var(--color-paper);
+  background-color: transparent;
   color: var(--color-ink);
   overflow-x: clip;
-}
-
-.cm-page::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image: var(--halo-page);
 }
 
 .cm-page > * {

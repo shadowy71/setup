@@ -6,7 +6,6 @@ import { preload } from 'react-dom';
  * reviewed here is the real Home surface — not a mock-up of it.
  */
 import '@/app/styles/home.css';
-import '@/app/styles/guide-strip.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
 import '@/app/styles/home-dashboard.css';

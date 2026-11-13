@@ -508,3 +508,13 @@
     }
   }
 }
+
+/* Compact discovery cards are scoped to Explore; the club directory retains its full cards. */
+.explore-clubs-grid .club-card { min-height: 15.7rem; }
+.explore-clubs-grid .club-card__visual { height: 5.5rem; min-height: 5.5rem; }
+.explore-clubs-grid .club-card__visual-hero { padding: .3rem; }
+.explore-clubs-grid .club-card__monogram { transform: scale(.72); }
+.explore-clubs-grid .club-card__body { padding: .65rem; gap: .3rem; }
+.explore-clubs-grid .club-card__description { -webkit-line-clamp: 2; line-height: 1.35; }
+.explore-clubs-grid .club-card__footer { padding-top: .2rem; }
+.explore-clubs-grid .club-card__icon-box { padding: .35rem .5rem; }

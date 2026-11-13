@@ -1,6 +1,4 @@
-import Link from 'next/link';
 
-import { ROUTES } from '@/lib/constants';
 import {
   GUIDE_GROUPS,
   GUIDE_HEADLINE_INK,
@@ -71,11 +69,7 @@ export function OnboardingIntro() {
               anonymous flex item and the sentence wraps inside itself — at 390px that
               reads as three narrow columns with the link stranded in the middle. */}
           <span className={styles.firstStepText}>
-            When your profile is saved you will land on Home.{' '}
-            <Link href={ROUTES.guide} className={styles.guideLink}>
-              Read the two-minute guide
-            </Link>{' '}
-            for what is where.
+            When your profile is saved you will land on Home.
           </span>
         </p>
       </section>

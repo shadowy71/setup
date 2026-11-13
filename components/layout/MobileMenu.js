@@ -25,10 +25,8 @@ import { openCommandPalette } from '@/components/search/CommandPalette';
 import { getTimetableHref } from '@/lib/timetable/meta';
 import { formatUnread } from '@/lib/notifications/format';
 import { handleOf } from '@/lib/identity/shell-user';
-import { NavigationHelp } from '@/components/navigation/NavigationHelp';
-import { requestNavigationTour } from '@/lib/guide/navigation-tour';
 
-function SheetLink({ href, icon, label, unread = null, onNavigate, helpTopic = href }) {
+function SheetLink({ href, icon, label, unread = null, onNavigate }) {
   return (
     <div className="sheet-destination">
       <Link
@@ -46,7 +44,6 @@ function SheetLink({ href, icon, label, unread = null, onNavigate, helpTopic = h
           </span>
         ) : null}
       </Link>
-      <NavigationHelp topic={helpTopic} label={label} />
     </div>
   );
 }
@@ -88,25 +85,11 @@ export function MobileMenuBody({
         <SheetLink href={ROUTES.clubs} icon="star" label="Clubs" onNavigate={close} />
         <SheetLink href={ROUTES.communities} icon="users" label="Communities" onNavigate={close} />
         <SheetLink href={ROUTES.campus} icon="building" label="Campus" onNavigate={close} />
-        <SheetLink href={getTimetableHref(user?.division)} icon="calendar" label="Timetable" helpTopic={ROUTES.timetable} onNavigate={close} />
+        <SheetLink href={getTimetableHref(user?.division)} icon="calendar" label="Timetable" onNavigate={close} />
         <SheetLink href={ROUTES.map} icon="mapPin" label="Map" onNavigate={close} />
         <SheetLink href={ROUTES.study} icon="book" label="Study finder" onNavigate={close} />
         <SheetLink href={ROUTES.notifications} icon="bell" label="Notifications" unread={unread} onNavigate={close} />
         <SheetLink href={ROUTES.settings} icon="settings" label="Settings" onNavigate={close} />
-        <SheetLink href={ROUTES.guide} icon="mapPin" label="First-visit guide" onNavigate={close} />
-        <button
-          type="button"
-          onClick={() => {
-            close();
-            window.setTimeout(requestNavigationTour, 0);
-          }}
-          className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-left text-[0.875rem] font-medium text-ink transition-colors hover:bg-surface-2"
-        >
-          <span className="grid h-8 w-8 place-items-center rounded-[var(--radius-sm)] border border-line bg-surface text-muted">
-            <Icon name="mapPin" size={16} />
-          </span>
-          <span className="flex-1">Quick navigation tour</span>
-        </button>
         {canModerate ? <SheetLink href={ROUTES.moderator} icon="shield" label="Moderation" onNavigate={close} /> : null}
         {canAdmin ? <SheetLink href={ROUTES.admin} icon="eye" label="Admin" onNavigate={close} /> : null}
       </div>

@@ -1,0 +1,47 @@
+/* Shared application frame: the canvas is the document, not a content column. */
+.app-frame, .shell-root, .shell-main { background: transparent; }
+:root .app-frame .side-panel {
+  position: fixed;
+  z-index: 50;
+  inset: 12px auto 12px 12px;
+  width: min(15.5rem, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  padding: var(--space-md) var(--space-sm);
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-paper-2);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.16);
+}
+.sidebar-host[hidden] { display: none; }
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: rgb(0 0 0 / 0.42);
+}
+.sidebar-toggle { flex: none; }
+.sidebar-toggle:active { transform: scale(.96); }
+@media (min-width: 1024px) {
+  :root .app-frame .shell-root { padding-left: 0; transition: padding-left 200ms ease; }
+  :root .app-frame[data-sidebar-open='true'] .shell-root { padding-left: 17rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .shell-root { transition: none; }
+}
+.sidebar-close {
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--color-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.sidebar-close:hover { background: var(--color-paper-3); }
+.sidebar-close:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }

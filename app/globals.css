@@ -22,6 +22,7 @@
 @import './styles/lumen.css';
 @import './styles/aurora.css';
 @import './styles/header-glass.css';
+@import './styles/shell-frame.css';
 
 /* ==========================================================================
    Campus+ semantic compatibility roles → Hallmark Lumen
@@ -401,7 +402,7 @@
 
   body {
     overflow-x: clip;
-    background-color: var(--color-paper);
+    background-color: var(--c-canvas);
     background-image: none;
     color: var(--color-ink);
     font-family: var(--font-body);

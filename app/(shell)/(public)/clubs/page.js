@@ -207,8 +207,6 @@ export default async function ClubsPage({ searchParams }) {
           next={currentHref}
           intent="join"
           actionLabel="Sign in with Google"
-          linkLabel="Read the first-visit guide"
-          linkHref={ROUTES.guide}
         />
       ) : null}
 

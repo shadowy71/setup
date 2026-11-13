@@ -38,7 +38,7 @@ export function OnboardingForm({ storageId = 'preview', preview = false }) {
   const [localError, setLocalError] = useState('');
   const [finished, setFinished] = useState(false);
   const { run, pending, error, fieldErrors } = useFormAction(completeOnboarding, {
-    redirectTo: '/guide?welcome=1',
+    redirectTo: '/home',
     onSuccess: () => { try { localStorage.removeItem(storageKey); } catch {} },
   });
 

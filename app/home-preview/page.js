@@ -116,8 +116,8 @@ const DEMO_RAIL = {
 };
 
 const DEMO_STATS = [
-  { label: 'On the feed', value: DEMO_FEED.length },
-  { label: 'Notices shown', value: DEMO_RAIL.notices.length },
+  { label: 'Posts in feed', value: DEMO_FEED.length },
+  { label: 'Notices published', value: DEMO_RAIL.notices.length },
 ];
 
 const DEMO_CREATE_ITEMS = [{ href: '/home-preview', label: 'Post or poll (demo)', icon: 'comment' }];

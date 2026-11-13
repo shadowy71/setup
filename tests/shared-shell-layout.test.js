@@ -18,3 +18,14 @@ describe('shared application shell route boundary', () => {
     expect(existsSync('app/(shell)/timetable/offline/page.js')).toBe(false);
   });
 });
+
+describe('shared sidebar layout ownership', () => {
+  it('keeps desktop shell spacing controlled by the sidebar state, not route material sheets', () => {
+    const css = read('app/styles/shell-frame.css');
+    expect(css).toMatch(/:root \.app-frame \.shell-root\s*\{\s*padding-left:\s*0/);
+    expect(css).toMatch(/data-sidebar-open='true'\] \.shell-root\s*\{\s*padding-left:\s*17rem/);
+    for (const sheet of ['app/styles/lumen.css', 'app/styles/aurora.css']) {
+      expect(read(sheet)).not.toMatch(/:root \.shell-root\s*\{[^}]*padding-left/s);
+    }
+  });
+});

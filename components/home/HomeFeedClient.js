@@ -502,8 +502,8 @@ export function HomeFeedClient({
   const feedTotal = typeof snapshot?.page?.total === 'number' ? snapshot.page.total : feed.length;
   const stats = snapshot
     ? [
-        { label: 'On the feed', value: feedTotal },
-        { label: 'Notices shown', value: notices.length },
+        { label: 'Posts in feed', value: feedTotal },
+        { label: 'Notices published', value: notices.length },
       ]
     : [];
 

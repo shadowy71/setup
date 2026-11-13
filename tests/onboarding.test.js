@@ -109,12 +109,12 @@ describe('field notes and orientation', () => {
     }
     // Exactly one link, and it is the guide. Every app route redirects a student
     // without a profile straight back to this page.
-    expect(html.match(/<a\b/g) ?? []).toHaveLength(1);
-    expect(html).toContain('href="/guide"');
+    expect(html.match(/<a\b/g) ?? []).toHaveLength(0);
+    expect(html).not.toContain('href="/guide"');
     expect(html).not.toMatch(/<button\b|<input\b|<li\b/);
     expect(html).toMatch(/you will land on Home/i);
     // Nothing here may name a destination the app does not serve.
-    const named = ['/guide', ...primary.map((group) => group.links[0].href)];
+    const named = primary.map((group) => group.links[0].href);
     for (const href of named) {
       expect(PAGE_ROUTES.has(href), href).toBe(true);
     }

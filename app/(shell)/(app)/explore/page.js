@@ -101,8 +101,6 @@ export default async function ExplorePage({ searchParams }) {
         <p className="text-sm text-muted">Use the search in the header to find clubs, events, interests and more.</p>
       </section>
 
-      <CampusDiscovery clubs={selectClubs(clubs)} recruitment={recruitment} events={events} hosts={hosts} interests={interestLinks(clubs)} clubsUnavailable={clubResult.unavailable} recruitmentUnavailable={recruitmentResult.unavailable} eventsUnavailable={eventResult.unavailable} />
-
       <section aria-label="Browse campus" className="flex flex-col gap-3">
         <SectionHeader
           title="Browse"
@@ -127,6 +125,8 @@ export default async function ExplorePage({ searchParams }) {
           ))}
         </div>
       </section>
+
+      <CampusDiscovery clubs={selectClubs(clubs)} recruitment={recruitment} events={events} hosts={hosts} interests={interestLinks(clubs)} clubsUnavailable={clubResult.unavailable} recruitmentUnavailable={recruitmentResult.unavailable} eventsUnavailable={eventResult.unavailable} />
 
       <section aria-label="Trending" className="flex flex-col gap-3">
         <SectionHeader

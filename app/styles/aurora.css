@@ -26,25 +26,25 @@ body {
   background-color: var(--color-paper);
 }
 
-/* Fixed atmosphere: two soft accent blooms, a floor bounce and a vertical
-   gradient with real depth. It never scrolls, never repaints with content
-   and sits behind every surface. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: var(--halo-page);
-}
+/* The document canvas is a single theme token; do not paint a second
+   fixed atmosphere over it. */
 
 ::selection {
   background: color-mix(in oklab, var(--color-accent) 30%, transparent);
   color: var(--color-ink);
 }
 
+/* The viewport scrollbar belongs to the same canvas as the document. A
+   transparent track can expose the browser's white default behind an iframe. */
 html {
-  scrollbar-color: var(--color-rule-2) transparent;
+  scrollbar-color: color-mix(in oklab, var(--color-muted) 55%, var(--c-canvas)) var(--c-canvas);
+  overscroll-behavior-y: none;
+}
+html::-webkit-scrollbar-track, body::-webkit-scrollbar-track {
+  background: var(--c-canvas);
+}
+html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
+  background: var(--c-canvas);
 }
 
 /* The Home stage stops painting its own flat paper so the room shows through;
@@ -236,9 +236,6 @@ html {
     backdrop-filter: blur(22px) saturate(1.35);
   }
 
-  :root .shell-root {
-    padding-left: 17rem;
-  }
 }
 
 /* Interior illumination: ice-blue at the top-left, warm sand at the foot. */
@@ -662,19 +659,8 @@ html {
   border-bottom: 0;
 }
 
-:root .home-pulse__aurora {
-  display: block;
-  content: '';
-  position: absolute;
-  z-index: 0;
-  inset: -34% -20% auto -20%;
-  height: 128%;
-  pointer-events: none;
-  opacity: 0.95;
-  background-image: var(--halo-hero);
-  animation: aurora-breathe 18s var(--ease-settle) infinite alternate;
-}
-
+/* The hero's former oversize aurora spilled outside its surface and painted
+   a rectangular blue-grey wash over the shared canvas. Keep it disabled. */
 :root .home-pulse__spark {
   display: block;
 }

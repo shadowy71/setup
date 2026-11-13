@@ -7,8 +7,7 @@
 
 import Link from 'next/link';
 import { ROUTES } from '@/lib/constants';
-import { Dropdown, IdentityMark, MenuItem, MenuLink, StaffDot } from '@/components/ui';
-import { requestNavigationTour } from '@/lib/guide/navigation-tour';
+import { Dropdown, IdentityMark, MenuLink, StaffDot } from '@/components/ui';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { Icon } from '@/components/ui/icons';
 import { handleOf } from '@/lib/identity/shell-user';
@@ -64,14 +63,6 @@ export function AccountMenu({ user = null, isStaff = false }) {
       <MenuLink href={ROUTES.notifications} icon="bell">
         Notifications
       </MenuLink>
-      {/* The guide is where a student sends a classmate, so it is reachable from
-          the one control that exists at every screen size. */}
-      <MenuLink href={ROUTES.guide} icon="mapPin">
-        First-visit guide
-      </MenuLink>
-      <MenuItem icon="mapPin" onClick={requestNavigationTour}>
-        Quick navigation tour
-      </MenuItem>
       <div className="border-t border-line p-1.5" onClick={(e) => e.stopPropagation()}>
         <SignOutButton variant="ghost" />
       </div>

@@ -7,9 +7,6 @@ import { preload } from 'react-dom';
  * route; the root's route gate decides whether the intro actually plays.
  */
 import '@/app/styles/home.css';
-// Home owns the first-visit guide offer too; neither its stylesheet nor its
-// tiny pre-paint storage check belongs in the shared shell or on public routes.
-import '@/app/styles/guide-strip.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
 import '@/app/styles/home-dashboard.css';

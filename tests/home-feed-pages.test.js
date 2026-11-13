@@ -226,10 +226,10 @@ describe('the Home surface around those pages', () => {
     expect(loadMore).toMatch(/catch \{\s*setLoadMoreError\(true\);/);
   });
 
-  it('shows the server-side total in the "On the feed" stat, not just the loaded page', () => {
+  it('shows the server-side total in the "Posts in feed" stat, not just the loaded page', () => {
     // 14 eligible posts, 10 loaded: the stat must read 14, the count beside the
     // stream may read "10 of 14" — never a bare 10 where a total is intended.
-    expect(home).toContain("{ label: 'On the feed', value: feedTotal }");
+    expect(home).toContain("{ label: 'Posts in feed', value: feedTotal }");
     expect(home).toMatch(/const feedTotal = typeof snapshot\?\.page\?\.total === 'number' \? snapshot\.page\.total : feed\.length;/);
     expect(home).toContain('`${feed.length} of ${snapshot.page.total} entries`');
   });
