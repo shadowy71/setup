@@ -101,8 +101,17 @@ export function useTimetableOffline() {
 
 export function TimetableOfflineProvider({ division, children }) {
   const batch = useMemo(() => describeBatch(division), [division]);
-  const platform = useMemo(() => detectPlatform(navigator.userAgent, navigator), []);
-  const standalone = useMemo(() => isStandalone((query) => window.matchMedia?.(query), navigator), []);
+  // Browser-only facts must not change the first client render from the server
+  // HTML: React does not patch mismatched text during hydration.
+  const [environment, setEnvironment] = useState({ platform: { kind: 'unknown', label: 'this browser' }, standalone: false });
+  const { platform, standalone } = environment;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEnvironment({
+      platform: detectPlatform(navigator.userAgent, navigator),
+      standalone: isStandalone((query) => window.matchMedia?.(query), navigator),
+    });
+  }, []);
 
   // A provider without a batch has nothing to read, so it starts "done" — the
   // pill would otherwise sit on "checking this device" forever.
