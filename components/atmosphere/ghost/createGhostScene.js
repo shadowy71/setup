@@ -93,10 +93,10 @@ function haloTexture() {
 
 /**
  * @param {HTMLElement} container  an element the scene's canvas is appended to
- * @param {{ reducedMotion?: boolean }} [options]
+ * @param {{ reducedMotion?: boolean, placement?: string }} [options]
  * @returns {() => void} dispose
  */
-export function createGhostScene(container, { reducedMotion = false } = {}) {
+export function createGhostScene(container, { reducedMotion = false, placement = 'login' } = {}) {
   const canvas = document.createElement('canvas');
   canvas.className = 'ghost-canvas';
   canvas.setAttribute('aria-hidden', 'true');
@@ -380,6 +380,8 @@ export function createGhostScene(container, { reducedMotion = false } = {}) {
     const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
     const viewWidth = viewHeight * camera.aspect;
     const edgePadding = 1.7;
+    // Keep the original full-viewport pointer tracking on every screen; only
+    // the initial resting position differs on onboarding.
     const targetX = pointer.x * Math.max(0, viewWidth / 2 - edgePadding);
     const targetY = pointer.y * Math.max(0, viewHeight / 2 - edgePadding);
     startPosition.copy(ghostGroup.position);
@@ -464,6 +466,12 @@ export function createGhostScene(container, { reducedMotion = false } = {}) {
   const onVisibility = () => (document.hidden ? stop() : start());
   document.addEventListener('visibilitychange', onVisibility);
 
+  // Position the onboarding ghost before the still frame as well as animation.
+  if (placement === 'onboarding') {
+    const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
+    ghostGroup.position.x = viewHeight * camera.aspect * 0.30;
+    haloSprite.position.x = ghostGroup.position.x;
+  }
   // Start just off the title so the ghost is visible before the first move.
   updatePointer(window.innerWidth * 0.72, window.innerHeight * 0.62);
   if (reducedMotion) {

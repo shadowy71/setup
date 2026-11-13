@@ -550,7 +550,7 @@ describe('one onboarding, not two', () => {
     expect(page).toContain("if (!isSupabaseConfigured()) redirect('/setup')");
     expect(page).toContain('if (!user) redirect(\'/login\')');
     expect(page).toContain("if (!user.needsProfileSetup) redirect('/home')");
-    expect(page).toContain('<OnboardingIntro />');
+    expect(page).toContain('<OnboardingForm storageId=');
   });
 
   it('leaves the root route\u2019s authentication decisions alone', () => {

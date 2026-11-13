@@ -101,6 +101,7 @@ export function isPublicPath(rawPath) {
   if (typeof rawPath !== 'string' || !rawPath.startsWith('/')) return false;
   const pathname = stripTrailingSlash(rawPath);
   if (pathname === '/') return true;
+  if (pathname === '/onboarding-preview' && process.env.NODE_ENV === 'development') return true;
   if (PUBLIC_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return true;
   if (PUBLIC_EXACT_PATHS.includes(pathname)) return true;
   if (isPublicClubChild(pathname)) return true;
@@ -162,6 +163,12 @@ function legacyPathRedirect(request) {
  * @param {import('next/server').NextRequest} request
  */
 export async function proxy(request) {
+  // Explicitly opted-in local demo: the preview host opens the sample instead
+  // of the unconfigured app. Production and ordinary development are unchanged.
+  if (process.env.NODE_ENV === 'development' && process.env.CAMPUS_ONBOARDING_DEMO === '1' && request.nextUrl.pathname === '/') {
+    const origin = originFromHeaders(request.headers, request.nextUrl.origin);
+    return NextResponse.redirect(new URL('/onboarding-preview', origin));
+  }
   const legacy = legacyCodeStep(request) || legacyPathRedirect(request);
   if (legacy) return legacy;
 
