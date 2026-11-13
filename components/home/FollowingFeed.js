@@ -14,6 +14,7 @@ export function FollowingFeed({ currentUserId, canModerate }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const sequence = useRef(0);
+  const sentinel = useRef(null);
   const { subscribe } = useLiveFeed();
 
   const load = useCallback(async (offset = 0) => {
@@ -50,6 +51,20 @@ export function FollowingFeed({ currentUserId, canModerate }) {
     return () => { sequence.current += 1; window.removeEventListener('campus:follow-change', refresh); unsubscribe(); };
   }, [load, subscribe]);
 
+  // Keep the explicit button for keyboards and browsers without IntersectionObserver.
+  useEffect(() => {
+    const target = sentinel.current;
+    if (!target || !page?.hasMore || busy || error || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        observer.disconnect();
+        void load(page.offset + page.limit);
+      }
+    }, { rootMargin: '200px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [busy, error, load, page]);
+
   return (
     <section className="flex flex-col gap-4" aria-label="Following feed" aria-busy={busy}>
       {busy && !page ? <p role="status" className="text-sm text-muted">Loading your Following feed…</p> : null}
@@ -64,6 +79,7 @@ export function FollowingFeed({ currentUserId, canModerate }) {
           </StreamSlot>
         ))}
       </div>
+      {page?.hasMore ? <div ref={sentinel} aria-hidden="true" /> : null}
       {page?.hasMore ? <Button variant="secondary" size="sm" disabled={busy} onClick={() => { void load(page.offset + page.limit); }}>{busy ? 'Loading more…' : 'Show more'}</Button> : null}
     </section>
   );
