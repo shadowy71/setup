@@ -3,6 +3,7 @@ import '@/app/styles/calendar.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
 import { PublicFrame } from '@/components/layout/PublicFrame';
+import { OptionalAppFrame } from '@/components/layout/OptionalAppFrame';
 
 /**
  * The public discovery route group.
@@ -13,11 +14,9 @@ import { PublicFrame } from '@/components/layout/PublicFrame';
  * `/clubs/new`, `/clubs/request`, `/clubs/[id]/manage`, `/clubs/[id]/edit`,
  * `/campus/events/new` and every other protected page.
  *
- * No `requireUser()` here, and no `AppShell`: the frame below is read-only and
- * session-free. Each page decides for itself whether an optional signed-in
- * viewer should see member-only extras; participation actions always go through
- * server actions/RPCs that re-check authentication and permissions.
+ * Anonymous access is preserved. The shared shell uses an optional session;
+ * protected interactions still enforce authorization independently.
  */
 export default function PublicLayout({ children }) {
-  return <PublicFrame>{children}</PublicFrame>;
+  return <OptionalAppFrame><PublicFrame>{children}</PublicFrame></OptionalAppFrame>;
 }

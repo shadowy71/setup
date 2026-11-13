@@ -61,7 +61,6 @@ export function AppShell({
           <Sidebar
             user={user}
             unreadNotifications={unreadNotifications}
-            isStaff={isStaff}
             canModerate={canModerate}
             canAdmin={canAdmin}
             createItems={createItems}

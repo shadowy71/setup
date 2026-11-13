@@ -136,16 +136,17 @@ describe('public pages live outside the authenticated route group', () => {
     }
   });
 
-  it('keeps the public frame free of student navigation and data', () => {
-    const frame = codeOnly('components/layout/PublicFrame.js');
-    expect(frame).not.toMatch(/AppShell|unread|CreateMenu|CommandPalette|listMyRsvps/);
-    expect(frame).toContain('PublicFrame');
-    expect(frame).toContain('SignInLink');
+  it('uses the shared optional shell while keeping public content and disclaimer', () => {
+    const layout = read('app/(public)/layout.js');
+    const frame = read('components/layout/PublicFrame.js');
+    const optional = read('components/layout/OptionalAppFrame.js');
+    expect(layout).toContain('OptionalAppFrame');
+    expect(layout).toContain('PublicFrame');
+    expect(optional).toContain('getCurrentUser()');
+    expect(optional).toContain('<AppShell>');
+    expect(optional).toContain('<AppLayout>');
     expect(frame).toContain('CollegeCrest');
-    expect(read('app/(public)/layout.js')).toContain('PublicFrame');
-    for (const sheet of ['sections.css', 'calendar.css', 'lumen.css']) {
-      expect(read('app/(public)/layout.js')).toContain(sheet);
-    }
+    for (const sheet of ['sections.css', 'calendar.css', 'lumen.css']) expect(layout).toContain(sheet);
     expect(exists('app/(app)/clubs/layout.js')).toBe(true);
   });
 });

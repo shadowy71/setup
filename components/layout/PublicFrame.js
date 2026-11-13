@@ -1,45 +1,13 @@
 import Link from 'next/link';
-import { BrandLockup, CollegeCrest } from '@/components/brand/Brand';
-import { SignInLink } from '@/components/auth/SignInLink';
-import { getCurrentUser } from '@/lib/auth/session';
+import { CollegeCrest } from '@/components/brand/Brand';
 import { PLATFORM, ROUTES } from '@/lib/constants';
-import { LinkButton } from '@/components/ui';
 
-/**
- * The lightweight public frame.
- *
- * Deliberately NOT the authenticated `AppShell`: it renders no private student
- * navigation, no unread badges, no Create menu and no membership data. The
- * single optional session read is used ONLY to swap the sign-in button for a
- * "back to Campus+ home" link for a signed-in student — it never changes what
- * public content is served, and nothing here is cached.
- *
- * Pages inside `app/(public)/` inherit this layout; protected pages stay inside
- * `app/(app)/` with `AppShell`. Both share the same tokens, brand and UI
- * primitives, so the Campus+ identity is unchanged.
- */
-export async function PublicFrame({ children }) {
-  const user = await getCurrentUser();
-  const signedIn = Boolean(user?.profile);
-
+/** Public discovery content and its institutional disclaimer; the shared
+ * optional application frame supplies navigation and account controls. */
+export function PublicFrame({ children }) {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[80rem] flex-col px-4 py-6 sm:px-6 sm:py-8">
-      <header className="public-header flex flex-wrap items-center justify-between gap-3 pb-4">
-        <BrandLockup href={ROUTES.clubs} size="lg" className="w-fit" />
-        <nav aria-label="Public discovery" className="flex flex-wrap items-center gap-2">
-          <Link href={ROUTES.clubs} className="chip">Clubs</Link>
-          <Link href="/campus/events" className="chip">Events</Link>
-          {signedIn ? (
-            <LinkButton href={ROUTES.home} size="sm" variant="secondary" icon="arrowUpRight">
-              Campus+ home
-            </LinkButton>
-          ) : (
-            <SignInLink />
-          )}
-        </nav>
-      </header>
-
-      <main className="flex-1 py-6 sm:py-8">{children}</main>
+    <div className="mx-auto flex w-full max-w-[80rem] flex-col py-6 sm:py-8">
+      <div className="flex-1">{children}</div>
 
       <footer className="public-footer flex flex-col gap-3 pt-5">
         <div className="flex items-start gap-3">

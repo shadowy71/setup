@@ -110,18 +110,18 @@ describe('shell surfaces render the adapter identity', () => {
 
   const render = (element) => renderToStaticMarkup(element);
 
-  it('renders the display name and handle in the sidebar', () => {
+  it('keeps the account identity out of the sidebar', () => {
     const user = toShellUser(sessionUser({ username: 'asha_e2e', display_name: 'Asha Patil', division: 'A' }));
     const html = render(React.createElement(Sidebar, { user }));
-    expect(html).toContain('Asha Patil');
-    expect(html).toContain('@asha_e2e');
+    expect(html).not.toContain('Asha Patil');
+    expect(html).not.toContain('@asha_e2e');
+    expect(html).not.toContain('href="/profile"');
     expect(html).not.toContain('undefined');
   });
 
   it('renders the fallback handle as the name when the display name is missing', () => {
     const user = toShellUser(sessionUser({ username: 'asha_e2e', display_name: null }));
     for (const html of [
-      render(React.createElement(Sidebar, { user })),
       render(React.createElement(AccountMenu, { user })),
       render(React.createElement(MobileMenuBody, { user })),
     ]) {
@@ -131,13 +131,11 @@ describe('shell surfaces render the adapter identity', () => {
     }
   });
 
-  it('marks staff in every surface that is visible while closed', () => {
+  it('preserves staff identity in the account surfaces', () => {
     const user = toShellUser(sessionUser({ username: 'mod_one', display_name: 'Mod One' }, ['moderator']));
     // The account dropdown only renders its panel once opened, so its staff dot
-    // is asserted through the two always-visible surfaces; the adapter's label
-    // (asserted above) is the single source all three read.
+    // is asserted in the mobile menu; the adapter is the single source.
     for (const html of [
-      render(React.createElement(Sidebar, { user, isStaff: true })),
       render(React.createElement(MobileMenuBody, { user, isStaff: true })),
     ]) {
       expect(html).toContain('Moderator');

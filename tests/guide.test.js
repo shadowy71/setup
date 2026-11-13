@@ -573,7 +573,7 @@ describe('the guide is reachable from where students already are', () => {
   });
 
   it('does not enlarge either navigation set', () => {
-    expect(PRIMARY_NAV).toHaveLength(9);
+    expect(PRIMARY_NAV).toHaveLength(8);
     expect(MOBILE_NAV).toHaveLength(5);
   });
 

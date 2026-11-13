@@ -98,7 +98,7 @@ export default async function ExplorePage({ searchParams }) {
       <PageHeader title="Explore" description="Search, trending, and the modules you might not have opened yet." />
       <section aria-labelledby="campus-life-heading" className="card flex flex-col gap-3 p-4 sm:p-5">
         <div><h2 id="campus-life-heading">There&apos;s more happening on campus.</h2><p className="mt-2 text-sm text-muted">Find student communities, explore clubs and discover what&apos;s happening at PCCOE.</p></div>
-        <SearchResults initialQuery="" initialScope="all" hint="Search clubs, events, interests and more…" />
+        <p className="text-sm text-muted">Use the search in the header to find clubs, events, interests and more.</p>
       </section>
 
       <CampusDiscovery clubs={selectClubs(clubs)} recruitment={recruitment} events={events} hosts={hosts} interests={interestLinks(clubs)} clubsUnavailable={clubResult.unavailable} recruitmentUnavailable={recruitmentResult.unavailable} eventsUnavailable={eventResult.unavailable} />
