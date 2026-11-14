@@ -21,10 +21,9 @@ describe('contained motion refresh', () => {
 
   it('limits decorative motion on mobile and for reduced motion', () => {
     const shell = read('app/styles/shell-frame.css');
-    const home = read('app/styles/home-dashboard.css');
     const market = read('app/styles/market-grid.css');
     expect(shell).toContain('(min-width: 768px) and (prefers-reduced-motion: no-preference)');
-    expect(home).toContain('(min-width: 768px) and (prefers-reduced-motion: no-preference)');
+    expect(read('components/home/AnimatedStat.js')).toContain('(min-width: 768px) and (prefers-reduced-motion: no-preference)');
     expect(market).toContain('(hover: hover) and (prefers-reduced-motion: no-preference)');
     expect(market).toContain('.market-product:hover .market-cover__image');
     expect(read('components/layout/ShellFrame.js')).toContain('(min-width: 768px) and (prefers-reduced-motion: no-preference)');
