@@ -26,7 +26,7 @@ describe('Home presentation refinement', () => {
     expect(html).toContain('aria-labelledby="home-greeting"');
     expect(html).toContain('PCCOE · CAMPUS FEED');
     expect(html).toContain('<span class="home-pulse__greet">Hey,</span>');
-    expect(html).toContain('title="Yash">Yash</span>.');
+    expect(html).toContain('title="Yash">Yash.</span>');
     expect(html).toContain('Here&#x27;s what&#x27;s happening around campus today.');
     expect(html).not.toContain('Computer Engineering');
     expect(html).not.toContain('Wave hello');
@@ -36,7 +36,7 @@ describe('Home presentation refinement', () => {
 
   it('falls back to the username and does not expose branch information', () => {
     const html = render({ user: { profile: { ...profile, display_name: '', username: 'meera_j' } } });
-    expect(html).toContain('title="meera_j">meera_j</span>.');
+    expect(html).toContain('title="meera_j">meera_j.</span>');
     expect(html).not.toContain('Computer Engineering');
   });
 
