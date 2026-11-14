@@ -20,9 +20,9 @@ describe('deployment toolchain', () => {
     });
   });
 
-  it('removes only the unsupported cache-dir env setting from Vercel npm invocations', () => {
+  it('uses the Vercel-persisted Next cache for clean npm installs', () => {
     const config = readJson('vercel.json');
-    expect(config.installCommand).toBe('env -u npm_config_cache_dir -u NPM_CONFIG_CACHE_DIR npm ci --include=dev');
+    expect(config.installCommand).toBe('env -u npm_config_cache_dir -u NPM_CONFIG_CACHE_DIR npm_config_cache=.next/cache/npm npm ci --include=dev --prefer-offline');
     expect(config.buildCommand).toBe('env -u npm_config_cache_dir -u NPM_CONFIG_CACHE_DIR npm run build');
     expect(readJson('package.json').scripts.prebuild).toBe('node scripts/check-proxy-routes.mjs && node scripts/build-sw.mjs');
     expect(readJson('lib/auth/package.json').type).toBe('module');
