@@ -16,20 +16,28 @@ describe('Home layout refinement', () => {
     expect(read('app/layout.js')).not.toContain('home-dashboard.css');
   });
 
-  it('keeps the personalized greeting compact and removes the wave', () => {
-    const pulse = read('components/home/HomePulse.js');
-    expect(pulse).toContain('home-pulse__greet');
-    expect(pulse).toContain('home-pulse__name-text');
-    expect(pulse).not.toContain('<HandWave');
-    expect(css).toMatch(/\.home-stage \.home-pulse__greet,[\s\S]*?display: inline;/);
+  it('stacks the real greeting in the PR 110 layout', () => {
+    expect(css).toMatch(/\.home-stage \.home-pulse__greet\s*\{[^}]*display: block;[^}]*font-weight: 700;/);
+    expect(css).toMatch(/\.home-stage \.home-pulse__name\s*\{[^}]*display: flex;[^}]*align-items: center;[^}]*margin: 0\.125rem 0 0;[^}]*font-weight: 700;/);
+    expect(read('components/home/HomePulse.js')).toContain('home-pulse__name-text');
+    expect(css).toMatch(/\.home-stage \.home-pulse__lead\s*\{[^}]*margin-top: 0\.625rem;/);
   });
 
-  it('uses Midnight Copper glass islands for the Home composition', () => {
-    for (const color of ['#202A37', '#455466', '#92715A', '#BE9671']) expect(css).toContain(color);
-    expect(css).toContain('--home-copper-gradient');
-    expect(css).toContain('blur(18px) saturate(130%)');
-    expect(css).toContain('.home-stage .home-composer');
-    expect(css).toContain('.home-stage .rail-island');
+  it('removes the major section boxes while keeping interactive entry surfaces', () => {
+    for (const section of ['.home-pulse', '.home-composer', '.rail-island']) {
+      expect(css).toMatch(new RegExp(`\\.home-stage \\${section}\\s*\\{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;[^}]*box-shadow: none;`));
+    }
+    expect(css).toMatch(/\.home-stage \.stream-card\s*\{[^}]*border-radius: var\(--radius-md\);/);
+    expect(css).toMatch(/\.home-stage \.home-composer__open\s*\{[^}]*border-radius: var\(--radius-sm\);/);
+    expect(css).toMatch(/\.home-stage \.feature-tile\s*\{[^}]*border-radius: var\(--radius-xs\);/);
+  });
+
+  it('uses a 1px white fade between major sections and between present rail modules', () => {
+    expect(css).toMatch(/--home-separator: linear-gradient\(\s*90deg,\s*transparent 0%,\s*rgba\(255, 255, 255, 0\.12\) 15%,\s*rgba\(255, 255, 255, 0\.24\) 50%,\s*rgba\(255, 255, 255, 0\.12\) 85%,\s*transparent 100%\s*\)/);
+    expect(css).toMatch(/\.home-stage \.home-pulse::after,\s*:root \.home-stage \.home-composer::after\s*\{[^}]*height: 1px;[^}]*background: var\(--home-separator\);/);
+    expect(css).toMatch(/\.home-stage \.rail-island::after\s*\{[^}]*height: 1px;[^}]*background: var\(--home-separator\);/);
+    expect(css).toContain('.home-stage .rail-island--market::after');
+    expect(css).toContain('.home-stage .home-body__rail:not(:has(.rail-island--market)) .rail-island--events::after');
   });
 
   it('preserves the two-column breakpoint and stacks below it', () => {

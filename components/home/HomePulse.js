@@ -35,7 +35,7 @@ export function HomePulse({ user, stats = [], children }) {
           <h1 id="home-greeting" className="home-pulse__title">
             <span className="home-pulse__greet">Hey,</span>{' '}
             <span className="home-pulse__name">
-              <span className="home-pulse__name-text" title={name}>{name}</span>.
+              <span className="home-pulse__name-text" title={name}>{name}.</span>
             </span>
           </h1>
           <p className="home-pulse__lead">Here&apos;s what&apos;s happening around campus today.</p>
