@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { getDivisionSummaries, TIMETABLE_SOURCE } from '@/lib/timetable';
 import { divisionTimetableHref } from '@/lib/timetable/meta';
 
@@ -36,7 +35,7 @@ export default function TimetableIndexPage() {
         <ul className="tt-tiles">
           {divisions.map(({ division, label, year }) => (
             <li key={division}>
-              <Link
+              <a
                 href={divisionTimetableHref(division)}
                 className="card card-interactive tt-tile"
                 aria-label={`Division ${division} (${label}) timetable`}
@@ -44,7 +43,7 @@ export default function TimetableIndexPage() {
                 <span className="tt-tile__letter">{division}</span>
                 <span className="tt-tile__branch">{label}</span>
                 <span className="tt-tile__friendly">{year}</span>
-              </Link>
+              </a>
             </li>
           ))}
         </ul>

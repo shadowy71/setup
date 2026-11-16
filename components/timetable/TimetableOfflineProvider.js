@@ -123,6 +123,7 @@ export function TimetableOfflineProvider({ division, children }) {
   const [error, setError] = useState(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
   const [offlineView, setOfflineView] = useState(false);
+  const [cachedView, setCachedView] = useState(false);
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [promptEvent, setPromptEvent] = useState(null);
   const [install, setInstall] = useState({ outcome: 'unknown', installed: false });
@@ -304,6 +305,7 @@ export function TimetableOfflineProvider({ division, children }) {
         }),
       );
       setOfflineView(!navigator.onLine);
+      setCachedView(Boolean(document.querySelector('meta[name="campus-timetable-cached"]')));
       setPhase(stored?.snapshot ? 'ready' : 'idle');
       setHydrated(true);
 
@@ -594,6 +596,7 @@ export function TimetableOfflineProvider({ division, children }) {
       error,
       refreshFailed,
       offlineView,
+      cachedView,
       online: !offlineView,
       needsRefresh,
       storage,
@@ -628,6 +631,7 @@ export function TimetableOfflineProvider({ division, children }) {
       error,
       refreshFailed,
       offlineView,
+      cachedView,
       needsRefresh,
       storage,
       worker,

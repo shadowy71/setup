@@ -230,7 +230,7 @@ check('the record is versioned and timed', savedFirst?.schemaVersion === 1 && Bo
 
 const saved = await view();
 check('the button names the batch once the copy is on the device', new RegExp(`Add Division ${letter(FIRST)} \\([^)]*\\) timetable to Home Screen`).test(saved.button ?? ''), saved.button);
-check('the header reports the saved copy', /Offline copy ready|Saved copy/.test(saved.pill ?? ''), saved.pill);
+check('the header stays quiet when the copy is ready', saved.pill === null, saved.pill);
 
 const caches1 = await cacheReport();
 check('this batch’s document is cached, so a reload needs no network', caches1.probes[`/timetable/${FIRST}`] === true);
@@ -256,14 +256,15 @@ check('the five weekday controls still work offline', offline.dayTabs === 5, `${
 const calendar = await evaluate(() => {
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long' }).formatToParts(new Date());
   const day = parts.find((part) => part.type === 'weekday')?.value ?? '';
-  return { day, teaching: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].includes(day) };
+  const selected = document.querySelector('.tt-tabs .tt-tab[aria-pressed="true"]');
+  return { day, teaching: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].includes(day), selectedToday: Boolean(selected?.querySelector('.tt-tab__today')) };
 });
 check(
   `today’s marker and the NOW/NEXT line agree with the campus calendar (${calendar.day})`,
-  calendar.teaching ? offline.todayMarks >= 1 && /NOW|NEXT|free|no more/i.test(offline.status ?? '') : offline.todayMarks === 0 && offline.status === null,
+  calendar.teaching ? offline.todayMarks >= 1 && (!calendar.selectedToday || /NOW|NEXT|free|no more|first class|lunch/i.test(offline.status ?? '')) : offline.todayMarks === 0 && offline.status === null,
   `${offline.todayMarks} marker(s), status: ${offline.status ?? 'none'}`,
 );
-check('the page labels its copy as saved, with a time', /Saved copy|Offline copy ready/.test(offline.pill ?? ''), offline.pill);
+check('the page labels its copy as saved', /Saved copy|Offline copy ready/.test(offline.pill ?? ''), offline.pill);
 check('an offline load never throws inside the page', pageErrors.length === 0, pageErrors.slice(0, 2).join(' | '));
 
 // Remember the actual captured weekday. Hard-coding Monday here made the

@@ -22,7 +22,7 @@ describe('home quick-access tiles', () => {
     expect(tiles).toContain('href: getTimetableHref(division)');
     expect(tiles).toContain('href: ROUTES.clubs');
     expect(ROUTES.clubs).toBe('/clubs');
-    expect(tiles).toMatch(/<Link[\s\S]*?feature-tile/);
+    expect(tiles).toMatch(/<NavigationLink[\s\S]*?feature-tile/);
   });
 
   it('places the grid in the hero and keeps Gigs accessible after the feed', () => {

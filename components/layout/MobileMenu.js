@@ -26,10 +26,11 @@ import { getTimetableHref } from '@/lib/timetable/meta';
 import { formatUnread } from '@/lib/notifications/format';
 import { handleOf } from '@/lib/identity/shell-user';
 
-function SheetLink({ href, icon, label, unread = null, onNavigate }) {
+function SheetLink({ href, icon, label, unread = null, onNavigate, documentNavigation = false }) {
+  const NavigationLink = documentNavigation ? 'a' : Link;
   return (
     <div className="sheet-destination">
-      <Link
+      <NavigationLink
         href={href}
         onClick={onNavigate}
         className="flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-[0.875rem] font-medium text-ink transition-colors hover:bg-surface-2 hover:no-underline"
@@ -43,7 +44,7 @@ function SheetLink({ href, icon, label, unread = null, onNavigate }) {
             {unread.text}
           </span>
         ) : null}
-      </Link>
+      </NavigationLink>
     </div>
   );
 }
@@ -85,7 +86,7 @@ export function MobileMenuBody({
         <SheetLink href={ROUTES.clubs} icon="star" label="Clubs" onNavigate={close} />
         <SheetLink href={ROUTES.communities} icon="users" label="Communities" onNavigate={close} />
         <SheetLink href={ROUTES.campus} icon="building" label="Campus" onNavigate={close} />
-        <SheetLink href={getTimetableHref(user?.division)} icon="calendar" label="Timetable" onNavigate={close} />
+        <SheetLink href={getTimetableHref(user?.division)} icon="calendar" label="Timetable" onNavigate={close} documentNavigation />
         <SheetLink href={ROUTES.map} icon="mapPin" label="Map" onNavigate={close} />
         <SheetLink href={ROUTES.study} icon="book" label="Study finder" onNavigate={close} />
         <SheetLink href={ROUTES.notifications} icon="bell" label="Notifications" unread={unread} onNavigate={close} />

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DIVISIONS, ROUTES } from '@/lib/constants';
 import { adjacentDivisions, getDivisionTimetable } from '@/lib/timetable';
@@ -109,10 +108,10 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
   return (
     <main className="mt-10">
       <nav aria-label="Breadcrumb" className="text-[0.8125rem]">
-        <Link href={ROUTES.timetable} className="inline-flex items-center gap-1.5 font-medium text-muted hover:text-ink">
+        <a href={ROUTES.timetable} className="inline-flex items-center gap-1.5 font-medium text-muted hover:text-ink">
           <Icon name="chevronLeft" size={14} aria-hidden="true" />
           All divisions
-        </Link>
+        </a>
       </nav>
 
       <TimetableOfflineProvider division={timetable.division}>
@@ -148,27 +147,27 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
 
       <nav aria-label="Neighbouring divisions" className="mt-10 flex flex-wrap items-center justify-between gap-3">
         {previous ? (
-          <Link
+          <a
             href={divisionTimetableHref(previous)}
             className="inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-md)] border border-line px-3.5 text-[0.8125rem] font-semibold text-ink transition-colors hover:border-line-strong hover:no-underline"
           >
             <Icon name="chevronLeft" size={14} aria-hidden="true" />
             Division {previous}
-          </Link>
+          </a>
         ) : (
           <span />
         )}
-        <Link href={ROUTES.timetable} className="text-[0.8125rem] font-medium text-muted underline hover:text-ink">
+        <a href={ROUTES.timetable} className="text-[0.8125rem] font-medium text-muted underline hover:text-ink">
           All divisions A–R
-        </Link>
+        </a>
         {next ? (
-          <Link
+          <a
             href={divisionTimetableHref(next)}
             className="inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-md)] border border-line px-3.5 text-[0.8125rem] font-semibold text-ink transition-colors hover:border-line-strong hover:no-underline"
           >
             Division {next}
             <Icon name="chevronRight" size={14} aria-hidden="true" />
-          </Link>
+          </a>
         ) : (
           <span />
         )}

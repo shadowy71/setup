@@ -413,11 +413,9 @@ describe('live component contracts', () => {
     expect(/\.tt-table tbody th\[scope='row'\]\s*\{[^}]*\}/.exec(css)[0]).toContain('position: sticky');
   });
 
-  it('uses a single, backed glass surface and no theme switch', () => {
-    // One unprefixed declaration for the clock (the -webkit alias sits on its
-    // own line, and the @supports condition is a feature query, not a second
-    // blurred surface).
-    expect(css.match(/^\s+backdrop-filter: blur\(10px\)/gm)).toHaveLength(1);
+  it('uses backed glass surfaces and no separate theme switch', () => {
+    expect(css).toContain('backdrop-filter: blur(22px) saturate(160%)');
+    expect(css).toContain('prefers-reduced-transparency: reduce');
     expect(css).toContain('@supports not ((backdrop-filter: blur(1px))');
     expect(css).not.toContain('data-theme');
     expect(css).not.toContain('prefers-color-scheme');
@@ -502,6 +500,14 @@ describe('rendered day view (server pass, fixed instants)', () => {
     });
     return renderLive({ division, day: auto.day, pinned, iso });
   }
+
+  it('shows the expanded programme name when available and the original label otherwise', () => {
+    const mechanical = renderAt({ division: 'A', iso: '2026-11-16T04:30:00Z' });
+    expect(mechanical).toContain('Mechanical Engineering');
+    expect(mechanical).not.toContain('Mech · Mechanical Engineering');
+    const vlsi = renderAt({ division: 'G', iso: '2026-11-16T04:30:00Z' });
+    expect(vlsi).toContain('VLSI');
+  });
 
   it('opens on the institute weekday with a live clock and one NOW + one NEXT', () => {
     // Friday 10:05 IST — inside Division O's 09:00–11:00 practical block.

@@ -65,10 +65,17 @@ export function Sidebar({ user = null, unreadNotifications = 0, canModerate = fa
         <p className="nav-group-label mb-1.5">Campus</p>
         {primary.map((item) => (
           <div key={item.href} className="nav-destination">
-            <Link href={item.href} prefetch={item.href === ROUTES.home ? false : undefined} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
-              <Icon name={item.icon} size={18} className="nav-icon" />
-              {item.label}
-            </Link>
+            {item.href === timetableHref ? (
+              <a href={item.href} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
+                <Icon name={item.icon} size={18} className="nav-icon" />
+                {item.label}
+              </a>
+            ) : (
+              <Link href={item.href} prefetch={item.href === ROUTES.home ? false : undefined} aria-current={active(item.href) ? 'page' : undefined} className="nav-item">
+                <Icon name={item.icon} size={18} className="nav-icon" />
+                {item.label}
+              </Link>
+            )}
           </div>
         ))}
       </nav>

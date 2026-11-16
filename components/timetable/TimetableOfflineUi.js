@@ -73,6 +73,7 @@ export function TimetableOfflinePill() {
     freshness,
     savedAgo,
     offlineView,
+    cachedView,
     phase,
     error,
     refreshFailed,
@@ -95,8 +96,16 @@ export function TimetableOfflinePill() {
             ? 'ready'
             : 'unavailable';
 
-  const copy = offlineStateCopy(state, { savedAgo, freshLabel: freshness.label, error });
+  const copy = cachedView
+    ? { tone: 'stale', label: 'Saved copy · may be out of date', detail: 'Showing a cached timetable while the connection is slow or unavailable. Reload when connected to see updates.' }
+    : worker.state === 'error' && savedReady
+      ? { tone: 'error', label: 'Offline reload may need a connection', detail: 'The timetable data was saved, but this browser could not keep the page files.' }
+      : offlineStateCopy(state, { savedAgo, freshLabel: freshness.label, error });
   const busy = state === 'saving' || state === 'checking';
+
+  // Keep the header quiet in normal use; warnings remain visible when the
+  // displayed timetable may be outdated or offline preparation has failed.
+  if (!cachedView && state !== 'stale' && state !== 'error' && !(savedReady && worker.state === 'error')) return null;
 
   return (
     <div className="tt-offline">
@@ -466,6 +475,7 @@ export function TimetableInstallOffer() {
       description={`One tap keeps this division’s week a screen away: the icon opens straight on ${name}, and the saved copy renders with no signal at all.`}
       size="sm"
       closeLabel="Close this sheet"
+      className="tt-glass-dialog"
     >
       <div className="tt-offer">
         <p className="tt-offer__status" aria-live="polite">
@@ -545,6 +555,7 @@ export function TimetableInstallSheet() {
       }
       size="sm"
       closeLabel="Close this sheet"
+      className="tt-glass-dialog"
     >
       {kind === 'offline' ? (
         <div className="tt-sheet__block">

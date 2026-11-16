@@ -65,9 +65,9 @@ export default function TimetableLayout({ children }) {
           </Link>
         </p>
         <p className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[0.8125rem]">
-          <Link href={ROUTES.timetable} className="font-medium text-muted underline hover:text-ink">
+          <a href={ROUTES.timetable} className="font-medium text-muted underline hover:text-ink">
             All divisions
-          </Link>
+          </a>
           <Link href={ROUTES.rules} className="font-medium text-muted underline hover:text-ink">
             Community rules
           </Link>

@@ -54,16 +54,19 @@ export function HomeFeatureTiles({ division }) {
     <section className="home-features" aria-labelledby="home-features-title">
       <h2 id="home-features-title" className="home-features__title">Quick navigation</h2>
       <div className="home-features__grid">
-        {tiles.map((tile) => (
-          <Link key={tile.name} href={tile.href} aria-label={tile.name} title={tile.name} className={`feature-tile feature-tile--${tile.tone}`}>
-            <span className="feature-tile__top" aria-hidden="true">
-              <span className="feature-tile__icon"><Icon name={tile.icon} size={19} /></span>
-              <Icon name="arrowUpRight" size={15} className="feature-tile__arrow" />
-            </span>
-            <span className="feature-tile__title">{tile.name}</span>
-            <span className="feature-tile__copy">{tile.copy}</span>
-          </Link>
-        ))}
+        {tiles.map((tile) => {
+          const NavigationLink = tile.tone === 'timetable' ? 'a' : Link;
+          return (
+            <NavigationLink key={tile.name} href={tile.href} aria-label={tile.name} title={tile.name} className={`feature-tile feature-tile--${tile.tone}`}>
+              <span className="feature-tile__top" aria-hidden="true">
+                <span className="feature-tile__icon"><Icon name={tile.icon} size={19} /></span>
+                <Icon name="arrowUpRight" size={15} className="feature-tile__arrow" />
+              </span>
+              <span className="feature-tile__title">{tile.name}</span>
+              <span className="feature-tile__copy">{tile.copy}</span>
+            </NavigationLink>
+          );
+        })}
       </div>
     </section>
   );

@@ -319,8 +319,7 @@ export default function TimetableLive({
           </p>
           <h1 className="t-display mt-2">Division {division}</h1>
           <p className="t-secondary mt-2">
-            {label}
-            {friendly ? ` · ${friendly}` : ''}
+            {friendly || label}
           </p>
         </div>
 
@@ -338,12 +337,6 @@ export default function TimetableLive({
 
         {offlineSlot}
       </header>
-
-      <p className="tt-help">
-        How to read practicals: an entry like <span className="text-ink-soft">EG-1/ENG-2/FES-3</span> means the three
-        batches are in different rooms at the same time — the [faculty] and [room] lists below it follow the same batch
-        order. Lunch is wherever this division’s row puts it. All times are the institute’s, {CAMPUS_TIME_ZONE}.
-      </p>
 
       <div className="tt-tabsbar">
         <div className="tt-tabs" role="group" aria-label="Choose a weekday">
@@ -441,6 +434,12 @@ export default function TimetableLive({
       ) : null}
 
       {children}
+
+      <p className="tt-help">
+        How to read practicals: an entry like <span className="text-ink-soft">EG-1/ENG-2/FES-3</span> means the three
+        batches are in different rooms at the same time — the [faculty] and [room] lists below it follow the same batch
+        order. Lunch is wherever this division’s row puts it. All times are the institute’s, {CAMPUS_TIME_ZONE}.
+      </p>
     </div>
   );
 }

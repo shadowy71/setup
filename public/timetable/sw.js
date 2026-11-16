@@ -183,8 +183,10 @@
     for (const url of urls) await cache.delete(url);
   }
   async function putDocument(cache, request, response, withAssets) {
-    await cache.put(request, response.clone());
-    if (!withAssets) return { stored: 0, failed: 0 };
+    if (!withAssets) {
+      await cache.put(request, response.clone());
+      return { stored: 0, failed: 0 };
+    }
     const text = await response.clone().text();
     const urls = extractAssetUrls(text);
     if (!urls.length) return { stored: 0, failed: 1 };
@@ -202,30 +204,53 @@
     );
     await prune(store, pickAssetsToPrune(await entriesOf(store), ASSET_LIMIT));
     const stored = results.filter(Boolean).length;
-    return { stored, failed: urls.length - stored };
+    const failed = urls.length - stored;
+    if (failed === 0) await cache.put(request, response.clone());
+    return { stored, failed };
   }
   async function markShell(cache, ready) {
     if (ready) await cache.put(OFFLINE_SHELL_READY_URL, new Response("ready"));
     else await cache.delete(OFFLINE_SHELL_READY_URL);
   }
-  async function handleDocument(request) {
-    const cache = await openCache(NAMES.documents);
-    const key = cacheKeyFor(request.url);
-    try {
-      const response = await fetch(request);
-      if (cache && isHtml(response) && key && !tooBig(response)) {
-        await putDocument(cache, request, response, true);
-        await prune(cache, pickDocumentsToPrune(await entriesOf(cache), DOCUMENT_LIMIT));
+  async function cachedDocument(response) {
+    const html = await response.text();
+    return mark("stale", html.replace(/<head([^>]*)>/i, '<head$1><meta name="campus-timetable-cached" content="true">'));
+  }
+  function handleDocument(request) {
+    const cachePromise = openCache(NAMES.documents);
+    const network = fetch(request);
+    const refresh = network.then((response2) => {
+      const copy = response2.clone();
+      return cachePromise.then(async (cache) => {
+        const key = cacheKeyFor(request.url);
+        if (cache && isHtml(response2) && key && !tooBig(response2)) {
+          await putDocument(cache, request, copy, true);
+          await prune(cache, pickDocumentsToPrune(await entriesOf(cache), DOCUMENT_LIMIT));
+        }
+      });
+    }).catch(() => {
+    });
+    const response = (async () => {
+      const cache = await cachePromise;
+      const key = cacheKeyFor(request.url);
+      const cached = cache && key ? await cache.match(key).catch(() => null) : null;
+      try {
+        if (!cached) return await network;
+        let timer;
+        const timeout = new Promise((resolve) => {
+          timer = setTimeout(() => resolve(null), 700);
+        });
+        const result = await Promise.race([network, timeout]).finally(() => clearTimeout(timer));
+        return result || await cachedDocument(cached);
+      } catch {
+        if (cached) return cachedDocument(cached);
+        const core = await openCache(NAMES.core);
+        const [shell, ready] = core ? await Promise.all([core.match(OFFLINE_SHELL_URL), core.match(OFFLINE_SHELL_READY_URL)]) : [null, null];
+        if (shell && ready) return mark("shell", await shell.text());
+        return mark("unavailable", offlineNotice());
       }
-      return response;
-    } catch {
-      const cached = cache && key ? await cache.match(key) : null;
-      if (cached) return mark("stale", await cached.text());
-      const core = await openCache(NAMES.core);
-      const [shell, ready] = core ? await Promise.all([core.match(OFFLINE_SHELL_URL), core.match(OFFLINE_SHELL_READY_URL)]) : [null, null];
-      if (shell && ready) return mark("shell", await shell.text());
-      return mark("unavailable", offlineNotice());
-    }
+    })();
+    return { response, refresh };
   }
   async function handleAsset(request, cacheName) {
     const cache = await openCache(cacheName);
@@ -299,9 +324,13 @@ main{max-width:34rem;margin:0 auto}p{color:oklch(69% .026 295)}b{color:oklch(80%
       selfOrigin: self.location.origin
     });
     if (decision.action === "bypass") return;
-    event.respondWith(
-      decision.action === "network-first" ? handleDocument(request) : handleAsset(request, decision.cache).catch(() => Response.error())
-    );
+    if (decision.action === "network-first") {
+      const { response, refresh } = handleDocument(request);
+      event.respondWith(response);
+      event.waitUntil(refresh);
+    } else {
+      event.respondWith(handleAsset(request, decision.cache).catch(() => Response.error()));
+    }
   });
   self.addEventListener("message", (event) => {
     const data = event.data || {};
@@ -349,8 +378,8 @@ main{max-width:34rem;margin:0 auto}p{color:oklch(69% .026 295)}b{color:oklch(80%
             if (response?.ok && isHtml(response)) {
               const documents = await openCache(NAMES.documents);
               if (documents) {
-                await putDocument(documents, request, response, true);
-                cached = true;
+                const result = await putDocument(documents, request, response, true);
+                cached = result.failed === 0;
               }
             }
           } catch {
