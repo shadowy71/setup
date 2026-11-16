@@ -107,7 +107,11 @@ export function CommandPaletteHost({ actions = [] }) {
     (action) => {
       if (!action) return;
       close();
-      router.push(action.href);
+      if (action.href === '/timetable' || action.href.startsWith('/timetable/')) {
+        window.location.assign(action.href);
+      } else {
+        router.push(action.href);
+      }
     },
     [close, router],
   );

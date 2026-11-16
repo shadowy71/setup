@@ -1,10 +1,8 @@
 /* ==========================================================================
    Timetable — public division selector + per-division master timetable
    --------------------------------------------------------------------------
-   Text-first and backed: session cards are solid elevated panels (never glass
-   over the animated sky), because a timetable is read at 8:55 in a corridor,
-   not admired. Exactly one surface on the page is glass — the live clock —
-   and it is backed at 90% opacity with a short blur, never stacked.
+   Text-first and backed: timetable surfaces use a subtle glass treatment
+   while keeping text, status and controls legible in both colour modes.
 
    Colour does one job: a slim leading edge and a dot name the featured subject,
    while the remaining families use the same quiet Lumen ink. Lunch and the
@@ -102,8 +100,7 @@
   max-width: 46rem;
 }
 
-/* The page's only glass surface: one short blur over an opaque-enough
-   backing, with an opaque fallback where backdrop-filter is unavailable. */
+/* Clock surface; the shared timetable glass treatment is defined below. */
 .tt-clock {
   display: flex;
   flex: 0 1 auto;
@@ -336,7 +333,7 @@
   /* Room to breathe when a session is scrolled into view. */
   scroll-margin-block: 1.25rem;
   display: grid;
-  grid-template-columns: 4.75rem minmax(0, 1fr);
+  grid-template-columns: 5.2rem minmax(0, 1fr);
   gap: 0.75rem;
   padding: 0.7rem 0.85rem;
   border: 1px solid var(--cp-border-subtle);
@@ -347,7 +344,7 @@
 
 @media (min-width: 640px) {
   .tt-item {
-    grid-template-columns: 6rem minmax(0, 1fr);
+    grid-template-columns: 6.5rem minmax(0, 1fr);
     padding: 0.8rem 1rem;
   }
 }
@@ -361,19 +358,19 @@
 }
 
 .tt-item__from {
-  font-size: 0.8125rem;
+  font-size: 0.9140625rem;
   font-weight: 680;
   color: var(--cp-text-primary);
 }
 
 .tt-item__to {
-  font-size: 0.6875rem;
+  font-size: 0.7734375rem;
   color: var(--cp-text-muted);
 }
 
 .tt-item__span {
   margin-top: 0.15rem;
-  font-size: 0.625rem;
+  font-size: 0.703125rem;
   letter-spacing: 0.02em;
   color: var(--cp-text-subtle);
 }
@@ -401,7 +398,7 @@
 }
 
 .tt-item__subject {
-  font-size: 0.875rem;
+  font-size: 0.984375rem;
   font-weight: 660;
   line-height: 1.35;
   color: var(--cp-text-primary);
@@ -416,7 +413,7 @@
 }
 
 .tt-item__meta {
-  font-size: 0.75rem;
+  font-size: 0.84375rem;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
   color: var(--cp-text-muted);
@@ -1342,3 +1339,63 @@
     opacity: 1;
   }
 }
+
+/* Frosted timetable islands: a translucent, softly highlighted material,
+   scoped to the public timetable, including its portalled install dialogs. */
+:root :is(.tt-shell, .tt-glass-dialog) {
+  --tt-glass: color-mix(in oklab, var(--cp-bg-elevated) 48%, transparent);
+  --tt-glass-strong: color-mix(in oklab, var(--cp-bg-strong) 78%, transparent);
+  --tt-glass-highlight: color-mix(in oklab, white 13%, transparent);
+  --tt-glass-border: color-mix(in oklab, var(--color-rule) 85%, white 15%);
+  --tt-glass-shadow: 0 8px 24px -20px rgb(0 0 0 / .24), inset 0 1px 0 rgb(255 255 255 / .08);
+}
+:root .tt-shell {
+  background-image: radial-gradient(ellipse at 12% 18%, color-mix(in oklab, var(--color-accent) 11%, transparent), transparent 42%), radial-gradient(ellipse at 90% 65%, color-mix(in oklab, var(--color-accent) 8%, transparent), transparent 45%);
+}
+:root .tt-shell :is(.card, .tt-tile, .tt-clock, .tt-item, .tt-status, .tt-week, .tt-scroll, .tt-install, .tt-offline, .tt-offline__pill, .tt-help, .tt-legend, .tt-shell__panel, .tt-shell__banner, .tt-shell__flagged, .tt-shell__chip, .tt-offer__status, .tt-verify),
+:root .tt-shell :is(.tt-tab, .tt-jump),
+:root .dialog.tt-glass-dialog {
+  border-color: var(--tt-glass-border);
+  background-color: var(--tt-glass);
+  background-image: linear-gradient(145deg, var(--tt-glass-highlight), rgb(255 255 255 / .04) 100%);
+  box-shadow: var(--tt-glass-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+}
+/* Preserve the timetable's printed accent stripe and NOW/NEXT outlines. */
+:root .tt-shell .tt-item {
+  box-shadow: inset 3px 0 0 var(--tt-accent, transparent), var(--tt-glass-shadow);
+}
+:root .tt-shell .tt-item--now { border-color: var(--color-success); }
+:root .tt-shell .tt-item--next { border-color: var(--color-accent-text); }
+:root .tt-shell :is(.tt-item--now, .tt-tab[aria-pressed='true'], .tt-shell__chip--active) {
+  background-color: color-mix(in oklab, var(--cp-selected-bg) 75%, transparent);
+  box-shadow: inset 0 0 0 1px var(--cp-selected-border), var(--tt-glass-shadow);
+}
+:root .tt-shell .tt-item--now { box-shadow: inset 3px 0 0 var(--color-success), var(--tt-glass-shadow); }
+:root .tt-shell :is(.tt-tile, .tt-tab:not([aria-pressed='true']), .tt-jump, .tt-shell__chip:not(.tt-shell__chip--active)):hover {
+  border-color: var(--cp-border-control);
+  background-color: color-mix(in oklab, var(--cp-bg-elevated) 78%, transparent);
+}
+:root .tt-shell :is(.tt-help, .tt-offline, .tt-legend) { padding: .75rem .9rem; }
+:root .tt-shell .tt-table :is(th, td) { background-color: var(--tt-glass); }
+:root .tt-shell .tt-table :is(thead th, tbody th[scope='row']) { background-color: var(--tt-glass-strong); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root :is(.tt-shell, .tt-glass-dialog) { --tt-glass: var(--cp-bg-elevated); --tt-glass-strong: var(--cp-bg-strong); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root :is(.tt-shell, .tt-glass-dialog) {
+    --tt-glass: var(--cp-bg-elevated);
+    --tt-glass-strong: var(--cp-bg-strong);
+    --tt-glass-highlight: transparent;
+  }
+  :root .tt-shell :is(.card, .tt-tile, .tt-clock, .tt-item, .tt-status, .tt-week, .tt-scroll, .tt-install, .tt-offline, .tt-offline__pill, .tt-help, .tt-legend, .tt-shell__panel, .tt-shell__banner, .tt-shell__flagged, .tt-shell__chip, .tt-offer__status, .tt-verify, .tt-tab, .tt-jump),
+  :root .dialog.tt-glass-dialog {
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  :root .tt-shell :is(.tt-item--now, .tt-tab[aria-pressed='true'], .tt-shell__chip--active) { background-color: var(--cp-selected-bg); }
+}
+
+:root .tt-shell .tt-help { margin-top: 2rem; }
