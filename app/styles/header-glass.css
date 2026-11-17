@@ -51,8 +51,16 @@
   backdrop-filter: blur(20px) saturate(1.12);
 }
 
+:root .shell-header .brand {
+  flex-shrink: 0;
+}
+
 :root .shell-header .brand-word {
   color: var(--header-ink);
+  font-size: 0.9375rem;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 :root .shell-header .brand-sub {
@@ -246,9 +254,10 @@
   }
 }
 
-/* The brand link retains its accessible name when its wordmark is hidden. */
+/* Keep the name legible on narrow phones while retaining the full-sized
+   header actions. The mark remains visible on wider screens and in the menu. */
 @media (max-width: 380px) {
-  :root .shell-header .brand-word { display: none; }
+  :root .shell-header .brand-mark { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

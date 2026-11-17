@@ -165,6 +165,7 @@ export function StreamItem({ item, post, currentUserId, canModerate, onPollVote 
   return (
     <PostCard
       variant="stream"
+      showFollow={false}
       post={post}
       currentUserId={currentUserId}
       canModerate={canModerate}
