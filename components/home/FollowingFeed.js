@@ -75,7 +75,7 @@ export function FollowingFeed({ currentUserId, canModerate }) {
       <div className="home-stream">
         {posts.map((post, index) => (
           <StreamSlot key={post.id} kind={post.kind} order={index}>
-            <PostCard variant="stream" post={{ ...post, following_by_me: true }} currentUserId={currentUserId} canModerate={canModerate} reactions={{ count: post.reaction_count || 0, mine: Boolean(post.reacted_by_me) }} poll={post.poll} />
+            <PostCard variant="stream" showFollow={false} post={{ ...post, following_by_me: true }} currentUserId={currentUserId} canModerate={canModerate} reactions={{ count: post.reaction_count || 0, mine: Boolean(post.reacted_by_me) }} poll={post.poll} />
           </StreamSlot>
         ))}
       </div>

@@ -51,6 +51,7 @@ export function PostCard({
   showCommunity = true,
   detail = false,
   manageAttachments = false,
+  showFollow = true,
   variant = 'card',
 }) {
   // `card` is the default everywhere; `stream` is the Home feed's entry
@@ -85,7 +86,7 @@ export function PostCard({
           timestamp={post.created_at}
         />
         <div className="flex shrink-0 items-center gap-1.5">
-          {!isOwner && currentUserId && post.author_id && post.author_username && post.following_by_me !== undefined ? (
+          {showFollow && !isOwner && currentUserId && post.author_id && post.author_username && post.following_by_me !== undefined ? (
             <FollowButton currentUserId={currentUserId} profileId={post.author_id} username={post.author_username} initialFollowing={post.following_by_me === true} unavailable={post.following_by_me === null} />
           ) : null}
           {post.is_official ? <OfficialBadge /> : null}
