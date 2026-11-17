@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { DIVISIONS, ROUTES } from '@/lib/constants';
-import { adjacentDivisions, getDivisionTimetable } from '@/lib/timetable';
+import { adjacentDivisions, getDivisionTimetable, timetableDaysForDate } from '@/lib/timetable';
 import { getCampusTime, normalizeTimetableDay } from '@/lib/timetable/clock';
 import { resolveAutoDay } from '@/lib/timetable/auto-day';
 import { divisionTimetableHref } from '@/lib/timetable/meta';
@@ -8,7 +8,6 @@ import { batchShortName, describeBatch } from '@/lib/timetable/batch';
 import TimetableLive from '@/components/timetable/TimetableLive';
 import { TimetableInstallCard, TimetableInstallSheet, TimetableOfflinePill } from '@/components/timetable/TimetableOfflineUi';
 import { TimetableOfflineProvider } from '@/components/timetable/TimetableOfflineProvider';
-import { FlaggedNotice, WeekTable } from '@/components/timetable/TimetableViews';
 import { Icon } from '@/components/ui/icons';
 
 /**
@@ -89,7 +88,7 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
   // decision is made here on the server so the first paint is already right —
   // no flash of a finished day while the browser catches up.
   const auto = resolveAutoDay({
-    days: timetable.days,
+    days: timetableDaysForDate(timetable.days, timetable.division, campus),
     weekday: campus.weekday,
     nowMinutes: campus.minutesOfDay,
   });
@@ -99,9 +98,8 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
   // day is chosen explicitly.
   const initialPinned = Boolean(requestedDay && requestedDay !== auto.day);
 
-  // Only what the live view and the offline copy need: the week grid keeps its
-  // slots server-side, the snapshot carries the same events the page renders.
-  const liveDays = timetable.days.map(({ day, events, freeRanges }) => ({ day, events, freeRanges }));
+  // Include the printed slots so the week grid can switch at the campus date boundary too.
+  const liveDays = timetable.days.map(({ day, events, freeRanges, slots }) => ({ day, events, freeRanges, slots }));
   const { previous, next } = adjacentDivisions(timetable.division);
   const batch = describeBatch(timetable.division);
 
@@ -121,25 +119,13 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
           friendly={timetable.friendly}
           days={liveDays}
           subjects={timetable.subjects}
+          showWeek
           initialDay={initialDay}
           initialPinned={initialPinned}
           initialNow={now.toISOString()}
           offlineSlot={batch ? <TimetableOfflinePill /> : null}
         >
-          {timetable.flagged.length ? (
-            <div className="mt-8">
-              <FlaggedNotice flagged={timetable.flagged} />
-            </div>
-          ) : null}
-
           {batch ? <TimetableInstallCard /> : null}
-
-          <details className="tt-week">
-            <summary>See the full week at a glance</summary>
-            <div className="tt-week__body">
-              <WeekTable days={timetable.days} division={timetable.division} />
-            </div>
-          </details>
         </TimetableLive>
 
         {batch ? <TimetableInstallSheet /> : null}

@@ -8,6 +8,8 @@ import { getDayStatus } from '@/lib/timetable/schedule';
 import { hasLectures, isScheduleComplete, resolveAutoDay } from '@/lib/timetable/auto-day';
 import { sessionScrollBehavior, shouldScrollToSession } from '@/lib/timetable/scroll';
 import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
+import { isSpecialTimetableDate, timetableDaysForDate } from '@/lib/timetable';
+import { FlaggedNotice, WeekTable } from '@/components/timetable/TimetableViews';
 
 /**
  * The live half of a division timetable.
@@ -158,8 +160,9 @@ export default function TimetableLive({
   division,
   label,
   friendly,
-  days,
+  days: regularDays,
   subjects,
+  showWeek = false,
   initialDay,
   initialPinned = false,
   initialNow,
@@ -182,6 +185,12 @@ export default function TimetableLive({
   }, []);
 
   const parts = useMemo(() => getCampusTime(now), [now]);
+  const specialActive = isSpecialTimetableDate(parts);
+  const { year, month, day: dateOfMonth } = parts;
+  const days = useMemo(
+    () => timetableDaysForDate(regularDays, division, { year, month, day: dateOfMonth }),
+    [regularDays, division, year, month, dateOfMonth],
+  );
   const today = timetableDayFor(parts.weekday);
 
   // The schedule-aware day: today while its last lecture has not finished,
@@ -338,6 +347,14 @@ export default function TimetableLive({
         {offlineSlot}
       </header>
 
+      {specialActive ? (
+        <div className="tt-status" role="status">
+          Special timetable for 18–20 November 2026. Wednesday to Friday use the supplied special schedule;
+          the regular timetable returns on 21 November.{' '}
+          <a href="/timetable/special-18-20-nov-2026.pdf" target="_blank" rel="noopener noreferrer" className="underline">View the source PDF</a>.
+        </div>
+      ) : null}
+
       <div className="tt-tabsbar">
         <div className="tt-tabs" role="group" aria-label="Choose a weekday">
           {days.map(({ day: name }) => {
@@ -370,7 +387,7 @@ export default function TimetableLive({
       </div>
 
       <div className="tt-dayhead">
-        <h2 className="tt-dayhead__title">{selected}</h2>
+        <h2 className="tt-dayhead__title">{selected}{day?.specialDate ? ` · ${day.specialDate} Nov` : ''}</h2>
         {isToday ? <span className="tt-dayhead__today">Today</span> : null}
         {dayNote ? <p className="tt-dayhead__note">{dayNote}</p> : null}
       </div>
@@ -433,7 +450,20 @@ export default function TimetableLive({
         </ul>
       ) : null}
 
+      {showWeek ? (
+        <div className="mt-8">
+          <FlaggedNotice flagged={days.flatMap(({ day: name, events }) => events.filter((event) => event.needsVerification).map((event) => ({ day: name, ...event })))} />
+        </div>
+      ) : null}
+
       {children}
+
+      {showWeek ? (
+        <details className="tt-week">
+          <summary>See the full week at a glance</summary>
+          <div className="tt-week__body"><WeekTable days={days} division={division} /></div>
+        </details>
+      ) : null}
 
       <p className="tt-help">
         How to read practicals: an entry like <span className="text-ink-soft">EG-1/ENG-2/FES-3</span> means the three
