@@ -461,7 +461,12 @@ export default function TimetableLive({
       {showWeek ? (
         <details className="tt-week">
           <summary>See the full week at a glance</summary>
-          <div className="tt-week__body"><WeekTable days={days} division={division} /></div>
+          <div className="tt-week__body">
+            {/* Hidden above the phone breakpoint, where the whole grid fits;
+                on a phone it names the gesture the printed table requires. */}
+            <p className="tt-week__hint">Scroll or swipe the table sideways to see the rest of the week.</p>
+            <WeekTable days={days} division={division} />
+          </div>
         </details>
       ) : null}
 
