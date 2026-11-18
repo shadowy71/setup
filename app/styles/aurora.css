@@ -24,6 +24,10 @@
 body {
   position: relative;
   background-color: var(--color-paper);
+  /* The room: a subtle, continuous atmospheric layer over the dark canvas.
+     Deep vertical falloff plus extremely low-opacity radial blooms — depth
+     behind the content, without changing the base colour or text contrast. */
+  background-image: var(--halo-page);
 }
 
 /* The document canvas is a single theme token; do not paint a second
