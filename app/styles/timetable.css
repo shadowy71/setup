@@ -580,6 +580,17 @@
   padding: 0.75rem;
 }
 
+/* Only the phone layout shows this: the grid is a printed ten-period table and
+   keeps its sideways gesture, so the affordance has to be named rather than
+   discovered. Hidden on wider screens, where the whole week already fits. */
+.tt-week__hint {
+  display: none;
+  margin: 0 0 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--cp-text-muted);
+}
+
 /* ---------------------------------------------------------------- table */
 
 .tt-scroll {
@@ -1399,3 +1410,122 @@
 }
 
 :root .tt-shell .tt-help { margin-top: 2rem; }
+
+/* ==========================================================================
+   Phone composition
+   --------------------------------------------------------------------------
+   The day view is the primary reading on a phone, so every control in it has
+   to fit without being cut off and every sentence has to use the full column.
+   These rules are deliberately scoped to the timetable subtree and to widths
+   below the sm breakpoint, so the desktop composition is untouched.
+   ========================================================================== */
+
+@media (max-width: 639px) {
+  /* The weekday picker was a non-wrapping strip with `overflow-x: auto`. Its
+     five non-shrinking tabs need ~309px at the default text size (more when a
+     phone's font size is raised), so on a 320px viewport — and on a 384px A55
+     with enlarged text — the last day sat outside the strip with no scrollbar
+     to say so: the "cut off at the right edge" phone screenshot. A wrapping
+     grid fits the same controls in one row when there is room and flows them
+     onto a second row when there is not, instead of clipping them. */
+  .tt-tabs {
+    display: grid;
+    flex: 1 1 100%;
+    grid-template-columns: repeat(auto-fit, minmax(3.25rem, 1fr));
+    gap: 0.3rem;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .tt-tab {
+    justify-content: center;
+    min-width: 0;
+    gap: 0.3rem;
+    padding-inline: 0.3rem;
+  }
+
+  .tt-jump {
+    align-self: flex-start;
+  }
+
+  /* Status/notice copy is text, not a row of controls. As a flex container the
+     trailing "View the source PDF" link became a ~40px column stacking one word
+     per line; block flow keeps the sentence and its link on the same measure. */
+  .tt-status {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  .tt-status a {
+    overflow-wrap: anywhere;
+  }
+
+  /* The install card's implicit grid track auto-sized to its widest nowrap
+     child, so with raised phone text size the card's content ran past its own
+     right edge. One explicit, shrinkable column plus wrapping text keeps every
+     row inside the card; buttons grow in height only when a label wraps. */
+  .tt-install {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tt-install > *,
+  .tt-offer > * {
+    min-width: 0;
+  }
+
+  .tt-install__intro,
+  .tt-install__status,
+  .tt-install__points li,
+  .tt-install__steps li {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .tt-install__points li > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .tt-install__actions .btn,
+  .tt-offer__actions .btn {
+    height: auto;
+    min-height: 2.75rem;
+    padding-block: 0.65rem;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .tt-install__actions .btn .btn-label,
+  .tt-offer__actions .btn .btn-label {
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  /* The printed week grid is the one existing interaction that genuinely needs
+     a sideways gesture; keep its momentum scrolling native. */
+  .tt-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tt-week__hint {
+    display: block;
+  }
+}
+
+/* Horizontal safe areas: a landscape notch, rounded corner or folded edge must
+   not sit over the timetable's first or last column. `max()` resolves to the
+   existing page gutter on devices without insets, so wide screens keep the
+   same padding they already had. */
+@supports (padding-left: env(safe-area-inset-left)) {
+  .tt-shell {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  @media (min-width: 640px) {
+    .tt-shell {
+      padding-left: max(1.5rem, env(safe-area-inset-left));
+      padding-right: max(1.5rem, env(safe-area-inset-right));
+    }
+  }
+}
