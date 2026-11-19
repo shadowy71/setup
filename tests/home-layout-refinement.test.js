@@ -32,8 +32,10 @@ describe('Home layout refinement', () => {
     expect(css).toMatch(/\.home-stage \.feature-tile\s*\{[^}]*border-radius: var\(--radius-xs\);/);
   });
 
-  it('uses a 1px white fade between major sections and between present rail modules', () => {
-    expect(css).toMatch(/--home-separator: linear-gradient\(\s*90deg,\s*transparent 0%,\s*rgba\(255, 255, 255, 0\.12\) 15%,\s*rgba\(255, 255, 255, 0\.24\) 50%,\s*rgba\(255, 255, 255, 0\.12\) 85%,\s*transparent 100%\s*\)/);
+  it('uses a layered 1px fade between major sections and between present rail modules', () => {
+    expect(css).toContain('--home-separator: linear-gradient(90deg, var(--home-rule-stops))');
+    expect(css).toContain('--home-separator-vertical: linear-gradient(180deg, var(--home-rule-stops))');
+    expect(css).toContain('filter: var(--home-rule-edge, none)');
     expect(css).toMatch(/\.home-stage \.home-pulse::after,\s*:root \.home-stage \.home-composer::after\s*\{[^}]*height: 1px;[^}]*background: var\(--home-separator\);/);
     expect(css).toMatch(/\.home-stage \.rail-island::after\s*\{[^}]*height: 1px;[^}]*background: var\(--home-separator\);/);
     expect(css).toContain('.home-stage .rail-island--market::after');
