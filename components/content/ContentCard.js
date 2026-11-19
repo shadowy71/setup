@@ -56,7 +56,7 @@ export function ContentCard({
   const stream = variant === 'stream';
   const skin = stream
     ? {
-        root: cn('stream-card stream-card--row', className),
+        root: cn('stream-card stream-card--row relative z-10', className),
         glyph: 'stream-card__glyph',
         title: 'stream-card__title',
         body: 'stream-card__body',
@@ -64,7 +64,7 @@ export function ContentCard({
         stamp: 'shrink-0',
       }
     : {
-        root: cn('card flex items-start gap-3 p-4', href ? 'group' : null, className),
+        root: cn('card relative z-10 flex items-start gap-3 p-4', href ? 'group' : null, className),
         glyph:
           'grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-line bg-surface-2 text-muted transition-colors',
         title: 't-card leading-snug',

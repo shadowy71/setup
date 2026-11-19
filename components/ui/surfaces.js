@@ -9,7 +9,7 @@ import { ProfileAvatar } from '@/components/storage/ProfileAvatar';
 
 export function Card({ className = '', as: Tag = 'div', interactive = false, children, ...props }) {
   return (
-    <Tag className={cn('card', interactive ? 'card-interactive' : null, className)} {...props}>
+    <Tag className={cn('card relative z-10', interactive ? 'card-interactive' : null, className)} {...props}>
       {children}
     </Tag>
   );

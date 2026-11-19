@@ -6,7 +6,7 @@ import { PLATFORM, ROUTES } from '@/lib/constants';
  * optional application frame supplies navigation and account controls. */
 export function PublicFrame({ children }) {
   return (
-    <div className="mx-auto flex w-full max-w-[80rem] flex-col py-6 sm:py-8">
+    <div className="relative z-10 mx-auto flex w-full max-w-[80rem] flex-col py-6 sm:py-8">
       <div className="flex-1">{children}</div>
 
       <footer className="public-footer flex flex-col gap-3 pt-5">
