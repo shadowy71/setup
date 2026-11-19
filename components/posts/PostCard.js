@@ -71,7 +71,7 @@ export function PostCard({
   return (
     <article
       className={cn(
-        stream ? 'stream-card stream-card--post' : 'card p-4',
+        stream ? 'stream-card stream-card--post relative z-10' : 'card relative z-10 p-4',
         post.is_official && !stream ? 'card-official' : null,
         post.is_official && stream ? 'stream-card--official' : null,
       )}

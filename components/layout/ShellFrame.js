@@ -68,14 +68,14 @@ export function ShellFrame({ children, ...props }) {
   }, [mobile, open]);
 
   return (
-    <div className="app-frame" data-sidebar-open={open} ref={frameRef}>
+    <div className="app-frame relative z-10" data-sidebar-open={open} ref={frameRef}>
       {mobile && open ? <div className="sidebar-backdrop" onClick={() => { setOpen(false); Array.from(frameRef.current?.querySelectorAll('.sidebar-toggle') || []).find((button) => button.getClientRects().length)?.focus(); }} aria-hidden="true" /> : null}
-      <div className="sidebar-host" hidden={!open}>
+      <div className="sidebar-host relative z-10" hidden={!open}>
         <Sidebar {...props} mobile={mobile} onClose={() => { setOpen(false); Array.from(frameRef.current?.querySelectorAll('.sidebar-toggle') || []).find((button) => button.getClientRects().length)?.focus(); }} onNavigate={() => { if (mobile) setOpen(false); }} />
       </div>
-      <div className="shell-root">
+      <div className="shell-root relative z-10">
         <ShellHeader {...props} sidebarOpen={open} onToggleSidebar={() => setOpen((value) => !value)} />
-        <main ref={contentRef} id="content" className="shell-content shell-main mx-auto w-full px-4 pb-28 pt-4 sm:px-6 lg:pb-16 lg:pt-5">
+        <main ref={contentRef} id="content" className="shell-content shell-main relative z-10 mx-auto w-full px-4 pb-28 pt-4 sm:px-6 lg:pb-16 lg:pt-5">
           {children}
         </main>
       </div>

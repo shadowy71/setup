@@ -51,7 +51,7 @@ export function AppShell({
       initialUnread={initialUnreadMessages}
     >
       <LiveFeedProvider key={feedUserId || 'signed-out'} userId={feedUserId}>
-        <div className="min-h-dvh">
+        <div className="relative z-10 min-h-dvh">
           <a href="#content" className="skip-link">
             Skip to content
           </a>

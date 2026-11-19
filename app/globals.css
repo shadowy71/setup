@@ -2,6 +2,7 @@
  * nav: kept shell, Lumen wells and hairlines · signature: none on app screens · states: loading, empty, error, success, offline, live, permission and moderation
  * axes: dark/high-contrast-serif/warm · posture: restrained · contrast: pass · v2.0.0 */
 @import 'tailwindcss';
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 @import './tokens.css';
 @import './base.css' layer(base);
 
@@ -24,6 +25,7 @@
 @import './styles/header-glass.css';
 @import './styles/attachment.css';
 @import './styles/shell-frame.css';
+@import './styles/background-beams.css';
 
 /* ==========================================================================
    Campus+ semantic compatibility roles → Hallmark Lumen

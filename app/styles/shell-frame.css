@@ -10,10 +10,22 @@
   overflow: hidden auto;
   overscroll-behavior: contain;
   padding: var(--space-md) var(--space-sm);
-  border: 0;
+  border: 1px solid color-mix(in oklab, var(--color-rule) 65%, transparent);
   border-radius: 16px;
   background: var(--color-paper-2);
   box-shadow: 0 12px 32px rgb(0 0 0 / 0.16);
+}
+@media (min-width: 1024px) {
+  :root[data-theme='dark'] .app-frame .side-panel {
+    background: color-mix(in oklab, var(--color-paper-2) 78%, rgb(255 255 255 / 0.02));
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  :root[data-theme='light'] .app-frame .side-panel {
+    background: rgb(255 255 255 / 0.45);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
 }
 .sidebar-host[hidden] { display: none; }
 .sidebar-backdrop {

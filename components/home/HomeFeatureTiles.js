@@ -51,15 +51,23 @@ export function HomeFeatureTiles({ division }) {
   ];
 
   return (
-    <section className="home-features" aria-labelledby="home-features-title">
+    <section className="home-features relative z-10" aria-labelledby="home-features-title">
       <h2 id="home-features-title" className="home-features__title">Quick navigation</h2>
       <div className="home-features__grid">
         {tiles.map((tile) => {
           const NavigationLink = tile.tone === 'timetable' ? 'a' : Link;
           return (
-            <NavigationLink key={tile.name} href={tile.href} aria-label={tile.name} title={tile.name} className={`feature-tile feature-tile--${tile.tone}`}>
+            <NavigationLink
+              key={tile.name}
+              href={tile.href}
+              aria-label={tile.name}
+              title={tile.name}
+              className={`feature-tile feature-tile--${tile.tone} transition-all duration-200`}
+            >
               <span className="feature-tile__top" aria-hidden="true">
-                <span className="feature-tile__icon"><Icon name={tile.icon} size={19} /></span>
+                <span className="feature-tile__icon">
+                  <Icon name={tile.icon} size={19} className="transition-all duration-200" />
+                </span>
                 <Icon name="arrowUpRight" size={15} className="feature-tile__arrow" />
               </span>
               <span className="feature-tile__title">{tile.name}</span>

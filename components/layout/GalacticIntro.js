@@ -400,7 +400,7 @@ export default function GalacticIntro({ children, enabled = true }) {
           </button>
         </section>
       )}
-      <div ref={content} tabIndex={-1} inert={visible ? true : undefined}>
+      <div ref={content} tabIndex={-1} inert={visible ? true : undefined} className="relative z-10">
         {children}
       </div>
     </>
