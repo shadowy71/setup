@@ -4,46 +4,30 @@
    the Home layout and its development preview after the shared material sheets. */
 .shell-content:has(.home-stage) { max-width: 78rem; }
 
-.home-stage {
-  /* The requested white fade on the dark canvas; the light theme below uses
-     the existing ink token so the same detail stays visible on warm paper. */
-  --home-separator: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.12) 15%,
-    rgba(255, 255, 255, 0.24) 50%,
-    rgba(255, 255, 255, 0.12) 85%,
-    transparent 100%
-  );
-  /* The same divider, turned upright: a thin vertical rule that fades out at
-     both ends. Used between the two homepage columns. */
-  --home-separator-vertical: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.12) 15%,
-    rgba(255, 255, 255, 0.24) 50%,
-    rgba(255, 255, 255, 0.12) 85%,
-    transparent 100%
-  );
+/* Keep the canvas continuous: a cool wash over the workspace falls away
+   into charcoal at the information rail. Chrome keeps its own material. */
+:root[data-theme='dark'] body:has(.home-stage) {
+  --halo-page: radial-gradient(ellipse 58rem 38rem at 38% 0%, rgb(78 105 130 / 12%), transparent 85%),
+    linear-gradient(105deg, #101720, #151d26 54%, #191d22);
 }
-
-:root[data-theme='light'] .home-stage {
-  --home-separator: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in oklab, var(--color-ink) 10%, transparent) 15%,
-    color-mix(in oklab, var(--color-ink) 20%, transparent) 50%,
-    color-mix(in oklab, var(--color-ink) 10%, transparent) 85%,
-    transparent 100%
-  );
-  --home-separator-vertical: linear-gradient(
-    180deg,
-    transparent 0%,
-    color-mix(in oklab, var(--color-ink) 10%, transparent) 15%,
-    color-mix(in oklab, var(--color-ink) 20%, transparent) 50%,
-    color-mix(in oklab, var(--color-ink) 10%, transparent) 85%,
-    transparent 100%
-  );
+:root[data-theme='dark'] .app-frame:has(.home-stage) .side-panel {
+  background: linear-gradient(155deg, #202933, #171e26 65%);
+}
+:root[data-theme='dark'] .home-stage {
+  --color-paper: #1a222c;
+  --color-paper-2: #26303b;
+  --color-rule: #404c59;
+  --home-rule-stops: transparent, rgb(7 13 20 / 80%) 12%, #050a10 50%, rgb(7 13 20 / 80%) 88%, transparent;
+  /* A crisp slate lip makes the recessed dark stroke visible on navy. */
+  --home-rule-glow: drop-shadow(0 0 2px rgb(150 176 198 / 32%));
+  --home-rule-edge: drop-shadow(0 1px 0 rgb(141 163 183 / 52%)) var(--home-rule-glow);
+  --home-rule-edge-vertical: drop-shadow(1px 0 0 rgb(141 163 183 / 52%)) var(--home-rule-glow);
+}
+.home-stage {
+  --home-rule-ink: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --home-rule-stops: transparent, var(--home-rule-ink) 15%, color-mix(in oklab, var(--color-ink) 20%, transparent) 50%, var(--home-rule-ink) 85%, transparent;
+  --home-separator: linear-gradient(90deg, var(--home-rule-stops));
+  --home-separator-vertical: linear-gradient(180deg, var(--home-rule-stops));
 }
 
 /* Two columns and their proportions are unchanged; only the rhythm tightens. */
@@ -81,6 +65,7 @@
     width: 1px;
     pointer-events: none;
     background-image: var(--home-separator-vertical);
+    filter: var(--home-rule-edge-vertical, none);
   }
 }
 
@@ -136,6 +121,7 @@
   height: 1px;
   margin-top: 0.85rem;
   background: var(--home-separator);
+  filter: var(--home-rule-edge, none);
 }
 :root .home-stage .home-features__title { margin-bottom: 0.5rem; }
 :root .home-stage .home-features__grid {
@@ -296,6 +282,7 @@
   height: 1px;
   pointer-events: none;
   background: var(--home-separator);
+  filter: var(--home-rule-edge, none);
 }
 :root .home-stage .home-feed-nav {
   display: flex;
@@ -346,6 +333,7 @@
   height: 1px;
   pointer-events: none;
   background: var(--home-separator);
+  filter: var(--home-rule-edge, none);
 }
 /* Flex order is visual, not DOM order: suppress the rule after the last
    module actually present, including empty-feed states with missing modules. */
