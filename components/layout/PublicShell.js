@@ -16,7 +16,7 @@ export function PublicShell({ eyebrow = null, title = null, description = null, 
   const widths = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl' };
 
   return (
-    <div className="relative mx-auto flex min-h-dvh w-full flex-col justify-center px-5 py-10 sm:py-14">
+    <div className="relative z-10 mx-auto flex min-h-dvh w-full flex-col justify-center px-5 py-10 sm:py-14">
       <BrandLockup href="/" size="lg" className="mb-8 w-fit" />
 
       <div className={cn('w-full', widths[width] || widths.md)}>

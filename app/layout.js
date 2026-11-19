@@ -1,4 +1,5 @@
 import './globals.css';
+import { BackgroundBeams } from '@/components/atmosphere/BackgroundBeams';
 import { LandingIntro } from '@/components/layout/GalacticIntro';
 import { ThemeChrome } from '@/components/layout/ThemeChrome';
 import { Analytics } from '@vercel/analytics/next';
@@ -93,6 +94,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${bodyFont.variable} ${displayFont.variable} ${microFont.variable} min-h-dvh bg-canvas text-ink antialiased`}>
         <ThemeChrome />
+        <BackgroundBeams />
         <LandingIntro>{children}</LandingIntro>
         {shouldUseVercelTelemetry() ? (
           <>

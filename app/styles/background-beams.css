@@ -1,0 +1,58 @@
+/* ==========================================================================
+   Background Beams — global non-interactive SVG beam layer
+   --------------------------------------------------------------------------
+   Theme-aware opacity and palette:
+     - Dark mode: deep slate/navy base preserved, beams at 0.45 opacity with
+       cool sky / indigo / violet trails.
+     - Light mode: warm cream paper preserved, beams at 0.18 opacity with a
+       subtle slate/neutral glow so copy stays crisp and readable.
+   ========================================================================== */
+
+:root,
+:root[data-theme='light'] {
+  --beam-mesh-color: rgb(100 116 139 / 0.34);
+  --beam-glow-1: rgb(71 85 105 / 0.55);
+  --beam-glow-2: rgb(100 116 139 / 0.42);
+  --beam-glow-3: rgb(148 163 184 / 0.32);
+  --beam-opacity: 0.18;
+}
+
+:root[data-theme='dark'] {
+  --beam-mesh-color: rgb(148 163 184 / 0.2);
+  --beam-glow-1: rgb(56 189 248 / 0.9);
+  --beam-glow-2: rgb(99 102 241 / 0.8);
+  --beam-glow-3: rgb(168 85 247 / 0.65);
+  --beam-opacity: 0.45;
+}
+
+.background-beams {
+  opacity: var(--beam-opacity);
+  transition: opacity var(--dur-panel, 320ms) var(--ease-out, ease-out);
+}
+
+.background-beams__trail {
+  stroke-dasharray: 0.18 0.82;
+  stroke-dashoffset: 1.2;
+  animation: background-beam-travel var(--beam-dur, 14s) linear var(--beam-delay, 0s) infinite;
+}
+
+@keyframes background-beam-travel {
+  0% {
+    stroke-dashoffset: 1.2;
+  }
+  100% {
+    stroke-dashoffset: -0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .background-beams {
+    transition: none;
+  }
+
+  .background-beams__trail {
+    animation: none;
+    stroke-dasharray: none;
+    opacity: 0.35;
+  }
+}

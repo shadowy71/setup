@@ -181,7 +181,7 @@ export function StreamItem({ item, post, currentUserId, canModerate, onPollVote 
 export function StreamSlot({ kind, children, order = 0 }) {
   return (
     <div
-      className="stream-slot"
+      className="stream-slot relative z-10"
       data-kind={kindOf(kind)}
       style={{ '--stream-order': String(Math.min(order, 8)) }}
     >
