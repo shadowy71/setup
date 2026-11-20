@@ -2,6 +2,7 @@ import '@/app/styles/sections.css';
 import '@/app/styles/calendar.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
+import '@/app/styles/liquid-glass.css';
 import { PublicFrame } from '@/components/layout/PublicFrame';
 
 /**

@@ -107,8 +107,20 @@ function color(value, theme, seen = new Set()) {
     if (first.weight === null && second.weight === null) first.weight = second.weight = 0.5;
     else if (first.weight === null) first.weight = 1 - second.weight;
     else if (second.weight === null) second.weight = 1 - first.weight;
-    const mixed = [0, 1, 2, 3].map((i) => first.color[i] * first.weight + second.color[i] * second.weight);
-    return oklabToSrgb(...mixed);
+
+    // CSS mixes in PREMULTIPLIED space. This matters enormously for the glass
+    // tokens, which mix a paper colour against `transparent`: non-premultiplied
+    // mixing treats transparent as black and drags every tint toward charcoal
+    // (a 66% paper-2 tint measured 141,139,135 instead of 231,227,222), so the
+    // audit was reporting contrast for a colour the browser never paints.
+    const alpha = first.weight * first.color[3] + second.weight * second.color[3];
+    if (alpha === 0) return [0, 0, 0, 0];
+    const mixed = [0, 1, 2].map(
+      (i) =>
+        (first.weight * first.color[3] * first.color[i] + second.weight * second.color[3] * second.color[i]) /
+        alpha,
+    );
+    return oklabToSrgb(...mixed, alpha);
   }
   if (text.startsWith('oklch(')) {
     const [components, alpha] = text.slice(6, -1).split('/');
@@ -251,9 +263,21 @@ for (const theme of ['light', 'dark']) {
       expect(overlays).not.toContain("'cp-menu absolute");
     });
 
-    it('bounds glass contrast over even the darkest/brightest underlays', () => {
+    it('bounds glass contrast over the room envelope the app can actually paint', () => {
+      // Liquid Glass makes the plates genuinely transparent, so the question is
+      // no longer "does it survive pure black and pure white" (no backdrop in
+      // this application is either) but "does it survive the darkest and
+      // brightest pixel the room can put under it". Those two pixels are
+      // declared in app/tokens.css as --cp-glass-underlay-{dark,light}; they are
+      // the measured envelope of `--halo-aura` over the canvas. If the room is
+      // ever made brighter, those tokens move and this test moves with them.
+      const underlays = ['--cp-glass-underlay-dark', '--cp-glass-underlay-light'].map((name) => {
+        expect(tokenMaps[theme].has(name), `Missing glass envelope token: ${name}`).toBe(true);
+        return color(tokenMaps[theme].get(name), theme);
+      });
+
       for (const surface of ['bg-glass', 'bg-glass-soft', 'bg-glass-strong', 'bg-cinematic-glass']) {
-        for (const underlay of [[0, 0, 0, 1], [255, 255, 255, 1]]) {
+        for (const underlay of underlays) {
           const background = composite(read(surface, theme), underlay);
           for (const text of textRoles) {
             const ratio = contrast(read(text, theme), background);

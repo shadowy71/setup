@@ -23,12 +23,23 @@ describe('Home layout refinement', () => {
     expect(css).toMatch(/\.home-stage \.home-pulse__lead\s*\{[^}]*margin-top: 0\.625rem;/);
   });
 
-  it('removes the major section boxes while keeping interactive entry surfaces', () => {
-    for (const section of ['.home-pulse', '.home-composer', '.rail-island']) {
+  it('keeps the page-level bands flat and the interactive islands glass', () => {
+    // Page-level bands stay flat. `.home-pulse` is the greeting/stats band and
+    // `.home-composer` is the band wrapper around the composer: both are pure
+    // layout, so they keep no plate of their own. The *interactive* islands
+    // inside them (the composer form, the rail modules, the feed rows) are
+    // glass and must NOT be flattened to `transparent`, which was the paper
+    // design's rule and left them without any visible material at all.
+    for (const section of ['.home-pulse', '.home-composer']) {
       expect(css).toMatch(new RegExp(`\\.home-stage \\${section}\\s*\\{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;[^}]*box-shadow: none;`));
     }
+    // Rail modules: surface-tier glass.
+    expect(css).toMatch(/\.home-stage \.rail-island\s*\{[^}]*background-color: color-mix\([^}]*glass-surface-tint[^}]*\);[^}]*backdrop-filter: var\(--glass-surface-blur\);/);
+    // The composer form: floating-tier glass.
+    expect(css).toMatch(/\.home-stage \.home-composer > form\s*\{[^}]*background-color: color-mix\([^}]*glass-floating-tint[^}]*\);[^}]*backdrop-filter: var\(--glass-floating-blur\);/);
+    // The collapsed trigger is a well, not a plate.
+    expect(css).toMatch(/\.home-stage \.home-composer__open\s*\{[^}]*background-color: var\(--cp-glass-well-tint\);[^}]*box-shadow: var\(--glass-well-shadow\);/);
     expect(css).toMatch(/\.home-stage \.stream-card\s*\{[^}]*border-radius: var\(--radius-md\);/);
-    expect(css).toMatch(/\.home-stage \.home-composer__open\s*\{[^}]*border-radius: var\(--radius-sm\);/);
     expect(css).toMatch(/\.home-stage \.feature-tile\s*\{[^}]*border-radius: var\(--radius-xs\);/);
   });
 

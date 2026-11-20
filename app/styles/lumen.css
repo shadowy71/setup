@@ -1531,10 +1531,19 @@
 /* --------------------------------------------------------------------------
    Timetable, calendar, clubs and gigs
    -------------------------------------------------------------------------- */
+/* The public timetable is its own full-bleed frame (no app shell around it),
+   so it has to carry a surface of its own — but as a glass frame rather than
+   an opaque page plate, or the one route that is a whole page is also the one
+   route where the room is completely hidden. It is the outermost island, so
+   it takes the thinnest tint: everything inside it must stay readable through
+   it. The material pass in liquid-glass.css re-asserts this after any route
+   sheet that loads later. */
 :root .tt-shell {
-  background: var(--color-paper);
-  background-image: none;
+  background-color: color-mix(in oklab, var(--cp-glass-floating-tint) 46%, transparent);
+  background-image: var(--glass-specular), var(--glass-bleed);
   color: var(--color-ink);
+  -webkit-backdrop-filter: var(--glass-floating-blur);
+  backdrop-filter: var(--glass-floating-blur);
 }
 
 :root .tt-item,

@@ -42,3 +42,36 @@ describe('shared sidebar layout ownership', () => {
     }
   });
 });
+
+/**
+ * Regression guard for the reported "the sidebar renders but nothing in it
+ * responds" defect.
+ *
+ * The rail is `position: fixed`, but a fixed box still belongs to its parent's
+ * stacking context. `.shell-root` (the content column) is `relative`,
+ * `z-index: 10`, `isolation: isolate`, and comes AFTER the rail's wrapper in
+ * the DOM. So the wrapper must be lifted above `10` — otherwise the panel is
+ * flattened to the same `z-index` at document level, the content column paints
+ * over it and silently swallows every click on the rail. The rail keeps
+ * rendering, which is why the failure looked like a "frozen" panel rather than
+ * a missing one, and why the header buttons (inside `.shell-root`) were fine.
+ */
+describe('the desktop rail cannot be buried by the content column', () => {
+  it('lifts the rail wrapper above the content column and keeps no stacking-context utility on it', () => {
+    const css = read('app/styles/shell-frame.css');
+    const hostRule = css.match(/(?:^|\n)\.sidebar-host\s*\{([^}]*)\}/s);
+    expect(hostRule, '.sidebar-host must own the rail wrapper stacking').toBeTruthy();
+    const body = hostRule[1];
+    const zIndex = Number(/z-index:\s*(-?\d+)/s.exec(body)?.[1]);
+    // `.shell-root` is z-index: 10 (night.css); the wrapper has to be above it.
+    expect(zIndex).toBeGreaterThan(10);
+    // The backdrop sits under the open rail, so the rail stays clickable on
+    // mobile while the scrim dims the page behind it.
+    const backdrop = Number(/\.sidebar-backdrop\s*\{[^}]*z-index:\s*(-?\d+)/s.exec(css)?.[1]);
+    expect(backdrop).toBeLessThan(zIndex);
+
+    const frame = read('components/layout/ShellFrame.js');
+    const wrapper = frame.slice(frame.indexOf('className="sidebar-host'), frame.indexOf('<Sidebar'));
+    expect(wrapper).not.toMatch(/\bz-\d+\b|\bz-\[/);
+  });
+});

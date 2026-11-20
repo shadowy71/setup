@@ -11,6 +11,7 @@
 import '@/app/styles/guide.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
+import '@/app/styles/liquid-glass.css';
 
 export default function GuideLayout({ children }) {
   return children;

@@ -25,10 +25,15 @@
   width: min(100%, 36rem); /* 576px — inside the 520–620px brief */
   max-width: 36rem;
   padding: 0;
-  background-color: var(--color-paper-2);
-  background-image: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  /* This dialog rides over the composer, so it is the overlay tier: the
+     densest glass in the ladder, because the attachment form's labels are
+     small. It used to cancel the material outright (`backdrop-filter: none`)
+     and paint an opaque plate, which made it the loudest solid in the app. */
+  background-color: var(--cp-glass-overlay-tint);
+  background-image: var(--glass-specular);
+  box-shadow: var(--glass-overlay-shadow);
+  -webkit-backdrop-filter: var(--glass-overlay-blur);
+  backdrop-filter: var(--glass-overlay-blur);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -131,9 +136,9 @@
   gap: 0.5rem;
   min-height: 17.5rem;
   padding: 2.25rem 1.75rem;
-  border: 1px dashed color-mix(in oklab, var(--color-rule-2) 52%, transparent);
+  border: 1px dashed color-mix(in oklab, var(--glass-surface-rim) 78%, transparent);
   border-radius: var(--radius-card);
-  background-color: color-mix(in oklab, var(--color-paper) 62%, transparent);
+  background-color: color-mix(in oklab, var(--cp-glass-well-tint) 70%, transparent);
   background-image: linear-gradient(
     180deg,
     color-mix(in oklab, var(--color-paper) 18%, transparent),

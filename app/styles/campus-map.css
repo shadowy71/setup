@@ -212,10 +212,12 @@
   padding: 14px;
   container: campus-map / inline-size;
   border-radius: var(--radius-card);
-  border: 1px solid var(--color-rule);
-  background-color: var(--color-paper-2);
-  background-image: var(--grad-surface);
-  box-shadow: inset 0 1px 0 var(--edge-light-soft), var(--depth-1);
+  border: 1px solid var(--glass-surface-rim);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 78%, transparent);
+  background-image: var(--glass-specular), var(--glass-bleed);
+  box-shadow: var(--glass-surface-shadow);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
 }
 
 .cm-grid {
@@ -233,10 +235,14 @@
   flex-direction: column;
   border-radius: var(--radius-card);
   overflow: hidden;
-  border: 1px solid var(--color-rule);
-  background-color: var(--color-paper-2);
-  background-image: var(--grad-surface);
-  box-shadow: inset 0 1px 0 var(--edge-light-soft), var(--depth-1);
+  border: 1px solid var(--glass-surface-rim);
+  /* A nested island inside .cm-shell, so it takes a *thinner* tint than the
+     shell rather than the same one. */
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 58%, transparent);
+  background-image: var(--glass-specular);
+  box-shadow: var(--glass-surface-shadow);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
 }
 
 .cm-maphead {
@@ -244,8 +250,8 @@
   align-items: center;
   gap: 16px;
   padding: 8px 16px;
-  border-bottom: 1px solid var(--color-rule-2);
-  background-color: var(--color-paper-3);
+  border-bottom: 1px solid color-mix(in oklab, var(--glass-surface-rim) 70%, transparent);
+  background-color: color-mix(in oklab, var(--glass-surface-rim) 22%, transparent);
 }
 
 /* The two institutional marks are static brand assets, painted as CSS
@@ -312,7 +318,9 @@
   position: relative;
   flex: 1;
   min-height: 470px;
-  background-color: var(--color-paper-3);
+  /* The plan is drawn content on a canvas, so it is a well: darker than its
+     card, no specular, and its grid lines are the only relief. */
+  background-color: color-mix(in oklab, var(--cp-glass-well-tint) 78%, transparent);
   background-image:
     linear-gradient(color-mix(in oklab, var(--color-rule-2) 20%, transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in oklab, var(--color-rule-2) 20%, transparent) 1px, transparent 1px);
@@ -826,11 +834,13 @@
 
 .cm-dir {
   border-radius: var(--radius-card);
-  border: 1px solid var(--color-rule);
-  background-color: var(--color-paper-2);
-  background-image: var(--grad-surface);
+  border: 1px solid var(--glass-surface-rim);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 62%, transparent);
+  background-image: var(--glass-specular);
   padding: 14px 14px 12px;
-  box-shadow: inset 0 1px 0 var(--edge-light-soft), var(--depth-1);
+  box-shadow: var(--glass-surface-shadow);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
 }
 
 .cm-dir__head {

@@ -102,6 +102,11 @@ export function isPublicPath(rawPath) {
   const pathname = stripTrailingSlash(rawPath);
   if (pathname === '/') return true;
   if (pathname === '/onboarding-preview' && process.env.NODE_ENV === 'development') return true;
+  // Local fixture sign-in (development only). The route itself answers 404
+  // unless the dev server is also pointed at the disposable harness, so letting
+  // the path through here grants nothing: it mints a session for a seeded
+  // account only, and every page, action and RLS policy still re-checks.
+  if (pathname === '/api/dev/session' && process.env.NODE_ENV === 'development') return true;
   if (PUBLIC_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return true;
   if (PUBLIC_EXACT_PATHS.includes(pathname)) return true;
   if (isPublicClubChild(pathname)) return true;

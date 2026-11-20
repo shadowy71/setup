@@ -10,14 +10,18 @@
   --halo-page: radial-gradient(ellipse 58rem 38rem at 38% 0%, rgb(78 105 130 / 12%), transparent 85%),
     linear-gradient(105deg, #101720, #151d26 54%, #191d22);
 }
+/* Home's rail keeps its slightly warmer slate identity, but as a tint layer
+   inside the Liquid Glass material rather than an opaque plate over it: the
+   sheet must still admit the room, or the one always-visible surface is the
+   only one that is not glass. */
 :root[data-theme='dark'] .app-frame:has(.home-stage) .side-panel {
-  background: linear-gradient(155deg, #202933, #171e26 65%);
+  background-color: color-mix(in oklab, var(--cp-glass-floating-tint) 78%, #202933);
+  background-image: linear-gradient(155deg, rgb(255 255 255 / 0.05), transparent 62%), var(--glass-bleed);
 }
 @media (min-width: 1024px) {
   :root[data-theme='dark'] .app-frame:has(.home-stage) .side-panel {
-    background: linear-gradient(155deg, rgb(32 41 51 / 0.8), rgb(23 30 38 / 0.86) 65%);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: var(--glass-floating-blur);
+    backdrop-filter: var(--glass-floating-blur);
   }
 }
 :root[data-theme='dark'] .home-stage {
@@ -441,18 +445,23 @@
   backdrop-filter: none;
 }
 :root .home-stage .home-composer::before { display: none; content: none; }
-:root .home-stage .home-composer > form { border-radius: var(--radius-md); }
+/* The composer form is the feed's primary input, so it is a control-tier
+   glass panel: shallower blur than a card, a recessed well for the textarea,
+   and a rim that reads as an edge rather than a drawn border. */
+:root .home-stage .home-composer > form {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-floating-rim);
+  background-color: color-mix(in oklab, var(--cp-glass-floating-tint) 82%, transparent);
+  background-image: var(--glass-specular);
+  box-shadow: var(--glass-floating-shadow);
+  -webkit-backdrop-filter: var(--glass-floating-blur);
+  backdrop-filter: var(--glass-floating-blur);
+}
 :root[data-theme='dark'] .home-stage .home-composer > form {
-  background-color: rgb(255 255 255 / 0.02);
-  background-image: linear-gradient(168deg, rgb(255 255 255 / 0.03), transparent 48%);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  background-color: color-mix(in oklab, var(--cp-glass-floating-tint) 72%, transparent);
 }
 :root[data-theme='light'] .home-stage .home-composer > form {
-  background-color: rgb(255 255 255 / 0.4);
-  background-image: linear-gradient(168deg, rgb(255 255 255 / 0.35), rgb(255 255 255 / 0.12) 55%);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  background-color: color-mix(in oklab, var(--cp-glass-floating-tint) 78%, transparent);
 }
 :root .home-stage .home-composer__open {
   display: block;
@@ -465,15 +474,16 @@
   background: var(--color-paper);
   cursor: pointer;
 }
-:root[data-theme='dark'] .home-stage .home-composer__open {
-  background-color: rgb(255 255 255 / 0.02);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+:root .home-stage .home-composer__open {
+  border-color: var(--glass-surface-rim);
+  background-color: var(--cp-glass-well-tint);
+  background-image: none;
+  box-shadow: var(--glass-well-shadow);
+  -webkit-backdrop-filter: var(--glass-well-blur);
+  backdrop-filter: var(--glass-well-blur);
 }
 :root[data-theme='light'] .home-stage .home-composer__open {
-  background-color: rgb(255 255 255 / 0.4);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  background-color: color-mix(in oklab, var(--color-paper) 46%, transparent);
 }
 :root .home-stage .home-composer__open:hover { border-color: var(--color-accent); color: var(--color-ink); }
 :root .home-stage .home-composer__open:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
@@ -514,22 +524,27 @@
 
 /* Sidebar modules share the canvas and one internal padding scale. Their
    existing order, icons, links and content are untouched. */
+/* The rail modules are the app's most persistent islands after the rail
+   itself, so they take the surface tier: translucent, rimmed, softly cast.
+   They were flattened to `transparent` under the paper design; under glass a
+   borderless transparent block reads as a layout accident, not a material. */
 :root .home-stage .rail-island {
-  padding: 1.5rem 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  padding: 1.15rem 1.1rem;
+  border: 1px solid var(--glass-surface-rim);
+  border-radius: var(--radius-md);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 74%, transparent);
+  background-image: var(--glass-specular);
+  box-shadow: var(--glass-surface-shadow);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
   --island-depth: 0px;
 }
 :root .home-stage .rail-island::before { display: none; content: none; }
 :root .home-stage .rail-island:hover {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  transform: none;
+  border-color: color-mix(in oklab, var(--glass-surface-rim) 70%, var(--color-accent));
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 88%, transparent);
+  box-shadow: var(--glass-surface-shadow), 0 18px 40px -28px rgb(0 0 0 / 0.6);
+  transform: translateY(-1px);
 }
 :root .home-stage .home-body__rail .island__head { margin-bottom: 0.875rem; }
 :root .home-stage .rail-island::after {
@@ -552,45 +567,54 @@
   display: none;
   content: none;
 }
+/* A `.card` directly inside the rail is a layout container for an island, so
+   it stays flush: transparent, unrimmed, no cast. The island plate above it is
+   the material. Painting a second plate here produced the stacked-slab look
+   the brief calls out. */
 :root .home-stage .home-body__rail > .card {
   padding: 1.5rem 0;
   border: 0;
   border-radius: 0;
-  background: transparent;
+  background-color: transparent;
+  background-image: none;
   box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
-/* Posts remain distinct interactive entries, but with a quieter tonal surface
-   and a 12px radius instead of another heavy glass panel. Kind markers stay. */
+/* Posts are the quietest glass in the app: a nested surface inside the feed
+   column, so they take a *thinner* tint than a card and no cast at all. That
+   is the hierarchy rule — inner islands are more transparent than outer ones,
+   never an opaque white rectangle dropped on top of glass. */
 :root .home-stage .stream-card {
-  border-color: color-mix(in oklab, var(--color-rule) 72%, transparent);
+  border-color: color-mix(in oklab, var(--glass-surface-rim) 68%, transparent);
   border-radius: var(--radius-md);
-  background-color: color-mix(in oklab, var(--color-paper-2) 58%, transparent);
-  background-image: none;
-  box-shadow: none;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 62%, transparent);
+  background-image: var(--glass-specular);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--glass-surface-edge) 55%, transparent);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
 }
 :root[data-theme='dark'] .home-stage .stream-card {
-  background-color: rgb(255 255 255 / 0.02);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 72%, transparent);
 }
 :root[data-theme='light'] .home-stage .stream-card {
-  background-color: rgb(255 255 255 / 0.4);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 54%, transparent);
 }
 :root .home-stage .stream-slot[data-kind='notice'] .stream-card {
-  border-color: color-mix(in oklab, var(--color-accent) 26%, var(--color-rule));
-  background-image: none;
+  border-color: color-mix(in oklab, var(--color-accent) 26%, var(--glass-surface-rim));
+  background-image: var(--glass-specular), var(--glass-bleed);
 }
 :root .home-stage .stream-slot:hover .stream-card {
-  border-color: color-mix(in oklab, var(--color-accent) 36%, var(--color-rule));
-  background-color: color-mix(in oklab, var(--color-paper-2) 76%, transparent);
-  box-shadow: none;
+  border-color: color-mix(in oklab, var(--color-accent) 36%, var(--glass-surface-rim));
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 88%, transparent);
+  box-shadow: inset 0 1px 0 var(--glass-surface-edge);
 }
 :root[data-theme='dark'] .home-stage .stream-slot:hover .stream-card {
-  background-color: rgb(255 255 255 / 0.045);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 92%, transparent);
 }
 :root[data-theme='light'] .home-stage .stream-slot:hover .stream-card {
-  background-color: rgb(255 255 255 / 0.56);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 74%, transparent);
 }
 :root .home-stage .stream-card__glyph,
 :root .home-stage .stream-stamp,

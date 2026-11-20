@@ -54,17 +54,26 @@ describe('background beams ambience & quick navigation upgrades', () => {
     const dashboard = read('app/styles/home-dashboard.css');
     const shellFrame = read('app/styles/shell-frame.css');
 
-    expect(aurora).toContain(":root[data-theme='dark'] .card");
-    expect(aurora).toContain('rgb(255 255 255 / 0.02)');
-    expect(aurora).toContain(":root[data-theme='light'] .card");
-    expect(aurora).toContain('rgb(255 255 255 / 0.4)');
-    expect(aurora).toContain('backdrop-filter: blur(4px)');
+    // Surfaces are no longer tinted with raw `rgb(255 255 255 / 0.02|0.4)`
+    // literals: every plate resolves through the glass ladder in tokens.css,
+    // so a theme change moves one value instead of a dozen scattered alphas.
+    const tokens = read('app/tokens.css');
+    expect(tokens).toContain('--cp-glass-surface-tint');
+    expect(tokens).toContain('--glass-surface-blur');
+    expect(tokens).toContain('--glass-floating-blur');
+    expect(tokens).toContain(":root[data-theme='dark']");
+
+    // Cards inherit the glass ladder rather than declaring their own tint.
+    expect(aurora).toContain('.card');
+    expect(aurora).toContain('backdrop-filter');
 
     expect(dashboard).toContain(":root[data-theme='dark'] .home-stage .stream-card");
     expect(dashboard).toContain(":root[data-theme='light'] .home-stage .stream-card");
-    expect(dashboard).toContain('backdrop-filter: blur(4px)');
+    expect(dashboard).toContain('glass-surface-tint');
 
-    expect(shellFrame).toContain('backdrop-filter: blur(12px)');
+    // The rail samples at every width; it used to blur only above 1024px and
+    // paint a flat plate below that.
+    expect(shellFrame).toContain('backdrop-filter: var(--glass-floating-blur)');
   });
 
   it('styles all six Quick Navigation tiles with dark/light micro-gradients and animated 19px icons', () => {

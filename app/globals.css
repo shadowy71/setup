@@ -26,6 +26,9 @@
 @import './styles/attachment.css';
 @import './styles/shell-frame.css';
 @import './styles/background-beams.css';
+/* The Liquid Glass material is the final authority: it must win over the older
+   near-opaque surfaces defined by lumen/aurora, so it is imported last. */
+@import './styles/liquid-glass.css';
 
 /* ==========================================================================
    Campus+ semantic compatibility roles → Hallmark Lumen
@@ -135,17 +138,24 @@
   --cp-switch-thumb-checked: var(--color-accent-ink);
   --cp-switch-track: var(--color-rule-2);
 
-  /* Halo glass: near-opaque tinted surfaces. The alpha is bounded so every
-     text tier keeps its audited contrast over any underlay (see
-     tests/contrast.test.js "bounds glass contrast"); the blur and the rim,
-     not transparency, carry the glass effect. */
-  --cp-bg-glass: color-mix(in oklab, var(--color-paper-2) 97%, transparent);
-  --cp-bg-glass-soft: color-mix(in oklab, var(--color-paper-2) 96%, transparent);
-  --cp-bg-glass-strong: var(--color-paper-3);
-  --cp-glass-tint: color-mix(in oklab, var(--color-accent) 5%, transparent);
-  --cp-glass-border: color-mix(in oklab, var(--color-ink) 14%, transparent);
-  --cp-glass-reflection: rgba(255, 255, 255, 0.08);
-  --cp-glass-warmth: color-mix(in oklab, var(--color-accent-warm) 7%, transparent);
+  /* Liquid Glass: the material comes from app/styles/liquid-glass.css, and
+     these roles resolve onto it. The old values were 96–97% opaque — a
+     surface that opaque cannot admit the room behind it, so every "glass"
+     surface read as a solid slab no matter what blur it carried. The alpha
+     now sits in the 52–74% band, calibrated against the audited text pairs
+     in tests/contrast.test.js. `-strong` stays close to opaque: it is the
+     fallback backing for menus that must remain readable over anything. */
+  --cp-bg-glass: var(--cp-glass-floating-tint);
+  --cp-bg-glass-soft: var(--cp-glass-surface-tint);
+  /* `-strong` is NOT a glass tier: it is the opaque backing a dropped menu
+     composites over so its text stays readable above arbitrary page content.
+     A menu is the one surface that floats over *anything*, so it is allowed
+     almost no translucency. */
+  --cp-bg-glass-strong: color-mix(in oklab, var(--color-paper-3) 97%, transparent);
+  --cp-glass-tint: color-mix(in oklab, var(--color-accent) 9%, transparent);
+  --cp-glass-border: color-mix(in oklab, var(--color-ink) 13%, transparent);
+  --cp-glass-reflection: color-mix(in oklab, #FFFFFF 30%, transparent);
+  --cp-glass-warmth: color-mix(in oklab, var(--color-accent-warm) 10%, transparent);
   --cp-scrim: color-mix(in oklab, var(--color-accent-ink) 72%, transparent);
   --cp-toast-bg: var(--color-paper-3);
   --cp-toast-text: var(--color-ink);

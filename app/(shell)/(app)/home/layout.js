@@ -10,6 +10,7 @@ import '@/app/styles/home.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
 import '@/app/styles/home-dashboard.css';
+import '@/app/styles/liquid-glass.css';
 
 export default function HomeLayout({ children }) {
   preload('/fonts/Syne.ttf', {
