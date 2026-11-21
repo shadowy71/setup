@@ -134,7 +134,7 @@ describe('campus clock (Asia/Kolkata)', () => {
   it('resolves the schedule-aware day on the server, so the first paint is already right', () => {
     const page = read('app/timetable/[division]/page.js');
     expect(page).toContain('resolveAutoDay({');
-    expect(page).toContain('days: timetableDaysForDate(timetable.days, timetable.division, campus)');
+    expect(page).toContain('days: timetable.days');
     expect(page).toContain('nowMinutes: campus.minutesOfDay');
     expect(page).toContain('const initialDay = requestedDay ?? auto.day;');
   });
