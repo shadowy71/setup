@@ -32,7 +32,6 @@ import { TimetableOfflineProvider } from '@/components/timetable/TimetableOfflin
 import { Button } from '@/components/ui';
 import { Icon } from '@/components/ui/icons';
 import { batchName } from '@/lib/timetable/batch';
-import { timetableDaysForDate } from '@/lib/timetable';
 import { formatSavedAgo } from '@/lib/timetable/offline';
 import { listSavedBatches, loadBatch } from '@/lib/timetable/offline-store';
 import { getCampusTime } from '@/lib/timetable/clock';
@@ -162,7 +161,7 @@ export default function TimetableOfflineShell() {
   const opened = new Date();
   const campus = getCampusTime(opened);
   const initialDay = resolveAutoDay({
-    days: timetableDaysForDate(snapshot.days, snapshot.division, campus),
+    days: snapshot.days,
     weekday: campus.weekday,
     nowMinutes: campus.minutesOfDay,
   }).day;
