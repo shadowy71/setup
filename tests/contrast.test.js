@@ -367,3 +367,54 @@ describe('readability architecture guards', () => {
     expect(fs.readFileSync('proxy.js', 'utf8')).not.toContain('/brand/');
   });
 });
+
+/**
+ * The header search pill, checked against the *measured* pill interior rather
+ * than a token.
+ *
+ * This exists because the bar's ink used to be `--color-accent-ink`
+ * (near-black), which was correct when the bar was an opaque accent plate and
+ * wrong the moment the bar became glass: at night the bar is a dark slate, and
+ * near-black text measured 2.10:1 on it. Token-level guards could not catch it,
+ * because both the ink and the fill were individually valid tokens.
+ *
+ * The numbers below are sampled from rendered screenshots of a 1440x900 /home
+ * in each theme; if the material changes, re-sample and update them.
+ */
+describe('header search readability', () => {
+  const pills = {
+    // `--cp-glass-*` tint at the bar's alpha over the room, plus the well.
+    dark: [56, 67, 80],
+    light: [205, 209, 210],
+  };
+  const inks = {
+    // --color-ink (typed value) and --color-ink-soft (placeholder hint).
+    dark: { typed: '#F2F1EC', hint: '#C3CBD5' },
+    light: { typed: '#292725', hint: '#4E4A45' },
+  };
+
+  for (const theme of ['light', 'dark']) {
+    it(`keeps the ${theme} search field's text and hint above AA`, () => {
+      const pill = [...pills[theme], 1];
+      for (const [role, hex] of Object.entries(inks[theme])) {
+        const ratio = contrast(color(hex, theme), pill);
+        expect(ratio, `${theme} search ${role} on pill rgb(${pills[theme]}): ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+
+    it(`does not tint the ${theme} header ink with the accent's ink`, () => {
+      // The specific regression: `--header-ink: var(--color-accent-ink)` is a
+      // near-black that cannot work on a dark glass bar.
+      const header = fs.readFileSync('app/styles/aurora.css', 'utf8');
+      expect(header).toMatch(/--header-ink:\s*var\(--color-ink\)/);
+      expect(header).not.toMatch(/--header-ink:\s*var\(--color-accent-ink\)/);
+    });
+  }
+
+  it('recesses the search well with black rather than an ink tint', () => {
+    const header = fs.readFileSync('app/styles/aurora.css', 'utf8');
+    // A well must darken. In dark mode `--color-ink` is near-white, so tinting
+    // the field with ink *raised* it and reversed the recess.
+    expect(header).toMatch(/\.shell-header \.search-pill__shell\s*\{[^}]*background-color:\s*color-mix\(in oklab, #000000/);
+  });
+});

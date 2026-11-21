@@ -7,8 +7,10 @@
  * theme tokens or non-header surfaces are changed here.
  */
 :root .shell-header {
-  --header-ink: var(--color-accent-ink);
-  --header-ink-soft: color-mix(in oklab, var(--header-ink) 78%, #3d5369);
+  /* See the note in aurora.css: this file re-declares the same roles, so both
+     statements have to move together or one of them wins by load order. */
+  --header-ink: var(--color-ink);
+  --header-ink-soft: var(--color-ink-soft);
   /* The header keeps its own blue identity, but the blue is now a *tint* over
      the glass rather than an opaque sheet: the tone stops became low-alpha
      colours so the room reads through the bar. Without this the header is the

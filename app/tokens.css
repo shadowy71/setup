@@ -36,6 +36,7 @@
   --color-ink: #292725;
   --color-ink-2: #4E4A45;
   --color-muted: #625C56;
+  --color-ink-soft: #4E4A45;
   --color-rule: #CDC4B8;
   --color-rule-2: #7C736B;
   --color-accent: #8DBCE3;
@@ -231,6 +232,10 @@
   --color-accent-warm: #CDAB80;
   --color-accent-2: #CDAB80;
   --color-accent-ink: #131720;
+  /* A hint on glass, not body copy: light enough to sit behind a typed value
+     but still 5.2:1 on the measured dark pill (rgb(64,78,93)). The muted
+     token (#A8A8A3) drops to 3.57:1 there, so it cannot carry the hint. */
+  --color-ink-soft: #C3CBD5;
   --color-live: #8DC9AE;
   --color-focus: #92C3EA;
 
