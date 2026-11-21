@@ -107,8 +107,20 @@ function color(value, theme, seen = new Set()) {
     if (first.weight === null && second.weight === null) first.weight = second.weight = 0.5;
     else if (first.weight === null) first.weight = 1 - second.weight;
     else if (second.weight === null) second.weight = 1 - first.weight;
-    const mixed = [0, 1, 2, 3].map((i) => first.color[i] * first.weight + second.color[i] * second.weight);
-    return oklabToSrgb(...mixed);
+
+    // CSS mixes in PREMULTIPLIED space. This matters enormously for the glass
+    // tokens, which mix a paper colour against `transparent`: non-premultiplied
+    // mixing treats transparent as black and drags every tint toward charcoal
+    // (a 66% paper-2 tint measured 141,139,135 instead of 231,227,222), so the
+    // audit was reporting contrast for a colour the browser never paints.
+    const alpha = first.weight * first.color[3] + second.weight * second.color[3];
+    if (alpha === 0) return [0, 0, 0, 0];
+    const mixed = [0, 1, 2].map(
+      (i) =>
+        (first.weight * first.color[3] * first.color[i] + second.weight * second.color[3] * second.color[i]) /
+        alpha,
+    );
+    return oklabToSrgb(...mixed, alpha);
   }
   if (text.startsWith('oklch(')) {
     const [components, alpha] = text.slice(6, -1).split('/');
@@ -251,9 +263,21 @@ for (const theme of ['light', 'dark']) {
       expect(overlays).not.toContain("'cp-menu absolute");
     });
 
-    it('bounds glass contrast over even the darkest/brightest underlays', () => {
+    it('bounds glass contrast over the room envelope the app can actually paint', () => {
+      // Liquid Glass makes the plates genuinely transparent, so the question is
+      // no longer "does it survive pure black and pure white" (no backdrop in
+      // this application is either) but "does it survive the darkest and
+      // brightest pixel the room can put under it". Those two pixels are
+      // declared in app/tokens.css as --cp-glass-underlay-{dark,light}; they are
+      // the measured envelope of `--halo-aura` over the canvas. If the room is
+      // ever made brighter, those tokens move and this test moves with them.
+      const underlays = ['--cp-glass-underlay-dark', '--cp-glass-underlay-light'].map((name) => {
+        expect(tokenMaps[theme].has(name), `Missing glass envelope token: ${name}`).toBe(true);
+        return color(tokenMaps[theme].get(name), theme);
+      });
+
       for (const surface of ['bg-glass', 'bg-glass-soft', 'bg-glass-strong', 'bg-cinematic-glass']) {
-        for (const underlay of [[0, 0, 0, 1], [255, 255, 255, 1]]) {
+        for (const underlay of underlays) {
           const background = composite(read(surface, theme), underlay);
           for (const text of textRoles) {
             const ratio = contrast(read(text, theme), background);
@@ -341,5 +365,56 @@ describe('readability architecture guards', () => {
     expect(brand).toContain('export const CREST_SRC = pccoeCrest.src');
     // The asset is compiled to a public static build URL, not an auth exception.
     expect(fs.readFileSync('proxy.js', 'utf8')).not.toContain('/brand/');
+  });
+});
+
+/**
+ * The header search pill, checked against the *measured* pill interior rather
+ * than a token.
+ *
+ * This exists because the bar's ink used to be `--color-accent-ink`
+ * (near-black), which was correct when the bar was an opaque accent plate and
+ * wrong the moment the bar became glass: at night the bar is a dark slate, and
+ * near-black text measured 2.10:1 on it. Token-level guards could not catch it,
+ * because both the ink and the fill were individually valid tokens.
+ *
+ * The numbers below are sampled from rendered screenshots of a 1440x900 /home
+ * in each theme; if the material changes, re-sample and update them.
+ */
+describe('header search readability', () => {
+  const pills = {
+    // `--cp-glass-*` tint at the bar's alpha over the room, plus the well.
+    dark: [56, 67, 80],
+    light: [205, 209, 210],
+  };
+  const inks = {
+    // --color-ink (typed value) and --color-ink-soft (placeholder hint).
+    dark: { typed: '#F2F1EC', hint: '#C3CBD5' },
+    light: { typed: '#292725', hint: '#4E4A45' },
+  };
+
+  for (const theme of ['light', 'dark']) {
+    it(`keeps the ${theme} search field's text and hint above AA`, () => {
+      const pill = [...pills[theme], 1];
+      for (const [role, hex] of Object.entries(inks[theme])) {
+        const ratio = contrast(color(hex, theme), pill);
+        expect(ratio, `${theme} search ${role} on pill rgb(${pills[theme]}): ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+
+    it(`does not tint the ${theme} header ink with the accent's ink`, () => {
+      // The specific regression: `--header-ink: var(--color-accent-ink)` is a
+      // near-black that cannot work on a dark glass bar.
+      const header = fs.readFileSync('app/styles/aurora.css', 'utf8');
+      expect(header).toMatch(/--header-ink:\s*var\(--color-ink\)/);
+      expect(header).not.toMatch(/--header-ink:\s*var\(--color-accent-ink\)/);
+    });
+  }
+
+  it('recesses the search well with black rather than an ink tint', () => {
+    const header = fs.readFileSync('app/styles/aurora.css', 'utf8');
+    // A well must darken. In dark mode `--color-ink` is near-white, so tinting
+    // the field with ink *raised* it and reversed the recess.
+    expect(header).toMatch(/\.shell-header \.search-pill__shell\s*\{[^}]*background-color:\s*color-mix\(in oklab, #000000/);
   });
 });

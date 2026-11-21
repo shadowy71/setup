@@ -1,6 +1,7 @@
 import '@/app/styles/login.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
+import '@/app/styles/liquid-glass.css';
 
 /** Sign-in shares the root Lumen font loaders; no route-specific display face. */
 export default function LoginLayout({ children }) {

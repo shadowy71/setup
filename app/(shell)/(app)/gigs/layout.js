@@ -5,6 +5,7 @@
 import '@/app/styles/sections.css';
 import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
+import '@/app/styles/liquid-glass.css';
 
 export default function GigsLayout({ children }) {
   return children;

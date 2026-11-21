@@ -70,7 +70,11 @@ export function ShellFrame({ children, ...props }) {
   return (
     <div className="app-frame relative z-10" data-sidebar-open={open} ref={frameRef}>
       {mobile && open ? <div className="sidebar-backdrop" onClick={() => { setOpen(false); Array.from(frameRef.current?.querySelectorAll('.sidebar-toggle') || []).find((button) => button.getClientRects().length)?.focus(); }} aria-hidden="true" /> : null}
-      <div className="sidebar-host relative z-10" hidden={!open}>
+      {/* The wrapper carries no `z-*` utility: stacking is owned by
+          `.sidebar-host` in app/styles/shell-frame.css, which lifts the rail
+          above the content column. A `z-10` here would create a stacking
+          context and bury the fixed rail under `.shell-root`. */}
+      <div className="sidebar-host relative" hidden={!open}>
         <Sidebar {...props} mobile={mobile} onClose={() => { setOpen(false); Array.from(frameRef.current?.querySelectorAll('.sidebar-toggle') || []).find((button) => button.getClientRects().length)?.focus(); }} onNavigate={() => { if (mobile) setOpen(false); }} />
       </div>
       <div className="shell-root relative z-10">

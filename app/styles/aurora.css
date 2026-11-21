@@ -61,6 +61,11 @@ html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
 /* --------------------------------------------------------------------------
    2. Surfaces — cards, wells and the glass family
    -------------------------------------------------------------------------- */
+/* Every plate is a Liquid Glass surface now (app/styles/liquid-glass.css). No
+   per-route colour is declared here: a second background on a `.card` would
+   paint over the material and bring the opaque slab straight back. The tier
+   owns the tint, the rim, the catch-light, the cast and the blur together, so
+   these selectors simply join the plate. */
 :root .card,
 :root .card-elevated,
 :root .card-glass,
@@ -74,37 +79,16 @@ html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
 :root .tt-offer,
 :root .tt-verify,
 :root .tt-help,
-:root .state-block {
-  border: 1px solid var(--color-rule);
+:root .state-block,
+:root .notice {
+  border: 1px solid var(--glass-surface-rim);
   border-radius: var(--radius-card);
-  background-color: var(--color-paper-2);
-  background-image: var(--grad-surface);
+  background-color: var(--glass-surface-tint);
+  background-image: var(--glass-specular), var(--glass-bleed);
   color: var(--color-ink);
-  box-shadow: inset 0 1px 0 var(--edge-light-soft), var(--depth-1);
-}
-
-:root[data-theme='dark'] .card,
-:root[data-theme='dark'] .card-elevated,
-:root[data-theme='dark'] .club-card,
-:root[data-theme='dark'] .gig-card,
-:root[data-theme='dark'] .state-block,
-:root[data-theme='dark'] .notice {
-  background-color: rgb(255 255 255 / 0.02);
-  background-image: linear-gradient(168deg, rgb(255 255 255 / 0.03), transparent 58%);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-}
-
-:root[data-theme='light'] .card,
-:root[data-theme='light'] .card-elevated,
-:root[data-theme='light'] .club-card,
-:root[data-theme='light'] .gig-card,
-:root[data-theme='light'] .state-block,
-:root[data-theme='light'] .notice {
-  background-color: rgb(255 255 255 / 0.4);
-  background-image: linear-gradient(168deg, rgb(255 255 255 / 0.35), rgb(255 255 255 / 0.14) 58%);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  box-shadow: var(--glass-surface-shadow);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
 }
 
 :root .card-flush {
@@ -427,10 +411,20 @@ html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
    colour only, the header's size, spacing and interaction are untouched. The
    scoped roles below keep that ink in one place. */
 :root .shell-header {
-  --header-ink: var(--color-accent-ink);
-  --header-ink-soft: color-mix(in oklab, var(--color-accent-ink) 84%, var(--color-accent));
-  --header-rim: color-mix(in oklab, var(--color-accent-ink) 22%, transparent);
-  --header-rim-strong: color-mix(in oklab, var(--color-accent-ink) 40%, transparent);
+  /* The header's ink has to follow what the bar actually paints, not what the
+     accent colour is. It used to be `--color-accent-ink` (near-black) because
+     the bar was an opaque accent plate — a light fill. Now the bar is glass:
+     the accent is only a 34% tint over whatever room is behind it, so at night
+     the bar is a dark slate and near-black ink on it measured 2.1:1.
+
+     Each theme therefore states its own ink, and both are asserted against
+     the *measured* pill interior in the contrast test:
+       dark  bar ~rgb(64,78,93)   -> light ink,   #C3CBD5 = 5.20:1
+       light bar ~rgb(211,215,217) -> dark ink,   #292725 = 10.27:1 */
+  --header-ink: var(--color-ink);
+  --header-ink-soft: var(--color-ink-soft);
+  --header-rim: color-mix(in oklab, var(--color-ink) 22%, transparent);
+  --header-rim-strong: color-mix(in oklab, var(--color-ink) 40%, transparent);
   --header-face: color-mix(in oklab, #ffffff 26%, transparent);
   --header-face-strong: color-mix(in oklab, #ffffff 42%, transparent);
   padding: var(--space-sm) var(--space-sm) 0;
@@ -544,14 +538,34 @@ html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
    dropped on top of it: the same accent family, recessed a step, with ink
    text. Its dimensions, placeholder and behaviour are the existing ones. */
 :root .shell-header .search-pill__shell {
-  border-color: var(--header-rim);
-  background-color: color-mix(in oklab, var(--color-accent-ink) 9%, transparent);
+  /* The field has to read as a recessed well in *both* themes. Tinting it with
+     `--color-accent-ink` (near-black) worked on the old opaque accent plate;
+     on today's glass bar it barely separated from the bar in dark mode and, in
+     light mode, tinted the field with a colour from the wrong end of the ramp.
+     The well is now built from the theme's own ink at a fixed alpha, so it
+     goes darker than the bar in light mode and lighter-tinted in dark mode —
+     the same relationship the textarea well uses. */
+  border-color: color-mix(in oklab, var(--color-ink) 26%, transparent);
+  /* A well darkens; it does not lighten. Black at a fixed alpha recesses the
+     field relative to the bar in both themes and keeps the hint at 6.4:1
+     (dark) / 5.8:1 (light) against it. An ink tint was the wrong instrument:
+     in dark mode ink is near-white, so it *raised* the field instead. */
+  background-color: color-mix(in oklab, #000000 20%, transparent);
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 62%);
-  box-shadow: inset 0 1px 2px color-mix(in oklab, var(--color-accent-ink) 12%, transparent);
+  box-shadow:
+    inset 0 1px 2px color-mix(in oklab, #000000 18%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, #ffffff 10%, transparent);
+}
+
+/* The light bar is already mid-tone, so the same black alpha over it would take
+   the field a full step too dark and squeeze the hint down to 4.55:1. A lighter
+   recess keeps the well legible as a well and the hint comfortably above AA. */
+:root[data-theme='light'] .shell-header .search-pill__shell {
+  background-color: color-mix(in oklab, #000000 10%, transparent);
 }
 
 :root .shell-header .search-pill__shell:hover {
-  border-color: var(--header-rim-strong);
+  border-color: color-mix(in oklab, var(--color-ink) 38%, transparent);
 }
 
 :root .shell-header .search-pill__shell:focus-within {
@@ -579,8 +593,10 @@ html::-webkit-scrollbar-corner, body::-webkit-scrollbar-corner {
 :root .shell-header .search-pill__icon,
 :root .shell-header .search-pill__shell:hover .search-pill__icon,
 :root .shell-header .search-pill__shell:focus-within .search-pill__icon {
-  color: var(--header-ink-soft);
-  border-left-color: color-mix(in oklab, var(--color-accent-ink) 30%, transparent);
+  /* A control, not a hint: it takes the full ink so the affordance is as
+     legible as the text it sits beside. */
+  color: var(--header-ink);
+  border-left-color: color-mix(in oklab, var(--color-ink) 26%, transparent);
 }
 
 /* A signed-out trigger only appears if the shell renders without a user; it

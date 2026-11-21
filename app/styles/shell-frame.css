@@ -10,23 +10,41 @@
   overflow: hidden auto;
   overscroll-behavior: contain;
   padding: var(--space-md) var(--space-sm);
-  border: 1px solid color-mix(in oklab, var(--color-rule) 65%, transparent);
-  border-radius: 16px;
-  background: var(--color-paper-2);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.16);
+  border: 1px solid var(--glass-floating-rim);
+  border-radius: var(--radius-lg);
+  background-color: var(--cp-glass-floating-tint);
+  background-image: var(--glass-specular), var(--glass-bleed);
+  box-shadow: var(--glass-floating-shadow);
+  /* The rail is the largest always-visible surface, so it samples at every
+     width. The old rule sampled only from 1024px up and painted a flat
+     `--color-paper-2` plate below that, which is why the rail on a laptop at
+     900px read as a solid column. The blur radius is the phone-aware one. */
+  -webkit-backdrop-filter: var(--glass-floating-blur);
+  backdrop-filter: var(--glass-floating-blur);
 }
-@media (min-width: 1024px) {
-  :root[data-theme='dark'] .app-frame .side-panel {
-    background: color-mix(in oklab, var(--color-paper-2) 78%, rgb(255 255 255 / 0.02));
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
-  :root[data-theme='light'] .app-frame .side-panel {
-    background: rgb(255 255 255 / 0.45);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
+/* --------------------------------------------------------------------------
+   Stacking contract for the rail
+   --------------------------------------------------------------------------
+   The content column (`.shell-root`, night.css) is `position: relative` with
+   `z-index: 10` and `isolation: isolate`, and it is a *later* sibling of this
+   wrapper. The wrapper therefore has to sit above it:
+
+     wrapper     z-index 55   above content (10) and the backdrop (49)
+     backdrop    z-index 49   below the open rail, above the content
+     the panel   z-index 50   inside the wrapper's context
+
+   This is invisible until you click. The panel is `position: fixed`, but a
+   fixed box still belongs to its parent's stacking context: with the wrapper
+   at `z-10` the panel was flattened to `z-10` at the document level, so the
+   equal-`z-index` content column that follows it in the DOM painted *over* the
+   rail and swallowed every pointer event. The rail rendered perfectly and was
+   completely unresponsive, while the header buttons (inside `.shell-root`)
+   kept working — which is exactly how the defect was reported. */
+.sidebar-host {
+  position: relative;
+  z-index: 55;
 }
+
 .sidebar-host[hidden] { display: none; }
 .sidebar-backdrop {
   position: fixed;

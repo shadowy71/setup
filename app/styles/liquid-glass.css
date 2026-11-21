@@ -1,0 +1,682 @@
+/* ==========================================================================
+   LIQUID GLASS — the material layer
+   --------------------------------------------------------------------------
+   Imported LAST in app/globals.css. This sheet is the single authority for the
+   glass material, so a surface never re-implements blur + rim + catch-light by
+   hand; it opts into a tier and inherits the whole optical stack.
+
+   The six optical layers every tier composes (per the reference bar):
+     1. backdrop blur + saturation  — the refraction proxy (--glass-*-blur)
+     2. surface tint                — tinted, never white-on-dark (--glass-*-tint)
+     3. edge rim                    — the boundary halo (--glass-*-rim)
+     4. inner catch-light           — the top-edge specular (inset 0 1px 0)
+     5. depth shadow                — the cast (--glass-*-shadow)
+     6. grain overlay               — the tooth (--glass-grain)
+
+   Two hard rules, both learned the hard way in this repo:
+
+   (a) NO SECOND BLUR. `backdrop-filter` samples the backdrop *behind* an
+       element, so a tier class must never be stacked on an ancestor that
+       already blurs, and two glass surfaces must not overlap at the same
+       z-tier. The tiers are therefore mutually exclusive, and the one place
+       nesting genuinely happens (a card inside a panel) uses `--glass-well`,
+       which is inset and does not blur twice.
+
+   (b) ALPHA IS BOUNDED BY CONTRAST, NOT BY TASTE. Every tint below is
+       calibrated so `--color-ink`, `--color-ink-2` and `--color-muted` clear
+       4.5:1 against the brightest and darkest backdrop the page can paint
+       underneath. tests/contrast.test.js owns that budget; raising a tint
+       percentage without re-running it will break text. Where a route needs
+       more translucency than the budget allows, it lowers the *backdrop's*
+       contrast, it does not raise the glass's opacity.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   The room — what the glass has to reveal
+   --------------------------------------------------------------------------
+   Translucency is only visible if there is something behind it. The old canvas
+   was a near-flat vertical gradient, so every panel read as an opaque slab no
+   matter what alpha it carried. This paints three lit pools with real colour
+   and drifts them slowly, so each island picks up a different part of the room
+   and the page stops looking like a dashboard on a grey background.
+
+   It is a fixed, non-interactive pseudo-element on `body` (already the layer
+   the app's atmosphere lives on), so it costs one composited paint, never a
+   layout pass, and it sits *behind* everything at z-index -1.
+   -------------------------------------------------------------------------- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10%;
+  /* z-index 0, not -1: `body` paints an opaque gradient of its own, and a
+     negative-z pseudo-element would be painted *behind* it and therefore be
+     invisible. Content is at z-10 (`.app-frame`), so the room stays behind
+     every surface while still being above the page background. */
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--halo-aura);
+  background-repeat: no-repeat;
+  /* No `filter: blur()` here. The aura is built from radial gradients, which
+     are already soft; blurring a 110%-viewport layer forces the compositor to
+     rasterise a huge offscreen surface on every frame of the drift, which
+     stalls screenshots and janks scroll for no visual gain. */
+  opacity: 0.85;
+  animation: glass-room-drift 42s var(--ease-in-out, ease-in-out) infinite alternate;
+  will-change: transform;
+}
+
+@keyframes glass-room-drift {
+  0% {
+    transform: translate3d(-1.5%, -1%, 0) scale(1.02) rotate(-1.2deg);
+  }
+  50% {
+    transform: translate3d(1.5%, 1.5%, 0) scale(1.06) rotate(0.8deg);
+  }
+  100% {
+    transform: translate3d(-0.5%, 2%, 0) scale(1.03) rotate(1.4deg);
+  }
+}
+
+/* A very fine grain over the room. Without it, large areas of tinted blur read
+   as flat plastic; with it, they read as a material with a surface. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--glass-grain);
+  mix-blend-mode: var(--glass-grain-blend);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------------------
+   Tier: surface — the canonical plate
+   --------------------------------------------------------------------------
+   Cards, islands, panels, stream items, stat blocks. The default a surface
+   reaches for. `@supports` fallback below makes it opaque where the engine
+   cannot blur, so the layout never depends on the filter.
+   -------------------------------------------------------------------------- */
+.glass-island,
+.glass-surface {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--glass-surface-rim);
+  border-radius: var(--radius-card);
+  background-color: var(--glass-surface-tint);
+  background-image: var(--glass-specular), var(--glass-bleed);
+  background-blend-mode: normal, normal;
+  box-shadow: var(--glass-surface-shadow);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
+  color: var(--color-ink);
+}
+
+/* --------------------------------------------------------------------------
+   Tier: floating — chrome that hovers above the page
+   --------------------------------------------------------------------------
+   Header bar, sidebar rail, docks, popovers, menus. Deeper blur than surface
+   because it is read against moving content, and it must not become an opaque
+   slab while the page scrolls beneath it.
+   -------------------------------------------------------------------------- */
+.glass-float,
+.glass-floating {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--glass-floating-rim);
+  border-radius: var(--radius-glass, var(--radius-lg));
+  background-color: var(--glass-floating-tint);
+  background-image: var(--glass-specular), var(--glass-bleed);
+  box-shadow: var(--glass-floating-shadow);
+  -webkit-backdrop-filter: var(--glass-floating-blur);
+  backdrop-filter: var(--glass-floating-blur);
+  color: var(--color-ink);
+}
+
+/* --------------------------------------------------------------------------
+   Tier: overlay — modal-over-modal
+   --------------------------------------------------------------------------
+   Dialogs, sheets, the command palette. The densest tier by design: it is the
+   top of the stack and it usually sits over a dimmed scrim, so more opacity
+   here costs no atmosphere and buys legibility.
+   -------------------------------------------------------------------------- */
+.glass-overlay {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--glass-overlay-rim);
+  border-radius: var(--radius-xl, var(--radius-lg));
+  background-color: var(--glass-overlay-tint);
+  background-image: var(--glass-specular), var(--glass-bleed);
+  box-shadow: var(--glass-overlay-shadow);
+  -webkit-backdrop-filter: var(--glass-overlay-blur);
+  backdrop-filter: var(--glass-overlay-blur);
+  color: var(--color-ink);
+}
+
+/* --------------------------------------------------------------------------
+   Tier: well — recessed, NOT raised
+   --------------------------------------------------------------------------
+   Search fields, composers, inputs, filter bars. Glass that has been pressed
+   into the surface rather than laid on it. Deliberately has no specular sheet
+   and no drop shadow: a well that catches light stops reading as a hole.
+   Nesting-safe — this is the one glass that may sit inside another glass,
+   because it never blurs twice (the parent already sampled the room).
+   -------------------------------------------------------------------------- */
+.glass-well {
+  border: 1px solid color-mix(in oklab, var(--color-ink) 16%, transparent);
+  background-color: var(--glass-well-tint);
+  color: var(--color-ink);
+  box-shadow: var(--glass-well-shadow);
+  -webkit-backdrop-filter: var(--glass-well-blur);
+  backdrop-filter: var(--glass-well-blur);
+}
+
+/* --------------------------------------------------------------------------
+   Interaction — light responds, geometry barely moves
+   --------------------------------------------------------------------------
+   A glass surface brightens and lifts by 1px on hover; it does not scale. The
+   rim becomes more luminous rather than thicker, so the plate reads as catching
+   more of the room, not as growing a border. Press returns the elevation to
+   nothing so the control feels like it moved toward the viewer.
+   -------------------------------------------------------------------------- */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .glass-island:hover,
+  .glass-surface:hover,
+  .glass-float:hover,
+  .glass-floating:hover {
+    border-color: color-mix(in oklab, var(--glass-surface-edge) 80%, var(--glass-surface-rim));
+    transform: translateY(-1px);
+    transition:
+      transform var(--dur-short, 180ms) var(--ease-out, ease-out),
+      border-color var(--dur-short, 180ms) var(--ease-out, ease-out),
+      box-shadow var(--dur-short, 180ms) var(--ease-out, ease-out);
+  }
+
+  /* Brightening is a background-image swap, not a filter: a `filter` on a
+     surface would create an isolated group and kill its own backdrop-filter. */
+  .glass-island:hover,
+  .glass-surface:hover {
+    background-image: linear-gradient(150deg, rgb(255 255 255 / 0.62), rgb(255 255 255 / 0.12) 30%, transparent 56%), var(--glass-bleed);
+  }
+}
+
+.glass-island:active,
+.glass-surface:active,
+.glass-float:active,
+.glass-control:active {
+  transform: translateY(0) scale(0.995);
+}
+
+/* Interactive glass controls (buttons, chips, icon buttons). */
+.glass-control {
+  position: relative;
+  border: 1px solid var(--glass-surface-rim);
+  border-radius: var(--radius-md);
+  background-color: color-mix(in oklab, var(--glass-surface-tint) 70%, transparent);
+  color: var(--color-ink);
+  box-shadow: inset 0 1px 0 var(--glass-surface-edge);
+  -webkit-backdrop-filter: var(--glass-well-blur);
+  backdrop-filter: var(--glass-well-blur);
+  transition:
+    background-color var(--dur-short, 180ms) var(--ease-out, ease-out),
+    border-color var(--dur-short, 180ms) var(--ease-out, ease-out),
+    transform var(--dur-short, 180ms) var(--ease-out, ease-out);
+}
+
+@media (hover: hover) {
+  .glass-control:hover {
+    background-color: color-mix(in oklab, var(--glass-surface-tint) 92%, transparent);
+    border-color: var(--glass-surface-edge);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Header scroll response
+   -------------------------------------------------------------------------- */
+.shell-header {
+  transition:
+    padding var(--dur-short, 180ms) var(--ease-out, ease-out),
+    opacity var(--dur-short, 180ms) var(--ease-out, ease-out);
+}
+
+/* ==========================================================================
+   AUTHORITATIVE MATERIAL PASS
+   --------------------------------------------------------------------------
+   `lumen.css` is a *flattening* pass: it sets `background: paper`, `image:
+   none`, `shadow: none` and `backdrop-filter: none` on every plate, and
+   `aurora.css` re-skins only some of them. Because this sheet is imported
+   last, this block is the single place that decides what a plate is made of —
+   otherwise each new route either looked like a solid slab or lost its glass
+   the moment lumen's selector won.
+
+   Specificity note: every rule here is `:root <class>` (0,2,0) so it outranks
+   lumen's `:root <class>` by source order, and the tier classes are ALSO
+   re-stated at that specificity so a `.glass-floating` element cannot be
+   flattened by lumen's `.glass-floating` rule.
+
+   There is deliberately no `!important` anywhere: if a rule needs one, the
+   cascade is wrong and the fix belongs here, not at the call site.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- surfaces */
+:root .card,
+:root .card-elevated,
+:root .card-glass,
+:root .island,
+:root .rail-island,
+:root .club-card,
+:root .club-hero,
+:root .gig-card,
+:root .tt-shell__panel,
+:root .tt-tile,
+:root .tt-install,
+:root .tt-offer,
+:root .tt-verify,
+:root .tt-help,
+:root .state-block,
+:root .notice,
+:root .stream-card,
+:root .stream-card--post,
+:root .stream-card--row,
+:root .home-pulse__stats,
+:root .feature-tile,
+:root .home-composer,
+:root .market-card,
+:root .post-card,
+:root .sheet,
+:root .reply,
+:root .message-bubble {
+  border: 1px solid var(--glass-surface-rim);
+  background-color: var(--cp-glass-surface-tint);
+  background-image: var(--glass-specular), var(--glass-bleed);
+  color: var(--color-ink);
+  box-shadow: var(--glass-surface-shadow);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
+}
+
+/* `card-flush` is the deliberate exception: a flush cell joins a neighbouring
+   plate rather than floating, so it keeps no cast and no specular — but it is
+   still translucent, or the column it lives in reads as a stack of slabs. */
+:root .card-flush {
+  border: 1px solid var(--glass-surface-rim);
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 82%, transparent);
+  background-image: none;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------ chrome */
+:root .side-panel,
+:root .glass-floating,
+:root .glass-strong,
+:root .glass,
+:root .glass-soft,
+:root .glass-featured,
+:root .glass-premium {
+  border: 1px solid var(--glass-floating-rim);
+  background-color: var(--cp-glass-floating-tint);
+  background-image: var(--glass-specular), var(--glass-bleed);
+  box-shadow: var(--glass-floating-shadow);
+  -webkit-backdrop-filter: var(--glass-floating-blur);
+  backdrop-filter: var(--glass-floating-blur);
+}
+
+/* The header and the mobile dock are chrome: floating tier, with the Campus+
+   ice-blue kept as a *tint inside the glass* rather than as a painted sheet.
+   A solid blue plate was the one opaque slab the eye could not forgive. */
+:root .shell-header__bar,
+:root .bottom-dock__bar {
+  border: 1px solid color-mix(in oklab, var(--color-accent) 34%, var(--glass-floating-rim));
+  background-color: color-mix(in oklab, var(--cp-glass-floating-tint) 82%, var(--color-accent));
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 0.30) 0%, rgb(255 255 255 / 0.06) 46%, transparent 100%),
+    radial-gradient(120% 170% at 8% -48%, color-mix(in oklab, var(--color-accent) 30%, transparent), transparent 62%),
+    var(--glass-bleed);
+  color: var(--header-ink, var(--color-ink));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.42),
+    inset 0 -1px 0 rgb(255 255 255 / 0.10),
+    0 2px 8px -3px rgb(0 0 0 / 0.22),
+    0 22px 52px -26px color-mix(in oklab, var(--color-accent) 40%, rgb(0 0 0 / 0.5));
+  -webkit-backdrop-filter: var(--glass-floating-blur);
+  backdrop-filter: var(--glass-floating-blur);
+}
+
+/* ----------------------------------------------------------------- overlays */
+:root .dialog,
+:root .command-palette,
+:root .cp-menu,
+:root .toast,
+:root .nav-help__popover,
+:root .floating-panel {
+  border: 1px solid var(--glass-overlay-rim);
+  background-color: var(--cp-glass-overlay-tint);
+  background-image: var(--glass-specular);
+  box-shadow: var(--glass-overlay-shadow);
+  -webkit-backdrop-filter: var(--glass-overlay-blur);
+  backdrop-filter: var(--glass-overlay-blur);
+}
+
+/* Menus stay the one near-opaque surface (see --cp-bg-glass-strong): they drop
+   over arbitrary page content and their text must never depend on what is
+   underneath. They still carry the rim, the catch-light and the cast, so they
+   read as glass — just backed glass. */
+:root .cp-menu {
+  background-color: color-mix(in oklab, var(--cp-bg-glass-strong) 88%, transparent);
+}
+
+/* -------------------------------------------------------------------- wells */
+/* Inputs are recessed, not raised: a darker tint than their parent, an inset
+   shadow instead of a cast, and no specular gradient (specular on an input is
+   what makes a form read as a floating button). `.control` carries every
+   `<input>`/`<textarea>`/`<select>` in the app through one class. */
+:root .input,
+:root .textarea,
+:root .select,
+:root .search-well,
+:root .composer-well,
+:root .filter-bar,
+:root .post-content-editor,
+:root .control,
+:root .cp-composer-input,
+:root textarea.control {
+  background-color: var(--cp-glass-well-tint);
+  box-shadow: var(--glass-well-shadow);
+}
+:root .control {
+  border-color: var(--glass-surface-rim);
+}
+:root .control::placeholder {
+  color: var(--color-muted);
+}
+
+/* Market listings are the grid's primary islands: they were a solid
+   `--color-paper-2` plate, which is exactly the opaque rectangle the brief
+   forbids. They join the surface tier, and their media region goes a step
+   darker so the product photo still reads. */
+:root .market-product {
+  border: 1px solid var(--glass-surface-rim);
+  background-color: var(--cp-glass-surface-tint);
+  background-image: var(--glass-specular), var(--glass-bleed);
+  box-shadow: var(--glass-surface-shadow);
+  -webkit-backdrop-filter: var(--glass-surface-blur);
+  backdrop-filter: var(--glass-surface-blur);
+}
+:root .market-product:hover {
+  /* Brighten the tint and deepen the cast, but keep the lift to 3px — the
+     brief asks for a tiny lift, not a scale-up. */
+  border-color: color-mix(in oklab, var(--color-accent) 44%, var(--glass-surface-rim));
+  background-color: color-mix(in oklab, var(--cp-glass-surface-tint) 92%, transparent);
+  box-shadow: var(--glass-surface-shadow), 0 20px 44px -26px rgb(0 0 0 / 0.66);
+}
+:root .market-product__image {
+  background-color: color-mix(in oklab, var(--cp-glass-well-tint) 70%, transparent);
+}
+
+/* Club cards carry a media band above the text. Left opaque it is a grey
+   block pasted onto a glass card; as a well it recedes into the material. */
+:root .club-card__visual {
+  background-color: color-mix(in oklab, var(--cp-glass-well-tint) 58%, transparent);
+  background-image: none;
+  border-bottom: 1px solid color-mix(in oklab, var(--glass-surface-rim) 60%, transparent);
+}
+
+/* Loading skeletons. `bg-surface-2` resolves to the opaque `--cp-bg-subtle`,
+   so a skeleton rendered as a solid slab over the room. Skeletons are the one
+   thing on screen while nothing else is, which makes an opaque one the most
+   conspicuous solid left in the app. */
+:root .skeleton,
+:root [class*='bg-surface-2'] {
+  background-color: color-mix(in oklab, var(--glass-surface-rim) 55%, transparent);
+  background-image: none;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------- mobile restitution */
+/* `aurora.css` withdraws backdrop sampling on phones to protect scroll perf,
+   which turns every floating surface into an opaque plate. Keep the sampling
+   but at a much cheaper radius, and raise the tint so legibility holds. This
+   is the one place a blur is restored against that rule, and it is bounded:
+   phones get 12–16px, never the desktop 24–32px. */
+@media (pointer: coarse), (max-width: 767px) {
+  :root .glass,
+  :root .glass-soft,
+  :root .glass-floating,
+  :root .glass-strong,
+  :root .side-panel,
+  :root .shell-header__bar,
+  :root .bottom-dock__bar,
+  :root .home-composer,
+  :root .stream-card,
+  :root .island,
+  :root .card,
+  :root .feature-tile,
+  :root .home-pulse__stats {
+    -webkit-backdrop-filter: var(--glass-surface-blur);
+    backdrop-filter: var(--glass-surface-blur);
+  }
+
+  :root .side-panel,
+  :root .shell-header__bar,
+  :root .bottom-dock__bar,
+  :root .glass-floating {
+    -webkit-backdrop-filter: var(--glass-floating-blur);
+    backdrop-filter: var(--glass-floating-blur);
+  }
+
+  :root .shell-header__bar,
+  :root .bottom-dock__bar,
+  :root .glass-floating,
+  :root .glass-strong {
+    background-color: color-mix(in oklab, var(--cp-glass-floating-tint) 90%, var(--color-accent));
+  }
+
+  :root .home-pulse__stats,
+  :root .stream-card {
+    background-color: var(--cp-glass-surface-tint);
+  }
+}
+
+/* Reduced transparency beats even the mobile restitution: no sampling, no
+   grain, fully backed plates. Declared last so it wins the cascade above. */
+@media (prefers-reduced-transparency: reduce) {
+  :root .card,
+  :root .card-elevated,
+  :root .card-glass,
+  :root .island,
+  :root .rail-island,
+  :root .club-card,
+  :root .gig-card,
+  :root .state-block,
+  :root .notice,
+  :root .stream-card,
+  :root .home-pulse__stats,
+  :root .feature-tile,
+  :root .home-composer,
+  :root .side-panel,
+  :root .glass,
+  :root .glass-soft,
+  :root .glass-floating,
+  :root .glass-strong,
+  :root .shell-header__bar,
+  :root .bottom-dock__bar,
+  :root .dialog,
+  :root .cp-menu,
+  :root .command-palette,
+  :root .toast {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--color-paper-2);
+    background-image: none;
+    box-shadow: var(--depth-1);
+    border-color: var(--color-rule);
+  }
+
+  body::after {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ interaction */
+/* Light responds on hover, geometry barely moves: a 1px lift and a brighter
+   rim. Pressed returns the elevation to rest so the plate reads as pushed. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :root a.card:hover,
+  :root button.card:hover,
+  :root .card-interactive:hover,
+  :root .club-card:hover,
+  :root .gig-card:hover,
+  :root .feature-tile:hover,
+  :root .stream-slot:hover .stream-card {
+    border-color: color-mix(in oklab, var(--glass-surface-edge) 70%, var(--glass-surface-rim));
+    transform: translateY(-1px);
+    transition:
+      transform var(--dur-short, 180ms) var(--ease-out, ease-out),
+      border-color var(--dur-short, 180ms) var(--ease-out, ease-out),
+      box-shadow var(--dur-short, 180ms) var(--ease-out, ease-out);
+  }
+
+  /* Brightening rides `background-image`, never `filter`: a `filter` on a
+     surface creates an isolated group and would kill its own backdrop-filter. */
+  :root a.card:hover,
+  :root button.card:hover,
+  :root .card-interactive:hover,
+  :root .club-card:hover,
+  :root .gig-card:hover,
+  :root .feature-tile:hover {
+    background-image: var(--glass-specular-hover, var(--glass-specular)), var(--glass-bleed);
+  }
+}
+
+:root a.card:active,
+:root button.card:active,
+:root .feature-tile:active {
+  transform: translateY(0) scale(0.995);
+}
+
+/* ==========================================================================
+   Performance and fallbacks
+   --------------------------------------------------------------------------
+   Four tiers of degradation, in order of what breaks first:
+
+   1. Coarse pointers / narrow screens: blur is expensive on a GPU that is also
+      compositing a scrolling feed, so the radius drops and the tint rises to
+      hold the same legibility. The material survives; the cost does not.
+   2. No backdrop-filter support: the tint becomes fully backed. Every surface
+      still looks like a plate, it simply stops being see-through.
+   3. prefers-reduced-transparency: same as (2) plus the grain and the specular
+      are withdrawn, because they are the *illusion* of glass and without the
+      blur they read as noise.
+   4. prefers-reduced-motion: the room stops drifting; nothing else changes.
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px), (pointer: coarse) {
+  :root {
+    --glass-surface-blur: blur(12px) saturate(1.45);
+    --glass-floating-blur: blur(16px) saturate(1.5);
+    --glass-overlay-blur: blur(20px) saturate(1.5);
+    --glass-surface-tint: color-mix(in oklab, var(--color-paper-2) 84%, transparent);
+    --glass-floating-tint: color-mix(in oklab, var(--color-paper-2) 80%, transparent);
+    --glass-grain: 0.025;
+  }
+
+  :root[data-theme='dark'] {
+    --glass-surface-tint: color-mix(in oklab, var(--color-paper-2) 74%, transparent);
+    --glass-floating-tint: color-mix(in oklab, var(--color-paper-2) 68%, transparent);
+  }
+
+  /* The room shrinks with the viewport so the drift never costs a full-screen
+     repaint on a phone. */
+  body::before {
+    filter: blur(18px);
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-island,
+  .glass-surface,
+  .glass-float,
+  .glass-floating,
+  .glass-overlay,
+  .glass-control {
+    background-color: var(--color-paper-2);
+    background-image: none;
+  }
+
+  .glass-well {
+    background-color: var(--color-paper);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-surface-tint: var(--color-paper-2);
+    --glass-floating-tint: var(--color-paper-2);
+    --glass-overlay-tint: var(--color-paper-2);
+    --glass-grain: 0;
+  }
+
+  .glass-island,
+  .glass-surface,
+  .glass-float,
+  .glass-floating,
+  .glass-overlay,
+  .glass-control,
+  .glass-well {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-image: none;
+    border-color: var(--color-rule);
+  }
+
+  body::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+    filter: blur(24px);
+  }
+
+  .glass-island,
+  .glass-surface,
+  .glass-float,
+  .glass-floating,
+  .glass-overlay,
+  .glass-control {
+    transition: none;
+  }
+
+  @media (hover: hover) {
+    .glass-island:hover,
+    .glass-surface:hover,
+    .glass-float:hover,
+    .glass-floating:hover {
+      transform: none;
+    }
+  }
+}
+
+@media print {
+  body::before,
+  body::after {
+    display: none;
+  }
+
+  .glass-island,
+  .glass-surface,
+  .glass-float,
+  .glass-floating,
+  .glass-overlay,
+  .glass-control,
+  .glass-well {
+    background-color: #fff;
+    background-image: none;
+    box-shadow: none;
+    border: 1px solid #000;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    color: #000;
+  }
+}

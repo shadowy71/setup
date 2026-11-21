@@ -36,6 +36,7 @@
   --color-ink: #292725;
   --color-ink-2: #4E4A45;
   --color-muted: #625C56;
+  --color-ink-soft: #4E4A45;
   --color-rule: #CDC4B8;
   --color-rule-2: #7C736B;
   --color-accent: #8DBCE3;
@@ -117,6 +118,101 @@
   --glow-soft: color-mix(in oklab, var(--color-accent) 16%, transparent);
   --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 26%, transparent), 0 6px 24px -8px var(--glow-accent);
   --shadow-lift: 0 2px 5px -2px rgb(41 39 37 / 0.10), 0 22px 48px -18px rgb(41 39 37 / 0.32), 0 0 32px -12px var(--glow-soft);
+
+  /* ------------------------------------------------------------------------
+     Liquid Glass material ladder
+     ------------------------------------------------------------------------
+     Three tiers, each a *composite of six optical layers*: backdrop blur +
+     saturation (the refraction proxy), a tinted surface, an edge rim, an
+     inner catch-light, a depth shadow, and a grain overlay. The values are
+     deliberately well below the old 96–97% opacity: a glass surface that is
+     opaque cannot admit the room behind it, and the room is the material's
+     whole point.
+
+     Readability is not bought with opacity here, it is bought with *backing*:
+     each tier's alpha is mixed toward the opaque paper token by an amount that
+     still clears 4.5:1 for every text tier on the brightest backdrop the page
+     can paint under it (tests/contrast.test.js asserts the token pairs, and
+     the glass is calibrated against them). Light mode carries more white than
+     dark mode carries black, because dark-on-dark loses contrast far faster.
+
+       surface   — the canonical plate: cards, islands, panels
+       floating  — chrome that hovers: header, rail, docks, popovers
+       overlay   — modal-over-modal: dialogs, sheets, palette
+     ------------------------------------------------------------------------ */
+
+  /* --- surface (canonical plate) --- */
+  --cp-glass-surface-tint: color-mix(in oklab, var(--color-paper-2) 74%, transparent);
+  --glass-surface-tint: var(--cp-glass-surface-tint);
+  --glass-surface-blur: blur(16px) saturate(1.6);
+  --glass-surface-rim: rgb(255 255 255 / 0.62);
+  --glass-surface-edge: rgb(255 255 255 / 0.92);
+  --glass-surface-shade: rgb(41 39 37 / 0.05);
+  --glass-surface-shadow:
+    inset 0 1px 0 var(--glass-surface-edge),
+    inset 0 -1px 0 rgb(255 255 255 / 0.18),
+    0 1px 2px -1px var(--glass-surface-shade),
+    0 12px 30px -20px rgb(41 39 37 / 0.30);
+
+  /* --- floating (chrome) --- */
+  --cp-glass-floating-tint: color-mix(in oklab, var(--color-paper-2) 66%, transparent);
+  --glass-floating-tint: var(--cp-glass-floating-tint);
+  --glass-floating-blur: blur(24px) saturate(1.75);
+  --glass-floating-rim: rgb(255 255 255 / 0.55);
+  --glass-floating-edge: rgb(255 255 255 / 0.90);
+  --glass-floating-shadow:
+    inset 0 1px 0 var(--glass-floating-edge),
+    inset 0 -1px 0 rgb(255 255 255 / 0.14),
+    0 2px 6px -2px rgb(41 39 37 / 0.10),
+    0 24px 56px -28px rgb(41 39 37 / 0.42);
+
+  /* --- overlay (dialogs) --- */
+  --cp-glass-overlay-tint: color-mix(in oklab, var(--color-paper-2) 86%, transparent);
+  --glass-overlay-tint: var(--cp-glass-overlay-tint);
+  --glass-overlay-blur: blur(32px) saturate(1.8);
+  --glass-overlay-rim: rgb(255 255 255 / 0.66);
+  --glass-overlay-edge: rgb(255 255 255 / 0.95);
+  --glass-overlay-shadow:
+    inset 0 1px 0 var(--glass-overlay-edge),
+    0 32px 80px -32px rgb(41 39 37 / 0.55);
+
+  /* ----------------------------------------------------------------------
+     The contrast budget the glass is calibrated against
+     ----------------------------------------------------------------------
+     Translucency is bounded by what the *room can actually paint* under a
+     surface, not by an imaginary pure-black/white photograph. These four
+     values are the measurable envelope of `--halo-aura` composited over the
+     canvas — the darkest and brightest pixels any glass panel can ever sit
+     on. tests/contrast.test.js reads them and asserts every text tier clears
+     4.5:1 against both, so the glass can never be made so transparent that
+     copy stops being readable, and a future "just make it more glassy" edit
+     fails CI instead of shipping unreadable text.
+     ---------------------------------------------------------------------- */
+  --cp-glass-underlay-dark: #C8B293;
+  --cp-glass-underlay-light: #FFFFFF;
+
+  /* Recessed wells: search fields, composers, inputs. Inset, not raised. */
+  --cp-glass-well-tint: color-mix(in oklab, var(--color-paper) 62%, transparent);
+  --glass-well-tint: var(--cp-glass-well-tint);
+  --glass-well-blur: blur(12px) saturate(1.4);
+  --glass-well-shadow:
+    inset 0 1px 2px rgb(41 39 37 / 0.10),
+    inset 0 -1px 0 rgb(255 255 255 / 0.55);
+
+  /* Specular + bleed. The highlight is the light source the material reports;
+     the bleed is the room's colour arriving *through* the glass. */
+  --glass-specular: linear-gradient(150deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.10) 30%, transparent 56%);
+  --glass-bleed: radial-gradient(120% 90% at 12% 0%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 62%),
+    radial-gradient(100% 80% at 100% 100%, color-mix(in oklab, var(--color-accent-warm) 14%, transparent), transparent 66%);
+  /* Just enough tooth that a large plate reads as a material, not a fill. */
+  --glass-grain: 0.035;
+  --glass-grain-blend: overlay;
+
+  /* The room itself: what the glass has to reveal. Three lit pools with real
+     colour, drifting slowly, so translucency has something to show. */
+  --halo-aura: radial-gradient(38rem 26rem at 18% 12%, color-mix(in oklab, var(--color-accent) 34%, transparent), transparent 70%),
+    radial-gradient(32rem 24rem at 84% 24%, color-mix(in oklab, var(--color-accent-warm) 30%, transparent), transparent 72%),
+    radial-gradient(44rem 30rem at 62% 92%, color-mix(in oklab, var(--color-accent-2) 26%, transparent), transparent 74%);
 }
 
 :root[data-theme='dark'] {
@@ -136,6 +232,10 @@
   --color-accent-warm: #CDAB80;
   --color-accent-2: #CDAB80;
   --color-accent-ink: #131720;
+  /* A hint on glass, not body copy: light enough to sit behind a typed value
+     but still 5.2:1 on the measured dark pill (rgb(64,78,93)). The muted
+     token (#A8A8A3) drops to 3.57:1 there, so it cannot carry the hint. */
+  --color-ink-soft: #C3CBD5;
   --color-live: #8DC9AE;
   --color-focus: #92C3EA;
 
@@ -179,6 +279,80 @@
   --glow-soft: color-mix(in oklab, var(--color-accent) 18%, transparent);
   --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 30%, transparent), 0 6px 28px -8px var(--glow-accent);
   --shadow-lift: 0 2px 6px -2px rgb(0 0 0 / 0.46), 0 24px 52px -18px rgb(0 0 0 / 0.70), 0 0 36px -12px var(--glow-soft);
+
+  /* ------------------------------------------------------------------------
+     Liquid Glass — dark arm
+     ------------------------------------------------------------------------
+     Dark glass is *tinted slate*, never white. A white overlay on a dark room
+     reads as fog, so the tint stays on the cool slate axis and the light comes
+     from the rim and the specular only. The alpha is denser than the light arm
+     because dark ink on a dark backdrop has the smaller contrakt budget.
+     ------------------------------------------------------------------------ */
+
+  --cp-glass-surface-tint: color-mix(in oklab, var(--color-paper-2) 58%, transparent);
+  --glass-surface-tint: var(--cp-glass-surface-tint);
+  --glass-surface-blur: blur(18px) saturate(1.5);
+  --glass-surface-rim: rgb(255 255 255 / 0.16);
+  --glass-surface-edge: rgb(255 255 255 / 0.22);
+  --glass-surface-shade: rgb(0 0 0 / 0.34);
+  --glass-surface-shadow:
+    inset 0 1px 0 var(--glass-surface-edge),
+    inset 0 -1px 0 rgb(255 255 255 / 0.05),
+    0 1px 2px -1px var(--glass-surface-shade),
+    0 14px 34px -22px rgb(0 0 0 / 0.72);
+
+  --cp-glass-floating-tint: color-mix(in oklab, var(--color-paper-2) 52%, transparent);
+  --glass-floating-tint: var(--cp-glass-floating-tint);
+  --glass-floating-blur: blur(26px) saturate(1.65);
+  --glass-floating-rim: rgb(255 255 255 / 0.13);
+  --glass-floating-edge: rgb(255 255 255 / 0.20);
+  --glass-floating-shadow:
+    inset 0 1px 0 var(--glass-floating-edge),
+    inset 0 -1px 0 rgb(255 255 255 / 0.04),
+    0 2px 6px -2px rgb(0 0 0 / 0.42),
+    0 26px 60px -30px rgb(0 0 0 / 0.86);
+
+  --cp-glass-overlay-tint: color-mix(in oklab, var(--color-paper-2) 82%, transparent);
+  --glass-overlay-tint: var(--cp-glass-overlay-tint);
+  --glass-overlay-blur: blur(34px) saturate(1.7);
+  --glass-overlay-rim: rgb(255 255 255 / 0.20);
+  --glass-overlay-edge: rgb(255 255 255 / 0.26);
+  --glass-overlay-shadow:
+    inset 0 1px 0 var(--glass-overlay-edge),
+    0 36px 88px -34px rgb(0 0 0 / 0.92);
+
+  --cp-glass-well-tint: color-mix(in oklab, #000000 26%, transparent);
+  --glass-well-tint: var(--cp-glass-well-tint);
+  --glass-well-blur: blur(14px) saturate(1.3);
+  --glass-well-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.42),
+    inset 0 -1px 0 rgb(255 255 255 / 0.08);
+
+  --glass-specular: linear-gradient(150deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.04) 32%, transparent 58%);
+  --glass-bleed: radial-gradient(120% 90% at 12% 0%, color-mix(in oklab, var(--color-accent) 20%, transparent), transparent 62%),
+    radial-gradient(100% 80% at 100% 100%, color-mix(in oklab, var(--color-accent-warm) 12%, transparent), transparent 66%);
+  --glass-grain: 0.055;
+  --glass-grain-blend: soft-light;
+
+  /* The room at night: deeper pools, cooler ice-blue, a distant sand horizon.
+     The strengths are capped because a bright pool behind dark glass is the
+     aggressor: at full accent strength a pool drove muted ink to 2.17:1
+     through a 52% tint. The ceiling is the luminance of the light end of
+     --cp-glass-underlay-dark (#35526B, L 0.0785): accent at 30% over the
+     #101720 base lands at #3A4E61, L 0.0721, inside budget with headroom.
+     36% crosses it. This is deliberately near the ceiling — a night room
+     that is too dark gives the glass nothing to refract, and translucency is
+     the whole point of the material. */
+  --halo-aura: radial-gradient(44rem 30rem at 12% 4%, color-mix(in oklab, var(--color-accent) 30%, transparent), transparent 64%),
+    radial-gradient(34rem 26rem at 92% 10%, color-mix(in oklab, var(--color-accent-warm) 22%, transparent), transparent 66%),
+    radial-gradient(50rem 34rem at 56% 100%, color-mix(in oklab, var(--color-accent-2) 26%, transparent), transparent 70%),
+    radial-gradient(30rem 22rem at 76% 44%, color-mix(in oklab, #7FB4D8 13%, transparent), transparent 72%);
+
+  /* The same declared envelope as the light arm (see the block above): the
+     darkest room pixel is the deep base, the brightest is the ice-blue pool
+     at its capped 22% over it, which is what the glass can actually see. */
+  --cp-glass-underlay-dark: #0E1218;
+  --cp-glass-underlay-light: #35526B;
 }
 
 :root {
