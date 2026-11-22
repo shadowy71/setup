@@ -10,6 +10,7 @@ import { TimetableInstallCard, TimetableInstallSheet, TimetableOfflinePill } fro
 import { TimetableOfflineProvider } from '@/components/timetable/TimetableOfflineProvider';
 import { FlaggedNotice, WeekTable } from '@/components/timetable/TimetableViews';
 import { Icon } from '@/components/ui/icons';
+import { Notice } from '@/components/ui/surfaces';
 
 /**
  * One division's public timetable, e.g. /timetable/o.
@@ -37,6 +38,12 @@ import { Icon } from '@/components/ui/icons';
 // anything else is a router-level 404 into not-found.js.
 export const dynamicParams = false;
 
+// The week shown depends on the date (Asia/Kolkata): the special sheet for
+// 23–27 November 2026, the master otherwise — and the boundary has to take
+// effect at midnight without a redeploy, so this page renders per request
+// instead of being prerendered to build-time content.
+export const dynamic = 'force-dynamic';
+
 export function generateStaticParams() {
   return DIVISIONS.flatMap((division) => [{ division: division.toLowerCase() }, { division }]);
 }
@@ -47,9 +54,10 @@ export async function generateMetadata({ params }) {
   if (!timetable) return { title: 'Timetable not found' };
   const batch = describeBatch(division);
   const programme = timetable.friendly ? `${timetable.label} (${timetable.friendly})` : timetable.label;
+  const sourceLabel = timetable.specialWeek ? 'the special one-week timetable' : 'the master timetable';
   return {
     title: `Division ${timetable.division} timetable — ${programme}`,
-    description: `Monday–Friday class timetable for first-year Division ${timetable.division} (${programme}) with the live class for Asia/Kolkata time. Lectures, batch practicals, faculty and rooms as printed in the master timetable. Save it to read with no signal, or add it to your Home Screen.`,
+    description: `Monday–Friday class timetable for first-year Division ${timetable.division} (${programme}) with the live class for Asia/Kolkata time. Lectures, batch practicals, faculty and rooms as printed in ${sourceLabel}. Save it to read with no signal, or add it to your Home Screen.`,
     // The per-batch manifest: its `id`, `name` and `start_url` are what make
     // the installed app "Division O", not "Campus+".
     manifest: batch ? batch.manifestUrl : undefined,
@@ -115,6 +123,16 @@ export default async function DivisionTimetablePage({ params, searchParams }) {
       </nav>
 
       <TimetableOfflineProvider division={timetable.division}>
+        {timetable.specialWeek ? (
+          <Notice tone="warning" icon="calendar" className="mt-6 max-w-3xl">
+            <p className="font-semibold">Special timetable week — {timetable.weekLabel}</p>
+            <p className="mt-1">
+              This page shows the published special timetable for these dates, not the master timetable.
+              Tuesday and Thursday are unchanged.
+            </p>
+          </Notice>
+        ) : null}
+
         <TimetableLive
           division={timetable.division}
           label={timetable.label}

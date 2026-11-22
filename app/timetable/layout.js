@@ -4,7 +4,7 @@ import '@/app/styles/lumen.css';
 import '@/app/styles/aurora.css';
 import '@/app/styles/liquid-glass.css';
 import { BrandLockup } from '@/components/brand/Brand';
-import { TIMETABLE_SOURCE } from '@/lib/timetable/meta';
+import { getTimetableSourceForDate } from '@/lib/timetable/meta';
 import { ROUTES } from '@/lib/constants';
 
 /**
@@ -38,6 +38,10 @@ export const viewport = {
  * an honest source footer.
  */
 export default function TimetableLayout({ children }) {
+  // Which week this is printed as — the special sheet gets its own name in
+  // the source line while it is in effect; the master does otherwise.
+  const source = getTimetableSourceForDate(new Date());
+
   return (
     <div className="tt-shell mx-auto w-full max-w-[96rem] px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -54,8 +58,8 @@ export default function TimetableLayout({ children }) {
 
       <footer className="mt-14 border-t border-line pt-6">
         <p className="max-w-[75ch] text-[0.8125rem] leading-relaxed text-muted">
-          Source: {TIMETABLE_SOURCE.title} — {TIMETABLE_SOURCE.department}, Academic Year{' '}
-          {TIMETABLE_SOURCE.academicYear}, {TIMETABLE_SOURCE.semester} ({TIMETABLE_SOURCE.fileTitle}). Subject
+          Source: {source.title} — {source.department}, Academic Year{' '}
+          {source.academicYear}, {source.semester} ({source.fileTitle}). Subject
           codes, batch splits, faculty initials and room numbers are reproduced as printed; where the timetable
           changes, official department notices prevail over this page.
         </p>
