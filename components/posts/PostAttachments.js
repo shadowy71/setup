@@ -2,6 +2,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Modal } from '@/components/ui';
+import { AttachmentPickerDialog, attachmentRejectionMessage, validateAttachmentSelection } from '@/components/posts/DraftAttachments';
 
 /** Reuse the pixels already displayed while the authorized full-size image loads. */
 export function snapshotThumbnail(image) {
@@ -28,15 +29,11 @@ export function FullImage({ postId, file, preview, basePath = '/api/storage/post
 }
 
 /** The owner editor uses the same add-files interaction as the composer. */
-export function EditAttachmentPicker({ open, disabled, onOpen, onClose, onChoose, error }) {
+export function EditAttachmentPicker({ open, disabled, onOpen, onClose, onChoose, error, items = [], maxItems = 8, onRemove }) {
   return <>
     <Button type="button" variant="ghost" size="sm" icon="paperclip" aria-expanded={open} onClick={onOpen} disabled={disabled}>Add files</Button>
-    <Modal open={open} onClose={onClose} title="Add files" description="Images or PDFs, up to eight (3 MiB each)." size="sm">
-      <label className="mt-4 block text-sm text-muted">Choose JPEG, PNG, WebP or PDF files
-        <input type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" onChange={onChoose} disabled={disabled} className="mt-2 block max-w-full text-xs" />
-      </label>
-      {error ? <p role="alert" className="mt-2 text-xs text-danger">{error}</p> : null}
-    </Modal>
+    <AttachmentPickerDialog open={open} onClose={onClose} scope="post-edit" disabled={disabled}
+      items={items} maxItems={maxItems} onRemove={onRemove} onFiles={onChoose} error={error} />
   </>;
 }
 
@@ -52,16 +49,16 @@ export function PostAttachments({ postId, manage = false }) {
   const previews = useRef(new Set());
   useEffect(() => () => { for (const url of previews.current) URL.revokeObjectURL(url); previews.current.clear(); }, []);
   function release(item) { if (item.preview) { URL.revokeObjectURL(item.preview); previews.current.delete(item.preview); } }
-  function choose(event, replaceId = null) {
-    const incoming = Array.from(event.target.files || []); event.target.value = '';
-    if (!incoming.length) return;
-    if (replaceId && incoming.some((file) => !file.type.startsWith('image/'))) { setMessage('Choose an image to replace this image.'); return; }
-    if (incoming.some((file) => !['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type) || file.size < 1 || file.size > 3 * 1024 * 1024)) { setMessage('Choose JPEG, PNG, WebP or PDF files up to 3 MiB.'); return; }
-    if (files.length + selected.length + incoming.length > 8) { setMessage('A post can have up to eight attachments.'); return; }
-    const added = incoming.map((file) => { const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null; if (preview) previews.current.add(preview); return { file, id: crypto.randomUUID(), preview, progress: 0, replaceId }; });
-    setSelected((old) => [...old, ...added]); setMessage('');
-    if (!replaceId) setPickerOpen(false);
+  function choose(incoming, replaceId = null) {
+    const remaining = Math.max(0, 8 - files.length - selected.length);
+    const { accepted, rejected } = validateAttachmentSelection(incoming, { imagesOnly: Boolean(replaceId), remaining });
+    if (accepted.length) {
+      const added = accepted.map((file) => { const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null; if (preview) previews.current.add(preview); return { file, id: crypto.randomUUID(), preview, progress: 0, replaceId }; });
+      setSelected((old) => [...old, ...added]);
+    }
+    setMessage(attachmentRejectionMessage(rejected, { imagesOnly: Boolean(replaceId), maxItems: 8, remaining }));
   }
+  function removeSelected(item) { release(item); setSelected((old) => old.filter((entry) => entry.id !== item.id)); }
   async function upload(item) {
     setBusy(true); setMessage('');
     const result = await new Promise((resolve) => { const xhr = new XMLHttpRequest(); xhr.open('POST', `/api/storage/posts/${postId}`); xhr.setRequestHeader('Content-Type', item.file.type); xhr.setRequestHeader('X-File-Name', encodeURIComponent(item.file.name)); xhr.setRequestHeader('X-Upload-Id', item.id);
@@ -97,10 +94,10 @@ export function PostAttachments({ postId, manage = false }) {
   return <div ref={root} className={files.length || (manage && canUpload) ? 'mt-3' : ''}>
     {files.length ? <div className={files.length === 1 ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 gap-2 sm:grid-cols-3'}>{files.map((file, index) => <div key={file.id} className="min-w-0 rounded border border-line p-1">
       {file.mime_type.startsWith('image/') ? <button type="button" onClick={() => openImage(file)} aria-label={`View ${file.original_name}`} className="block w-full"><img data-attachment-id={file.id} src={`/api/storage/posts/${postId}/${file.id}?size=thumb`} alt={file.original_name} loading="lazy" decoding="async" className="mx-auto block max-h-96 w-auto max-w-full rounded object-contain" /></button> : <a className="block break-all p-2 text-sm underline" href={`/api/storage/posts/${postId}/${file.id}`}>{file.original_name} · {(file.byte_size / 1024).toFixed(0)} KiB</a>}
-      {manage ? <div className="flex flex-wrap gap-2 text-xs">{file.mime_type.startsWith('image/') ? <label className="p-1 underline">Replace<input aria-label={`Replace ${file.original_name}`} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={(event) => choose(event, file.id)} className="sr-only" /></label> : null}<button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} className="p-1 underline">Earlier</button><button type="button" disabled={busy || index === files.length - 1} onClick={() => move(index, 1)} className="p-1 underline">Later</button><button type="button" disabled={busy} onClick={() => remove(file)} className="p-1 text-muted underline">Remove</button></div> : null}
+      {manage ? <div className="flex flex-wrap gap-2 text-xs">{file.mime_type.startsWith('image/') ? <label className="p-1 underline">Replace<input aria-label={`Replace ${file.original_name}`} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={(event) => { const incoming = Array.from(event.target.files || []); event.target.value = ''; choose(incoming, file.id); }} className="sr-only" /></label> : null}<button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} className="p-1 underline">Earlier</button><button type="button" disabled={busy || index === files.length - 1} onClick={() => move(index, 1)} className="p-1 underline">Later</button><button type="button" disabled={busy} onClick={() => remove(file)} className="p-1 text-muted underline">Remove</button></div> : null}
     </div>)}</div> : null}
-    {manage && canUpload ? <div className="mt-2"><EditAttachmentPicker open={pickerOpen} disabled={busy} onOpen={() => { setMessage(''); setPickerOpen(true); }} onClose={closePicker} onChoose={choose} error={message} /></div> : null}
-    {selected.map((item) => <div key={item.id} className="mt-2 flex items-center gap-2 text-xs">{item.preview ? <img src={item.preview} alt="" className="h-10 w-10 rounded object-cover" /> : null}<span className="min-w-0 truncate">{item.file.name}</span><button type="button" disabled={busy} onClick={() => upload(item)} className="underline">Upload {item.progress ? `${item.progress}%` : ''}</button><button type="button" disabled={busy} onClick={() => { release(item); setSelected((old) => old.filter((entry) => entry.id !== item.id)); }} className="underline">Cancel</button></div>)}
+    {manage && canUpload ? <div className="mt-2"><EditAttachmentPicker open={pickerOpen} disabled={busy} onOpen={() => { setMessage(''); setPickerOpen(true); }} onClose={closePicker} onChoose={choose} error={message} items={selected} maxItems={Math.max(0, 8 - files.length)} onRemove={removeSelected} /></div> : null}
+    {selected.map((item) => <div key={item.id} className="mt-2 flex items-center gap-2 text-xs">{item.preview ? <img src={item.preview} alt="" className="h-10 w-10 rounded object-cover" /> : null}<span className="min-w-0 truncate">{item.file.name}</span><button type="button" disabled={busy} onClick={() => upload(item)} className="underline">Upload {item.progress ? `${item.progress}%` : ''}</button><button type="button" disabled={busy} onClick={() => removeSelected(item)} className="underline">Cancel</button></div>)}
     {message && !pickerOpen ? <p role="status" className="mt-2 text-xs text-danger">{message}</p> : null}
     <Modal open={Boolean(lightbox)} onClose={closeLightbox} title={lightbox?.file.original_name || 'Image'} size="lg">
       {lightbox ? <FullImage key={lightbox.file.id} postId={postId} file={lightbox.file} preview={lightbox.preview} /> : null}

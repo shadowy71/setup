@@ -79,6 +79,7 @@ describe('onboarding interaction', () => {
     await click('button[type="submit"]');
     expect(container.textContent).toContain(accountType === 'visitor' ? 'Which college do you attend?' : 'Which branch are you in?');
     expect(JSON.parse(localStorage.getItem(key)).step).toBe(2);
+    if (accountType === 'visitor') expect(container.querySelector('#visitor_college_name').placeholder).toBe('College Name');
     // Even an unrelated parent re-render under StrictMode must not rehydrate
     // and jump backwards after Continue.
     await act(async () => root.render(React.createElement(React.StrictMode, null, React.createElement(OnboardingForm, { storageId: 'test-account', accountType }))));

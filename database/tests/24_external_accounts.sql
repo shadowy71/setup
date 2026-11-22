@@ -11,7 +11,7 @@
 --   4. a visitor cannot escalate its own role or account type
 --   5. an administrator can grant selected permissions through the existing
 --      role machinery, and revocation takes effect immediately
---   6. campus-only and internal content stays invisible to visitors
+--   6. visitors can read Home posts; restricted communities and notices remain private
 --   7. institutional accounts are completely unaffected
 -- =============================================================================
 
@@ -466,7 +466,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 9. Read access: public content yes, campus-only content no
+-- 9. Read access: public and campus Home posts; campus clubs/notices stay restricted
 -- ---------------------------------------------------------------------------
 -- Build the fixtures with the trusted context, as a maintenance script would.
 reset role;
@@ -497,6 +497,17 @@ begin
     ('dd000000-0000-4000-a000-0000000000f1', 'Public Club', 'public-club-080', 'Open to all.', 'club', 'public', 'published', v_author),
     ('dd000000-0000-4000-a000-0000000000e2', 'Campus Club', 'campus-club-080', 'Students only.', 'club', 'campus', 'published', v_author);
 
+  -- Moderation, deletion, and restricted community access must stay intact.
+  insert into public.posts (id, author_id, body, visibility, status, deleted_at, community_id)
+  values
+    ('dd000000-0000-4000-a000-0000000000c3', v_author, 'Hidden post.', 'campus', 'hidden', null, null),
+    ('dd000000-0000-4000-a000-0000000000c4', v_author, 'Deleted post.', 'campus', 'published', now(), null),
+    ('dd000000-0000-4000-a000-0000000000c5', v_author, 'Campus club post.', 'community', 'published', null, 'dd000000-0000-4000-a000-0000000000e2');
+  insert into public.comments (id, post_id, author_id, body, status)
+  values
+    ('dd000000-0000-4000-a000-0000000000d3', 'dd000000-0000-4000-a000-0000000000c3', v_author, 'Hidden parent.', 'published'),
+    ('dd000000-0000-4000-a000-0000000000d4', 'dd000000-0000-4000-a000-0000000000c5', v_author, 'Restricted parent.', 'published');
+
   -- An internal notice.
   insert into public.notices (id, title, body, status, created_by, published_at)
   values ('dd000000-0000-4000-a000-0000000000f1', 'Internal examination schedule',
@@ -520,7 +531,7 @@ declare
   v_notices integer;
 begin
 
-  -- Visitor: public content only.
+  -- Visitor: published standalone posts, but not restricted communities or notices.
   select count(*) into v_public_post from public.posts
    where id = 'dd000000-0000-4000-a000-0000000000c1';
   perform public.test_assert(v_public_post = 1,
@@ -528,8 +539,8 @@ begin
 
   select count(*) into v_campus_post from public.posts
    where id = 'dd000000-0000-4000-a000-0000000000c2';
-  perform public.test_assert(v_campus_post = 0,
-    'a visitor must NOT read a campus-only post');
+  perform public.test_assert(v_campus_post = 1,
+    'a visitor must read a published standalone campus post');
 
   select count(*) into v_public_comment from public.comments
    where id = 'dd000000-0000-4000-a000-0000000000d1';
@@ -538,8 +549,31 @@ begin
 
   select count(*) into v_campus_comment from public.comments
    where id = 'dd000000-0000-4000-a000-0000000000d2';
-  perform public.test_assert(v_campus_comment = 0,
-    'a visitor must NOT read comments on a campus-only post');
+  perform public.test_assert(v_campus_comment = 1,
+    'a visitor must read comments on a published standalone campus post');
+
+  perform public.test_assert(
+    (select count(*) from public.posts where id in (
+      'dd000000-0000-4000-a000-0000000000c3', 'dd000000-0000-4000-a000-0000000000c4',
+      'dd000000-0000-4000-a000-0000000000c5')) = 0,
+    'visitors cannot read hidden, deleted, or campus club posts');
+  perform public.test_assert(
+    (select count(*) from public.comments where id in (
+      'dd000000-0000-4000-a000-0000000000d3', 'dd000000-0000-4000-a000-0000000000d4')) = 0,
+    'comments do not expose hidden or restricted posts');
+  perform public.test_assert(
+    exists (select 1 from public.campus_feed(100, 0, 'newest') where id = 'dd000000-0000-4000-a000-0000000000c2'),
+    'the Home feed includes the campus post for visitors');
+  perform public.test_assert(
+    (select count(*) from public.campus_feed_post_visibility(array[
+      'dd000000-0000-4000-a000-0000000000c2'::uuid,
+      'dd000000-0000-4000-a000-0000000000c3'::uuid,
+      'dd000000-0000-4000-a000-0000000000c5'::uuid])) = 1,
+    'reconciliation includes only the readable campus post');
+  perform public.test_assert(public.can_view_post_attachment('dd000000-0000-4000-a000-0000000000c2'),
+    'visitors can read attachments of readable campus posts');
+  perform public.test_assert(not public.can_view_post_attachment('dd000000-0000-4000-a000-0000000000c5'),
+    'attachments of restricted club posts stay private');
 
   select count(*) into v_public_club from public.communities
    where id = 'dd000000-0000-4000-a000-0000000000f1';
@@ -555,6 +589,46 @@ begin
     'a visitor must NOT read an internal campus notice');
 end;
 $$;
+
+-- Blocks and mutes continue to apply to the newly visible post, its comments,
+-- and feed reconciliation. Insert/remove each relationship as a trusted writer.
+reset role;
+select set_config('request.jwt.claim.role', 'service_role', false);
+insert into public.blocks (blocker_id, blocked_id)
+select visitor.profile_id, author.profile_id from public.profile_private visitor, public.profile_private author
+where visitor.auth_user_id = 'dd000000-0000-4000-a000-000000000002'
+  and author.auth_user_id = 'dd000000-0000-4000-a000-000000000001';
+set role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', false);
+select set_config('request.jwt.claim.sub', 'dd000000-0000-4000-a000-000000000002', false);
+select public.test_assert(not exists (select 1 from public.posts where id = 'dd000000-0000-4000-a000-0000000000c2'), 'blocked author post remains hidden');
+select public.test_assert(not exists (select 1 from public.comments where id = 'dd000000-0000-4000-a000-0000000000d2'), 'blocked author comments remain hidden');
+select public.test_assert(not exists (select 1 from public.campus_feed_post_visibility(array['dd000000-0000-4000-a000-0000000000c2'::uuid])), 'blocked post excluded from reconciliation');
+reset role;
+select set_config('request.jwt.claim.role', 'service_role', false);
+delete from public.blocks where blocker_id = (select profile_id from public.profile_private where auth_user_id = 'dd000000-0000-4000-a000-000000000002') and blocked_id = (select profile_id from public.profile_private where auth_user_id = 'dd000000-0000-4000-a000-000000000001');
+insert into public.mutes (user_id, muted_user_id)
+select visitor.profile_id, author.profile_id from public.profile_private visitor, public.profile_private author
+where visitor.auth_user_id = 'dd000000-0000-4000-a000-000000000002'
+  and author.auth_user_id = 'dd000000-0000-4000-a000-000000000001';
+set role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', false);
+select public.test_assert(not exists (select 1 from public.posts where id = 'dd000000-0000-4000-a000-0000000000c2'), 'muted author post remains hidden');
+select public.test_assert(not exists (select 1 from public.comments where id = 'dd000000-0000-4000-a000-0000000000d2'), 'muted author comments remain hidden');
+reset role;
+select set_config('request.jwt.claim.role', 'service_role', false);
+delete from public.mutes where user_id = (select profile_id from public.profile_private where auth_user_id = 'dd000000-0000-4000-a000-000000000002') and muted_user_id = (select profile_id from public.profile_private where auth_user_id = 'dd000000-0000-4000-a000-000000000001');
+set role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', false);
+
+-- Anonymous public discovery is separate and must not expose standalone Home posts.
+reset role;
+set role anon;
+select set_config('request.jwt.claim.role', 'anon', false);
+select set_config('request.jwt.claim.sub', '', false);
+select public.test_assert(not exists (select 1 from public.posts where id = 'dd000000-0000-4000-a000-0000000000c2'), 'anonymous users cannot read campus Home posts');
+reset role;
+set role authenticated;
 
 -- The same rows, read by the institutional account, must all be visible.
 do $$

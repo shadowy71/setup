@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-/** The post composer's attachment popup. Other forms retain their existing picker. */
+/** Shared attachment popup for composers and attachment galleries. */
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Button, Modal } from '@/components/ui';
@@ -50,7 +50,7 @@ export function attachmentRejectionMessage(rejected, { imagesOnly = false, maxIt
           : `${name} is not an image or PDF.`,
       );
     } else if (reason === 'empty') {
-      notes.add(`${name} is empty. Choose a file with image data.`);
+      notes.add(`${name} is empty. Choose a non-empty file.`);
     } else if (reason === 'size') {
       notes.add(`${name} is larger than 3 MB.`);
     } else if (reason === 'limit') {
@@ -133,7 +133,7 @@ export function AttachmentDropzone({
     return (
       <p className="attach-limit" role="status" onDragOver={(event) => event.preventDefault()} onDrop={(event) => event.preventDefault()}>
         <Icon name="checkCircle" size={14} />
-        <span>{`${maxItems} ${label}s added. Remove one to add another.`}</span>
+        <span>{maxItems > 0 ? `${maxItems} ${label}${maxItems === 1 ? '' : 's'} added. Remove one to add another.` : `No more ${label}s can be added. Remove one to add another.`}</span>
       </p>
     );
   }
@@ -181,8 +181,8 @@ export function AttachmentDropzone({
           <span className="attach-drop__cta">Choose from device</span>
           <span id={hintId} className="attach-drop__hint">
             {imagesOnly
-              ? `JPEG, PNG or WebP · Maximum 3 MB per image · Up to ${maxItems} images.`
-              : `JPEG, PNG, WebP or PDF · Maximum 3 MB per file · Up to ${maxItems} files.`}
+              ? `JPEG, PNG or WebP · Maximum 3 MB per image · Up to ${maxItems} ${maxItems === 1 ? 'image' : 'images'}.`
+              : `JPEG, PNG, WebP or PDF · Maximum 3 MB per file · Up to ${maxItems} ${maxItems === 1 ? 'file' : 'files'}.`}
           </span>
         </>
       )}
@@ -205,19 +205,20 @@ export function AttachmentPreview({
   postId = null,
   onRemove,
   onMove,
+  canChooseCover = true,
 }) {
   if (!items.length) return null;
   const label = noun(imagesOnly);
   /* The cover is the first *image*: scopes that accept images can claim it, a
      PDF-only selection has no cover to move, and a published post is fixed. */
-  const coverable = imagesOnly && !postId && Boolean(onMove);
+  const coverable = imagesOnly && canChooseCover && !postId && Boolean(onMove);
 
   return (
     <div className="attach-preview">
       <p className="attach-count" role="status">
         <span>
           <strong>{items.length}</strong>
-          {` of ${maxItems} ${label}s selected`}
+          {` of ${maxItems} ${label}${maxItems === 1 ? '' : 's'} selected`}
         </span>
       </p>
       <ul className="attach-grid" data-count={items.length}>
@@ -271,6 +272,38 @@ export function AttachmentPreview({
   );
 }
 
+/** One accessible dialog for every add-attachment surface. The caller owns
+ * selection/upload state; type and capacity limits remain specific to its scope. */
+export function AttachmentPickerDialog({
+  open, onClose, enabled = true, availability = 'unavailable', imagesOnly = false,
+  maxItems = 8, items = [], disabled = false, busy = false, postId = null,
+  onRemove, onMove, onFiles, error = '', scope = 'post',
+}) {
+  const messages = { checking: 'Checking attachment availability…', disabled: 'Attachments are disabled on this deployment.', permission: 'Attachments require upload permission from an administrator.', sign_in: 'Sign in to attach files.', unavailable: 'Attachment availability could not be checked. Try again later.' };
+  const label = noun(imagesOnly);
+  return <Modal
+    open={open}
+    onClose={onClose}
+    title={imagesOnly ? 'Add photos' : 'Add files'}
+    description={imagesOnly ? 'Photos to attach.' : scope === 'post' ? 'Photos and documents for your post.' : 'Photos and documents to attach.'}
+    className="dialog-attachment"
+    footer={<>
+      <Button type="button" variant="ghost" className="attach-cancel" onClick={onClose}>Cancel</Button>
+      {enabled ? <Button type="button" icon="check" onClick={onClose} disabled={!items.length || disabled || busy || Boolean(postId)}>Continue</Button> : null}
+    </>}
+  >
+    <div className="attach-body">
+      {enabled ? <>
+        {items.length ? <AttachmentPreview items={items} imagesOnly={imagesOnly} maxItems={maxItems} disabled={disabled} busy={busy} postId={postId} onRemove={onRemove} onMove={onMove} canChooseCover={maxItems === 8} /> : null}
+        <AttachmentDropzone compact={items.length > 0} focusOnOpen imagesOnly={imagesOnly}
+          maxItems={maxItems} remaining={maxItems - items.length} disabled={disabled || busy} onFiles={onFiles} />
+        {error ? <p className="attach-error" role="alert"><Icon name="alert" size={14} /><span>{error}</span></p> : null}
+        {items.length ? <p className="attach-note">{scope === 'post' ? `On submit, these ${label}s are uploaded from this browser and kept here until published or discarded.` : `These ${label}s are ready to upload from this browser.`}</p> : null}
+      </> : <p role="status" className="attach-status"><Icon name="lock" size={15} /><span>{messages[availability] || messages.unavailable}</span></p>}
+    </div>
+  </Modal>;
+}
+
 export function DraftAttachments({ items, setItems, disabled, postId, busy, children, submit, scope = 'post', imagesOnly = false, maxItems = 8 }) {
   const [enabled, setEnabled] = useState(false); const [availability, setAvailability] = useState('checking'); const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
@@ -285,14 +318,6 @@ export function DraftAttachments({ items, setItems, disabled, postId, busy, chil
   }, [scope]);
   useEffect(() => { const active = new Set(items.map((item) => item.preview).filter(Boolean)); for (const url of urls.current) if (!active.has(url)) { URL.revokeObjectURL(url); urls.current.delete(url); } for (const url of active) urls.current.add(url); }, [items]);
   useEffect(() => () => { for (const url of urls.current) URL.revokeObjectURL(url); urls.current.clear(); }, []);
-  function choose(event) {
-    const files = Array.from(event.target.files || []); event.target.value = '';
-    if (items.length + files.length > maxItems) { setError(`Choose at most ${maxItems} files for the remaining slots.`); return; }
-    const types = imagesOnly ? ['image/jpeg','image/png','image/webp'] : ['image/jpeg','image/png','image/webp','application/pdf'];
-    if (files.some((file) => !types.includes(file.type) || file.size < 1 || file.size > 3 * 1024 * 1024)) { setError(imagesOnly ? 'Choose JPEG, PNG or WebP images up to 3 MiB each.' : 'Choose JPEG, PNG, WebP or PDF files up to 3 MiB each.'); return; }
-    const next = files.map((file) => { const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null; if (preview) urls.current.add(preview); return { file, preview, id: crypto.randomUUID(), progress: 0 }; });
-    setItems((old) => [...old, ...next]); setError(''); setOpen(false);
-  }
   function remove(item) { if (item.preview) { URL.revokeObjectURL(item.preview); urls.current.delete(item.preview); } setItems((old) => old.filter((entry) => entry.id !== item.id)); }
   function move(index, delta) { setItems((old) => { const next = [...old]; const target = index + delta; if (target < 0 || target >= next.length) return old; [next[index], next[target]] = [next[target], next[index]]; return next; }); }
   function addFiles(files) {
@@ -304,15 +329,12 @@ export function DraftAttachments({ items, setItems, disabled, postId, busy, chil
     }
     setError(rejected.length ? attachmentRejectionMessage(rejected, { imagesOnly, maxItems, remaining }) : '');
   }
-  const messages = { checking: 'Checking attachment availability…', disabled: 'Attachments are disabled on this deployment.', permission: 'Attachments require upload permission from an administrator.', sign_in: 'Sign in to attach files.', unavailable: 'Attachment availability could not be checked. Try again later.' };
-  const label = noun(imagesOnly);
-  const photoPopup = scope === 'post';
   return <>
     {items.length ? <div className="mt-3 text-xs">{items.map((item, index) => <div key={item.id} className="mt-2 flex flex-wrap items-center gap-2">
       {item.preview ? <img src={item.preview} alt="" className="max-h-14 max-w-20 rounded object-contain" /> : null}
       <span className="max-w-40 truncate">{item.file.name} · {(item.file.size / 1024).toFixed(0)} KiB</span>
-      {imagesOnly && index === 0 ? <span>Cover</span> : null}
-      {imagesOnly && index > 0 && !postId ? <button type="button" disabled={disabled || busy} className="underline" onClick={() => setItems((old) => { const next = [...old]; const [cover] = next.splice(index, 1); return [cover, ...next]; })}>Make cover</button> : null}
+      {imagesOnly && maxItems === 8 && index === 0 ? <span>Cover</span> : null}
+      {imagesOnly && maxItems === 8 && index > 0 && !postId ? <button type="button" disabled={disabled || busy} className="underline" onClick={() => setItems((old) => { const next = [...old]; const [cover] = next.splice(index, 1); return [cover, ...next]; })}>Make cover</button> : null}
       {item.progress ? <span>{item.progress}%</span> : null}
       {!postId ? <><button type="button" disabled={disabled || busy || index === 0} onClick={() => move(index,-1)} className="underline">Earlier</button><button type="button" disabled={disabled || busy || index === items.length - 1} onClick={() => move(index,1)} className="underline">Later</button></> : null}
       {!postId ? <button type="button" disabled={disabled || busy} onClick={() => remove(item)} className="underline">Remove</button> : null}
@@ -324,38 +346,12 @@ export function DraftAttachments({ items, setItems, disabled, postId, busy, chil
       </div>
       {submit}
     </div>
-    {photoPopup ? <Modal
-      open={open}
-      onClose={close}
-      title={imagesOnly ? 'Add photos' : 'Add files'}
-      description={imagesOnly ? 'The first photo becomes the cover.' : 'Photos and documents for your post.'}
-      className="dialog-attachment"
-      footer={<>
-        <Button type="button" variant="ghost" className="attach-cancel" onClick={close}>Cancel</Button>
-        {enabled ? <Button type="button" icon="check" onClick={close} disabled={!items.length || disabled || busy || Boolean(postId)}>Continue</Button> : null}
-      </>}
-    >
-      <div className="attach-body">
-        {enabled ? <>
-          {items.length ? <AttachmentPreview items={items} imagesOnly={imagesOnly} maxItems={maxItems} disabled={disabled} busy={busy} postId={postId} onRemove={remove} onMove={(index) => setItems((old) => { const next = [...old]; const [cover] = next.splice(index, 1); return [cover, ...next]; })} /> : null}
-          <AttachmentDropzone
-            compact={items.length > 0}
-            focusOnOpen
-            imagesOnly={imagesOnly}
-            maxItems={maxItems}
-            remaining={maxItems - items.length}
-            disabled={disabled || busy}
-            onFiles={addFiles}
-          />
-          {error ? <p className="attach-error" role="alert"><Icon name="alert" size={14} /><span>{error}</span></p> : null}
-          {items.length ? <p className="attach-note">{`On submit, these ${label}s are uploaded from this browser and kept here until published or discarded.`}</p> : null}
-        </> : <p role="status" className="attach-status"><Icon name="lock" size={15} /><span>{messages[availability] || messages.unavailable}</span></p>}
-      </div>
-    </Modal> : <Modal open={open} onClose={close} title="Add files" description={imagesOnly ? 'Images, up to eight (3 MiB each).' : 'Images or PDFs, up to eight (3 MiB each).'} size="sm">
-      {enabled ? <label className="mt-4 block text-sm text-muted">{imagesOnly ? 'Choose JPEG, PNG or WebP images' : 'Choose JPEG, PNG, WebP or PDF files'}
-        <input type="file" multiple accept={imagesOnly ? 'image/jpeg,image/png,image/webp' : 'image/jpeg,image/png,image/webp,application/pdf'} onChange={choose} disabled={disabled || busy} className="mt-2 block max-w-full text-xs" />
-      </label> : <p role="status" className="mt-4 text-sm text-muted">{messages[availability] || messages.unavailable}</p>}
-      {error ? <p role="alert" className="mt-2 text-xs text-danger">{error}</p> : null}
-    </Modal>}
+    <AttachmentPickerDialog
+      open={open} onClose={close} enabled={enabled} availability={availability}
+      imagesOnly={imagesOnly} maxItems={maxItems} items={items} disabled={disabled}
+      busy={busy} postId={postId} onRemove={remove}
+      onMove={(index) => setItems((old) => { const next = [...old]; const [cover] = next.splice(index, 1); return [cover, ...next]; })}
+      onFiles={addFiles} error={error} scope={scope}
+    />
   </>;
 }

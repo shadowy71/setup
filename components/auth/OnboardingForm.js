@@ -38,7 +38,7 @@ const STEP_LABELS = {
 const TEXT_STEP_PLACEHOLDER = {
   display_name: 'Your name',
   username: 'your_username',
-  visitor_college_name: 'e.g. Sinhgad College of Engineering',
+  visitor_college_name: 'College Name',
 };
 const SAMPLE = { ...INITIAL, display_name: 'Asha Patil', username: 'asha_p', branch: 'Computer Engineering', year: 'Second Year', division: 'O', bio: 'Always curious and up for a good campus conversation.' };
 /**
