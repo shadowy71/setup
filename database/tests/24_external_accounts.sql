@@ -1466,3 +1466,217 @@ begin
   );
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- 18. An account without a username, and the visitor's own year and college
+-- ---------------------------------------------------------------------------
+-- Two changes landed after the first production sign-up exposed them:
+--
+--   * `admin_set_visitor_permissions()` used `profiles.username` as its
+--     existence check. A username is only claimed during onboarding, so every
+--     freshly signed-in external account — the exact account an administrator
+--     goes looking for — was rejected with "That account could not be found",
+--     and no grant was possible until the visitor happened to finish
+--     onboarding first. Migration 082 checks `profile_private` instead.
+--
+--   * Visitors were previously refused a year of any kind. They now answer
+--     "which college do you attend?" and "what year are you in?", stored in
+--     `visitor_college_name` / `visitor_year`. The institutional `year` column
+--     stays off-limits, so the student directory cannot be poisoned.
+
+do $$
+declare
+  v_fresh_auth uuid := 'dd000000-0000-4000-a000-0000000000e1';
+  v_fresh uuid;
+  v_result jsonb;
+  v_username text;
+  v_completed boolean;
+  v_row public.profiles;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  -- A brand-new external sign-up, exactly as the trigger leaves it: a profile
+  -- row, a profile_private row, a visitor role - and no username.
+  insert into auth.users (id, email) values (v_fresh_auth, 'brand.new.external@gmail.com')
+  on conflict (id) do nothing;
+
+  select pp.profile_id into v_fresh from public.profile_private pp
+   where pp.auth_user_id = v_fresh_auth;
+
+  perform public.test_assert(v_fresh is not null, 'the signup trigger must create a profile_private row');
+
+  select p.username into v_username from public.profiles p where p.id = v_fresh;
+  perform public.test_assert(v_username is null, 'a fresh account must not have a username yet');
+
+  -- THE REGRESSION: granting before onboarding must work.
+  v_result := public.admin_set_visitor_permissions(v_fresh, array['create_posts']);
+
+  perform public.test_assert(
+    v_result->>'ok' = 'true',
+    'an administrator must be able to grant permissions before the account has a username'
+  );
+  perform public.test_assert(
+    (select count(*) from public.visitor_permission_grants g
+      where g.user_id = v_fresh and g.permission_key = 'create_posts') = 1,
+    'the grant must be recorded for an account with no username'
+  );
+
+  -- The capability resolves immediately, without a username and without a
+  -- completed profile.
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform set_config('request.jwt.claim.sub', v_fresh_auth::text, false);
+  perform public.test_assert(
+    public.has_permission('create_posts'),
+    'a granted capability must apply to an account that has not onboarded'
+  );
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  -- An institutional account is still refused, username or not.
+  perform public.test_assert_denied(
+    $sql$select public.admin_set_visitor_permissions(
+           (select pp.profile_id from public.profile_private pp
+             where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001'),
+           array['create_posts'])$sql$,
+    'a student must never be routed through the visitor grant path'
+  );
+
+  -- A genuinely missing account still raises, so the fix did not turn the
+  -- existence check into a no-op.
+  perform public.test_assert_denied(
+    $sql$select public.admin_set_visitor_permissions(
+           'dd000000-0000-4000-a000-0000000000ff'::uuid, array['create_posts'])$sql$,
+    'an unknown profile id must still be reported as not found'
+  );
+
+  -- The new account finishes onboarding with its own details.
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform set_config('request.jwt.claim.sub', v_fresh_auth::text, false);
+  perform public.complete_profile(
+    'brand_new_external',
+    'Brand New External',
+    null,          -- bio
+    null,          -- branch
+    null,          -- year
+    null,          -- division
+    true,          -- show_branch_year
+    'Sinhgad College of Engineering',
+    'Second Year'
+  );
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select * into v_row from public.profiles where id = v_fresh;
+  select pp.profile_completed into v_completed from public.profile_private pp where pp.profile_id = v_fresh;
+
+  perform public.test_assert(v_row.username = 'brand_new_external', 'a visitor must be able to claim a username');
+  perform public.test_assert(v_completed, 'a visitor must be able to complete their profile');
+  perform public.test_assert(
+    v_row.visitor_college_name = 'Sinhgad College of Engineering',
+    'a visitor''s own college must be stored'
+  );
+  perform public.test_assert(v_row.visitor_year = 'Second Year', 'a visitor''s own year must be stored');
+  -- …and must never leak into the institutional columns.
+  perform public.test_assert(v_row.year is null, 'a visitor''s year must not be written to profiles.year');
+  perform public.test_assert(v_row.branch is null, 'a visitor must not acquire a branch');
+  perform public.test_assert(v_row.division is null, 'a visitor must not acquire a division');
+end;
+$$;
+
+-- The direct-API route: a visitor may write its own two columns, but can never
+-- write the institutional pair in the same statement.
+do $$
+declare
+  v_auth uuid := 'dd000000-0000-4000-a000-0000000000e1';
+  v_row public.profiles;
+begin
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform set_config('request.jwt.claim.sub', v_auth::text, false);
+  perform set_config('role', 'authenticated', true);
+
+  update public.profiles
+     set visitor_college_name = 'Changed College',
+         visitor_year = 'Final Year',
+         branch = 'Computer Engineering',
+         year = 'Third Year',
+         division = 'B'
+   where id = public.current_profile_id();
+
+  perform set_config('role', 'none', true);
+
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select * into v_row from public.profiles
+   where id = (select pp.profile_id from public.profile_private pp where pp.auth_user_id = v_auth);
+
+  perform public.test_assert(v_row.visitor_college_name = 'Changed College', 'a visitor may edit its own college');
+  perform public.test_assert(v_row.visitor_year = 'Final Year', 'a visitor may edit its own year');
+  perform public.test_assert(v_row.branch is null, 'the academic columns stay clamped in the same write');
+  perform public.test_assert(v_row.year is null, 'the institutional year stays clamped in the same write');
+  perform public.test_assert(v_row.division is null, 'the division stays clamped in the same write');
+end;
+$$;
+
+-- The mirror rule: an institutional account cannot hold visitor-only fields,
+-- even when a trusted writer sets them.
+do $$
+declare
+  v_student uuid;
+  v_row public.profiles;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select pp.profile_id into v_student from public.profile_private pp
+   where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001';
+
+  update public.profiles
+     set visitor_college_name = 'Somewhere Else',
+         visitor_year = 'First Year'
+   where id = v_student;
+
+  select * into v_row from public.profiles where id = v_student;
+
+  perform public.test_assert(v_row.visitor_college_name is null, 'a student must not hold a visitor college name');
+  perform public.test_assert(v_row.visitor_year is null, 'a student must not hold a visitor year');
+end;
+$$;
+
+-- public_profiles exposes the visitor fields and the boolean that labels them.
+do $$
+declare
+  v_row public.public_profiles;
+  v_student_row public.public_profiles;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select * into v_row from public.public_profiles
+   where id = (select pp.profile_id from public.profile_private pp
+                where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000e1');
+
+  perform public.test_assert(v_row.is_external, 'the public projection must label an external account');
+  perform public.test_assert(v_row.visitor_college_name is not null, 'the public projection must carry the college');
+  perform public.test_assert(v_row.visitor_year is not null, 'the public projection must carry the year');
+
+  select * into v_student_row from public.public_profiles
+   where id = (select pp.profile_id from public.profile_private pp
+                where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001');
+
+  perform public.test_assert(not v_student_row.is_external, 'a student must not be labelled external');
+end;
+$$;
+
+-- Cleanup: leave no evidence behind for the next suite.
+do $$
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+  delete from public.visitor_permission_grants
+   where user_id = (select pp.profile_id from public.profile_private pp
+                     where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000e1');
+  delete from auth.users where id = 'dd000000-0000-4000-a000-0000000000e1';
+end;
+$$;

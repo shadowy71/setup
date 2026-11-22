@@ -338,6 +338,34 @@ describe('visitor onboarding', () => {
     expect(validate({ ...base, accept_rules: false }, visitorOnboardingSchema).ok).toBe(false);
   });
 
+  it('asks a visitor for their own year and college, and stores them separately', () => {
+    // Migration 082. The visitor's answers are optional, but when present they
+    // must validate into their own keys — never into `year`, which means a
+    // PCCOE student's year and drives the student directory.
+    const withDetails = validate(
+      { ...base, visitor_college_name: 'Sinhgad College of Engineering', visitor_year: 'Second Year' },
+      visitorOnboardingSchema,
+    );
+    expect(withDetails.ok).toBe(true);
+    expect(withDetails.data.visitor_college_name).toBe('Sinhgad College of Engineering');
+    expect(withDetails.data.visitor_year).toBe('Second Year');
+    // The institutional key is not produced by the visitor schema at all.
+    expect(withDetails.data.year).toBeUndefined();
+  });
+
+  it('rejects a visitor year outside the offered vocabulary', () => {
+    const result = validate({ ...base, visitor_year: 'Fifth Year' }, visitorOnboardingSchema);
+    expect(result.ok).toBe(false);
+    expect(result.errors?.visitor_year).toBeTruthy();
+  });
+
+  it('caps the college name and treats an empty answer as absent', () => {
+    expect(validate({ ...base, visitor_college_name: 'x'.repeat(121) }, visitorOnboardingSchema).ok).toBe(false);
+    const blank = validate({ ...base, visitor_college_name: '   ' }, visitorOnboardingSchema);
+    expect(blank.ok).toBe(true);
+    expect(blank.data.visitor_college_name).toBeNull();
+  });
+
   it('leaves the institutional schema untouched', () => {
     // The student flow still validates all the academic fields it always did.
     const student = validate(

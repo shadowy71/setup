@@ -1,6 +1,6 @@
 # External accounts — deployment checklist
 
-Automatic external user authentication and Visitor RBAC (migrations 080 and 081).
+Automatic external user authentication and Visitor RBAC (migrations 080, 081 and 082).
 
 **Read this before announcing visitor access.** The code and the database are
 ready. One step below — the Google consent screen — is a dashboard switch that
@@ -14,15 +14,24 @@ without it.
 
 | Layer | State |
 | --- | --- |
-| Migrations 080, 081 | written, applied cleanly against a throwaway PostgreSQL 18 instance, 24 test suites green |
-| RLS / functions / triggers | complete; verified with real `set role authenticated` sessions |
-| Callback, session, permissions, admin UI, visitor notice | complete |
-| Google consent screen (External) | **manual — not applied** |
-| Production Supabase project | **not pushed** — see §2 |
+| Migrations 080, 081, 082 | **applied to production `eooysgxgvhbgohdmomji`** (2026-11-22), section by section, each verified |
+| RLS / functions / triggers | complete; verified against the live project with real sessions, and by 24 SQL suites locally |
+| Callback, session, permissions, admin UI, visitor notice | complete; 1,533 unit tests green, lint clean, build compiles |
+| Google consent screen (External) | **manual — NOT applied** |
+| Production Supabase project | migrations applied; **code not yet deployed** |
 
-External authentication is therefore **implemented and verified locally, and not
-live in production**. Do not describe visitor sign-in as available until §1 and
-§3 are done.
+So the database half is live, and one genuine external sign-up
+(`kartikgaikwad250@gmail.com`, 2026-11-22 12:21 UTC) was classified `visitor` by
+the trigger with no client input.
+
+**Visitor sign-in is still not a supported end-to-end journey**, because the
+Google consent screen is Internal and the application code is not deployed. Do
+not describe visitor access as available until §1 and the code deploy are done.
+
+Note also that the migrations were applied by hand, so
+`supabase_migrations.schema_migrations` has no rows for 080–082. `supabase db
+push` would attempt to re-run them. They are idempotent, but back-fill the rows
+(or land the next release through the CLI) so drift reporting is accurate.
 
 ---
 
@@ -77,7 +86,7 @@ a policy that institutional accounts rely on, and neither changes an existing
 user's data.
 
 ```bash
-npm run verify:db          # 81 migrations + 24 suites against throwaway Postgres
+npm run verify:db          # 82 migrations + 24 suites against throwaway Postgres
 npm run db:bundle          # regenerates supabase/bundle/campus-plus-schema.sql
 ```
 
@@ -99,6 +108,27 @@ select public.classify_institutional_email('someone@gmail.com');      -- externa
 
 -- Nothing was granted to anybody by the migration.
 select count(*) from public.visitor_permission_grants;                -- 0
+
+-- 082: the visitor's own fields exist, and no account holds the wrong pair.
+select count(*) from information_schema.columns
+ where table_schema = 'public' and table_name = 'profiles'
+   and column_name in ('visitor_college_name', 'visitor_year');      -- 2
+
+select count(*) from public.profiles p
+  join public.profile_private pp on pp.profile_id = p.id
+ where pp.account_type <> 'visitor'
+   and (p.visitor_college_name is not null or p.visitor_year is not null);  -- 0
+
+select count(*) from public.profiles p
+  join public.profile_private pp on pp.profile_id = p.id
+ where pp.account_type = 'visitor'
+   and (p.branch is not null or p.year is not null or p.division is not null
+        or p.show_branch_year);                                      -- 0
+
+-- 082: exactly one complete_profile overload, the 9-argument one.
+select pg_get_function_identity_arguments(p.oid)
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public' and p.proname = 'complete_profile';
 ```
 
 Expected after a dry run on the existing data: every row `student`, 0 grants.

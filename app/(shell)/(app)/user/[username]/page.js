@@ -101,6 +101,17 @@ export default async function UserProfilePage({ params }) {
                   <dd>{[profile.branch, profile.year].filter(Boolean).join(' · ')}</dd>
                 </div>
               ) : null}
+              {/* An external account's own college and year. Labelled, because
+                  without the label it would read as PCCOE data. */}
+              {profile.is_external && (profile.visitor_college_name || profile.visitor_year) ? (
+                <div className="flex items-center gap-1">
+                  <dt className="sr-only">External account, college and year</dt>
+                  <dd>
+                    {[profile.visitor_year, profile.visitor_college_name].filter(Boolean).join(' at ')}
+                    <span className="text-muted"> · external</span>
+                  </dd>
+                </div>
+              ) : null}
               <div className="flex items-center gap-1">
                 <dt className="sr-only">Joined</dt>
                 <dd>Joined {formatDate(profile.created_at)}</dd>

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { listBlockedUsers } from '@/lib/blocks';
-import { ROUTES, BRANCHES, YEARS, DIVISIONS, LIMITS, DEFAULT_PLATFORM_SETTINGS } from '@/lib/constants';
+import { ROUTES, BRANCHES, YEARS, DIVISIONS, VISITOR_YEARS, LIMITS, DEFAULT_PLATFORM_SETTINGS } from '@/lib/constants';
 import { Button, Card, EmptyState, LinkButton, Notice, PageHeader } from '@/components/ui';
 import { ActionForm } from '@/components/forms/ActionForm';
 import { SignOutButton } from '@/components/auth/SignOutButton';
@@ -123,7 +123,10 @@ export default async function SettingsPage({ searchParams }) {
             { name: 'display_name', label: 'Display name', required: true, maxLength: LIMITS.displayName.max, defaultValue: profile.display_name || '' },
             { name: 'bio', label: 'Bio', type: 'textarea', rows: 3, maxLength: LIMITS.bio.max, defaultValue: profile.bio || '', hint: 'Up to 280 characters. No contact details — people can message you here.' },
             ...(visitor
-              ? []
+              ? [
+                  { name: 'visitor_college_name', label: 'College', maxLength: LIMITS.collegeName.max, defaultValue: profile.visitor_college_name || '', hint: 'The institution you attend. Shown on your profile.' },
+                  { name: 'visitor_year', label: 'Year', type: 'select', defaultValue: profile.visitor_year || '', options: VISITOR_YEARS.map((year) => ({ value: year, label: year })), hint: 'Your year at your own college.' },
+                ]
               : [
                   { name: 'branch', label: 'Branch', type: 'select', defaultValue: profile.branch || '', options: BRANCHES.map((branch) => ({ value: branch, label: branch })) },
                   { name: 'year', label: 'Year', type: 'select', defaultValue: profile.year || '', options: YEARS.map((year) => ({ value: year, label: year })) },
@@ -214,10 +217,14 @@ export default async function SettingsPage({ searchParams }) {
             <h2 className="text-sm font-semibold">What other students can see</h2>
             <ul className="flex list-inside list-disc flex-col gap-1 text-[0.8125rem] text-muted">
               <li>Your display name, username and bio.</li>
-              <li>
-                Your branch and year — currently {profile.show_branch_year === false ? 'hidden' : 'visible'}. Toggle
-                this on the Profile tab.
-              </li>
+              {visitor ? (
+                <li>Your college and year, if you added them. You can change or clear them on the Profile tab.</li>
+              ) : (
+                <li>
+                  Your branch and year — currently {profile.show_branch_year === false ? 'hidden' : 'visible'}. Toggle
+                  this on the Profile tab.
+                </li>
+              )}
               <li>Posts, comments and marketplace listings you publish.</li>
               <li>
                 Direct messages from other students — currently{' '}
