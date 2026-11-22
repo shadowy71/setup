@@ -150,7 +150,29 @@ Institutional accounts are unaffected (verified: a student still publishes
 removed and pass when it is restored, so they are load-bearing rather than
 decorative.
 
-### 2.6 The sign-in flow
+### 2.6 "Find external accounts" only searched the page it had already fetched
+
+The admin list originally paged `profile_private`, joined usernames, display
+names and emails in JavaScript, and *then* applied the search term. Two visible
+consequences:
+
+- an account that was not on the current page could not be found at all — the
+  search box silently searched only what was already on screen;
+- `total` came from the unfiltered `count`, so it disagreed with the rows
+  whenever a term was entered.
+
+Both are exactly the "find external accounts" requirement failing. Fixed by
+moving the query into `admin_list_external_users()`: it joins `profiles` and
+`auth.users`, applies one `ILIKE` predicate across username, display name and
+email, and returns `count(*) over ()` from the *same* predicate, so the rows and
+the total cannot disagree. It also means the address never has to cross into a
+client-readable shape to be searchable.
+
+Verified on a live database with nine external accounts at a page size of three:
+searching for an account that is **not** on page one returns it, while the old
+page-then-filter approach returns an empty set for the same account.
+
+### 2.7 The sign-in flow
 
 `app/auth/callback/route.js` exchanges the PKCE code, calls `getUser()`, reads the
 classification **back from the database** (`resolveAccountType`), and continues to
@@ -178,7 +200,7 @@ any link and would make the UI assert something the server never said.
 | File | Purpose |
 | --- | --- |
 | `supabase/migrations/20261122000001_080_external_accounts.sql` (742 lines) | `account_type`, classifier, provisioning trigger, Visitor/External Contributor roles, read restrictions, `complete_profile()` for visitors |
-| `supabase/migrations/20261122000002_081_visitor_permission_grants.sql` (496 lines) | per-account grants, `has_permission()` union, admin RPC, allow-list, profile-field guard, post-scope guard |
+| `supabase/migrations/20261122000002_081_visitor_permission_grants.sql` | per-account grants, `has_permission()` union, admin RPCs, allow-list, profile-field guard, post-scope guard, paged external-user list |
 | `database/tests/24_external_accounts.sql` (1349 lines) | 16 sections of real RLS tests against `set role authenticated` |
 | `lib/auth/visitor-notice.js` | cookie name/window/read-and-clear helpers |
 | `components/auth/VisitorNotice.js` | the modal |
@@ -235,12 +257,12 @@ with `roles_rank_check` widened to −100…1000; `account_type_of()`,
 `comments_select_visible`, `can_view_community`; `notices_select_published` made
 institutional-only; `complete_profile()` nulling academic fields for visitors.
 
-**Migration 081** (8 sections): `visitor_permission_grants`; the allow-list
+**Migration 081** (9 sections): `visitor_permission_grants`; the allow-list
 function; `has_permission()` unioned; `admin_set_visitor_permissions()` (audited,
 refuses non-visitors and non-allow-listed keys); `admin_external_user_emails()`
 for administrators; a row-level grant guard; `guard_visitor_profile_fields()`
-(clears branch/year/division even for a trusted writer); and §8's post-scope
-policies.
+(clears branch/year/division even for a trusted writer); §8's post-scope
+policies; and §9's paged, searchable external-user list.
 
 Both are **forward-only and additive**. No table, column, policy or row belonging
 to institutional accounts is dropped. Existing users migrate to `student` by the
@@ -280,6 +302,7 @@ authenticated`, `request.jwt.claim.sub`), never a mock:
 | 14 | three visitors with three different capability sets |
 | 15 | profile-field clamp applies even to a superuser write |
 | 16 | granted capability cannot widen audience (insert **and** update) |
+| 17 | external-user list: search across username/name/email beyond page one, bounded total, staff-only, never an institutional account |
 
 `npx vitest run`: **168 files, 1530 tests, all passing** — 44 new (33
 external-account, 11 visitor-notice), plus the updated OAuth/onboarding/permission
@@ -329,11 +352,16 @@ the cookie) and to be gated on the cookie for a real session.
    composer's community picker still lists communities the visitor can view; the
    database refuses a non-public target, so the failure is a policy error rather
    than a hidden option. Acceptable (it fails closed) but not polished.
-2. There is no self-service path to institutional access. A person with a
+2. Search is a substring match, by design — an administrator types part of an
+   address. As a consequence a term like `pccoepune.org` also matches an external
+   address such as `someone@not-pccoepune.org`. That is a search that is too
+   permissive, not a leak: the list is already filtered to external accounts, and
+   an institutional account cannot appear in it.
+3. There is no self-service path to institutional access. A person with a
    personal Google account who is actually a student has to sign in with the
    college address. This matches the requirement that the type is never chosen,
    but it deserves a line in user-facing help text.
-3. `visitor` and `external_contributor` ranks are negative, so the rank-based
+4. `visitor` and `external_contributor` ranks are negative, so the rank-based
    `grant_role` guard treats them as below every student role. An administrator
    cannot accidentally promote a visitor to moderator without that being a
    deliberate, audited act.
