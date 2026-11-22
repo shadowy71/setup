@@ -24,8 +24,12 @@ import { listDivisionLetters } from '@/lib/timetable/batch';
  */
 
 // The dataset is a repository file, so a build is the only thing that can
-// change it: every division is generated at build time and an unknown letter
-// 404s instead of reaching a render.
+// change it — except that one week a year: while the special sheet is in
+// effect (2026-11-23 → 2026-11-27, Asia/Kolkata) the response must serve its
+// events, and the boundary takes effect at midnight without a redeploy.
+// Hence a per-request render with short cache lifetimes, keyed by date.
+export const dynamic = 'force-dynamic';
+
 export const dynamicParams = false;
 
 export function generateStaticParams() {
@@ -33,9 +37,10 @@ export function generateStaticParams() {
 }
 
 const PUBLIC_HEADERS = {
-  // Long `s-maxage`: a timetable changes when the department reposts it, which
-  // is a deploy. `stale-while-revalidate` keeps a slow origin from being felt.
-  'Cache-Control': 'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800',
+  // A timetable changes when the department reposts it — normally a deploy,
+  // but the special week starts and ends at midnight with no deploy. Cache
+  // lifetimes stay short so the boundary flips within minutes, not days.
+  'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=600',
   'X-Robots-Tag': 'noindex, nofollow',
   Vary: 'Accept-Encoding',
 };
@@ -47,7 +52,7 @@ export async function GET(_request, { params }) {
     return NextResponse.json({ ok: false, error: 'division-not-found' }, { status: 404, headers: PUBLIC_HEADERS });
   }
 
-  const snapshot = buildSnapshot({ ...timetable, generatedAt: new Date().toISOString() });
+  const snapshot = buildSnapshot({ ...timetable, source: timetable.source, generatedAt: new Date().toISOString() });
   if (!snapshot) {
     return NextResponse.json({ ok: false, error: 'snapshot-unavailable' }, { status: 500, headers: PUBLIC_HEADERS });
   }

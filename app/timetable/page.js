@@ -4,7 +4,7 @@ import { divisionTimetableHref } from '@/lib/timetable/meta';
 export const metadata = {
   title: 'Class Timetables — Divisions A to R',
   description:
-    'First-year class timetables for divisions A–R, Monday to Friday. Source: MASTER TIME TABLE, Department AS & H, Academic Year 2026–2027, SEM-I. No sign-in needed.',
+    'First-year class timetables for divisions A–R, Monday to Friday. Department AS & H, Academic Year 2026–2027, SEM-I. No sign-in needed.',
 };
 
 /**
@@ -22,7 +22,7 @@ export default function TimetableIndexPage() {
         <h1 className="t-display mt-2">Class timetables</h1>
         <p className="t-secondary mt-3 max-w-[68ch] leading-relaxed">
           Pick your division to see its Monday–Friday timetable — lectures, batch-wise practicals, faculty and
-          rooms, exactly as printed in the {TIMETABLE_SOURCE.department} master timetable for{' '}
+          rooms, exactly as printed in the {TIMETABLE_SOURCE.department} timetable for{' '}
           {TIMETABLE_SOURCE.academicYear}. No sign-in needed; the link works for anyone you share it with.
         </p>
         <p className="mt-3 text-[0.8125rem] leading-relaxed text-muted">
