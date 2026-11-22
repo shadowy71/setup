@@ -32,7 +32,7 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase → Data API → Project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | Supabase → API Keys → Publishable key |
 | `SUPABASE_SECRET_KEY` | scripts only | Supabase → API Keys → Secret key |
-| `CAMPUS_ALLOWED_EMAIL_DOMAINS` | yes | comma-separated institutional domains, e.g. `pccoepune.org` |
+| `CAMPUS_ALLOWED_EMAIL_DOMAINS` | yes | comma-separated institutional domains, e.g. `pccoepune.org`; used to classify sign-ups, not to reject them (migration 080) |
 | `NEXT_PUBLIC_KLIPY_APP_KEY` | optional | public browser key from <https://partner.klipy.com/> |
 | `GIPHY_API_KEY` | legacy; retain until verified | <https://developers.giphy.com/dashboard> → Create an App |
 | `GIPHY_CLIENT_ID` | optional | any non-secret app id, default `campus_plus` |
@@ -139,9 +139,30 @@ Supabase dashboard → **Authentication**:
    `http://localhost:3000/auth/callback` for local work) to *Redirect URLs*.
    Sign-in returns to `/login` with an explanation if `/auth/callback` is
    missing here.
-4. **Google Cloud consent screen (optional but recommended)**: keep the app
-   *Internal* to the college Workspace tenant, so personal Google accounts never
-   reach the provider at all.
+4. **Google Cloud consent screen — must be *External* for visitor sign-in.**
+   The app previously recommended *Internal*, which is a hard block: an
+   *Internal* consent screen only admits accounts in the college Workspace
+   tenant, so a personal Gmail address never reaches Supabase at all and no
+   external account can ever be created. External accounts (migration 080)
+   require:
+
+   - **User type: External**, publishing status **In production** (a *Testing*
+     app admits only addresses listed under *Test users*, and caps them at 100);
+   - no verification is needed while the only scopes are `openid`, `email` and
+     `profile` — Campus+ requests nothing else, and adding a sensitive scope
+     would require Google verification;
+   - *Authorized domains* must include the production domain.
+
+   If the college's Workspace policy forbids an External consent screen, that
+   policy — not this code — is the blocker. Do not work around it by relaxing
+   domain checks in the database: an institutional account is still only ever
+   created for a verified address on a configured college domain.
+
+   **Applying this is a manual, dashboard-only step.** Until it is done, external
+   sign-in does not work in that deployment, even with the migrations applied.
+   The Visitor role, the admin surface and the RLS rules are all live and
+   correct; they simply have no external account to apply to. Do not announce
+   visitor access as available before this switch is flipped.
 
 No SMTP configuration is needed: Campus+ never sends email.
 
@@ -152,11 +173,15 @@ Authorized redirect URI — exactly
 ID/secret go into `GOOGLE_DRIVE_CLIENT_ID` / `GOOGLE_DRIVE_CLIENT_SECRET`, never
 into the Supabase Auth provider. See `docs/BACKUPS.md` §4.
 
-Domain enforcement is server-side and lives in the database
-(`colleges.email_domains`, `platform_settings.allowed_email_domains`,
-`enforce_institutional_domain`) plus `CAMPUS_ALLOWED_EMAIL_DOMAINS` as the
-deployment default; `app/auth/callback/route.js` re-checks the Google-verified
-address before the session is used. Adding a second domain is a row update — see §8.
+Domain *classification* is server-side and lives in the database
+(`colleges.email_domains` matched against active colleges by
+`classify_institutional_email()`, invoked from the `auth.users` provisioning
+trigger). It is not an allow-list that rejects sign-in: an address outside every
+configured domain is admitted as an **external** account with the `visitor`
+role, and an address on one is provisioned as an **institutional** account with
+the `student` role. `app/auth/callback/route.js` reads that decision back from
+the database and never decides it itself. Adding a second college or domain is a
+row update — see §8.
 
 ## 5. KLIPY (optional; rollout not yet verified)
 
@@ -324,7 +349,9 @@ sample or invented content.
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | `/` shows `/setup` | Supabase environment variables missing or still placeholders | set them in `.env.local` **and** Vercel |
-| Login says "not a PCCOE address" | the Google account is outside the allow-list | sign in with the institutional account; check `CAMPUS_ALLOWED_EMAIL_DOMAINS` and `platform_settings.allowed_email_domains` |
+| Signed in, but the account is a Visitor and cannot post | the Google address is not on any active college domain | expected; a Campus+ administrator can grant individual publishing permissions in **Admin → External Users**. Check `colleges.email_domains` if the address *should* be institutional |
+| A visitor notice never appeared after signing in | the account is institutional, or the 2-minute indicator cookie was already consumed (refresh, second tab) | expected; it is deliberately once-per-sign-in. Sign out and in again to see it |
+| External sign-in never reaches Supabase | the Google consent screen is still *Internal* | set it to *External* (§4.4); this is a dashboard change, not a code change |
 | Google shows "redirect_uri_mismatch" | Supabase's callback is not an authorized redirect URI in the Google OAuth client | add `https://<project-ref>.supabase.co/auth/v1/callback` (§4) |
 | Sign-in returns to /login with "could not complete the sign-in" | `/auth/callback` is missing from the Supabase *Redirect URLs*, or the PKCE verifier cookie was lost | add both callback URLs (§4) and start again from /login |
 | "Continue with Google" says sign-in is not configured | the Google provider is not enabled in Supabase | add the client ID and secret (§4) |

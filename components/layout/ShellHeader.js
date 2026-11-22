@@ -46,7 +46,7 @@ function NotificationBell({ unreadNotifications = 0 }) {
   );
 }
 
-export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = false, canModerate = false, canAdmin = false, createItems = [], sidebarOpen, onToggleSidebar }) {
+export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = false, canModerate = false, canAdmin = false, createItems = [], institutional = true, sidebarOpen, onToggleSidebar }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchId = useId();
   const searchTriggerRef = useRef(null);
@@ -93,6 +93,7 @@ export function ShellHeader({ user = null, unreadNotifications = 0, isStaff = fa
                 canModerate={canModerate}
                 canAdmin={canAdmin}
                 createItems={createItems}
+                institutional={institutional}
               />
               <BrandLockup size="sm" subtitle={null} wordClass="text-[0.9375rem]" />
             </>

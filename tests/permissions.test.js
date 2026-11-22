@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { can, canAll, canAny, highestRole, isActiveActor, isBanned, isSuspended, toActor } from '@/lib/permissions/authorization';
+import {
+  can, canAll, canAny, highestRole, isActiveActor, isAdmin, isBanned,
+  isModerator, isSuspended, roleRank, toActor,
+} from '@/lib/permissions/authorization';
 import { makeActor, makeUser } from './helpers/fixtures';
 import { PERMISSIONS, PERMISSION_KEYS, ROLE_ORDER } from '@/lib/constants';
 
@@ -81,8 +84,20 @@ describe('canAll / canAny / highestRole', () => {
 
   it('orders roles by the configured rank, not by array order', () => {
     expect(highestRole(makeActor({ roles: ['student', 'admin'] }))).toBe('admin');
-    expect(highestRole(makeActor({ roles: [] }))).toBe('student');
-    expect(ROLE_ORDER).toEqual(['student', 'moderator', 'admin', 'super_admin']);
+    // An external visitor ranks below a student; the higher role still wins.
+    expect(highestRole(makeActor({ roles: ['visitor', 'external_contributor'] }))).toBe('external_contributor');
+    expect(ROLE_ORDER).toEqual(['visitor', 'external_contributor', 'student', 'moderator', 'admin', 'super_admin']);
+  });
+
+  it('reports no role at all when the actor holds none — never a student default', () => {
+    // This is the fail-closed contract: missing role data used to resolve to
+    // `student`, which silently granted the whole student baseline to a visitor
+    // whose grant was absent.
+    expect(highestRole(makeActor({ roles: [] }))).toBeNull();
+    expect(roleRank(makeActor({ roles: [] }))).toBe(-1);
+    expect(highestRole(makeActor({ roles: ['not_a_real_role'] }))).toBeNull();
+    expect(isModerator(makeActor({ roles: [] }))).toBe(false);
+    expect(isAdmin(makeActor({ roles: ['student'] }))).toBe(false);
   });
 });
 

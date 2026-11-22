@@ -6,20 +6,25 @@
  *   1. Google returns `?code=…` (PKCE authorization code) to this route,
  *   2. the code is exchanged **server-side** for a session with the code
  *      verifier cookie that `startGoogleSignIn` wrote,
- *   3. the authenticated address is re-checked against the institutional
- *      allow-list, and a session that fails the check is signed out again,
- *   4. the browser is sent into the app (or back to /login with a reason).
+ *   3. the database has already classified the account (`handle_new_user()`),
+ *      and this route re-reads that classification from `profile_private`,
+ *   4. an external visitor is sent onward with a one-shot notice cookie; an
+ *      institutional student is sent onward with none,
+ *   5. the browser lands in the app (or back at /login with a reason).
  *
- * The session cookie therefore never depends on anything the browser claims:
- * the address is read from Supabase (Google-verified), not from a form field.
+ * The session cookie never depends on anything the browser claims: the address
+ * is read from Supabase (Google-verified) and the account type is read from the
+ * database. `?visitor=1` and friends are never consulted — a query parameter
+ * must not be able to decide what the UI says about an account.
  */
 
 import { NextResponse } from 'next/server';
 import { getServerClient } from '@/lib/supabase/server';
-import { checkInstitutionalEmail } from '@/lib/auth/domains';
+import { resolveAccountType } from '@/lib/auth/domains';
 import { loginErrorPath, OAUTH_CALLBACK_PATH, originFromHeaders, safeNextPath } from '@/lib/auth/oauth';
+import { VISITOR_NOTICE_COOKIE, VISITOR_NOTICE_WINDOW_SECONDS, visitorNoticeValue } from '@/lib/auth/visitor-notice';
 import { logError } from '@/lib/errors';
-import { ROUTES } from '@/lib/constants';
+import { ACCOUNT_TYPES, ROUTES } from '@/lib/constants';
 
 // Reads the PKCE code and session cookies: never cached, never prerendered.
 export const dynamic = 'force-dynamic';
@@ -60,15 +65,45 @@ export async function GET(request) {
     return fail(origin, 'exchange');
   }
 
-  // Defence in depth: the signup trigger rejects other domains in the database
-  // and Supabase Auth's own allow-list is a third layer, but the application
-  // re-checks the Google-verified address before letting the session in.
-  const check = await checkInstitutionalEmail(data.user.email, supabase);
-  if (!check.ok) {
-    // A session for an address that is not allowed must not survive.
+  // The account must have a verified address. An address-less identity is the
+  // only thing the database refuses to provision (see migration 080), so a
+  // session without one has nothing to be classified from.
+  const email = String(data.user.email || '').trim();
+  if (!email || !email.includes('@')) {
     await supabase.auth.signOut();
     return fail(origin, 'domain');
   }
 
-  return NextResponse.redirect(new URL(next || ROUTES.home, origin));
+  // Defence in depth: the signup trigger classified this account inside the
+  // exchange above. If it somehow has not provisioned yet, the app's own
+  // onboarding gate handles it — we do not invent a classification here.
+  const accountType = await resolveAccountType(supabase, data.user.id);
+  const destination = new URL(next || ROUTES.home, origin);
+
+  const response = NextResponse.redirect(destination);
+
+  // Trusted, one-shot flow indicator for the Visitor notice. It is a *cookie*
+  // set by this server route, not a query parameter, so:
+  //   * it cannot be forged by editing the URL,
+  //   * it exists only once per successful sign-in (the reader clears it),
+  //   * it disappears on refresh because the reader consumed it.
+  // The value is deliberately trivial (`1`): the cookie says "show the notice",
+  // it never says "this account is a visitor". The client re-reads that from
+  // the authenticated profile if it ever needs to.
+  if (accountType === ACCOUNT_TYPES.visitor) {
+    response.cookies.set(VISITOR_NOTICE_COOKIE, visitorNoticeValue(), {
+      httpOnly: false, // the notice component reads it to decide to render
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      // Two minutes: long enough to land, short enough to expire. Kept in step
+      // with the constant the client reader and its tests share.
+      maxAge: VISITOR_NOTICE_WINDOW_SECONDS,
+    });
+  } else {
+    // An institutional account must never inherit a stale notice cookie.
+    response.cookies.set(VISITOR_NOTICE_COOKIE, '', { path: '/', maxAge: 0 });
+  }
+
+  return response;
 }

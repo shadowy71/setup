@@ -36,52 +36,60 @@ begin
 end;
 $$;
 
--- Expected domain rejection is SQLSTATE 42501, not an arbitrary trigger error.
--- The inner PL/pgSQL block is a subtransaction: catching that expected error
--- rolls back only the rejected insert. The following SELECT runs in the same
--- outer transaction and would fail with 25P02 if recovery were incorrect. An
--- uncaught rejection still requires the Auth caller to roll back its own
--- transaction; the trigger must never return NULL and pretend signup succeeded.
+-- Migration 080 replaced rejection with *classification*: a personal address is
+-- no longer refused at signup, it is provisioned as an external visitor. The
+-- institutional gate is unchanged in what matters — a non-institutional domain
+-- still cannot obtain student access — it is now expressed as an account type
+-- instead of an error. (The full visitor contract is covered by suite 24.)
 do $$
+declare
+  v_type public.account_type;
+  v_college uuid;
+  v_roles text[];
 begin
-  begin
-    insert into auth.users (id, email)
-    values ('f0000000-0000-4000-a000-0000000000f1', 'outsider@gmail.com');
-    raise exception 'ASSERTION FAILED (operation was allowed): a personal email address must not create an account';
-  exception
-    when sqlstate '42501' then
-      perform public.test_assert(
-        sqlerrm like 'Campus+ is limited to approved institutional email addresses%',
-        'the expected rejection must come from the institutional-domain trigger, not an unrelated permission error'
-      );
-      perform public.test_assert(
-        public.allowed_email_domain('recovery@pccoepune.org'),
-        'SQL after an expected domain rejection must run cleanly after subtransaction rollback'
-      );
-    when others then
-      raise;
-  end;
+  insert into auth.users (id, email)
+  values ('f0000000-0000-4000-a000-0000000000f1', 'outsider-external@gmail.com');
+
+  select pp.account_type, pp.college_id into v_type, v_college
+    from public.profile_private pp
+   where pp.auth_user_id = 'f0000000-0000-4000-a000-0000000000f1';
+
+  perform public.test_assert(v_type = 'visitor',
+    'a personal address must be provisioned as an external visitor, not a student');
+  perform public.test_assert(v_college is null,
+    'a visitor must not be attached to an institution');
+  perform public.test_assert(public.allowed_email_domain('recovery@pccoepune.org'),
+    'the institutional domain check must still pass for a real address');
+
+  select array_agg(ur.role_key) into v_roles
+    from public.user_roles ur
+    join public.profile_private pp on pp.profile_id = ur.user_id
+   where pp.auth_user_id = 'f0000000-0000-4000-a000-0000000000f1';
+  perform public.test_assert(v_roles @> array['visitor'],
+    'an external account must hold the visitor role');
+  perform public.test_assert(not (v_roles @> array['student']),
+    'an external account must never hold the student role');
 end;
 $$;
 
-select public.test_assert_denied(
-  $sql$insert into auth.users (id, email) values ('f0000000-0000-4000-a000-0000000000f2', 'outsider@pccoepune.org.evil.com')$sql$,
-  'a look-alike domain must not be able to create an account'
-);
-
+-- A look-alike domain is the case that must still be caught: it is not an
+-- institution, so it is an external visitor, never an institutional student.
 do $$
 declare
-  v_leaked integer;
+  v_type public.account_type;
+  v_college uuid;
 begin
-  -- Earlier suites have their own accounts, so this checks the rejected auth ids
-  -- specifically rather than counting the whole table.
-  select count(*) into v_leaked
-  from public.profile_private
-  where auth_user_id in (
-    'f0000000-0000-4000-a000-0000000000f1',
-    'f0000000-0000-4000-a000-0000000000f2'
-  );
-  perform public.test_assert(v_leaked = 0, 'a rejected signup must not leave a profile behind');
+  insert into auth.users (id, email)
+  values ('f0000000-0000-4000-a000-0000000000f2', 'outsider@not-pccoepune.org');
+
+  select pp.account_type, pp.college_id into v_type, v_college
+    from public.profile_private pp
+   where pp.auth_user_id = 'f0000000-0000-4000-a000-0000000000f2';
+
+  perform public.test_assert(v_type = 'visitor',
+    'a look-alike domain must classify as an external visitor');
+  perform public.test_assert(v_college is null,
+    'a look-alike domain must never resolve to the institution');
 end;
 $$;
 

@@ -1,7 +1,7 @@
 import { NoticeGallery } from '@/components/campus/NoticeGallery';
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
-import { can, toActor } from '@/lib/permissions/authorization';
+import { can, isInstitutional, toActor } from '@/lib/permissions/authorization';
 import { listPublishedNotices } from '@/lib/data/public-cache';
 import { ROUTES, PAGE_SIZE } from '@/lib/constants';
 import { PageHeader, EmptyState, Notice, LinkButton, Card } from '@/components/ui';
@@ -30,7 +30,14 @@ export default async function NoticeboardPage({ searchParams }) {
   // Published notices are identical for every student, so this read is served
   // from the short public cache (see lib/data/public-cache.js) and revalidated
   // the moment staff publish or edit one.
-  const { items, unavailable } = await listPublishedNotices({ limit: PAGE_SIZE.default, offset, category });
+  // The noticeboard is campus-internal: migration 080 restricts the published
+  // policy to institutional accounts because notices carry internal dates, room
+  // numbers and staff instructions. An external account would otherwise see an
+  // empty list and assume the campus posts nothing.
+  const institutional = isInstitutional(actor);
+  const { items, unavailable } = institutional
+    ? await listPublishedNotices({ limit: PAGE_SIZE.default, offset, category })
+    : { items: [], unavailable: false };
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,27 +48,36 @@ export default async function NoticeboardPage({ searchParams }) {
         action={can(actor, 'manage_notices') ? <LinkButton href="/campus/noticeboard/manage" size="sm">Manage notices</LinkButton> : null}
       />
 
-      <Card className="flex flex-wrap items-center gap-1.5 p-3">
-        <NoticeboardViews active="current" />
-        <span className="rule mx-1 h-5 w-px" aria-hidden="true" />
-        <Link
-          href="/campus/noticeboard"
-          className="chip"
-          data-active={!category}
-        >
-          Everything
-        </Link>
-        {['important', 'academic', 'event', 'opportunity', 'general'].map((value) => (
+      {institutional ? null : (
+        <Notice tone="neutral" icon="info">
+          The noticeboard is published to campus members. Your account signs in with an
+          email address outside the campus, so notices are not shown here.
+        </Notice>
+      )}
+
+      {institutional ? (
+        <Card className="flex flex-wrap items-center gap-1.5 p-3">
+          <NoticeboardViews active="current" />
+          <span className="rule mx-1 h-5 w-px" aria-hidden="true" />
           <Link
-            key={value}
-            href={`/campus/noticeboard?category=${value}`}
+            href="/campus/noticeboard"
             className="chip"
-            data-active={category === value}
+            data-active={!category}
           >
-            {value}
+            Everything
           </Link>
-        ))}
-      </Card>
+          {['important', 'academic', 'event', 'opportunity', 'general'].map((value) => (
+            <Link
+              key={value}
+              href={`/campus/noticeboard?category=${value}`}
+              className="chip"
+              data-active={category === value}
+            >
+              {value}
+            </Link>
+          ))}
+        </Card>
+      ) : null}
 
       {unavailable ? (
         <Notice tone="warning" icon="flag">
@@ -69,7 +85,7 @@ export default async function NoticeboardPage({ searchParams }) {
         </Notice>
       ) : null}
 
-      {!unavailable && !items.length ? (
+      {institutional && !unavailable && !items.length ? (
         <EmptyState
           icon="megaphone"
           title={category ? 'No notices in this category' : 'No notices yet'}

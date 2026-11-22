@@ -33,6 +33,7 @@ const DEV_ACCOUNTS = {
   student: 'perf.student1@pccoepune.org',
   moderator: 'perf.mod@pccoepune.org',
   admin: 'perf.admin@pccoepune.org',
+  visitor: 'perf.visitor@gmail.com',
 };
 const DEV_PASSWORD = 'perf-password';
 
@@ -41,6 +42,7 @@ const AFTER_SIGN_IN = {
   student: '/home',
   moderator: '/moderator',
   admin: '/admin',
+  visitor: '/home',
 };
 
 function isEnabled() {
@@ -64,8 +66,13 @@ function browserOrigin(request, url) {
 }
 
 /**
- * GET /api/dev/session?as=student
+ * GET /api/dev/session?as=student|moderator|admin|visitor
  *   → signs in as that fixture account and redirects into the app.
+ *
+ * The `visitor` fixture is an external account (a Gmail address outside every
+ * college domain). It exists so the visitor experience — reduced navigation,
+ * no Create menu, the settings account card, and the admin External Users
+ * tab — can be inspected against real RLS rather than a mocked session.
  *
  * The cookie jar is the response's own cookie store, so `setAll` writes the
  * real `@supabase/ssr` chunked session cookies with their correct options.

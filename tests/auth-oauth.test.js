@@ -10,8 +10,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  *     it never redirects and never creates a session),
  *   - the session is created only in `/auth/callback`, from a server-side code
  *     exchange,
- *   - the Google-verified address is re-checked against the institutional
- *     allow-list, and a disallowed session is signed out again,
+ *   - the account classification is read from the database (written by the
+ *     signup trigger from the verified Google address), never from the URL,
+ *   - an external account is admitted and flagged for the one-shot Visitor
+ *     notice; an institutional account is admitted without a notice,
  *   - `next` can only be a path on this site (no open redirect),
  *   - every failure lands on /login with a reason the screen can explain,
  *   - the login form starts that round trip exactly once per submission and
@@ -21,7 +23,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
   supabase: null,
-  checkResult: null,
+  accountTypeRows: null,
+  resolveAccountType: null,
   signOutCalls: 0,
   oauthOptions: null,
   oauthResult: null,
@@ -32,8 +35,13 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 vi.mock('@/lib/auth/domains', () => ({
-  checkInstitutionalEmail: async (email) =>
-    state.checkResult ? state.checkResult(email) : { ok: true, email, domain: 'pccoepune.org' },
+  // The callback now asks the database what kind of account this is. Tests
+  // drive the answer through `state.accountTypeRows`.
+  resolveAccountType: async (supabase, authUserId) => {
+    if (state.resolveAccountType) return state.resolveAccountType(authUserId);
+    const row = state.accountTypeRows?.[authUserId];
+    return row ?? null;
+  },
 }));
 
 vi.mock('@/lib/auth/session', () => ({
@@ -88,6 +96,14 @@ const callback = (query = '') =>
 
 const locationOf = (response) => response.headers.get('location');
 
+/** Read a `Set-Cookie` pair written by the redirect, whichever jar mechanism exists. */
+const cookieOf = (response, name) => {
+  const list = typeof response.cookies?.getAll === 'function'
+    ? response.cookies.getAll()
+    : [];
+  return list.find((cookie) => cookie.name === name) || null;
+};
+
 const formData = (values = {}) => {
   const data = new FormData();
   for (const [key, value] of Object.entries(values)) data.set(key, value);
@@ -96,7 +112,8 @@ const formData = (values = {}) => {
 
 beforeEach(() => {
   state.supabase = null;
-  state.checkResult = null;
+  state.accountTypeRows = null;
+  state.resolveAccountType = null;
   state.signOutCalls = 0;
   state.oauthOptions = null;
   state.oauthResult = null;
@@ -253,6 +270,7 @@ describe('GET /auth/callback', () => {
 
   it('creates the session server-side and lands on the requested page', async () => {
     state.supabase = makeClient();
+    state.accountTypeRows = { 'auth-1': 'student' };
 
     expect(locationOf(await GET(callback('?code=good')))).toBe('https://campus.test/home');
     expect(locationOf(await GET(callback('?code=good&next=%2Fmarket%2Flisting%2F7')))).toBe(
@@ -264,25 +282,75 @@ describe('GET /auth/callback', () => {
     );
   });
 
-  it('signs a non-institutional address straight back out', async () => {
+  it('signs an external account IN and flags the visitor notice once', async () => {
+    // Migration 080: a non-institutional address is a legitimate external
+    // account, not an error. It must be admitted, and the notice must be
+    // signalled with a server-set cookie rather than a query parameter.
     state.supabase = makeClient({ user: { id: 'auth-2', email: 'someone@gmail.com' } });
-    state.checkResult = () => ({ ok: false, error: 'That address is not allowed.' });
+    state.accountTypeRows = { 'auth-2': 'visitor' };
+
+    const response = await GET(callback('?code=good'));
+
+    expect(locationOf(response)).toBe('https://campus.test/home');
+    expect(state.signOutCalls).toBe(0);
+    expect(cookieOf(response, 'campus_visitor_notice')).toBeTruthy();
+    expect(locationOf(response)).not.toContain('visitor');
+  });
+
+  it('does not flag the notice for an institutional account', async () => {
+    state.supabase = makeClient();
+    state.accountTypeRows = { 'auth-1': 'student' };
+
+    const response = await GET(callback('?code=good'));
+
+    expect(locationOf(response)).toBe('https://campus.test/home');
+    // The cookie is explicitly cleared, so a previous visitor session on this
+    // browser cannot leak a notice to the student who signs in next.
+    expect(cookieOf(response, 'campus_visitor_notice')?.value ?? '').toBe('');
+  });
+
+  it('never trusts a query parameter for the account classification', async () => {
+    state.supabase = makeClient();
+    state.accountTypeRows = { 'auth-1': 'student' };
+
+    // A crafted `visitor=1` must not make the server say anything visitor-ish.
+    const response = await GET(callback('?code=good&visitor=1&account_type=visitor&role=admin'));
+
+    expect(locationOf(response)).toBe('https://campus.test/home');
+    expect(cookieOf(response, 'campus_visitor_notice')?.value ?? '').toBe('');
+  });
+
+  it('resolves the classification from the authenticated user, not the URL', async () => {
+    state.supabase = makeClient();
+    const seen = [];
+    state.resolveAccountType = (authUserId) => {
+      seen.push(authUserId);
+      return 'student';
+    };
+
+    await GET(callback('?code=good&email=attacker@evil.example&account_type=visitor'));
+
+    expect(seen).toEqual(['auth-1']);
+  });
+
+  it('signs out an identity with no usable email address', async () => {
+    state.supabase = makeClient({ user: { id: 'auth-3', email: '' } });
 
     expect(locationOf(await GET(callback('?code=good')))).toBe('https://campus.test/login?error=domain');
     expect(state.signOutCalls).toBe(1);
   });
 
-  it('re-checks the Google-verified address, not something from the URL', async () => {
-    state.supabase = makeClient();
-    const seen = [];
-    state.checkResult = (email) => {
-      seen.push(email);
-      return { ok: true, email };
-    };
+  it('admits an account whose classification has not resolved yet', async () => {
+    // A provisioning race must not strand the student at /login. The app's own
+    // onboarding gate handles an unfinished profile, and no notice is shown
+    // because nothing said the account is external.
+    state.supabase = makeClient({ user: { id: 'auth-4', email: 'late@gmail.com' } });
+    state.accountTypeRows = {};
 
-    await GET(callback(`?code=good&email=attacker@evil.example`));
+    const response = await GET(callback('?code=good'));
 
-    expect(seen).toEqual([ALLOWED_EMAIL]);
+    expect(locationOf(response)).toBe('https://campus.test/home');
+    expect(cookieOf(response, 'campus_visitor_notice')?.value ?? '').toBe('');
   });
 });
 

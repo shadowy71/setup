@@ -26,7 +26,10 @@ describe('home quick-access tiles', () => {
   });
 
   it('places the grid in the hero and keeps Gigs accessible after the feed', () => {
-    expect(page).toContain('heroFeatures={<HomeFeatureTiles division={profile.division} />}');
+    // The grid still renders in the hero. It now also learns whether the reader
+    // is institutional, so an external account is not offered the noticeboard
+    // tile (migration 080 makes that surface campus-internal).
+    expect(page).toContain('heroFeatures={<HomeFeatureTiles division={profile.division} institutional={institutional} />}');
     expect(page).toContain('afterFeed={<HomeAreas />}');
     const hero = feedClient.indexOf('<HomePulse user={user} stats={stats}>{heroFeatures}</HomePulse>');
     expect(hero).toBeGreaterThan(-1);

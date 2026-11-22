@@ -32,15 +32,30 @@ and after every deployment.
 * Sessions are created in exactly one place: `app/auth/callback/route.js`, after
   a server-side PKCE code exchange (`exchangeCodeForSession`). The browser only
   starts the round trip; it can never mint a session of its own.
-* The institutional domain is enforced **server-side three times**: the callback
-  re-checks the Google-verified address (`lib/auth/domains.js`), the database
-  rejects other domains at signup (`enforce_institutional_domain` trigger,
-  `allowed_email_domain()`, `colleges.email_domains`, plus
-  `platform_settings.allowed_email_domains`), and Supabase Auth's provider
-  configuration is the third layer. A callback whose address fails the check is
-  signed out again before the browser is sent anywhere.
-* A missing `CAMPUS_ALLOWED_EMAIL_DOMAINS` falls back to the seeded `pccoepune.org`;
-  an empty allow-list never means "allow everyone".
+* **Account type is decided server-side from the verified Google address**, in
+  the database, once, at provisioning time (migration 080). `classify_institutional_email()`
+  normalises the address, takes the domain after the last `@`, and matches it
+  against `colleges.email_domains` for **active** colleges. A match provisions an
+  institutional account (`student` role, `college_id` set); no match provisions
+  an external account (`visitor` role, `college_id` null). The browser supplies
+  no email, no type and no role: the trigger reads `auth.users.email`, which is
+  the address Google verified.
+* `profile_private.account_type` is authoritative and not client-editable. A
+  database `CHECK` keeps the two shapes consistent (`student` ⇒ a college,
+  `visitor` ⇒ none) and `guard_account_type()` refuses later changes to it.
+* External accounts are admitted deliberately, not by accident. Sign-in is no
+  longer an allow-list that *rejects* other domains; it is a classifier that
+  *admits and restricts*. Nothing a visitor can do is authorized by the address
+  it signed in with — every capability comes from `has_permission()`, which
+  fails closed (see below).
+* `has_permission()` returns false when the caller has no profile, no role row,
+  an inactive account, or an unknown account type. There is no fallback to
+  Student: a partially provisioned account has no capabilities at all rather
+  than the default student set.
+* Per-account publishing grants (`visitor_permission_grants`, migration 081) are
+  unioned into `has_permission()` for **external accounts only**, and only for
+  an allow-list of publishing capabilities. They cannot confer `manage_users`,
+  `assign_roles`, moderation, or campus-official content.
 * Sign-in needs no app-side rate limit: it sends no mail and issues no code (so
   it can be neither an email relay nor a guessable secret), and Supabase Auth
   and Google rate-limit the authorization endpoint themselves. The old
@@ -141,7 +156,7 @@ Sign-in itself has no bucket — see §2 for why Google OAuth does not need one.
 | `NEXT_PUBLIC_KLIPY_APP_KEY` | browser | public KLIPY app key; provider quota can be used outside Campus+ |
 | `GIPHY_API_KEY` | server only | used by `/api/giphy/search` |
 | `GIPHY_CONTENT_RATING` | server only | `g` / `pg` / `pg-13` / `r`, default `pg-13` |
-| `CAMPUS_ALLOWED_EMAIL_DOMAINS` | server only | deployment default for the domain gate |
+| `CAMPUS_ALLOWED_EMAIL_DOMAINS` | server only | deployment default for the domain *classifier*; it does not decide authorization |
 | `GOOGLE_DRIVE_CLIENT_ID` / `GOOGLE_DRIVE_CLIENT_SECRET` | server only | existing Drive-only OAuth client; separate from the Supabase Google provider used for student sign-in |
 | `BACKUP_ENCRYPTION_KEYS` / `BACKUP_ENCRYPTION_KEY_ID` | server only | 32-byte AES-GCM key ring; losing it makes backups unrecoverable |
 | `BACKUP_DATABASE_URL` / `BACKUP_RESTORE_DATABASE_URL` | server only | direct Postgres connection for snapshots / disposable restore target |

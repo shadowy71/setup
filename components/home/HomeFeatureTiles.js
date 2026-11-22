@@ -3,8 +3,14 @@ import { ROUTES } from '@/lib/constants';
 import { getTimetableHref } from '@/lib/timetable/meta';
 import { Icon } from '@/components/ui/icons';
 
-/** Compact navigation to real campus destinations, with no invented activity. */
-export function HomeFeatureTiles({ division }) {
+/**
+ * Compact navigation to real campus destinations, with no invented activity.
+ *
+ * `institutional` is false for an external account. The noticeboard is a
+ * campus-internal surface (migration 080), so it is not offered to someone who
+ * could only ever see the explanation on the page itself.
+ */
+export function HomeFeatureTiles({ division, institutional = true }) {
   const tiles = [
     {
       href: '/campus/noticeboard',
@@ -23,7 +29,7 @@ export function HomeFeatureTiles({ division }) {
     {
       href: getTimetableHref(division),
       name: 'Timetable',
-      copy: 'Your classes and daily schedule.',
+      copy: institutional ? 'Your classes and daily schedule.' : 'Class timetables by division.',
       icon: 'clock',
       tone: 'timetable',
     },
@@ -50,11 +56,15 @@ export function HomeFeatureTiles({ division }) {
     },
   ];
 
+  const visible = institutional
+    ? tiles
+    : tiles.filter((tile) => tile.href !== '/campus/noticeboard');
+
   return (
     <section className="home-features relative z-10" aria-labelledby="home-features-title">
       <h2 id="home-features-title" className="home-features__title">Quick navigation</h2>
       <div className="home-features__grid">
-        {tiles.map((tile) => {
+        {visible.map((tile) => {
           const NavigationLink = tile.tone === 'timetable' ? 'a' : Link;
           return (
             <NavigationLink

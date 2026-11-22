@@ -12,5 +12,7 @@ export default async function OnboardingPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
   if (!user.needsProfileSetup) redirect('/home');
-  return <OnboardingForm storageId={user.profile?.id || user.id} />;
+  // The account type decides which questions are asked: an external account is
+  // never shown the institutional ones (and the database refuses to store them).
+  return <OnboardingForm storageId={user.profile?.id || user.id} accountType={user.accountType} />;
 }

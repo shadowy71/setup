@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (79 files):
+-- Contents (81 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -112,9 +112,11 @@
 --   77  20261112000031_077_pccoe_noticeboard_dates.sql  (142 lines)
 --   78  20261112000032_078_klipy_gif_references.sql  (82 lines)
 --   79  20261112000033_079_user_follows.sql  (61 lines)
+--   80  20261122000001_080_external_accounts.sql  (743 lines)
+--   81  20261122000002_081_visitor_permission_grants.sql  (582 lines)
 
 -- ==========================================================================
--- FILE 01/79  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/81  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -235,7 +237,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/79  20261005000002_002_identity_roles.sql
+-- FILE 02/81  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -827,7 +829,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/79  20261005000003_003_blocks.sql
+-- FILE 03/81  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -974,7 +976,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/79  20261005000004_004_communities.sql
+-- FILE 04/81  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1381,7 +1383,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/79  20261005000005_005_social.sql
+-- FILE 05/81  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -2004,7 +2006,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/79  20261005000006_006_moderation_core.sql
+-- FILE 06/81  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2479,7 +2481,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/79  20261005000007_007_messaging.sql
+-- FILE 07/81  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3068,7 +3070,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/79  20261005000008_008_marketplace.sql
+-- FILE 08/81  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3590,7 +3592,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/79  20261005000009_009_campus.sql
+-- FILE 09/81  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4624,7 +4626,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/79  20261005000010_010_random.sql
+-- FILE 10/81  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5276,7 +5278,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/79  20261005000011_011_platform.sql
+-- FILE 11/81  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -6016,7 +6018,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/79  20261005000012_012_auth_hooks.sql
+-- FILE 12/81  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6473,7 +6475,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/79  20261005000013_013_reference_data.sql
+-- FILE 13/81  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6747,7 +6749,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/79  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/81  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6960,7 +6962,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/79  20261005000015_015_column_privileges.sql
+-- FILE 15/81  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7188,7 +7190,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/79  20261005000016_016_staff_actions.sql
+-- FILE 16/81  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7895,7 +7897,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/79  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/81  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8093,7 +8095,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/79  20261005000018_018_function_grants.sql
+-- FILE 18/81  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8208,7 +8210,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/79  20261005000019_019_staff_visibility.sql
+-- FILE 19/81  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8284,7 +8286,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/79  20261005000020_020_chat_inbox.sql
+-- FILE 20/81  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8378,7 +8380,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/79  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/81  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8716,7 +8718,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/79  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/81  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8789,7 +8791,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/79  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/81  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8819,7 +8821,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/79  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/81  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9292,7 +9294,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/79  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/81  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9586,7 +9588,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/79  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/81  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9706,7 +9708,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/79  20261025000001_027_backup_change_capture.sql
+-- FILE 27/81  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10972,7 +10974,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/79  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/81  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11299,7 +11301,7 @@ comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
--- FILE 29/79  20261026000001_029_feed_realtime_delivery.sql
+-- FILE 29/81  20261026000001_029_feed_realtime_delivery.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11416,7 +11418,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 30/79  20261027000001_030_random_channel_authorization.sql
+-- FILE 30/81  20261027000001_030_random_channel_authorization.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11609,7 +11611,7 @@ comment on function public.can_access_random_session is
   'can_access_own_random_session(uuid) instead.';
 
 -- ==========================================================================
--- FILE 31/79  20261028000001_031_club_governance.sql
+-- FILE 31/81  20261028000001_031_club_governance.sql
 -- ==========================================================================
 
 -- Campus+ migration 031 — club governance, requests and scoped management
@@ -12662,7 +12664,7 @@ grant execute on function public.remove_community_member(uuid, uuid) to authenti
 grant execute on function public.update_club_profile(uuid, jsonb) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 32/79  20261028000002_032_club_catalogue.sql
+-- FILE 32/81  20261028000002_032_club_catalogue.sql
 -- ==========================================================================
 
 -- Campus+ migration 032 — source-backed club catalogue
@@ -12876,7 +12878,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 33/79  20261029000001_033_unread_count_lookup.sql
+-- FILE 33/81  20261029000001_033_unread_count_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12934,7 +12936,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 34/79  20261029000002_034_inbox_membership_lookup.sql
+-- FILE 34/81  20261029000002_034_inbox_membership_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13026,7 +13028,7 @@ revoke all on function public.conversation_inbox(integer) from public, anon;
 grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 35/79  20261029000003_035_feed_visibility_reconciliation.sql
+-- FILE 35/81  20261029000003_035_feed_visibility_reconciliation.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13082,7 +13084,7 @@ revoke all on function public.campus_feed_post_visibility(uuid[]) from public, a
 grant execute on function public.campus_feed_post_visibility(uuid[]) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 36/79  20261029000004_036_admin_dashboard_counts.sql
+-- FILE 36/81  20261029000004_036_admin_dashboard_counts.sql
 -- ==========================================================================
 
 -- Campus+ 036: one authorized, RLS-scoped Admin count snapshot
@@ -13146,7 +13148,7 @@ revoke all on function public.campus_admin_dashboard_counts() from anon;
 grant execute on function public.campus_admin_dashboard_counts() to authenticated;
 
 -- ==========================================================================
--- FILE 37/79  20261029000005_037_realtime_authorization_grants.sql
+-- FILE 37/81  20261029000005_037_realtime_authorization_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 037 — reassert least-privilege Realtime function grants
@@ -13182,7 +13184,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 38/79  20261101000001_038_post_pin_ordering.sql
+-- FILE 38/81  20261101000001_038_post_pin_ordering.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13500,7 +13502,7 @@ comment on index public.posts_feed_replica_identity_idx is
   'Realtime update identity: old id/pin/status only, so pin transitions are distinguishable from counter-only writes without full-row replica identity.';
 
 -- ==========================================================================
--- FILE 39/79  20261102000001_039_poll_author_may_vote.sql
+-- FILE 39/81  20261102000001_039_poll_author_may_vote.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13541,7 +13543,7 @@ comment on policy poll_votes_insert_self on public.poll_votes is
   'Any active student may vote once in an open published poll, including the poll author; duplicates remain blocked by the unique (post_id, user_id) constraint.';
 
 -- ==========================================================================
--- FILE 40/79  20261102000002_040_busiest_trending.sql
+-- FILE 40/81  20261102000002_040_busiest_trending.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13765,7 +13767,7 @@ comment on function public.trending_posts(integer, integer) is
   'Deterministic recent-engagement trending score. Formula and defaults are published in lib/constants.js#TRENDING_FORMULA; bar normalization lives in lib/social/activity-scale.js. SECURITY INVOKER so RLS still decides visibility.';
 
 -- ==========================================================================
--- FILE 41/79  20261103000001_041_public_discovery.sql
+-- FILE 41/81  20261103000001_041_public_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 041 — public discovery: clubs by slug, public events
@@ -14045,7 +14047,7 @@ end $$;
 drop table __anon_exec_before_041;
 
 -- ==========================================================================
--- FILE 42/79  20261105000001_042_ai_ml_branch.sql
+-- FILE 42/81  20261105000001_042_ai_ml_branch.sql
 -- ==========================================================================
 
 -- Rename only complete, structured branch values. Identifiers, divisions,
@@ -14089,7 +14091,7 @@ where regexp_replace(lower(branch), '[^a-z0-9]', '', 'g') in (
 ) and branch <> 'AI & ML';
 
 -- ==========================================================================
--- FILE 43/79  20261110000001_043_profile_storage_foundation.sql
+-- FILE 43/81  20261110000001_043_profile_storage_foundation.sql
 -- ==========================================================================
 
 -- Storage ledger foundation only. No file endpoints are enabled by this migration.
@@ -14225,7 +14227,7 @@ revoke all on function public.storage_account_usage(uuid) from public, anon;
 grant execute on function public.storage_account_usage(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 44/79  20261110000002_044_storage_admin_summary.sql
+-- FILE 44/81  20261110000002_044_storage_admin_summary.sql
 -- ==========================================================================
 
 -- Read-only operational view of Campus+ ledger rows, never the Drive account.
@@ -14256,7 +14258,7 @@ revoke all on function public.admin_storage_summary() from public, anon;
 grant execute on function public.admin_storage_summary() to authenticated;
 
 -- ==========================================================================
--- FILE 45/79  20261110000003_045_backup_capture_late_tables.sql
+-- FILE 45/81  20261110000003_045_backup_capture_late_tables.sql
 -- ==========================================================================
 
 -- Migration 027 installed capture before the club-request and storage tables
@@ -14265,7 +14267,7 @@ grant execute on function public.admin_storage_summary() to authenticated;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 46/79  20261110000004_046_profile_photo_lifecycle.sql
+-- FILE 46/81  20261110000004_046_profile_photo_lifecycle.sql
 -- ==========================================================================
 
 -- Profile photos use the existing ledger as the association. There is at most
@@ -14358,7 +14360,7 @@ revoke all on function public.storage_complete_profile_delete(uuid,uuid) from pu
 grant execute on function public.storage_complete_profile_delete(uuid,uuid) to service_role;
 
 -- ==========================================================================
--- FILE 47/79  20261112000001_047_profile_storage_v3.sql
+-- FILE 47/81  20261112000001_047_profile_storage_v3.sql
 -- ==========================================================================
 
 -- V3 keys are immutable and separate from legacy V2 keys. Existing rows stay V2.
@@ -14423,7 +14425,7 @@ revoke all on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,
 grant execute on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,text,bigint,text) to service_role;
 
 -- ==========================================================================
--- FILE 48/79  20261112000002_048_post_attachments.sql
+-- FILE 48/81  20261112000002_048_post_attachments.sql
 -- ==========================================================================
 
 -- The existing storage ledger remains the single quota and operation ledger.
@@ -14547,7 +14549,7 @@ revoke all on function public.can_view_post_attachment(uuid) from public,anon;
 grant execute on function public.can_view_post_attachment(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 49/79  20261112000003_049_post_attachment_order.sql
+-- FILE 49/81  20261112000003_049_post_attachment_order.sql
 -- ==========================================================================
 
 -- Reorder only an exact snapshot of this owner's current ready attachments.
@@ -14579,7 +14581,7 @@ revoke all on function public.storage_reorder_post_attachments(uuid,uuid,uuid[])
 grant execute on function public.storage_reorder_post_attachments(uuid,uuid,uuid[]) to service_role;
 
 -- ==========================================================================
--- FILE 50/79  20261112000004_050_post_attachment_drafts.sql
+-- FILE 50/81  20261112000004_050_post_attachment_drafts.sql
 -- ==========================================================================
 
 -- Private, expiring upload drafts. Nothing is visible as a post until the
@@ -14753,7 +14755,7 @@ grant execute on function public.publish_post_with_draft(uuid,uuid,public.post_k
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 51/79  20261112000005_051_marketplace_attachments.sql
+-- FILE 51/81  20261112000005_051_marketplace_attachments.sql
 -- ==========================================================================
 
 insert into public.feature_flags(key,label,description,group_name,enabled) values ('marketplace_images','Marketplace images','Allow entitled users to attach images to marketplace listings.','marketplace',false) on conflict (key) do nothing;
@@ -14903,7 +14905,7 @@ grant execute on function public.can_view_marketplace_images(uuid) to authentica
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 52/79  20261112000006_052_team_request_integrity.sql
+-- FILE 52/81  20261112000006_052_team_request_integrity.sql
 -- ==========================================================================
 
 -- Team requests are private to the applicant and the team-post owner. Prevent
@@ -14932,7 +14934,7 @@ create trigger guard_team_post_request before insert or update on public.team_po
 for each row execute function public.guard_team_post_request();
 
 -- ==========================================================================
--- FILE 53/79  20261112000007_053_profile_achievements.sql
+-- FILE 53/81  20261112000007_053_profile_achievements.sql
 -- ==========================================================================
 
 -- Student-submitted profile achievements are distinct from system-awarded,
@@ -14989,7 +14991,7 @@ create trigger guard_profile_achievement_status before update on public.profile_
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 54/79  20261112000008_054_ride_kinds.sql
+-- FILE 54/81  20261112000008_054_ride_kinds.sql
 -- ==========================================================================
 
 -- Existing posts remain unclassified rather than being guessed as offers.
@@ -14998,7 +15000,7 @@ grant update (ride_kind) on public.ride_posts to authenticated;
 create index ride_posts_kind_date_idx on public.ride_posts (ride_kind, ride_date) where status = 'published';
 
 -- ==========================================================================
--- FILE 55/79  20261112000009_055_notice_delete.sql
+-- FILE 55/81  20261112000009_055_notice_delete.sql
 -- ==========================================================================
 
 -- Delete and audit as one operation; do not grant notice permissions to new roles.
@@ -15019,7 +15021,7 @@ revoke all on function public.delete_official_notice(uuid) from public,anon;
 grant execute on function public.delete_official_notice(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 56/79  20261112000010_056_event_rsvp_guard.sql
+-- FILE 56/81  20261112000010_056_event_rsvp_guard.sql
 -- ==========================================================================
 
 -- A previously saved RSVP cannot be changed after an event stops accepting
@@ -15031,7 +15033,7 @@ alter policy event_registrations_update_own on public.event_registrations
               and exists (select 1 from public.events e where e.id = event_id and e.status = 'published'));
 
 -- ==========================================================================
--- FILE 57/79  20261112000011_057_team_invitations.sql
+-- FILE 57/81  20261112000011_057_team_invitations.sql
 -- ==========================================================================
 
 -- Invitations are private, and all mutations run through narrowly scoped RPCs.
@@ -15113,7 +15115,7 @@ grant execute on function public.remove_team_member(uuid) to authenticated;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 58/79  20261112000012_058_team_project_link.sql
+-- FILE 58/81  20261112000012_058_team_project_link.sql
 -- ==========================================================================
 
 -- An optional association: existing team requests stay unchanged.
@@ -15134,7 +15136,7 @@ create trigger team_project_link_guard before insert or update of project_id on 
 for each row execute function public.guard_team_project_link();
 
 -- ==========================================================================
--- FILE 59/79  20261112000013_059_board_staff_visibility.sql
+-- FILE 59/81  20261112000013_059_board_staff_visibility.sql
 -- ==========================================================================
 
 -- Moderators can inspect hidden board reports without granting student access.
@@ -15142,7 +15144,7 @@ create policy housing_select_staff on public.housing_posts for select to authent
 create policy rides_select_staff on public.ride_posts for select to authenticated using (public.has_permission('moderate_all'));
 
 -- ==========================================================================
--- FILE 60/79  20261112000014_060_event_rsvp_capacity.sql
+-- FILE 60/81  20261112000014_060_event_rsvp_capacity.sql
 -- ==========================================================================
 
 -- Keep capacity accounting private even when attendee visibility is disabled.
@@ -15185,7 +15187,7 @@ for each row execute function public.sync_event_rsvp_capacity();
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 61/79  20261112000015_061_remove_storage_quota.sql
+-- FILE 61/81  20261112000015_061_remove_storage_quota.sql
 -- ==========================================================================
 
 -- Remove aggregate per-user storage limits while retaining operation reservations,
@@ -15328,7 +15330,7 @@ end $$;
 -- it no longer controls any upload path.
 
 -- ==========================================================================
--- FILE 62/79  20261112000016_062_lost_found_attachments.sql
+-- FILE 62/81  20261112000016_062_lost_found_attachments.sql
 -- ==========================================================================
 
 -- Private image links for lost-and-found reports; uploads use existing V3 drafts.
@@ -15419,7 +15421,7 @@ grant execute on function public.storage_complete_lost_found_image_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 63/79  20261112000017_063_housing_attachments.sql
+-- FILE 63/81  20261112000017_063_housing_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for housing posts; uploads use existing V3 drafts.
@@ -15510,7 +15512,7 @@ grant execute on function public.storage_complete_housing_attachment_delete(uuid
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 64/79  20261112000018_064_ride_attachments.sql
+-- FILE 64/81  20261112000018_064_ride_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for ride posts; uploads use existing V3 drafts.
@@ -15601,7 +15603,7 @@ grant execute on function public.storage_complete_ride_attachment_delete(uuid) t
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 65/79  20261112000019_065_team_attachments.sql
+-- FILE 65/81  20261112000019_065_team_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for team posts; uploads use existing V3 drafts.
@@ -15692,7 +15694,7 @@ grant execute on function public.storage_complete_team_attachment_delete(uuid) t
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 66/79  20261112000020_066_project_attachments.sql
+-- FILE 66/81  20261112000020_066_project_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for project posts; uploads use existing V3 drafts.
@@ -15783,7 +15785,7 @@ grant execute on function public.storage_complete_project_attachment_delete(uuid
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 67/79  20261112000021_067_gig_attachments.sql
+-- FILE 67/81  20261112000021_067_gig_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for gig posts; uploads use existing V3 drafts.
@@ -15884,7 +15886,7 @@ create trigger gig_retire_soft_deleted after update of status on public.gigs for
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 68/79  20261112000022_068_achievement_attachments.sql
+-- FILE 68/81  20261112000022_068_achievement_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for achievement posts; uploads use existing V3 drafts.
@@ -15977,7 +15979,7 @@ grant execute on function public.storage_complete_achievement_attachment_delete(
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 69/79  20261112000023_069_notice_attachments.sql
+-- FILE 69/81  20261112000023_069_notice_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for notice posts; uploads use existing V3 drafts.
@@ -16070,7 +16072,7 @@ grant execute on function public.storage_complete_notice_attachment_delete(uuid)
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 70/79  20261112000024_070_event_attachments.sql
+-- FILE 70/81  20261112000024_070_event_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for event posts; uploads use existing V3 drafts.
@@ -16163,7 +16165,7 @@ grant execute on function public.storage_complete_event_attachment_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 71/79  20261112000025_071_space_attachments.sql
+-- FILE 71/81  20261112000025_071_space_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for space posts; uploads use existing V3 drafts.
@@ -16277,7 +16279,7 @@ grant execute on function public.storage_complete_space_attachment_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 72/79  20261112000026_072_notice_archive.sql
+-- FILE 72/81  20261112000026_072_notice_archive.sql
 -- ==========================================================================
 
 -- Campus+ migration 072 — noticeboard archive
@@ -16395,7 +16397,7 @@ grant all on public.notice_archive_entries to service_role;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 73/79  20261112000027_073_pccoe_noticeboard_archive.sql
+-- FILE 73/81  20261112000027_073_pccoe_noticeboard_archive.sql
 -- ==========================================================================
 
 -- Campus+ migration 073 — PCCOE noticeboard archive (batch pccoe-noticeboard-2026-11)
@@ -16750,7 +16752,7 @@ end
 $import$;
 
 -- ==========================================================================
--- FILE 74/79  20261112000028_074_upload_access_default.sql
+-- FILE 74/81  20261112000028_074_upload_access_default.sql
 -- ==========================================================================
 
 -- Give current active profiles upload access and enable it for new accounts.
@@ -16789,7 +16791,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 75/79  20261112000029_075_return_pccoe_noticeboard_to_archive.sql
+-- FILE 75/81  20261112000029_075_return_pccoe_noticeboard_to_archive.sql
 -- ==========================================================================
 
 -- Campus+ migration 075 — return the PCCOE noticeboard batch to the archive
@@ -16834,7 +16836,7 @@ end
 $archive$;
 
 -- ==========================================================================
--- FILE 76/79  20261112000030_076_notice_archive_dates.sql
+-- FILE 76/81  20261112000030_076_notice_archive_dates.sql
 -- ==========================================================================
 
 -- Campus+ migration 076 — dates for noticeboard archive records
@@ -16897,7 +16899,7 @@ comment on column public.notice_archive_entries.date_note is
   'Where the date comes from, when that needs saying.';
 
 -- ==========================================================================
--- FILE 77/79  20261112000031_077_pccoe_noticeboard_dates.sql
+-- FILE 77/81  20261112000031_077_pccoe_noticeboard_dates.sql
 -- ==========================================================================
 
 -- Campus+ migration 077 — dates of the PCCOE noticeboard batch
@@ -17043,7 +17045,7 @@ end
 $dates$;
 
 -- ==========================================================================
--- FILE 78/79  20261112000032_078_klipy_gif_references.sql
+-- FILE 78/81  20261112000032_078_klipy_gif_references.sql
 -- ==========================================================================
 
 -- Add KLIPY GIF references without modifying existing rows, RLS or grants.
@@ -17129,7 +17131,7 @@ end
 $migration$;
 
 -- ==========================================================================
--- FILE 79/79  20261112000033_079_user_follows.sql
+-- FILE 79/81  20261112000033_079_user_follows.sql
 -- ==========================================================================
 
 -- Private, directional follow relationships between existing Campus+ profiles.
@@ -17192,6 +17194,1339 @@ as $$
 $$;
 revoke all on function public.following_feed(integer, integer) from public, anon;
 grant execute on function public.following_feed(integer, integer) to authenticated, service_role;
+
+-- ==========================================================================
+-- FILE 80/81  20261122000001_080_external_accounts.sql
+-- ==========================================================================
+
+-- Campus+ migration 080 — external accounts and the Visitor role
+-- Supabase CLI filename: 20261005000034_080_external_accounts.sql
+-- This file is part of the single authoritative migration history in supabase/migrations/.
+-- =============================================================================
+-- Campus+ 080 — automatic external-user classification + Visitor RBAC
+-- =============================================================================
+-- Until now Campus+ assumed every authenticated user was an institutional
+-- student: migration 002 declared `profile_private.college_id` NOT NULL, and
+-- migration 012 rejected any auth user whose domain was not an approved
+-- institution. This migration removes that assumption *without* creating a
+-- parallel identity system and without weakening a single existing policy.
+--
+-- The model after 080:
+--
+--   account_type = 'student'   institutional address on an active college
+--   account_type = 'visitor'   any other verified address (e.g. Gmail)
+--
+-- Account type is decided in the database from the verified address at the
+-- moment the auth user is created. It is never accepted from the client, and
+-- it is deliberately independent of *authorization*: an external visitor who
+-- is granted publishing permissions stays a visitor. Roles decide what an
+-- account may do; account_type records which institution, if any, it belongs
+-- to. Conflating the two is how "grant one permission" quietly becomes
+-- "become a student", so they are separate columns with separate guards.
+--
+-- Read access is unchanged: every policy that reads "public" content already
+-- lets any authenticated user in, so a visitor sees exactly what an anonymous
+-- browser sees plus the authenticated extras they have permission for. Write
+-- access is unchanged for the same reason: every content-creation policy
+-- already requires a specific permission, and `visitor` holds none of them.
+--
+-- Forward-only: no earlier migration is edited.
+-- =============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 1. Account classification
+-- ----------------------------------------------------------------------------
+
+do $$ begin
+  if not exists (select 1 from pg_type where typname = 'account_type') then
+    create type public.account_type as enum ('student', 'visitor');
+  end if;
+end $$;
+
+alter table public.profile_private
+  add column if not exists account_type public.account_type not null default 'student';
+
+comment on column public.profile_private.account_type is
+  'Authoritative account classification, set once by the auth trigger from the verified email domain and never client-writable. Independent of the roles granted in user_roles.';
+
+-- Visitors have no institution; students must have exactly one. Written as a
+-- CHECK rather than a trigger so an impossible row cannot exist even for a
+-- moment, and so a future backfill that forgets the rule fails loudly.
+do $$ begin
+  if not exists (
+    select 1 from pg_constraint
+     where conrelid = 'public.profile_private'::regclass
+       and conname = 'profile_private_account_type_college'
+  ) then
+    alter table public.profile_private
+      add constraint profile_private_account_type_college
+      check (
+        (account_type = 'student' and college_id is not null)
+        or (account_type = 'visitor' and college_id is null)
+      );
+  end if;
+end $$;
+
+-- `college_id` becomes nullable for visitors only; the CHECK above is what
+-- keeps students attached to a real institution.
+alter table public.profile_private
+  alter column college_id drop not null;
+
+create index if not exists profile_private_account_type_idx
+  on public.profile_private (account_type, created_at desc);
+
+-- Every account that already existed was provisioned by the institutional-only
+-- trigger, so it is a student. This is a no-op for a fresh database and is
+-- kept explicit so the intent is auditable rather than implied by the default.
+update public.profile_private
+   set account_type = 'student'
+ where account_type is distinct from 'student'
+   and college_id is not null;
+
+-- ----------------------------------------------------------------------------
+-- 2. Central email classification
+-- ----------------------------------------------------------------------------
+-- One authoritative function answers "which institution does this verified
+-- address belong to, if any?". It reads `colleges.email_domains` (the mapping
+-- the rest of the platform already uses) so there is no second domain list to
+-- drift, and it normalises the address the same way the application does:
+-- trim, lowercase, take the part after the final '@'.
+--
+-- It returns the college id plus the normalised domain, or NULL for the
+-- college when the domain is not an active institution. `allowed_email_domain`
+-- (migration 012) keeps working exactly as before: it is a boolean wrapper for
+-- "is this an institutional address", which is still the right question for
+-- the sign-in screen.
+
+create or replace function public.normalize_email_domain(p_email text)
+returns text
+language sql
+immutable
+as $$
+  select nullif(lower(btrim(split_part(btrim(coalesce(p_email, '')), '@', 2))), '');
+$$;
+
+comment on function public.normalize_email_domain(text) is
+  'Lower-cased domain of an email address, or NULL when there is no meaningful domain. Used for account classification.';
+
+create or replace function public.classify_institutional_email(p_email text)
+returns table (domain text, college_id uuid, account_type public.account_type)
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_domain text := public.normalize_email_domain(p_email);
+  v_college uuid;
+begin
+  if v_domain is null then
+    return query select null::text, null::uuid, 'visitor'::public.account_type;
+    return;
+  end if;
+
+  -- A college may list the same domain twice; `limit 1` keeps the resolution
+  -- deterministic and the `order by` prefers the longest-lived institution.
+  select c.id
+    into v_college
+    from public.colleges c
+   where c.is_active
+     and exists (
+       select 1 from unnest(c.email_domains) d
+       where lower(btrim(d)) = v_domain
+     )
+   order by c.created_at asc
+   limit 1;
+
+  if v_college is null then
+    return query select v_domain, null::uuid, 'visitor'::public.account_type;
+  else
+    return query select v_domain, v_college, 'student'::public.account_type;
+  end if;
+end;
+$$;
+
+comment on function public.classify_institutional_email(text) is
+  'Authoritative server-side classification: active college for the verified domain, otherwise an external visitor. The only place account_type is decided.';
+
+revoke all on function public.classify_institutional_email(text) from public, anon;
+revoke all on function public.normalize_email_domain(text) from public, anon;
+grant execute on function public.classify_institutional_email(text) to authenticated, service_role;
+grant execute on function public.normalize_email_domain(text) to authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- 3. Replace the institutional-only signup gate with classification
+-- ----------------------------------------------------------------------------
+-- Migration 012's `enforce_institutional_domain()` raised for every address
+-- outside an approved domain, which made an external account impossible to
+-- create. The replacement accepts any address that Supabase Auth has already
+-- verified — classification, not rejection, is now the gate — and still
+-- refuses an account with no email at all, because Campus+ has no
+-- phone-only or anonymous identity.
+
+create or replace function public.enforce_verified_email_domain()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_email text := lower(btrim(coalesce(new.email, '')));
+begin
+  if v_email = '' then
+    raise exception 'Campus+ requires an email address to create an account.'
+      using errcode = '42501';
+  end if;
+
+  if position('@' in v_email) = 0 then
+    raise exception 'Campus+ requires a valid email address to create an account.'
+      using errcode = '42501';
+  end if;
+
+  return new;
+end;
+$$;
+
+comment on function public.enforce_verified_email_domain() is
+  'Signup gate: an account must have an email address. Domain membership no longer rejects a signup — it decides account_type in handle_new_user().';
+
+-- Swap the trigger. `drop trigger` then `create trigger` (rather than
+-- renaming) keeps exactly one BEFORE INSERT hook on auth.users, so ordering
+-- against the separate AFTER INSERT provisioning trigger is unchanged.
+drop trigger if exists enforce_institutional_domain_trigger on auth.users;
+drop function if exists public.enforce_institutional_domain();
+
+create trigger enforce_verified_email_domain_trigger
+  before insert on auth.users
+  for each row execute function public.enforce_verified_email_domain();
+
+-- ----------------------------------------------------------------------------
+-- 4. Provisioning: classify, then assign the matching baseline role
+-- ----------------------------------------------------------------------------
+-- Same shape as migration 012's `handle_new_user()`, with three changes:
+--   * the college is resolved from the classification instead of raising,
+--   * `account_type` is written explicitly,
+--   * the baseline role is `student` for an institutional account and
+--     `visitor` for an external one.
+--
+-- The role choice is made here, in the definer function, from `new.email` —
+-- the address Supabase Auth verified. A client can influence neither the
+-- address nor the role, and `prevent_privilege_escalation()` still guards the
+-- direct-write path.
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_email text := lower(btrim(coalesce(new.email, '')));
+  v_class record;
+  v_profile uuid;
+  v_display text;
+  v_username_seed text;
+begin
+  select * into v_class from public.classify_institutional_email(v_email);
+
+  if v_class.domain is null then
+    -- The BEFORE INSERT gate should have caught this; refuse rather than
+    -- provision a half-classified identity.
+    raise exception 'Campus+ could not classify this account.' using errcode = '42501';
+  end if;
+
+  v_display := coalesce(
+    nullif(btrim(coalesce(new.raw_user_meta_data->>'display_name', '')), ''),
+    nullif(btrim(coalesce(new.raw_user_meta_data->>'full_name', '')), ''),
+    nullif(btrim(coalesce(new.raw_user_meta_data->>'name', '')), ''),
+    initcap(replace(split_part(v_email, '@', 1), '.', ' '))
+  );
+
+  -- Mark the provisioning work so guards such as prevent_privilege_escalation()
+  -- know this is the database's own baseline setup, not a client asking for a
+  -- role. Transaction-local: it disappears when this trigger's transaction ends.
+  perform set_config('campus.system_context', 'on', true);
+
+  insert into public.profiles (display_name)
+  values (left(v_display, 60))
+  returning id into v_profile;
+
+  insert into public.profile_private (
+    profile_id, auth_user_id, college_id, account_type, account_status, profile_completed
+  ) values (
+    v_profile, new.id, v_class.college_id, v_class.account_type, 'active', false
+  );
+
+  -- Baseline role. Additional roles are granted deliberately and audited.
+  insert into public.user_roles (user_id, role_key)
+  values (
+    v_profile,
+    case when v_class.account_type = 'student' then 'student' else 'visitor' end
+  )
+  on conflict do nothing;
+
+  -- The first username_history row is written by complete_profile() once the
+  -- account actually claims a handle.
+
+  return new;
+end;
+$$;
+
+comment on function public.handle_new_user() is
+  'Creates profiles + profile_private with the classified account_type and the matching baseline role (student for an institution, visitor otherwise). Username is chosen during onboarding.';
+
+-- ----------------------------------------------------------------------------
+-- 5. The Visitor role
+-- ----------------------------------------------------------------------------
+-- A built-in role with the *lowest* rank in the hierarchy. Rank 0 currently
+-- belongs to Student, and `grant_role()` refuses to grant a role ranked at or
+-- above the granter's own rank — so giving Visitor rank 0 would force every
+-- operator to outrank a student to grant it. Negative ranks keep the existing
+-- comparison exact without special-casing the role anywhere.
+--
+-- `roles.rank` is `check (rank between 0 and 1000)` in migration 002, so the
+-- constraint must be widened before the row can exist.
+alter table public.roles drop constraint if exists roles_rank_check;
+alter table public.roles add constraint roles_rank_check check (rank between -100 and 1000);
+
+insert into public.roles (key, label, description, rank, is_system) values
+  ('visitor', 'Visitor',
+   'External account verified by Google. Reads explicitly public content; cannot publish until an administrator grants a role.',
+   -10, true)
+on conflict (key) do update
+  set label = excluded.label,
+      description = excluded.description,
+      rank = excluded.rank,
+      is_system = excluded.is_system;
+
+-- A dedicated, readable role for granting publishing rights to individual
+-- external accounts without ever handing them the Student role. It is a normal
+-- row in the normal tables: administrators edit its permissions with the same
+-- permission editor they already use.
+insert into public.roles (key, label, description, rank, is_system) values
+  ('external_contributor', 'External Contributor',
+   'An external account an administrator has allowed to publish selected content. Still not an institutional student.',
+   -5, true)
+on conflict (key) do update
+  set label = excluded.label,
+      description = excluded.description,
+      rank = excluded.rank,
+      is_system = excluded.is_system;
+
+-- Default visitor permissions: strictly read-only plus the ability to look
+-- after its own account and report abuse. Every content-creation permission is
+-- conspicuous by its absence, which is the point — this list is an allow-list,
+-- so a permission added to the catalogue later is NOT granted to visitors by
+-- default.
+--
+-- `react_content` and `rsvp_events` are deliberately absent: both are outward
+-- interactions that announce a visitor in campus activity. Granting either to
+-- an individual visitor is an administrator's decision, not a default.
+insert into public.role_permissions (role_key, permission_key)
+select 'visitor', p.key
+from public.permissions p
+where p.key in (
+  'manage_own_profile',
+  'report_content'
+)
+on conflict do nothing;
+
+-- External Contributor starts with *nothing*. An administrator grants the
+-- specific capabilities that account needs, one at a time, which is exactly
+-- the "Visitor A can post but not comment" requirement.
+delete from public.role_permissions where role_key = 'external_contributor';
+
+-- Defence in depth: a visitor must never accumulate a staff permission by
+-- accident. Anything outside the visitor allow-list is removed even if an
+-- operator added it by hand before this migration ran.
+delete from public.role_permissions rp
+ where rp.role_key = 'visitor'
+   and rp.permission_key not in ('manage_own_profile', 'report_content');
+
+-- ----------------------------------------------------------------------------
+-- 6. Account-type helpers (read-only, used by policies and the app)
+-- ----------------------------------------------------------------------------
+
+create or replace function public.account_type_of(p_profile uuid)
+returns public.account_type
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select pp.account_type from public.profile_private pp where pp.profile_id = p_profile;
+$$;
+
+create or replace function public.current_account_type()
+returns public.account_type
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select public.account_type_of(public.current_profile_id());
+$$;
+
+create or replace function public.is_visitor(p_profile uuid default null)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce(public.account_type_of(coalesce(p_profile, public.current_profile_id())) = 'visitor', false);
+$$;
+
+create or replace function public.is_institutional(p_profile uuid default null)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce(public.account_type_of(coalesce(p_profile, public.current_profile_id())) = 'student', false);
+$$;
+
+comment on function public.is_visitor(uuid) is
+  'True for an external account. Fails closed to false when the account type cannot be resolved.';
+
+revoke all on function public.account_type_of(uuid) from public, anon;
+revoke all on function public.current_account_type() from public, anon;
+revoke all on function public.is_visitor(uuid) from public, anon;
+revoke all on function public.is_institutional(uuid) from public, anon;
+grant execute on function public.account_type_of(uuid) to authenticated, service_role;
+grant execute on function public.current_account_type() to authenticated, service_role;
+grant execute on function public.is_visitor(uuid) to authenticated, service_role;
+grant execute on function public.is_institutional(uuid) to authenticated, service_role;
+
+-- `current_profile_id()` is the linchpin of every policy. It is unchanged in
+-- behaviour but restated here so this migration is self-contained and so the
+-- SECURITY DEFINER + pinned search_path shape is guaranteed on a database that
+-- somehow predates it.
+create or replace function public.current_profile_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select pp.profile_id from public.profile_private pp where pp.auth_user_id = auth.uid();
+$$;
+
+-- ----------------------------------------------------------------------------
+-- 7. Campus-scoped content is institutional-only
+-- ----------------------------------------------------------------------------
+-- Until 080 "authenticated" meant "has an institutional account", so a policy
+-- that said `visibility in ('public','campus')` effectively meant "everyone at
+-- this institution". With external accounts that reading silently widens
+-- `campus` visibility to the whole internet's Google users. These three
+-- functions are the single gate for that visibility level, so the correction
+-- lives here rather than being copied into a dozen policies.
+--
+--   * `community_visible_to_current(visibility)` — campus requires an
+--     institutional account; public is open to any authenticated user;
+--     private is limited to members/staff exactly as before.
+--   * `can_view_community()` — same rules, now expressed through the helper.
+--   * `posts_select_visible` — rebuilt to call the helper for the
+--     community-less branch.
+
+create or replace function public.community_visible_to_current(p_visibility public.visibility_level)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select case
+    when p_visibility = 'public' then true
+    when p_visibility = 'campus' then public.is_institutional()
+    else false
+  end;
+$$;
+
+comment on function public.community_visible_to_current(public.visibility_level) is
+  'The one place campus-level visibility is decided. External visitors see public content only, never campus-only content.';
+
+create or replace function public.can_view_community(p_community uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+    from public.communities c
+    where c.id = p_community
+      and c.status = 'published'
+      and (
+        public.community_visible_to_current(c.visibility)
+        or public.is_community_member(c.id)
+        or public.has_permission('moderate_communities')
+        or public.has_permission('moderate_all')
+      )
+  );
+$$;
+
+comment on function public.can_view_community(uuid) is
+  'Visibility gate reused by community, post, discussion and chat policies. Campus-level visibility requires an institutional account (migration 080).';
+
+revoke all on function public.community_visible_to_current(public.visibility_level) from public, anon;
+grant execute on function public.community_visible_to_current(public.visibility_level) to authenticated, service_role;
+
+-- Posts without a community are readable when their visibility permits it.
+-- Rewritten from migration 005 with the campus branch delegated to the helper.
+drop policy if exists posts_select_visible on public.posts;
+create policy posts_select_visible on public.posts
+  for select to authenticated
+  using (
+    status = 'published'
+    and deleted_at is null
+    and public.is_active_profile(author_id)
+    and not public.is_blocked_with_current(author_id)
+    and not public.is_muted_by_current(author_id)
+    and (
+      (community_id is null and public.community_visible_to_current(visibility))
+      or (community_id is not null and public.can_view_community(community_id))
+    )
+  );
+
+comment on policy posts_select_visible on public.posts is
+  'Signed-in readers see published posts whose visibility permits it. Campus-only posts require an institutional account; external visitors see public posts only (migration 080).';
+
+-- Comments inherit their post's visibility. Migration 005 repeated the
+-- visibility expression inline; rewrite it to use the helper so there is one
+-- definition of "campus".
+drop policy if exists comments_select_visible on public.comments;
+create policy comments_select_visible on public.comments
+  for select to authenticated
+  using (
+    status = 'published'
+    and exists (
+      select 1
+      from public.posts p
+      where p.id = comments.post_id
+        and p.status = 'published'
+        and p.deleted_at is null
+        and public.is_active_profile(p.author_id)
+        and not public.is_blocked_with_current(p.author_id)
+        and (
+          (p.community_id is null and public.community_visible_to_current(p.visibility))
+          or (p.community_id is not null and public.can_view_community(p.community_id))
+        )
+    )
+  );
+
+comment on policy comments_select_visible on public.comments is
+  'A comment is readable when its post is. Campus-only posts gate their comments to institutional accounts (migration 080).';
+
+-- ----------------------------------------------------------------------------
+-- 8. Notices are institutional announcements
+-- ----------------------------------------------------------------------------
+-- `notices` has no visibility column: it is the college noticeboard. Migration
+-- 041 gave `anon` a narrow published-event read precisely because events are
+-- public-facing; no such carve-out exists for notices, which routinely carry
+-- internal dates, room numbers and staff instructions. With external accounts
+-- the old "any authenticated user" read would mean "any Gmail address on
+-- earth". Restrict signed-in reads to institutional accounts, keeping the
+-- archive and staff policies untouched.
+drop policy if exists notices_select_published on public.notices;
+create policy notices_select_published on public.notices
+  for select to authenticated
+  using (
+    public.is_institutional()
+    and status = 'published'
+    and (expires_at is null or expires_at > now())
+  );
+
+comment on policy notices_select_published on public.notices is
+  'The noticeboard is campus-internal. External visitors do not read notices (migration 080); staff policies are unchanged.';
+
+-- ----------------------------------------------------------------------------
+-- 9. Onboarding for both account types
+-- ----------------------------------------------------------------------------
+-- `complete_profile()` is the only supported onboarding path: it owns username
+-- uniqueness, the reserved list, the cooldown and the audit entry. Institutional
+-- accounts keep every existing rule. Visitors claim the same username and
+-- display name but must not be able to invent academic details: branch, year
+-- and division are the college's, so a visitor's values are forced to NULL
+-- regardless of what the client sends.
+
+create or replace function public.complete_profile(
+  p_username text,
+  p_display_name text,
+  p_bio text default null,
+  p_branch text default null,
+  p_year text default null,
+  p_division text default null,
+  p_show_branch_year boolean default true
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_me uuid := public.current_profile_id();
+  v_username text := lower(btrim(coalesce(p_username, '')));
+  v_display text := btrim(coalesce(p_display_name, ''));
+  v_existing text;
+  v_visitor boolean := public.is_visitor();
+begin
+  if v_me is null then
+    raise exception 'Not authenticated' using errcode = '42501';
+  end if;
+
+  -- Validation mirrors lib/validation/schemas.js#vUsername (defence in depth:
+  -- the database is the last word).
+  if v_username !~ '^[a-z0-9_]{3,24}$' then
+    raise exception 'Usernames must be 3-24 characters using lowercase letters, numbers and underscores.'
+      using errcode = '22023';
+  end if;
+  if v_username ~ '^_|_$' or v_username ~ '__' then
+    raise exception 'Usernames cannot start or end with an underscore, or repeat one.'
+      using errcode = '22023';
+  end if;
+  if v_username ~ '^[0-9]+$' then
+    raise exception 'Usernames cannot be only numbers.' using errcode = '22023';
+  end if;
+  if public.is_reserved_username(v_username) then
+    raise exception 'That username is reserved by the platform.' using errcode = '22023';
+  end if;
+  if length(v_display) < 2 or length(v_display) > 60 then
+    raise exception 'Display name must be between 2 and 60 characters.' using errcode = '22023';
+  end if;
+  if length(coalesce(p_bio, '')) > 280 then
+    raise exception 'Bio must be at most 280 characters.' using errcode = '22023';
+  end if;
+  if not public.is_active_user() then
+    raise exception 'This account cannot complete its profile.' using errcode = '42501';
+  end if;
+
+  select username into v_existing from public.profiles where id = v_me;
+  if v_existing is not null and v_existing <> v_username then
+    raise exception 'Your username can be changed from Settings once the cooldown passes.'
+      using errcode = '22023';
+  end if;
+
+  if exists (select 1 from public.profiles p where lower(p.username) = v_username and p.id <> v_me) then
+    raise exception 'That username is already taken.' using errcode = '23505';
+  end if;
+
+  update public.profiles
+     set username = v_username,
+         display_name = v_display,
+         bio = nullif(btrim(coalesce(p_bio, '')), ''),
+         -- Academic details belong to an institution. A visitor's are forced to
+         -- NULL so no fabricated PCCOE identity can be stored or displayed.
+         branch = case when v_visitor then null else nullif(btrim(coalesce(p_branch, '')), '') end,
+         year = case when v_visitor then null else nullif(btrim(coalesce(p_year, '')), '') end,
+         division = case when v_visitor then null else nullif(btrim(coalesce(p_division, '')), '') end,
+         show_branch_year = case when v_visitor then false else coalesce(p_show_branch_year, true) end
+   where id = v_me;
+
+  update public.profile_private
+     set profile_completed = true,
+         username_changed_at = coalesce(username_changed_at, now()),
+         last_seen = now()
+   where profile_id = v_me;
+
+  insert into public.username_history (user_id, old_username, new_username, changed_by)
+  values (v_me, v_existing, v_username, v_me);
+
+  perform public.evaluate_achievements(v_me);
+
+  insert into public.audit_logs (actor_user_id, action, target_type, target_id, metadata, visibility)
+  values (
+    v_me, 'account.profile_created', 'user', v_me,
+    jsonb_build_object('username', v_username, 'account_type', public.account_type_of(v_me)),
+    'private'
+  );
+
+  return jsonb_build_object(
+    'ok', true,
+    'username', v_username,
+    'account_type', public.account_type_of(v_me)
+  );
+exception
+  when unique_violation then
+    raise exception 'That username is already taken.' using errcode = '23505';
+end;
+$$;
+
+comment on function public.complete_profile is
+  'First-login onboarding for every account type: claims a unique username and completes the profile. Academic fields are institutional only (migration 080).';
+
+-- ----------------------------------------------------------------------------
+-- 10. Guard: account_type is never client-writable, and never drifts
+-- ----------------------------------------------------------------------------
+-- Column privileges already stop a client from writing `account_type`
+-- (migration 015 revokes UPDATE on profile_private entirely). This trigger is
+-- the second layer, and it is the one that matters for a future maintenance
+-- path that forgets the rule: an account may not move between classifications,
+-- and may not be attached to a college while remaining external.
+
+create or replace function public.guard_account_type()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if new.account_type is distinct from old.account_type then
+    -- Promotion to an institutional account (e.g. a student who later gets a
+    -- college address) is a deliberate administrative act, not a side effect.
+    if public.in_system_context()
+       or public.has_permission('manage_users') then
+      null;
+    else
+      raise exception 'Account type cannot be changed from here.'
+        using errcode = '42501';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists profile_private_guard_account_type on public.profile_private;
+create trigger profile_private_guard_account_type
+  before update on public.profile_private
+  for each row execute function public.guard_account_type();
+
+-- ----------------------------------------------------------------------------
+-- 11. Onboarding completeness no longer requires institutional details
+-- ----------------------------------------------------------------------------
+-- `profile_completed` and the username are the only onboarding requirements for
+-- both account types. Nothing anywhere requires branch/year/division, so the
+-- same gate now serves visitors without change; this comment records that the
+-- absence of a college is intentionally not part of it.
+
+comment on column public.profile_private.profile_completed is
+  'True once onboarding has claimed a username. Institutional details are optional for students and forbidden for visitors (migration 080).';
+
+-- ----------------------------------------------------------------------------
+-- 12. Read access for external accounts
+-- ----------------------------------------------------------------------------
+-- Visitors reach content through the same authenticated policies as students.
+-- The only additional surface they need is a way to render a profile card for
+-- people they share a public community with — already covered by
+-- `profiles_select_authenticated`. No policy is widened by this section; it is
+-- recorded here so a reviewer can see that the question was asked.
+--
+-- Deliberately NOT granted to visitors, and left exactly as they were:
+--   * conversations / messages / message_reads  — membership only, so an
+--     external account has no inbox until someone messages it.
+--   * random_*                                   — requires use_random_chat.
+--   * event_registrations, marketplace_interactions, ratings — member actions.
+--   * notices, campus-only posts and communities — gated in sections 7 and 8.
+--   * admin / moderation tables                  — permission-gated.
+
+-- ----------------------------------------------------------------------------
+-- 13. Explicit grants for the new RPC surface
+-- ----------------------------------------------------------------------------
+-- `create or replace function` preserves the old ACL, but a brand-new function
+-- gets PUBLIC EXECUTE by default. Migration 018's policy is that no definer
+-- function is callable by `anon`; make that true for everything added here.
+
+revoke all on function public.classify_institutional_email(text) from public, anon;
+revoke all on function public.normalize_email_domain(text) from public, anon;
+revoke all on function public.account_type_of(uuid) from public, anon;
+revoke all on function public.current_account_type() from public, anon;
+revoke all on function public.is_visitor(uuid) from public, anon;
+revoke all on function public.is_institutional(uuid) from public, anon;
+revoke all on function public.community_visible_to_current(public.visibility_level) from public, anon;
+revoke all on function public.enforce_verified_email_domain() from public, anon;
+revoke all on function public.guard_account_type() from public, anon;
+
+grant execute on function public.complete_profile(text, text, text, text, text, text, boolean) to authenticated;
+revoke execute on function public.complete_profile(text, text, text, text, text, text, boolean) from anon;
+
+-- ==========================================================================
+-- FILE 81/81  20261122000002_081_visitor_permission_grants.sql
+-- ==========================================================================
+
+-- Campus+ migration 081 — per-account publishing grants for external users
+-- Supabase CLI filename: 20261005000035_081_visitor_permission_grants.sql
+-- This file is part of the single authoritative migration history in supabase/migrations/.
+-- =============================================================================
+-- Campus+ 081 — individual permission grants for external accounts
+-- =============================================================================
+-- 080 introduced the Visitor role and the External Contributor role. Roles are
+-- the right model for *groups* of capability, but `role_permissions` maps a role
+-- to permissions globally: granting `create_posts` to `external_contributor`
+-- would give it to every holder of that role at once. The product requirement is
+-- the opposite —
+--
+--     Visitor A: posts + comments
+--     Visitor B: posts only
+--     Visitor C: read only
+--
+-- — so the three accounts cannot share one permission set. This migration adds
+-- the smallest thing that expresses that, *inside* the existing model:
+--
+--   `visitor_permission_grants` records a permission granted to one account.
+--   `has_permission()` — the single function every policy and every RPC already
+--   calls — unions role-derived permissions with these grants. There is still
+--   exactly one permission catalogue (`public.permissions`), one resolution
+--   point (`has_permission`) and one audit trail. No second role table, and no
+--   second authorization system.
+--
+-- Why this and not a role row per person: `roles.key` is constrained to
+-- `^[a-z0-9_]{2,40}$` and roles are shared, editable objects. Minting one role
+-- per external account would put per-person state in a table designed for
+-- configuration, would need a deterministic name the schema cannot encode (a
+-- UUID is 36 characters of dashes), and would let an administrator grant it to
+-- the wrong person by mistake. A direct grant is explicit, one row, trivially
+-- auditable and impossible to mis-apply.
+--
+-- Grants are:
+--   * only writable by `admin_set_visitor_permissions()` (SECURITY DEFINER,
+--     permission-checked, audited) — the table has no client write policy;
+--   * restricted to an allow-list of publishing permissions, enforced in the
+--     database rather than in the admin form;
+--   * only applicable to an external account: a student's capabilities come
+--     from their role, and this must never become a way to top up arbitrary
+--     accounts;
+--   * ignored the moment the account stops being an active visitor.
+-- =============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 1. The grant table
+-- ----------------------------------------------------------------------------
+
+create table if not exists public.visitor_permission_grants (
+  user_id        uuid not null references public.profiles (id) on delete cascade,
+  permission_key text not null references public.permissions (key) on delete cascade,
+  granted_by     uuid references public.profiles (id) on delete set null,
+  granted_at     timestamptz not null default now(),
+  primary key (user_id, permission_key)
+);
+
+create index if not exists visitor_permission_grants_user_idx
+  on public.visitor_permission_grants (user_id);
+
+comment on table public.visitor_permission_grants is
+  'A publishing capability an administrator granted to one external account. Unioned into has_permission(); never client-writable.';
+comment on column public.visitor_permission_grants.granted_by is
+  'The administrator who made the grant. Retained if that profile is deleted so the audit trail keeps its actor id.';
+
+alter table public.visitor_permission_grants enable row level security;
+
+-- The account may see what it currently holds (the profile screen and the
+-- "you cannot post yet" affordance both need it). Nobody may see anyone else's
+-- except staff who manage users.
+drop policy if exists visitor_permission_grants_select_self on public.visitor_permission_grants;
+create policy visitor_permission_grants_select_self on public.visitor_permission_grants
+  for select to authenticated
+  using (user_id = public.current_profile_id());
+
+drop policy if exists visitor_permission_grants_select_staff on public.visitor_permission_grants;
+create policy visitor_permission_grants_select_staff on public.visitor_permission_grants
+  for select to authenticated
+  using (public.has_permission('manage_users'));
+
+-- No INSERT/UPDATE/DELETE policy exists, so no client can write. The definer
+-- function below is the only writer, and it is owned by postgres.
+
+revoke insert, update, delete on public.visitor_permission_grants from authenticated, anon;
+grant select on public.visitor_permission_grants to authenticated;
+
+-- ----------------------------------------------------------------------------
+-- 2. The allow-list, in the database
+-- ----------------------------------------------------------------------------
+-- A visitor may be allowed to *publish*. Nothing here can reach administration,
+-- moderation, campus-official content, role management or another account's
+-- data. Keeping the list in SQL is what makes the admin form a convenience
+-- rather than the boundary: a crafted RPC call with `manage_users` fails here.
+
+create or replace function public.visitor_grantable_permission(p_permission text)
+returns boolean
+language sql
+immutable
+as $$
+  select coalesce(p_permission = any (array[
+    'create_posts', 'create_comments', 'create_polls',
+    'create_marketplace_listing', 'create_gigs', 'create_housing_post', 'create_ride_post',
+    'send_messages',
+    'submit_resources', 'submit_opportunities', 'create_projects',
+    'create_lost_found', 'create_team_posts', 'create_study_posts', 'submit_events',
+    'react_content', 'rsvp_events', 'join_clubs', 'use_gifs'
+  ]), false);
+$$;
+
+comment on function public.visitor_grantable_permission(text) is
+  'Allow-list of capabilities an administrator may grant to an external account. Everything else stays role-only.';
+
+revoke all on function public.visitor_grantable_permission(text) from public, anon;
+grant execute on function public.visitor_grantable_permission(text) to authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- 3. has_permission() — role permissions ∪ per-account grants
+-- ----------------------------------------------------------------------------
+-- The one resolution point. The additional branch is deliberately narrow:
+--   * it only fires for an *external* account (a student's grants are ignored,
+--     so this can never become a quiet promotion path);
+--   * it requires the account to be active (`is_active_user()`), so a
+--     suspension still removes every capability;
+--   * it is an indexed lookup by the caller's own profile id.
+
+create or replace function public.has_permission(p_permission text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select public.is_active_user()
+     and (
+       exists (
+         select 1
+         from public.user_roles ur
+         join public.role_permissions rp on rp.role_key = ur.role_key
+         where ur.user_id = public.current_profile_id()
+           and rp.permission_key = p_permission
+           and (ur.expires_at is null or ur.expires_at > now())
+       )
+       or (
+         -- Individual publishing grant for an external account (migration 081).
+         exists (
+           select 1
+           from public.visitor_permission_grants g
+           where g.user_id = public.current_profile_id()
+             and g.permission_key = p_permission
+         )
+         and public.account_type_of(public.current_profile_id()) = 'visitor'
+       )
+     );
+$$;
+
+comment on function public.has_permission(text) is
+  'The single permission resolution point: role permissions, plus explicit per-account publishing grants held by an active external visitor.';
+
+-- ----------------------------------------------------------------------------
+-- 4. Administrator surface
+-- ----------------------------------------------------------------------------
+
+create or replace function public.admin_set_visitor_permissions(
+  p_user uuid,
+  p_permissions text[]
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_actor uuid := public.current_profile_id();
+  v_username text;
+  v_account_type public.account_type;
+  v_wanted text[];
+  v_before text[];
+  v_after text[];
+  v_granted text[];
+  v_revoked text[];
+  v_key text;
+begin
+  if not (public.has_permission('assign_roles') or public.is_trusted_writer()) then
+    raise exception 'You do not have permission to change permissions.' using errcode = '42501';
+  end if;
+
+  select p.username into v_username from public.profiles p where p.id = p_user;
+  if v_username is null then
+    raise exception 'That account could not be found.' using errcode = '22023';
+  end if;
+
+  select pp.account_type into v_account_type
+    from public.profile_private pp where pp.profile_id = p_user;
+
+  -- This function exists for external accounts. An institutional account's
+  -- capabilities come from its role, and routing it through here would be a
+  -- second, unchecked way to widen a student.
+  if coalesce(v_account_type::text, '') <> 'visitor' then
+    raise exception 'Only external accounts can be granted publishing permissions.'
+      using errcode = '42501';
+  end if;
+
+  -- Normalise and validate the requested set.
+  v_wanted := array(
+    select distinct lower(btrim(p))
+      from unnest(coalesce(p_permissions, array[]::text[])) p
+     where btrim(p) <> ''
+     order by 1
+  );
+
+  foreach v_key in array v_wanted loop
+    if not public.visitor_grantable_permission(v_key) then
+      raise exception '% cannot be granted to an external account.', v_key
+        using errcode = '42501';
+    end if;
+  end loop;
+
+  select coalesce(array_agg(g.permission_key order by g.permission_key), array[]::text[])
+    into v_before
+    from public.visitor_permission_grants g
+   where g.user_id = p_user;
+
+  -- Replace the set with exactly what was asked for. Idempotent: calling it
+  -- twice with the same list changes nothing and records nothing.
+  delete from public.visitor_permission_grants g
+   where g.user_id = p_user
+     and not (g.permission_key = any (v_wanted));
+
+  insert into public.visitor_permission_grants (user_id, permission_key, granted_by)
+  select p_user, g.key, v_actor from unnest(v_wanted) as g(key)
+  on conflict (user_id, permission_key) do nothing;
+
+  select coalesce(array_agg(g.permission_key order by g.permission_key), array[]::text[])
+    into v_after
+    from public.visitor_permission_grants g
+   where g.user_id = p_user;
+
+  v_granted := array(select unnest(v_after) except select unnest(v_before));
+  v_revoked := array(select unnest(v_before) except select unnest(v_after));
+
+  if cardinality(v_granted) > 0 or cardinality(v_revoked) > 0 then
+    perform public.log_audit(
+      'admin.visitor_permissions_changed',
+      'user',
+      p_user::text,
+      jsonb_build_object(
+        'username', v_username,
+        'account_type', 'visitor',
+        'granted', to_jsonb(v_granted),
+        'revoked', to_jsonb(v_revoked),
+        'current', to_jsonb(v_after),
+        'administrator', v_actor
+      ),
+      true,
+      null,
+      'admin'
+    );
+
+    -- Tell the account, so a capability appearing or disappearing is not a
+    -- silent change to what its interface offers.
+    if cardinality(v_granted) > 0 then
+      perform public.notify_user(
+        p_user,
+        'moderation_notice',
+        'Your Campus+ permissions changed',
+        'A Campus+ administrator granted you additional permissions.',
+        'profile',
+        p_user::text,
+        '/settings'
+      );
+    elsif cardinality(v_revoked) > 0 then
+      perform public.notify_user(
+        p_user,
+        'moderation_notice',
+        'Your Campus+ permissions changed',
+        'Some of your publishing permissions were removed by a Campus+ administrator.',
+        'profile',
+        p_user::text,
+        '/settings'
+      );
+    end if;
+  end if;
+
+  return jsonb_build_object(
+    'ok', true,
+    'user_id', p_user,
+    'granted', to_jsonb(v_granted),
+    'revoked', to_jsonb(v_revoked),
+    'current', to_jsonb(v_after)
+  );
+end;
+$$;
+
+comment on function public.admin_set_visitor_permissions(uuid, text[]) is
+  'Replaces the publishing permissions held by one external account. Audited, allow-listed, and refused for institutional accounts.';
+
+revoke all on function public.admin_set_visitor_permissions(uuid, text[]) from public, anon;
+grant execute on function public.admin_set_visitor_permissions(uuid, text[]) to authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- 5. Reading an external account's email, for authorised administrators
+-- ----------------------------------------------------------------------------
+-- Supabase Auth is the only place an email is stored (migration 002 says so
+-- explicitly). An administrator needs it to recognise an external person, who
+-- has no institutional identity to go on. Rather than duplicating the address
+-- onto a table, expose it through this narrow, permission-checked function.
+
+create or replace function public.admin_external_user_emails(p_profile_ids uuid[])
+returns table (profile_id uuid, email text)
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not (public.has_permission('manage_users') or public.is_trusted_writer()) then
+    raise exception 'You do not have permission to read account emails.' using errcode = '42501';
+  end if;
+
+  return query
+    select pp.profile_id, u.email::text
+      from public.profile_private pp
+      join auth.users u on u.id = pp.auth_user_id
+     where pp.profile_id = any (coalesce(p_profile_ids, array[]::uuid[]))
+       and pp.account_type = 'visitor';
+end;
+$$;
+
+comment on function public.admin_external_user_emails(uuid[]) is
+  'Verified emails for external accounts only, for administrators who manage users. The address is never copied to a public table.';
+
+revoke all on function public.admin_external_user_emails(uuid[]) from public, anon;
+grant execute on function public.admin_external_user_emails(uuid[]) to authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- 6. Guard: a grant can never attach to a non-visitor, and never widens a role
+-- ----------------------------------------------------------------------------
+-- Defence in depth for the maintenance path: even a trusted writer cannot use
+-- this table to hand a student a capability outside their role, because the
+-- insert is refused at the row level.
+
+create or replace function public.guard_visitor_permission_grant()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_account_type public.account_type;
+begin
+  select pp.account_type into v_account_type
+    from public.profile_private pp where pp.profile_id = new.user_id;
+
+  if coalesce(v_account_type::text, '') <> 'visitor' then
+    raise exception 'Publishing grants apply to external accounts only.'
+      using errcode = '42501';
+  end if;
+
+  if not public.visitor_grantable_permission(new.permission_key) then
+    raise exception '% is not a grantable publishing permission.', new.permission_key
+      using errcode = '42501';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists visitor_permission_grants_guard on public.visitor_permission_grants;
+create trigger visitor_permission_grants_guard
+  before insert or update on public.visitor_permission_grants
+  for each row execute function public.guard_visitor_permission_grant();
+
+revoke all on function public.guard_visitor_permission_grant() from public, anon;
+
+-- ----------------------------------------------------------------------------
+-- 7. Institutional profile fields stay empty on an external account
+-- ----------------------------------------------------------------------------
+-- `complete_profile()` already nulls branch/year/division for a visitor, but
+-- `profiles_update_self` lets an account update its own row column by column.
+-- Without this guard a visitor could PUT a branch and year straight at the REST
+-- API and appear to be a student in every listing that renders those fields.
+-- The academic fields belong to an institutional identity, so the database, not
+-- the settings form, is what keeps them empty.
+
+create or replace function public.guard_visitor_profile_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_account_type public.account_type;
+begin
+  select pp.account_type into v_account_type
+    from public.profile_private pp where pp.profile_id = new.id;
+
+  if coalesce(v_account_type::text, '') = 'visitor' then
+    new.branch := null;
+    new.year := null;
+    new.division := null;
+    new.show_branch_year := false;
+  end if;
+
+  return new;
+end;
+$$;
+
+comment on function public.guard_visitor_profile_fields() is
+  'An external account has no branch, year or division; clears them on every write so the REST API cannot set them either.';
+
+drop trigger if exists profiles_guard_visitor_fields on public.profiles;
+create trigger profiles_guard_visitor_fields
+  before insert or update on public.profiles
+  for each row execute function public.guard_visitor_profile_fields();
+
+revoke all on function public.guard_visitor_profile_fields() from public, anon;
+
+-- ----------------------------------------------------------------------------
+-- 9. Listing external accounts, with search that actually searches
+-- ----------------------------------------------------------------------------
+-- The admin screen has to answer "find this external person" by username,
+-- display name *or* email. Those three live in different places — `profiles`,
+-- and `auth.users` for the address — and the address cannot be read by the
+-- client at all. Paging each table and filtering the page in JavaScript would
+-- only ever search the rows already fetched, so a visitor who is not on the
+-- first page would be invisible to the search box.
+--
+-- Doing it here also makes `total` truthful: the count and the rows come from
+-- the same predicate, so pagination cannot disagree with the search.
+
+create or replace function public.admin_list_external_users(
+  p_query text default null,
+  p_limit integer default 50,
+  p_offset integer default 0
+)
+returns table (
+  profile_id uuid,
+  auth_user_id uuid,
+  username text,
+  display_name text,
+  email text,
+  account_type public.account_type,
+  account_status public.account_status,
+  created_at timestamptz,
+  roles text[],
+  total bigint
+)
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_term text := nullif(btrim(coalesce(p_query, '')), '');
+  v_limit integer := least(greatest(coalesce(p_limit, 50), 1), 200);
+  v_offset integer := greatest(coalesce(p_offset, 0), 0);
+begin
+  if not (public.has_permission('manage_users') or public.is_trusted_writer()) then
+    raise exception 'You do not have permission to list external accounts.' using errcode = '42501';
+  end if;
+
+  return query
+    with matched as (
+      select pp.profile_id,
+             pp.auth_user_id,
+             p.username,
+             p.display_name,
+             u.email::text as email,
+             pp.account_type,
+             pp.account_status,
+             coalesce(p.created_at, pp.created_at) as created_at,
+             coalesce(
+               (select array_agg(ur.role_key order by ur.role_key)
+                  from public.user_roles ur where ur.user_id = pp.profile_id),
+               array[]::text[]
+             ) as roles
+        from public.profile_private pp
+        join auth.users u on u.id = pp.auth_user_id
+        left join public.profiles p on p.id = pp.profile_id
+       where pp.account_type = 'visitor'
+         and (
+           v_term is null
+           or p.username ilike '%' || v_term || '%'
+           or p.display_name ilike '%' || v_term || '%'
+           or u.email ilike '%' || v_term || '%'
+         )
+    )
+    select m.profile_id, m.auth_user_id, m.username, m.display_name, m.email,
+           m.account_type, m.account_status, m.created_at, m.roles,
+           count(*) over () as total
+      from matched m
+     order by m.created_at desc nulls last, m.profile_id
+     limit v_limit offset v_offset;
+end;
+$$;
+
+comment on function public.admin_list_external_users(text, integer, integer) is
+  'External accounts for the admin screen: one row per visitor, with username, display name, verified email, roles and a search across all three.';
+
+revoke all on function public.admin_list_external_users(text, integer, integer) from public, anon;
+grant execute on function public.admin_list_external_users(text, integer, integer) to authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- 8. A granted capability never widens scope
+-- ----------------------------------------------------------------------------
+-- Granting `create_posts` answers "may this account publish at all?". It must
+-- not also answer "…into a private community?" or "…to a campus-only audience?",
+-- because those audiences are made of accounts the visitor is not part of. The
+-- insert policy in migration 005 checked permission, visibility and membership
+-- independently and so allowed exactly that: a visitor holding `create_posts`
+-- could publish a post with `visibility = 'campus'`, or into a community it had
+-- joined, and it would then be delivered to campus-only readers.
+--
+-- External accounts publish to the public sphere, and to communities that are
+-- themselves public. The `posts_update_author` policy is re-issued for the same
+-- reason: without it a visitor could create a public post and then widen it with
+-- an UPDATE, which would make the insert guard decorative.
+
+create or replace function public.post_scope_allowed_to_current(p_visibility public.visibility_level, p_community uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select case
+    when not public.is_visitor() then true
+    -- An external account never addresses an institutional audience ...
+    when p_visibility in ('campus', 'community', 'private') then false
+    -- ... and never posts inside a community it could not show the post to.
+    when p_community is null then true
+    else exists (
+      select 1 from public.communities c
+       where c.id = p_community
+         and c.visibility = 'public'
+    )
+  end;
+$$;
+
+comment on function public.post_scope_allowed_to_current(public.visibility_level, uuid) is
+  'An external account may publish to the public sphere only. Institutional accounts are unaffected.';
+
+revoke all on function public.post_scope_allowed_to_current(public.visibility_level, uuid) from public, anon;
+grant execute on function public.post_scope_allowed_to_current(public.visibility_level, uuid) to authenticated, service_role;
+
+drop policy if exists posts_insert_own on public.posts;
+create policy posts_insert_own on public.posts
+  for insert to authenticated
+  with check (
+    author_id = public.current_profile_id()
+    and public.is_active_user()
+    and public.has_permission('create_posts')
+    and public.is_active_profile(author_id)
+    and status in ('published', 'pending')
+    and (is_official = false or public.has_permission('manage_notices'))
+    and (community_id is null or public.can_post_in_community(community_id))
+    and (kind <> 'poll' or public.has_permission('create_polls'))
+    -- migration 081: holding the capability must not also widen the audience
+    and public.post_scope_allowed_to_current(visibility, community_id)
+  );
+
+comment on policy posts_insert_own on public.posts is
+  'Own posts only. External accounts are limited to the public sphere and public communities (migration 081).';
+
+-- The author's update path is re-issued to re-check the same invariants. Editing
+-- a post must not be a way to reach an audience the insert refused.
+drop policy if exists posts_update_author on public.posts;
+create policy posts_update_author on public.posts
+  for update to authenticated
+  using (author_id = public.current_profile_id() and public.is_active_user())
+  with check (
+    author_id = public.current_profile_id()
+    and public.has_permission('create_posts')
+    and (is_official = false or public.has_permission('manage_notices'))
+    and (community_id is null or public.can_post_in_community(community_id))
+    and (kind <> 'poll' or public.has_permission('create_polls'))
+    and public.post_scope_allowed_to_current(visibility, community_id)
+  );
+
+comment on policy posts_update_author on public.posts is
+  'Own posts only, re-checked against the same capability and scope rules as insert (migration 081).';
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)
