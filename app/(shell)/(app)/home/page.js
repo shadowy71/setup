@@ -30,7 +30,7 @@ export default async function HomePage() {
   const profile = user.profile;
   const userId = profile.id;
 
-  // External accounts read the public feed. The noticeboard shortcut points at
+  // External accounts can also read published Home posts. The noticeboard shortcut points at
   // a campus-internal surface, so it is not offered to them.
   const institutional = isInstitutional(actor);
   const visitor = isVisitor(actor);
@@ -48,7 +48,7 @@ export default async function HomePage() {
     <div className="home-stage">
       {visitor ? (
         <Notice tone="neutral" icon="info">
-          You are signed in as a Visitor. You can read public content, follow clubs and events,
+          You are signed in as a Visitor. You can read published Home posts and public content, follow clubs and events,
           and manage your own profile. Publishing is disabled unless a Campus+ administrator
           grants it to your account.
         </Notice>

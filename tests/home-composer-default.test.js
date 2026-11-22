@@ -11,6 +11,7 @@ describe('Home composer default', () => {
     const html = renderToStaticMarkup(React.createElement(HomeComposer, { canPost: true, authorName: 'Alex' }));
     expect(html).toContain('New on campus');
     expect(html).toContain('Posts, discussions and polls');
+    expect(html).toContain('Published Home posts can be read by all signed-in Campus+ users, including visitors.');
     expect(html).toContain('data-testid="editor">Editor: post');
     expect(html).not.toContain('home-composer__open');
   });

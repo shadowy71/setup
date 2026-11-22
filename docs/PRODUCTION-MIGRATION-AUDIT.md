@@ -1,6 +1,12 @@
 # Production migration history and onboarding audit
 
-Read-only audit of project `eooysgxgvhbgohdmomji`, snapshot 2026-11-22. No production migration, history row, profile, grant or policy was modified by this audit.
+Read-only audit of project `eooysgxgvhbgohdmomji`, snapshot 2026-11-22. No production migration, history row, profile, grant or policy was modified by that audit.
+
+## Subsequent change: visitor Home post access (084)
+
+After the audit, migration `20261122000005_084_visitor_home_posts.sql` was applied separately to production via Supabase's create-migration operation. Production recorded it as `20261122153656_084_visitor_home_posts`, not the repository version. The one stored SQL statement's MD5 (`408fe2b1455c2a02d79d169483a71c32`) matched the repository file bytes at application time. Both post/comment policies and their comments were checked in the production catalog after application; RLS remained enabled on both tables. This changes the audience of existing and future published standalone campus posts to include signed-in active visitors, without changing the shared community gate. No production user accounts were modified for verification. An end-to-end authenticated production feed test was not performed.
+
+History remains divergent: do not infer that 080–083 are fully applied or blindly run `supabase db push` or mark repository versions as applied. The app changes that disclose the wider audience to authors and change the college placeholder must be deployed separately. During the preflight, production `campus_feed(integer,integer,text)` was observed to be SECURITY INVOKER but to differ from the repository's migration 038 definition (including its 50-row limit and ordering); this unrelated divergence was not repaired.
 
 ## Findings and limits
 
