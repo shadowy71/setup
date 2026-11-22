@@ -91,6 +91,15 @@ export default async function UserProfilePage({ params }) {
             <h2 className="flex items-center gap-2 text-[1.0625rem] font-semibold">
               <span className="truncate">{name}</span>
               {profile.is_staff ? <StaffDot label="Campus+ staff" /> : null}
+              {/* An outside person who has been allowed to publish is a
+                  different standing from a read-only visitor, and readers are
+                  entitled to know which they are looking at. Institutional
+                  accounts get nothing here. */}
+              {profile.is_external && profile.is_contributor ? (
+                <Badge tone="accent" title="An outside contributor allowed to publish on Campus+">
+                  External Contributor
+                </Badge>
+              ) : null}
             </h2>
             <p className="mt-0.5 text-[0.8125rem] text-muted">@{profile.username}</p>
             {profile.bio ? <p className="user-text mt-2 text-[0.9375rem] leading-relaxed"><LinkifiedText text={profile.bio} mentions /></p> : null}
@@ -99,6 +108,17 @@ export default async function UserProfilePage({ params }) {
                 <div className="flex items-center gap-1">
                   <dt className="sr-only">Branch and year</dt>
                   <dd>{[profile.branch, profile.year].filter(Boolean).join(' · ')}</dd>
+                </div>
+              ) : null}
+              {/* An external account's own college and year. Labelled, because
+                  without the label it would read as PCCOE data. */}
+              {profile.is_external && (profile.visitor_college_name || profile.visitor_year) ? (
+                <div className="flex items-center gap-1">
+                  <dt className="sr-only">External account, college and year</dt>
+                  <dd>
+                    {[profile.visitor_year, profile.visitor_college_name].filter(Boolean).join(' at ')}
+                    <span className="text-muted"> · external</span>
+                  </dd>
                 </div>
               ) : null}
               <div className="flex items-center gap-1">

@@ -157,15 +157,26 @@ describe('guided profile form', () => {
     const visitorHtml = htmlOf(React.createElement(OnboardingForm, { accountType: 'visitor' }));
     const studentHtml = htmlOf(React.createElement(OnboardingForm, { accountType: 'student' }));
 
-    // A visitor walks a shorter flow: name, username, bio, privacy-free, rules.
-    expect(visitorHtml).toContain('STEP 1 / 4');
+    // A visitor walks six questions (migration 082): name, username, college,
+    // year at their own college, bio and the rules. The institutional trio
+    // (branch / year / division) and the privacy toggle are gone.
+    expect(visitorHtml).toContain('STEP 1 / 6');
     expect(studentHtml).toContain('STEP 1 / 8');
-    // Neither flow asks a visitor for a branch/year/division at any point.
+
+    // No institutional question may reach a visitor at any step.
     expect(visitorHtml).not.toContain('Which branch are you in?');
-    expect(visitorHtml).not.toContain('What year are you in?');
     expect(visitorHtml).not.toContain('Do you have a division?');
-    // The student flow is unchanged.
+    expect(visitorHtml).not.toContain('Show your academic details?');
+
     const source = fs.readFileSync('components/auth/OnboardingForm.js', 'utf8');
+    // A visitor *is* asked for a year, but it is their own — and the field is
+    // `visitor_year`, never `year`. This is the assertion that would catch the
+    // two columns being conflated again.
+    expect(source).toContain("field: 'visitor_year'");
+    expect(source).toContain("field: 'visitor_college_name'");
+    expect(source).toContain("title: 'Which college do you attend?'");
+    expect(source).toContain('visitorOnly: true');
+    // The student flow is unchanged.
     expect(source).toContain('Which branch are you in?');
   });
 

@@ -2,15 +2,15 @@ import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
 import { listBlockedUsers } from '@/lib/blocks';
-import { ROUTES, BRANCHES, YEARS, DIVISIONS, LIMITS, DEFAULT_PLATFORM_SETTINGS } from '@/lib/constants';
-import { Button, Card, EmptyState, LinkButton, Notice, PageHeader } from '@/components/ui';
+import { ROUTES, BRANCHES, YEARS, DIVISIONS, VISITOR_YEARS, LIMITS, DEFAULT_PLATFORM_SETTINGS } from '@/lib/constants';
+import { Badge, Button, Card, EmptyState, LinkButton, Notice, PageHeader } from '@/components/ui';
 import { ActionForm } from '@/components/forms/ActionForm';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { ProfileActions } from '@/components/profile/ProfileActions';
 import { FileUpload } from '@/components/storage/FileUpload';
 import { updateProfile, changeUsername, deactivateAccount, reactivateAccount } from '@/lib/actions/profile';
 import { markAllNotificationsRead } from '@/lib/actions/notifications';
-import { isVisitor } from '@/lib/permissions/authorization';
+import { isExternalContributor, isVisitor } from '@/lib/permissions/authorization';
 import { formatDate, daysBetween } from '@/lib/utils';
 
 export const metadata = { title: 'Settings' };
@@ -46,6 +46,7 @@ export default async function SettingsPage({ searchParams }) {
   // PRN are institutional fields. Offering them would be a form the database
   // silently discards (see guard_visitor_profile_fields, migration 081).
   const visitor = isVisitor({ accountType: user.accountType });
+  const contributor = isExternalContributor({ accountType: user.accountType, roles: user.roles });
   const grantedPermissions = visitor && tab === 'profile'
     ? (await supabase.from('visitor_permission_grants').select('permission_key').order('permission_key')).data || []
     : [];
@@ -100,15 +101,25 @@ export default async function SettingsPage({ searchParams }) {
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[0.8125rem] font-semibold">Account type</span>
               <span className="chip" data-active="true">Visitor</span>
+              {/* The standing is a separate statement from the account type: an
+                  account is always a Visitor, and may additionally be a
+                  contributor or hold individual permissions. */}
+              {contributor ? <Badge tone="accent">External Contributor</Badge> : null}
             </div>
             <p className="text-2xs text-muted">
               You sign in with {user.email || 'an external email address'}, which is not an institutional address.
               You can read public content and manage this profile. Publishing is off by default; a Campus+ administrator
               can grant individual permissions — your account type stays Visitor either way.
             </p>
+            {contributor ? (
+              <p className="text-2xs text-muted">
+                You are also an <strong>External Contributor</strong>: an outside person Campus+ has allowed to
+                publish. That is a separate arrangement from your account type, and it does not make you a student.
+              </p>
+            ) : null}
             <p className="text-2xs text-muted">
               {grantedPermissions.length
-                ? `Granted: ${grantedPermissions.map((row) => row.permission_key.replace(/_/g, ' ')).join(', ')}`
+                ? `Your permissions: ${grantedPermissions.map((row) => row.permission_key.replace(/_/g, ' ')).join(', ')}`
                 : 'No publishing permissions granted. Once granted, they apply immediately.'}
             </p>
           </Card>
@@ -123,7 +134,10 @@ export default async function SettingsPage({ searchParams }) {
             { name: 'display_name', label: 'Display name', required: true, maxLength: LIMITS.displayName.max, defaultValue: profile.display_name || '' },
             { name: 'bio', label: 'Bio', type: 'textarea', rows: 3, maxLength: LIMITS.bio.max, defaultValue: profile.bio || '', hint: 'Up to 280 characters. No contact details — people can message you here.' },
             ...(visitor
-              ? []
+              ? [
+                  { name: 'visitor_college_name', label: 'College', maxLength: LIMITS.collegeName.max, defaultValue: profile.visitor_college_name || '', hint: 'The institution you attend. Shown on your profile.' },
+                  { name: 'visitor_year', label: 'Year', type: 'select', defaultValue: profile.visitor_year || '', options: VISITOR_YEARS.map((year) => ({ value: year, label: year })), hint: 'Your year at your own college.' },
+                ]
               : [
                   { name: 'branch', label: 'Branch', type: 'select', defaultValue: profile.branch || '', options: BRANCHES.map((branch) => ({ value: branch, label: branch })) },
                   { name: 'year', label: 'Year', type: 'select', defaultValue: profile.year || '', options: YEARS.map((year) => ({ value: year, label: year })) },
@@ -214,10 +228,14 @@ export default async function SettingsPage({ searchParams }) {
             <h2 className="text-sm font-semibold">What other students can see</h2>
             <ul className="flex list-inside list-disc flex-col gap-1 text-[0.8125rem] text-muted">
               <li>Your display name, username and bio.</li>
-              <li>
-                Your branch and year — currently {profile.show_branch_year === false ? 'hidden' : 'visible'}. Toggle
-                this on the Profile tab.
-              </li>
+              {visitor ? (
+                <li>Your college and year, if you added them. You can change or clear them on the Profile tab.</li>
+              ) : (
+                <li>
+                  Your branch and year — currently {profile.show_branch_year === false ? 'hidden' : 'visible'}. Toggle
+                  this on the Profile tab.
+                </li>
+              )}
               <li>Posts, comments and marketplace listings you publish.</li>
               <li>
                 Direct messages from other students — currently{' '}

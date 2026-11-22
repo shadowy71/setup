@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
-import { can, showsRoleBadge, toActor } from '@/lib/permissions/authorization';
+import { can, isVisitor, showsRoleBadge, toActor } from '@/lib/permissions/authorization';
 import { getProfileCounts } from '@/lib/data/profiles';
 import { getPostsByAuthor } from '@/lib/data/feed';
 import { LiveFeedSync } from '@/components/social/LiveFeedSync';
@@ -34,6 +34,9 @@ export default async function ProfilePage() {
   ]);
 
   const name = profile.display_name || `@${profile.username}`;
+  // An external account's college and year describe their own institution and
+  // are never mixed into the branch · year line, which means "PCCOE student".
+  const visitor = isVisitor({ accountType: user.accountType });
 
   return (
     <div className="flex flex-col gap-4">
@@ -68,6 +71,12 @@ export default async function ProfilePage() {
             <dl className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-muted">
               {profile.branch || profile.year ? (
                 <dd>{[profile.branch, profile.year].filter(Boolean).join(' · ')}</dd>
+              ) : null}
+              {visitor && (profile.visitor_college_name || profile.visitor_year) ? (
+                <dd>
+                  {[profile.visitor_year, profile.visitor_college_name].filter(Boolean).join(' at ')}
+                  <span className="text-muted"> (external)</span>
+                </dd>
               ) : null}
               <dd>Joined {formatDate(profile.created_at)}</dd>
               <dd>{counts.posts} post{counts.posts === 1 ? '' : 's'}</dd>

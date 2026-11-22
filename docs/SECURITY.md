@@ -56,6 +56,23 @@ and after every deployment.
   unioned into `has_permission()` for **external accounts only**, and only for
   an allow-list of publishing capabilities. They cannot confer `manage_users`,
   `assign_roles`, moderation, or campus-official content.
+* `visitor` and `external_contributor` are different mechanisms, not two grades
+  of access. `visitor` is the baseline the signup trigger assigns; it is never
+  granted by a person. `external_contributor` is an entitlement an administrator
+  confers on one account, and its permissions are honoured **only** for an
+  external account — a role row inserted directly to bypass `grant_role()`
+  confers nothing on a student, because `has_permission()` applies the condition
+  at resolution time (migration 083). This matters because
+  `user_roles_insert_admin` is a table-level policy and cannot see which role is
+  being inserted.
+* An external account may hold its **own** college name and year
+  (`visitor_college_name`, `visitor_year`, migration 082) but never the
+  institutional `branch` / `year` / `division`, which the directory and the
+  study-partner matcher read as proof of membership. `guard_visitor_profile_fields()`
+  clears the wrong pair on every write regardless of who writes it, including a
+  trusted writer, and the same rule runs in reverse for a student. The visitor's
+  columns are only ever rendered with an explicit "external" label, and are never
+  used to classify the account.
 * Sign-in needs no app-side rate limit: it sends no mail and issues no code (so
   it can be neither an email relay nor a guessable secret), and Supabase Auth
   and Google rate-limit the authorization endpoint themselves. The old
