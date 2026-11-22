@@ -494,7 +494,7 @@ begin
   -- A public club and a campus-only club.
   insert into public.communities (id, name, slug, description, kind, visibility, status, created_by)
   values
-    ('dd000000-0000-4000-a000-0000000000e1', 'Public Club', 'public-club-080', 'Open to all.', 'club', 'public', 'published', v_author),
+    ('dd000000-0000-4000-a000-0000000000f1', 'Public Club', 'public-club-080', 'Open to all.', 'club', 'public', 'published', v_author),
     ('dd000000-0000-4000-a000-0000000000e2', 'Campus Club', 'campus-club-080', 'Students only.', 'club', 'campus', 'published', v_author);
 
   -- An internal notice.
@@ -542,7 +542,7 @@ begin
     'a visitor must NOT read comments on a campus-only post');
 
   select count(*) into v_public_club from public.communities
-   where id = 'dd000000-0000-4000-a000-0000000000e1';
+   where id = 'dd000000-0000-4000-a000-0000000000f1';
   perform public.test_assert(v_public_club = 1, 'a visitor must see a public club');
 
   select count(*) into v_campus_club from public.communities
@@ -1464,5 +1464,457 @@ begin
     ),
     'no external account may hold an address on an active college domain'
   );
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 18. An account without a username, and the visitor's own year and college
+-- ---------------------------------------------------------------------------
+-- Two changes landed after the first production sign-up exposed them:
+--
+--   * `admin_set_visitor_permissions()` used `profiles.username` as its
+--     existence check. A username is only claimed during onboarding, so every
+--     freshly signed-in external account — the exact account an administrator
+--     goes looking for — was rejected with "That account could not be found",
+--     and no grant was possible until the visitor happened to finish
+--     onboarding first. Migration 082 checks `profile_private` instead.
+--
+--   * Visitors were previously refused a year of any kind. They now answer
+--     "which college do you attend?" and "what year are you in?", stored in
+--     `visitor_college_name` / `visitor_year`. The institutional `year` column
+--     stays off-limits, so the student directory cannot be poisoned.
+
+do $$
+declare
+  v_fresh_auth uuid := 'dd000000-0000-4000-a000-0000000000f1';
+  v_fresh uuid;
+  v_result jsonb;
+  v_username text;
+  v_completed boolean;
+  v_row public.profiles;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  -- A brand-new external sign-up, exactly as the trigger leaves it: a profile
+  -- row, a profile_private row, a visitor role - and no username.
+  insert into auth.users (id, email) values (v_fresh_auth, 'brand.new.external@gmail.com')
+  on conflict (id) do nothing;
+
+  select pp.profile_id into v_fresh from public.profile_private pp
+   where pp.auth_user_id = v_fresh_auth;
+
+  perform public.test_assert(v_fresh is not null, 'the signup trigger must create a profile_private row');
+
+  select p.username into v_username from public.profiles p where p.id = v_fresh;
+  perform public.test_assert(v_username is null, 'a fresh account must not have a username yet');
+
+  -- THE REGRESSION: granting before onboarding must work.
+  v_result := public.admin_set_visitor_permissions(v_fresh, array['create_posts']);
+
+  perform public.test_assert(
+    v_result->>'ok' = 'true',
+    'an administrator must be able to grant permissions before the account has a username'
+  );
+  perform public.test_assert(
+    (select count(*) from public.visitor_permission_grants g
+      where g.user_id = v_fresh and g.permission_key = 'create_posts') = 1,
+    'the grant must be recorded for an account with no username'
+  );
+
+  -- The capability resolves immediately, without a username and without a
+  -- completed profile.
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform set_config('request.jwt.claim.sub', v_fresh_auth::text, false);
+  perform public.test_assert(
+    public.has_permission('create_posts'),
+    'a granted capability must apply to an account that has not onboarded'
+  );
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  -- An institutional account is still refused, username or not.
+  perform public.test_assert_denied(
+    $sql$select public.admin_set_visitor_permissions(
+           (select pp.profile_id from public.profile_private pp
+             where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001'),
+           array['create_posts'])$sql$,
+    'a student must never be routed through the visitor grant path'
+  );
+
+  -- A genuinely missing account still raises, so the fix did not turn the
+  -- existence check into a no-op.
+  perform public.test_assert_denied(
+    $sql$select public.admin_set_visitor_permissions(
+           'dd000000-0000-4000-a000-0000000000ff'::uuid, array['create_posts'])$sql$,
+    'an unknown profile id must still be reported as not found'
+  );
+
+  -- The new account finishes onboarding with its own details.
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform set_config('request.jwt.claim.sub', v_fresh_auth::text, false);
+  perform public.complete_profile(
+    'brand_new_external',
+    'Brand New External',
+    null,          -- bio
+    null,          -- branch
+    null,          -- year
+    null,          -- division
+    true,          -- show_branch_year
+    'Sinhgad College of Engineering',
+    'Second Year'
+  );
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select * into v_row from public.profiles where id = v_fresh;
+  select pp.profile_completed into v_completed from public.profile_private pp where pp.profile_id = v_fresh;
+
+  perform public.test_assert(v_row.username = 'brand_new_external', 'a visitor must be able to claim a username');
+  perform public.test_assert(v_completed, 'a visitor must be able to complete their profile');
+  perform public.test_assert(
+    v_row.visitor_college_name = 'Sinhgad College of Engineering',
+    'a visitor''s own college must be stored'
+  );
+  perform public.test_assert(v_row.visitor_year = 'Second Year', 'a visitor''s own year must be stored');
+  -- …and must never leak into the institutional columns.
+  perform public.test_assert(v_row.year is null, 'a visitor''s year must not be written to profiles.year');
+  perform public.test_assert(v_row.branch is null, 'a visitor must not acquire a branch');
+  perform public.test_assert(v_row.division is null, 'a visitor must not acquire a division');
+end;
+$$;
+
+-- The direct-API route: a visitor may write its own two columns, but can never
+-- write the institutional pair in the same statement.
+do $$
+declare
+  v_auth uuid := 'dd000000-0000-4000-a000-0000000000f1';
+  v_row public.profiles;
+begin
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform set_config('request.jwt.claim.sub', v_auth::text, false);
+  perform set_config('role', 'authenticated', true);
+
+  update public.profiles
+     set visitor_college_name = 'Changed College',
+         visitor_year = 'Final Year',
+         branch = 'Computer Engineering',
+         year = 'Third Year',
+         division = 'B'
+   where id = public.current_profile_id();
+
+  perform set_config('role', 'none', true);
+
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select * into v_row from public.profiles
+   where id = (select pp.profile_id from public.profile_private pp where pp.auth_user_id = v_auth);
+
+  perform public.test_assert(v_row.visitor_college_name = 'Changed College', 'a visitor may edit its own college');
+  perform public.test_assert(v_row.visitor_year = 'Final Year', 'a visitor may edit its own year');
+  perform public.test_assert(v_row.branch is null, 'the academic columns stay clamped in the same write');
+  perform public.test_assert(v_row.year is null, 'the institutional year stays clamped in the same write');
+  perform public.test_assert(v_row.division is null, 'the division stays clamped in the same write');
+end;
+$$;
+
+-- The mirror rule: an institutional account cannot hold visitor-only fields,
+-- even when a trusted writer sets them.
+do $$
+declare
+  v_student uuid;
+  v_row public.profiles;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select pp.profile_id into v_student from public.profile_private pp
+   where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001';
+
+  update public.profiles
+     set visitor_college_name = 'Somewhere Else',
+         visitor_year = 'First Year'
+   where id = v_student;
+
+  select * into v_row from public.profiles where id = v_student;
+
+  perform public.test_assert(v_row.visitor_college_name is null, 'a student must not hold a visitor college name');
+  perform public.test_assert(v_row.visitor_year is null, 'a student must not hold a visitor year');
+end;
+$$;
+
+-- public_profiles exposes the visitor fields and the boolean that labels them.
+do $$
+declare
+  v_row public.public_profiles;
+  v_student_row public.public_profiles;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select * into v_row from public.public_profiles
+   where id = (select pp.profile_id from public.profile_private pp
+                where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000f1');
+
+  perform public.test_assert(v_row.is_external, 'the public projection must label an external account');
+  perform public.test_assert(v_row.visitor_college_name is not null, 'the public projection must carry the college');
+  perform public.test_assert(v_row.visitor_year is not null, 'the public projection must carry the year');
+
+  select * into v_student_row from public.public_profiles
+   where id = (select pp.profile_id from public.profile_private pp
+                where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001');
+
+  perform public.test_assert(not v_student_row.is_external, 'a student must not be labelled external');
+end;
+$$;
+
+-- Cleanup: leave no evidence behind for the next suite.
+do $$
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+  delete from public.visitor_permission_grants
+   where user_id = (select pp.profile_id from public.profile_private pp
+                     where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000f1');
+  delete from auth.users where id = 'dd000000-0000-4000-a000-0000000000f1';
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 19. Visitor and External Contributor are different things
+-- ---------------------------------------------------------------------------
+-- `visitor` is the account type's baseline: read-only, plus own profile and
+-- reporting, granted by the signup trigger and never by a human.
+--
+-- `external_contributor` is an entitlement a person gives one account. This
+-- section proves the three properties that make the difference real:
+--
+--   1. the entitlement confers nothing on an institutional account, even if the
+--      role row arrives through the table rather than through grant_role();
+--   2. it applies normally to an external account, through the same
+--      has_permission() every other permission goes through;
+--   3. granting it never changes the account type.
+
+-- This section provisions its own external account, because section 18 deletes
+-- the one it created. An external address goes through the real signup trigger,
+-- so the account arrives as a visitor with no username — which is now enough to
+-- hold a role or a grant (082).
+do $$
+declare
+  v_student uuid;
+  v_visitor uuid;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  insert into auth.users (id, email)
+  values ('dd000000-0000-4000-a000-0000000000f1', 'contributor.probe@gmail.com')
+  on conflict (id) do nothing;
+
+  select pp.profile_id into v_student from public.profile_private pp
+   where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001';
+  select pp.profile_id into v_visitor from public.profile_private pp
+   where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000f1';
+
+  -- The role now confers a permission, so "it changed nothing" is a real test
+  -- rather than a tautology.
+  insert into public.role_permissions (role_key, permission_key)
+  values ('external_contributor', 'create_posts')
+  on conflict do nothing;
+
+  -- The student gets the role by direct insert, bypassing grant_role()'s check
+  -- in 083 §4. This is the path that RLS cannot police, because
+  -- user_roles_insert_admin is a table-level policy and cannot see which role
+  -- is being inserted.
+  insert into public.user_roles (user_id, role_key)
+  values (v_student, 'external_contributor')
+  on conflict do nothing;
+
+  -- ...and the same role on an external account, where it must take effect.
+  insert into public.user_roles (user_id, role_key)
+  values (v_visitor, 'external_contributor')
+  on conflict do nothing;
+end;
+$$;
+
+do $$
+declare
+  v_student_auth uuid;
+  v_visitor_auth uuid;
+  v_student_has boolean;
+  v_visitor_has boolean;
+  v_standing text;
+  v_type public.account_type;
+begin
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+
+  select pp.auth_user_id into v_student_auth from public.profile_private pp
+   where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001';
+  select pp.auth_user_id into v_visitor_auth from public.profile_private pp
+   where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000f1';
+
+  -- 1. The institutional account holding the role must gain nothing from it.
+  perform set_config('request.jwt.claim.sub', v_student_auth::text, false);
+  perform public.test_assert(
+    public.has_permission('create_posts'),
+    'a student keeps the permissions their own role already gives them'
+  );
+
+  perform set_config('request.jwt.claim.sub', v_visitor_auth::text, false);
+  v_visitor_has := public.has_permission('create_posts');
+  perform public.test_assert(
+    v_visitor_has,
+    'the same role must confer its permissions on an external account'
+      || ' [type=' || coalesce(public.account_type_of(public.current_profile_id())::text, 'NULL')
+      || ' active=' || public.is_active_user()::text
+      || ' roles=' || coalesce((select string_agg(role_key, ',') from public.user_roles
+                                 where user_id = public.current_profile_id()), 'NONE')
+      || ']'
+  );
+
+  -- 3. The account type is untouched by any of this.
+  select pp.account_type into v_type from public.profile_private pp
+   where pp.auth_user_id = v_visitor_auth;
+  perform public.test_assert(v_type = 'visitor', 'a contributor is still an external account');
+
+  v_standing := public.external_standing();
+  perform public.test_assert(v_standing = 'contributor', 'the standing must report contributor');
+
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+end;
+$$;
+
+-- The leak this migration closes, stated directly: strip the student's own
+-- permissions and the contributor role must still confer nothing to them.
+do $$
+declare
+  v_student_auth uuid;
+  v_student uuid;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select pp.auth_user_id, pp.profile_id into v_student_auth, v_student
+    from public.profile_private pp where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001';
+
+  -- Move the account off Student (so it has no role that grants create_posts
+  -- either) but keep the contributor role. has_permission() must still say no:
+  -- the contributor branch is conditional on being external.
+  delete from public.user_roles where user_id = v_student and role_key = 'student';
+
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform set_config('request.jwt.claim.sub', v_student_auth::text, false);
+  perform public.test_assert(
+    not public.has_permission('create_posts'),
+    'the contributor role must confer nothing on an institutional account'
+  );
+
+  -- And the standing must not describe them as a contributor.
+  perform public.test_assert(
+    public.external_standing() = 'institutional',
+    'an institutional account has no external standing'
+  );
+
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+end;
+$$;
+
+-- grant_role() refuses the entitlement on an institutional account, and accepts
+-- it on an external one.
+do $$
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  perform public.test_assert_denied(
+    $sql$select public.grant_role(
+           (select pp.profile_id from public.profile_private pp
+             where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001'),
+           'external_contributor')$sql$,
+    'External Contributor must not be grantable to an institutional account'
+  );
+
+  perform public.test_assert(
+    public.grant_role(
+      (select pp.profile_id from public.profile_private pp
+        where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000f1'),
+      'external_contributor'
+    )->>'ok' = 'true',
+    'External Contributor must be grantable to an external account'
+  );
+end;
+$$;
+
+-- The three standings, driven from the database rather than derived in the UI.
+do $$
+declare
+  v_auth uuid;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select pp.auth_user_id into v_auth from public.profile_private pp
+   where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000f1';
+
+  -- Contributor already established above.
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform set_config('request.jwt.claim.sub', v_auth::text, false);
+  perform public.test_assert(public.external_standing() = 'contributor', 'standing: contributor');
+  perform public.test_assert(public.is_external_contributor(), 'is_external_contributor: true');
+
+  -- Drop the role, grant one capability: permitted visitor.
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  delete from public.user_roles where role_key = 'external_contributor'
+    and user_id = (select pp.profile_id from public.profile_private pp
+                    where pp.auth_user_id = v_auth);
+
+  perform public.admin_set_visitor_permissions(
+    (select pp.profile_id from public.profile_private pp where pp.auth_user_id = v_auth),
+    array['create_posts']
+  );
+
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform public.test_assert(public.external_standing() = 'permitted_visitor', 'standing: permitted visitor');
+  perform public.test_assert(not public.is_external_contributor(), 'is_external_contributor: false');
+  perform public.test_assert(public.has_permission('create_posts'), 'a permitted visitor can publish');
+
+  -- Drop the grant too: read-only visitor.
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform public.admin_set_visitor_permissions(
+    (select pp.profile_id from public.profile_private pp where pp.auth_user_id = v_auth),
+    array[]::text[]
+  );
+
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  perform public.test_assert(public.external_standing() = 'read_only_visitor', 'standing: read-only visitor');
+  perform public.test_assert(not public.has_permission('create_posts'), 'a read-only visitor cannot publish');
+end;
+$$;
+
+-- Cleanup: leave the fixture roles and permissions as they were found.
+do $$
+declare
+  v_student uuid;
+begin
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  perform set_config('request.jwt.claim.sub', '', false);
+
+  select pp.profile_id into v_student from public.profile_private pp
+   where pp.auth_user_id = 'dd000000-0000-4000-a000-000000000001';
+
+  -- Restore the student role removed above; the rest of the suite depends on it.
+  insert into public.user_roles (user_id, role_key) values (v_student, 'student')
+  on conflict do nothing;
+
+  delete from public.user_roles where role_key = 'external_contributor';
+  delete from public.role_permissions
+   where role_key = 'external_contributor' and permission_key = 'create_posts';
+  delete from public.visitor_permission_grants
+   where user_id = (select pp.profile_id from public.profile_private pp
+                     where pp.auth_user_id = 'dd000000-0000-4000-a000-0000000000f1');
+  delete from auth.users where id = 'dd000000-0000-4000-a000-0000000000f1';
 end;
 $$;

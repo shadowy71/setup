@@ -80,7 +80,16 @@ colleges only) and writes the result to `profile_private.account_type`:
 The classification is made once, in the database, from the address Google
 verified. The callback reads it back; it never decides it, and nothing about
 authorization depends on a query parameter or on client-supplied input. An
-external account is a first-class, restricted account — not an error state.
+external account is a first-class, restricted account — not an error state. It
+claims a username through the same `complete_profile()` path as a student, and may
+record the college it attends and its year there, in
+`profiles.visitor_college_name` / `profiles.visitor_year` (migration 082). Those
+columns are separate from `branch` / `year` / `division` on purpose: the latter
+describe *this* college's students and are what the directory and the
+study-partner matcher treat as proof of membership, so a visitor's values are
+cleared from them on every write by `guard_visitor_profile_fields()`. Division is
+never asked of a visitor — it is a section code inside one department of one
+institution.
 
 The public identity is always `@username`; the email address is never rendered
 except to an administrator who manages users, and never copied out of

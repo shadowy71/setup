@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useFormAction } from '@/lib/forms';
 import { completeOnboarding } from '@/lib/actions/auth';
-import { BRANCHES, YEARS, DIVISIONS, LIMITS } from '@/lib/constants';
+import { BRANCHES, YEARS, DIVISIONS, VISITOR_YEARS, LIMITS } from '@/lib/constants';
 import { onboardingSchema, visitorOnboardingSchema, validate } from '@/lib/validation/schemas';
 import { normalizeUsername } from '@/lib/utils';
 import { GhostScene } from '@/components/atmosphere/GhostScene';
@@ -12,22 +12,57 @@ import { BrandLockup } from '@/components/brand/Brand';
 import { IndependenceNotice } from '@/components/brand/IndependenceNotice';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
-const INITIAL = { display_name: '', username: '', branch: '', year: '', division: '', bio: '', show_branch_year: true, accept_rules: false };
+const INITIAL = { display_name: '', username: '', branch: '', year: '', division: '', bio: '', show_branch_year: true, visitor_college_name: '', visitor_year: '', accept_rules: false };
+
+/* The free-text steps and their per-field affordances. Kept as one mapping so a
+ * new text question cannot silently inherit the display-name limits. */
+const TEXT_STEP_MAX = {
+  display_name: LIMITS.displayName.max,
+  username: LIMITS.username.max,
+  visitor_college_name: LIMITS.collegeName.max,
+};
+/* Short labels for the demo navigation, keyed by field so inserting a question
+ * cannot shift every label after it (which is what an index-keyed array does). */
+const STEP_LABELS = {
+  display_name: 'Name',
+  username: 'Username',
+  branch: 'Branch',
+  year: 'Year',
+  division: 'Division',
+  visitor_college_name: 'College',
+  visitor_year: 'Year',
+  bio: 'Bio',
+  show_branch_year: 'Privacy',
+  accept_rules: 'Rules',
+};
+const TEXT_STEP_PLACEHOLDER = {
+  display_name: 'Your name',
+  username: 'your_username',
+  visitor_college_name: 'e.g. Sinhgad College of Engineering',
+};
 const SAMPLE = { ...INITIAL, display_name: 'Asha Patil', username: 'asha_p', branch: 'Computer Engineering', year: 'Second Year', division: 'O', bio: 'Always curious and up for a good campus conversation.' };
 /**
- * The institutional questions. A visitor's step list is STEPS minus these —
- * see `stepsFor()` below. Keeping them in one list with an `institutionalOnly`
- * flag means the ordering, progress bar and validation stay identical for both
- * account types without a second, drifting copy of the flow.
+ * Both flows in one list. Each question is tagged with the account type that
+ * should see it, so the ordering, progress bar and validation stay identical
+ * for both without a second, drifting copy of the flow.
+ *
+ * The visitor's identity questions are not simply *removed* institutional ones.
+ * A visitor is asked for the year they are in and the name of the college they
+ * attend — their own institution, not this one — and those answers are stored in
+ * `visitor_year` / `visitor_college_name`. Division is absent entirely: it is a
+ * section code inside one department of one college and means nothing outside
+ * it. See migration 082.
  */
 const STEPS = [
   // A visitor's identity line is written for the public sphere, not for
   // classmates: an external account is not a student and does not have any.
   { field: 'display_name', eyebrow: 'A little introduction', title: 'What should we call you?', copy: 'Your display name is how you’ll appear to other people on Campus+.' },
-  { field: 'username', eyebrow: 'Make it yours', title: 'Pick your @username.', copy: 'This is how students can find and mention you. You can change it later, subject to a cooldown.' },
+  { field: 'username', eyebrow: 'Make it yours', title: 'Pick your @username.', copy: 'This is how people can find and mention you. You can change it later, subject to a cooldown.' },
   { field: 'branch', eyebrow: 'Your campus', title: 'Which branch are you in?', copy: 'Share your branch if you’d like. You can always add it later.', optional: true, institutionalOnly: true },
   { field: 'year', eyebrow: 'Your campus', title: 'What year are you in?', copy: 'This helps classmates know where you are in your journey.', optional: true, institutionalOnly: true },
   { field: 'division', eyebrow: 'Your campus', title: 'Do you have a division?', copy: 'Choose one to make your timetable shortcut more useful.', optional: true, institutionalOnly: true },
+  { field: 'visitor_college_name', eyebrow: 'Where you study', title: 'Which college do you attend?', copy: 'Campus+ is a PCCOE community, and you’re joining from outside it. Naming your college helps people know who they’re talking to. Optional.', optional: true, visitorOnly: true },
+  { field: 'visitor_year', eyebrow: 'Where you study', title: 'What year are you in?', copy: 'Your year at your own college. Optional, and always shown as your year — never as a PCCOE student’s.', optional: true, visitorOnly: true },
   { field: 'bio', eyebrow: 'A little about you', title: 'Anything you’d like to share?', copy: 'A short bio is a nice way to introduce yourself. This is completely optional.', optional: true },
   { field: 'show_branch_year', eyebrow: 'Your profile, your choice', title: 'Show your academic details?', copy: 'Choose whether your branch and year are visible on your profile.', institutionalOnly: true },
   { field: 'accept_rules', eyebrow: 'One last thing', title: 'Let’s keep this a good place.', copy: 'Campus+ works best when everyone feels welcome and respected.' },
@@ -35,7 +70,7 @@ const STEPS = [
 
 /** The steps an account type actually walks through. */
 function stepsFor(isVisitor) {
-  return isVisitor ? STEPS.filter((step) => !step.institutionalOnly) : STEPS;
+  return STEPS.filter((step) => (isVisitor ? !step.institutionalOnly : !step.visitorOnly));
 }
 
 function fieldError(field, values, isVisitor = false) {
@@ -109,7 +144,14 @@ export function OnboardingForm({ storageId = 'preview', preview = false, account
     for (const [key, value] of Object.entries(values)) formData.set(key, String(value));
     run(formData);
   };
-  const options = current.field === 'branch' ? BRANCHES : current.field === 'year' ? YEARS : current.field === 'division' ? DIVISIONS : null;
+  const options = current.field === 'branch' ? BRANCHES
+    : current.field === 'year' ? YEARS
+    : current.field === 'division' ? DIVISIONS
+    : current.field === 'visitor_year' ? VISITOR_YEARS
+    : null;
+  // The college name is free text: a visitor's institution is not in any list
+  // this platform holds, which is the whole reason they are external.
+  const isTextStep = ['display_name', 'username', 'visitor_college_name'].includes(current.field);
 
   return (
     <main className="login-stage cinematic-stage onboarding-stage">
@@ -122,7 +164,7 @@ export function OnboardingForm({ storageId = 'preview', preview = false, account
         </header>
         {preview && <nav className="onboarding-demo-nav" aria-label="Preview each question">
           <span>EXPLORE THE DEMO</span>
-          <div>{STEPS.map((item, index) => <button key={item.field} type="button" aria-current={!finished && step === index ? 'step' : undefined} onClick={() => { setFinished(false); move(index); }}>{['Name', 'Username', 'Branch', 'Year', 'Division', 'Bio', 'Privacy', 'Rules'][index]}</button>)}</div>
+          <div>{steps.map((item, index) => <button key={item.field} type="button" aria-current={!finished && step === index ? 'step' : undefined} onClick={() => { setFinished(false); move(index); }}>{STEP_LABELS[item.field] || item.field}</button>)}</div>
         </nav>}
         <section className="onboarding-content" aria-label="Profile setup">
           <div className="onboarding-topline"><span>{preview ? 'SAMPLE DEMO · NO ACCOUNT NEEDED' : 'YOUR CAMPUS+ PROFILE'}</span><span>{finished ? 'ALL DONE' : `STEP ${step + 1} / ${steps.length}`}</span></div>
@@ -136,11 +178,13 @@ export function OnboardingForm({ storageId = 'preview', preview = false, account
                 <h1 id="onboarding-question" aria-live="polite">{current.title}</h1>
                 <p className="onboarding-copy" id="onboarding-description">{current.copy}</p>
                 <div className="onboarding-control">
-                  {current.field === 'display_name' || current.field === 'username' ? (
-                    <div className="onboarding-input-wrap">{current.field === 'username' && <span aria-hidden="true">@</span>}<input id={current.field} name={current.field} aria-labelledby="onboarding-question" aria-describedby="onboarding-description onboarding-hint" aria-invalid={Boolean(localError)} value={values[current.field]} maxLength={current.field === 'username' ? LIMITS.username.max : LIMITS.displayName.max} autoComplete={current.field === 'display_name' ? 'name' : 'off'} autoCapitalize={current.field === 'username' ? 'none' : 'words'} spellCheck={false} placeholder={current.field === 'display_name' ? 'Your name' : 'your_username'} onChange={(event) => update(current.field, current.field === 'username' ? normalizeUsername(event.target.value) : event.target.value)} /></div>
+                  {isTextStep ? (
+                    <div className="onboarding-input-wrap">{current.field === 'username' && <span aria-hidden="true">@</span>}<input id={current.field} name={current.field} aria-labelledby="onboarding-question" aria-describedby="onboarding-description onboarding-hint" aria-invalid={Boolean(localError)} value={values[current.field]} maxLength={TEXT_STEP_MAX[current.field]} autoComplete={current.field === 'display_name' ? 'name' : current.field === 'visitor_college_name' ? 'organization' : 'off'} autoCapitalize={current.field === 'username' ? 'none' : 'words'} spellCheck={false} placeholder={TEXT_STEP_PLACEHOLDER[current.field]} onChange={(event) => update(current.field, current.field === 'username' ? normalizeUsername(event.target.value) : event.target.value)} /></div>
                   ) : null}
                   {current.field === 'username' && <p className="onboarding-hint" id="onboarding-hint">3–24 characters · lowercase letters, numbers and underscores</p>}
                   {current.field === 'display_name' && <p className="onboarding-hint" id="onboarding-hint">This name will be visible on your profile.</p>}
+                  {current.field === 'visitor_college_name' && <p className="onboarding-hint" id="onboarding-hint">Shown on your profile. You can change it in Settings.</p>}
+                  {current.field === 'visitor_year' && <p className="onboarding-hint" id="onboarding-hint">Shown on your profile as your year at your own college.</p>}
                   {options && <fieldset className={`onboarding-options ${current.field === 'division' ? 'onboarding-options--division' : ''}`} aria-labelledby="onboarding-question" aria-describedby="onboarding-description"><legend className="sr-only">{current.title}</legend>{options.map((option) => <label className={`onboarding-option ${values[current.field] === option ? 'is-selected' : ''}`} key={option}><input type="radio" name={current.field} value={option} checked={values[current.field] === option} onChange={() => update(current.field, option)} /><span>{option}</span><i aria-hidden="true" /></label>)}</fieldset>}
                   {current.field === 'bio' && <><textarea aria-labelledby="onboarding-question" aria-describedby="onboarding-description" value={values.bio} maxLength={LIMITS.bio.max} rows={4} placeholder="A few words about you…" onChange={(event) => update('bio', event.target.value)} /><p className="onboarding-hint">{values.bio.length} / {LIMITS.bio.max} characters</p></>}
                   {current.field === 'show_branch_year' && <fieldset className="onboarding-options" aria-labelledby="onboarding-question"><legend className="sr-only">Profile visibility</legend>{[[true, 'Show on my profile', 'Let other students see my branch and year.'], [false, 'Keep them private', 'I can change this later in Settings.']].map(([value, label, detail]) => <label key={label} className={`onboarding-option onboarding-option--detail ${values.show_branch_year === value ? 'is-selected' : ''}`}><input type="radio" name="visibility" checked={values.show_branch_year === value} onChange={() => update('show_branch_year', value)} /><span><strong>{label}</strong><small>{detail}</small></span><i aria-hidden="true" /></label>)}</fieldset>}

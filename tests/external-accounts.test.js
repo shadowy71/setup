@@ -8,6 +8,8 @@ import {
   isInstitutional,
   isModerator,
   isVisitor,
+  isExternalContributor,
+  externalStanding,
   permissionsFromRoles,
   roleRank,
   toActor,
@@ -201,6 +203,65 @@ describe('account type is separate from role', () => {
     expect(roleRank(contributor)).toBeLessThan(ROLE_ORDER.indexOf('student'));
   });
 
+  it('distinguishes a read-only visitor, a permitted visitor and a contributor', () => {
+    // Three different statements, and the product must not collapse them.
+    const readOnly = makeActor({
+      roles: ['visitor'],
+      permissions: new Set(['manage_own_profile', 'report_content']),
+      accountType: 'visitor',
+    });
+    const permitted = makeActor({
+      roles: ['visitor'],
+      permissions: new Set(['manage_own_profile', 'report_content', 'create_posts']),
+      accountType: 'visitor',
+    });
+    const contributor = makeActor({
+      roles: ['visitor', 'external_contributor'],
+      permissions: new Set(['manage_own_profile', 'report_content', 'create_posts']),
+      accountType: 'visitor',
+    });
+
+    expect(externalStanding(readOnly)).toBe('read_only_visitor');
+    expect(externalStanding(permitted)).toBe('permitted_visitor');
+    expect(externalStanding(contributor)).toBe('contributor');
+    expect(externalStanding(makeActor({ roles: ['student'], accountType: 'student' }))).toBe('institutional');
+  });
+
+  it('never reports an institutional account as a contributor', () => {
+    // The database refuses the role on a student (083 §4) and ignores it if it
+    // arrives another way (083 §1). The UI must not claim otherwise either.
+    const studentWithRole = makeActor({
+      roles: ['student', 'external_contributor'],
+      permissions: new Set(),
+      accountType: 'student',
+    });
+    expect(isExternalContributor(studentWithRole)).toBe(false);
+    expect(externalStanding(studentWithRole)).toBe('institutional');
+  });
+
+  it('does not treat holding the contributor role as permission to publish by itself', () => {
+    // The role is an entitlement container. If it carries no permissions yet,
+    // the account can publish nothing — which is why the admin screen says so
+    // rather than showing a control that appears to work.
+    const emptyRole = makeActor({
+      roles: ['visitor', 'external_contributor'],
+      permissions: new Set(['manage_own_profile', 'report_content']),
+      accountType: 'visitor',
+    });
+    expect(isExternalContributor(emptyRole)).toBe(true);
+    expect(externalStanding(emptyRole)).toBe('contributor');
+    expect(can(emptyRole, 'create_posts')).toBe(false);
+  });
+
+  it('accepts an array of permissions as well as a Set', () => {
+    // Session users carry an array; `toActor()` normalises to a Set. Both must
+    // produce the same standing.
+    expect(externalStanding({ accountType: 'visitor', roles: ['visitor'], permissions: ['create_posts'] }))
+      .toBe('permitted_visitor');
+    expect(externalStanding({ accountType: 'visitor', roles: ['visitor'], permissions: new Set(['create_posts']) }))
+      .toBe('permitted_visitor');
+  });
+
   it('treats an unknown account type as not institutional', () => {
     for (const accountType of [null, undefined, '', 'unknown']) {
       const actor = makeActor({ accountType });
@@ -336,6 +397,34 @@ describe('visitor onboarding', () => {
     expect(validate({ ...base, username: 'x' }, visitorOnboardingSchema).ok).toBe(false);
     expect(validate({ ...base, display_name: '' }, visitorOnboardingSchema).ok).toBe(false);
     expect(validate({ ...base, accept_rules: false }, visitorOnboardingSchema).ok).toBe(false);
+  });
+
+  it('asks a visitor for their own year and college, and stores them separately', () => {
+    // Migration 082. The visitor's answers are optional, but when present they
+    // must validate into their own keys — never into `year`, which means a
+    // PCCOE student's year and drives the student directory.
+    const withDetails = validate(
+      { ...base, visitor_college_name: 'Sinhgad College of Engineering', visitor_year: 'Second Year' },
+      visitorOnboardingSchema,
+    );
+    expect(withDetails.ok).toBe(true);
+    expect(withDetails.data.visitor_college_name).toBe('Sinhgad College of Engineering');
+    expect(withDetails.data.visitor_year).toBe('Second Year');
+    // The institutional key is not produced by the visitor schema at all.
+    expect(withDetails.data.year).toBeUndefined();
+  });
+
+  it('rejects a visitor year outside the offered vocabulary', () => {
+    const result = validate({ ...base, visitor_year: 'Fifth Year' }, visitorOnboardingSchema);
+    expect(result.ok).toBe(false);
+    expect(result.errors?.visitor_year).toBeTruthy();
+  });
+
+  it('caps the college name and treats an empty answer as absent', () => {
+    expect(validate({ ...base, visitor_college_name: 'x'.repeat(121) }, visitorOnboardingSchema).ok).toBe(false);
+    const blank = validate({ ...base, visitor_college_name: '   ' }, visitorOnboardingSchema);
+    expect(blank.ok).toBe(true);
+    expect(blank.data.visitor_college_name).toBeNull();
   });
 
   it('leaves the institutional schema untouched', () => {

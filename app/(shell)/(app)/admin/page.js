@@ -180,6 +180,12 @@ export default async function AdminPage({ searchParams }) {
     ? await listVisitorGrantedPermissions(supabase, externalUsers.items.map((item) => item.id))
     : new Map();
   const externalRoles = activeTab === 'external' ? await listRoles(supabase) : [];
+  // What the External Contributor entitlement currently confers. Empty means
+  // granting the role would change nothing yet, and the screen says so instead
+  // of offering a control that silently does nothing.
+  const contributorPermissions = activeTab === 'external'
+    ? (await supabase.rpc('external_contributor_permissions')).data || []
+    : [];
   const [pendingClubRequests, clubRequestHistory, unassignedClubs] = activeTab === 'clubs'
     ? await Promise.all([
         listClubCreationRequests(supabase, { status: 'pending', limit: 60 }),
@@ -396,11 +402,19 @@ export default async function AdminPage({ searchParams }) {
                     <span className="text-[0.875rem] font-medium">{row.display_name || 'Unfinished profile'}</span>
                   )}
                   {row.username ? <span className="text-2xs text-muted">@{row.username}</span> : null}
+                  {/* "Visitor" is the account type, always held. The contributor
+                      entitlement is a different statement and gets its own badge,
+                      so an administrator can see which one an account has. */}
                   <Badge tone="neutral">Visitor</Badge>
+                  {row.roles.includes('external_contributor') ? (
+                    <Badge tone="accent">External Contributor</Badge>
+                  ) : null}
                   <Badge tone={row.account_status === 'active' ? 'success' : 'warning'}>{row.account_status}</Badge>
-                  {row.roles.map((role) => (
-                    <Badge key={role} tone={role === 'visitor' ? 'neutral' : 'danger'}>{role.replace(/_/g, ' ')}</Badge>
-                  ))}
+                  {row.roles
+                    .filter((role) => role !== 'visitor' && role !== 'external_contributor')
+                    .map((role) => (
+                      <Badge key={role} tone="danger">{role.replace(/_/g, ' ')}</Badge>
+                    ))}
                 </div>
 
                 <div className="flex flex-col gap-0.5 text-2xs text-muted">
@@ -417,8 +431,15 @@ export default async function AdminPage({ searchParams }) {
                   <VisitorPermissionsForm userId={row.id} permissions={visitorPermissions} granted={granted} />
                 )}
 
+                {row.roles.includes('external_contributor') && contributorPermissions.length === 0 ? (
+                  <Notice tone="neutral" icon="shield">
+                    External Contributor currently confers nothing — the role has no permissions assigned
+                    yet. Grant capabilities below, or define the role in Roles &amp; Permissions.
+                  </Notice>
+                ) : null}
+
                 <div className="flex flex-wrap items-center gap-2">
-                  <GrantRoleForm userId={row.id} roles={externalRoles.filter((role) => role.key !== 'student')} currentRoles={row.roles} />
+                  <GrantRoleForm userId={row.id} roles={externalRoles.filter((role) => role.key === 'external_contributor')} currentRoles={row.roles} />
                   {row.roles
                     .filter((role) => role !== 'visitor' && role !== 'student' && role !== 'super_admin')
                     .map((role) => (
