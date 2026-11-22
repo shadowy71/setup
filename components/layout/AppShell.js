@@ -38,6 +38,7 @@ export function AppShell({
   canModerate = false,
   canAdmin = false,
   createItems = [],
+  institutional = true,
   paletteActions = [],
   children,
 }) {
@@ -63,6 +64,7 @@ export function AppShell({
             canModerate={canModerate}
             canAdmin={canAdmin}
             createItems={createItems}
+            institutional={institutional}
           >
             {children}
           </ShellFrame>

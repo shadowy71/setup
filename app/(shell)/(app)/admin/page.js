@@ -14,6 +14,9 @@ import {
   getAdminDashboardCounts,
   getStorageUsageByUser,
   getAdminStorageSummary,
+  listExternalUsers,
+  listVisitorGrantedPermissions,
+  VISITOR_GRANTABLE_PERMISSIONS,
 } from '@/lib/data/admin';
 import { listReports } from '@/lib/data/moderation';
 import { ROUTES, PAGE_SIZE, ROLE_ORDER, CLUB_ORGANIZATION_TYPE_LABELS } from '@/lib/constants';
@@ -27,6 +30,7 @@ import {
   UploadPermissionForm,
   PlatformSettingForm,
   FeatureFlagToggle,
+  VisitorPermissionsForm,
 } from '@/components/admin/AdminPanels';
 import { ModerationActions, ResolveReportForm } from '@/components/moderation/ModerationPanels';
 import { formatDateTime, relativeTime } from '@/lib/utils';
@@ -54,6 +58,7 @@ export const metadata = { title: 'Administration' };
 
 const TABS = [
   { key: 'users', label: 'Users', permission: 'manage_users' },
+  { key: 'external', label: 'External Users', permission: 'manage_users' },
   { key: 'roles', label: 'Roles', permission: 'manage_roles' },
   { key: 'permissions', label: 'Permissions', permission: 'manage_permissions' },
   { key: 'reports', label: 'Reports', permission: 'review_reports' },
@@ -162,6 +167,19 @@ export default async function AdminPage({ searchParams }) {
   const backups = activeTab === 'backups' ? await getBackupStatus(supabase) : null;
   const backupConfig = activeTab === 'backups' ? getBackupConfiguration() : [];
   const storageSummary = activeTab === 'storage' ? await getAdminStorageSummary(supabase) : null;
+
+  // External accounts (migration 080). The permission list is filtered to the
+  // allow-list the database will accept, so the form cannot offer something the
+  // RPC would reject.
+  const externalUsers = activeTab === 'external' ? await listExternalUsers(supabase, { q, limit: PAGE_SIZE.admin, offset }) : null;
+  const allPermissions = activeTab === 'external' ? await listPermissions(supabase) : [];
+  const visitorPermissions = allPermissions.filter((permission) =>
+    VISITOR_GRANTABLE_PERMISSIONS.includes(permission.key),
+  );
+  const visitorGrants = externalUsers && externalUsers.items.length
+    ? await listVisitorGrantedPermissions(supabase, externalUsers.items.map((item) => item.id))
+    : new Map();
+  const externalRoles = activeTab === 'external' ? await listRoles(supabase) : [];
   const [pendingClubRequests, clubRequestHistory, unassignedClubs] = activeTab === 'clubs'
     ? await Promise.all([
         listClubCreationRequests(supabase, { status: 'pending', limit: 60 }),
@@ -311,6 +329,119 @@ export default async function AdminPage({ searchParams }) {
               </span>
               {offset + PAGE_SIZE.admin < users.total ? (
                 <Link className="underline" href={`${ROUTES.admin}?tab=users&offset=${offset + PAGE_SIZE.admin}${q ? `&q=${encodeURIComponent(q)}` : ''}`}>
+                  Older
+                </Link>
+              ) : <span />}
+            </nav>
+          ) : null}
+        </section>
+      ) : null}
+
+      {/* ------------------------------------------------------- external users */}
+      {activeTab === 'external' && externalUsers ? (
+        <section aria-label="External users" className="flex flex-col gap-3">
+          <Notice tone="neutral" icon="info">
+            External accounts signed in with a non-institutional Google address. They can read
+            publicly available content and manage their own profile. Grant publishing permissions
+            here, one account at a time — the account stays a Visitor, it never becomes a student.
+          </Notice>
+
+          <form className="flex flex-wrap items-end gap-2" action={ROUTES.admin} method="get">
+            <input type="hidden" name="tab" value="external" />
+            <label className="flex flex-col gap-1 text-2xs text-muted">
+              Search
+              <input
+                name="q"
+                defaultValue={q || ''}
+                maxLength={80}
+                placeholder="Username, name or email"
+                className="control control-input h-9"
+              />
+            </label>
+            <Button type="submit" size="sm" variant="secondary" icon="search">
+              Search
+            </Button>
+          </form>
+
+          {externalUsers.unavailable ? (
+            <Notice tone="warning" icon="flag">External accounts could not be loaded. Refresh to try again.</Notice>
+          ) : null}
+          {!externalUsers.unavailable && externalUsers.items.length === 0 ? (
+            <EmptyState
+              icon="users"
+              title="No external accounts"
+              description={q ? 'Try another name or email.' : 'Nobody has signed in with an external Google account yet.'}
+            />
+          ) : null}
+
+          {visitorGrants === null ? (
+            <Notice tone="warning" icon="flag">
+              Granted permissions could not be loaded, so they are not shown here. Saving from this
+              state would revoke capabilities the accounts hold, so the controls are hidden —
+              reload the page.
+            </Notice>
+          ) : null}
+
+          {externalUsers.items.map((row) => {
+            const granted = [...(visitorGrants.get(row.id) || [])];
+            return (
+              <Card key={row.id} className="flex flex-col gap-3 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <IdentityMark name={row.display_name || row.username} username={row.username} size={32} />
+                  {row.username ? (
+                    <Link href={ROUTES.user(row.username)} className="text-[0.875rem] font-medium underline-offset-2 hover:underline">
+                      {row.display_name || `@${row.username}`}
+                    </Link>
+                  ) : (
+                    <span className="text-[0.875rem] font-medium">{row.display_name || 'Unfinished profile'}</span>
+                  )}
+                  {row.username ? <span className="text-2xs text-muted">@{row.username}</span> : null}
+                  <Badge tone="neutral">Visitor</Badge>
+                  <Badge tone={row.account_status === 'active' ? 'success' : 'warning'}>{row.account_status}</Badge>
+                  {row.roles.map((role) => (
+                    <Badge key={role} tone={role === 'visitor' ? 'neutral' : 'danger'}>{role.replace(/_/g, ' ')}</Badge>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-0.5 text-2xs text-muted">
+                  <span>{row.email || 'Email unavailable'}</span>
+                  <span>Joined {formatDateTime(row.created_at)}</span>
+                  <span>
+                    {granted.length
+                      ? `Granted: ${granted.map((key) => visitorPermissions.find((p) => p.key === key)?.label || key).join(', ')}`
+                      : 'Granted: none — read-only visitor'}
+                  </span>
+                </div>
+
+                {visitorGrants === null ? null : (
+                  <VisitorPermissionsForm userId={row.id} permissions={visitorPermissions} granted={granted} />
+                )}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <GrantRoleForm userId={row.id} roles={externalRoles.filter((role) => role.key !== 'student')} currentRoles={row.roles} />
+                  {row.roles
+                    .filter((role) => role !== 'visitor' && role !== 'student' && role !== 'super_admin')
+                    .map((role) => (
+                      <RevokeRoleForm key={role} userId={row.id} role={role} label={role.replace(/_/g, ' ')} />
+                    ))}
+                  <AccountStatusForm userId={row.id} currentStatus={row.account_status} />
+                </div>
+              </Card>
+            );
+          })}
+
+          {externalUsers.total > PAGE_SIZE.admin ? (
+            <nav className="flex items-center justify-between text-2xs text-muted" aria-label="External account pages">
+              {offset > 0 ? (
+                <Link className="underline" href={`${ROUTES.admin}?tab=external&offset=${Math.max(0, offset - PAGE_SIZE.admin)}${q ? `&q=${encodeURIComponent(q)}` : ''}`}>
+                  Newer
+                </Link>
+              ) : <span />}
+              <span>
+                {offset + 1}–{Math.min(offset + PAGE_SIZE.admin, externalUsers.total)} of {externalUsers.total}
+              </span>
+              {offset + PAGE_SIZE.admin < externalUsers.total ? (
+                <Link className="underline" href={`${ROUTES.admin}?tab=external&offset=${offset + PAGE_SIZE.admin}${q ? `&q=${encodeURIComponent(q)}` : ''}`}>
                   Older
                 </Link>
               ) : <span />}

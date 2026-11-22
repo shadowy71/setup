@@ -60,6 +60,7 @@ export function MobileMenuBody({
   canModerate = false,
   canAdmin = false,
   createItems = [],
+  institutional = true,
   onNavigate = () => {},
 }) {
   const unread = formatUnread(unreadNotifications);
@@ -88,7 +89,9 @@ export function MobileMenuBody({
         <SheetLink href={ROUTES.campus} icon="building" label="Campus" onNavigate={close} />
         <SheetLink href={getTimetableHref(user?.division)} icon="calendar" label="Timetable" onNavigate={close} documentNavigation />
         <SheetLink href={ROUTES.map} icon="mapPin" label="Map" onNavigate={close} />
-        <SheetLink href={ROUTES.study} icon="book" label="Study finder" onNavigate={close} />
+        {institutional ? (
+          <SheetLink href={ROUTES.study} icon="book" label="Study finder" onNavigate={close} />
+        ) : null}
         <SheetLink href={ROUTES.notifications} icon="bell" label="Notifications" unread={unread} onNavigate={close} />
         <SheetLink href={ROUTES.settings} icon="settings" label="Settings" onNavigate={close} />
         {canModerate ? <SheetLink href={ROUTES.moderator} icon="shield" label="Moderation" onNavigate={close} /> : null}

@@ -16,6 +16,8 @@ export const PASSWORD = 'perf-password';
 export const STUDENT_EMAIL = 'perf.student1@pccoepune.org';
 export const ADMIN_EMAIL = 'perf.admin@pccoepune.org';
 export const MODERATOR_EMAIL = 'perf.mod@pccoepune.org';
+/** An external account: a Gmail address, so the classifier makes it a visitor. */
+export const VISITOR_EMAIL = 'perf.visitor@gmail.com';
 
 const STUDENTS = [
   ['perf.student1@pccoepune.org', 'Aarav Patil', 'aarav_p'],
@@ -75,6 +77,36 @@ export async function seedFixtures(client) {
     const user = users.find((u) => u.email === email);
     await client.query(`select public.grant_role($1, $2)`, [user.profileId, role]);
   }
+
+  // An external account, created exactly the way Google sign-up creates one:
+  // an `auth.users` row whose email is outside every configured college domain.
+  // `handle_new_user()` classifies it, provisions the profile, assigns the
+  // Visitor baseline role and leaves `college_id` null — no fixture-specific
+  // branch in the database, and no manual account_type in this seed.
+  const { rows: visitorAuth } = await client.query(
+    `insert into auth.users (email, encrypted_password, raw_user_meta_data, created_at, last_sign_in_at)
+     values ($1, $2, $3, now() - interval '4 days', now() - interval '1 hour')
+     returning id`,
+    [VISITOR_EMAIL, PASSWORD, JSON.stringify({ display_name: 'Priya (visitor)' })],
+  );
+  const visitorAuthId = visitorAuth[0].id;
+  const { rows: visitorPrivate } = await client.query(
+    `select profile_id from public.profile_private where auth_user_id = $1`,
+    [visitorAuthId],
+  );
+  const visitorProfileId = visitorPrivate[0].profile_id;
+  await asUser(client, visitorAuthId, `select public.complete_profile($1, $2, $3)`, [
+    'perf_visitor',
+    'Priya (visitor)',
+    'Signed in with a personal Gmail address.',
+  ]);
+  // One granted capability, so the admin surface and the visitor's own
+  // settings have something real to display. The other visitors' capabilities
+  // stay at whatever the operator grants.
+  await client.query(
+    `select public.admin_set_visitor_permissions($1, array['create_posts', 'create_comments'])`,
+    [visitorProfileId],
+  );
   const me = users[0];
   const admin = users.find((u) => u.email === ADMIN_EMAIL);
   const authorIds = users.filter((u) => !u.username.startsWith('perf_')).map((u) => u.profileId);

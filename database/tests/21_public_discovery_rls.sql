@@ -18,7 +18,13 @@ reset role;
 -- Fixtures. Fixed ids so the assertions can name exactly what they expect.
 -- ---------------------------------------------------------------------------
 insert into auth.users (id, email) values
-  ('98000000-0000-4000-a000-000000000001', 'discovery.student@pccoepune.org')
+  ('98000000-0000-4000-a000-000000000001', 'discovery.student@pccoepune.org'),
+  -- A distinct author. Section 5 asserts that a student who is neither staff
+  -- nor the submitter cannot read a draft; the draft must therefore belong to
+  -- somebody else. (Before migration 080 this suite's JWT claim carried the
+  -- *profile* id, so current_profile_id() never resolved and every ownership
+  -- comparison was NULL — which is why the draft looked unreadable then.)
+  ('98000000-0000-4000-a000-000000000002', 'discovery.author@pccoepune.org')
 on conflict (id) do nothing;
 
 do $fixture$
@@ -30,11 +36,25 @@ begin
     p_branch => 'Computer Engineering',
     p_year => 'Third Year'
   );
+  perform set_config('request.jwt.claim.sub', '98000000-0000-4000-a000-000000000002', false);
+  perform public.complete_profile(
+    p_username => 'discovery_author',
+    p_display_name => 'Discovery Author',
+    p_branch => 'Computer Engineering',
+    p_year => 'Third Year'
+  );
 end $fixture$;
 select set_config('request.jwt.claim.sub', '', false);
 
 insert into public.__test_scratch (key, value)
 select 'discovery_profile', id from public.profiles where username = 'discovery_student'
+on conflict (key) do update set value = excluded.value;
+-- `auth.uid()` is the AUTH user id, and current_profile_id() resolves it through
+-- profile_private.auth_user_id. Migration 080 relies on that resolution to
+-- classify the account, so the claim must carry the auth id, not the profile id.
+insert into public.__test_scratch (key, value)
+select 'discovery_auth_user', auth_user_id from public.profile_private
+ where profile_id = (select value from public.__test_scratch where key = 'discovery_profile')
 on conflict (key) do update set value = excluded.value;
 select public.test_assert(
   (select value from public.__test_scratch where key = 'discovery_profile') is not null,
@@ -61,27 +81,29 @@ insert into public.events
 values
   ('98200000-0000-4000-a000-000000000001', 'Public Discovery Meetup',
    'A published event with intentionally public registration notes.', '2026-12-01', 'Seminar Hall',
-   'published', false, (select value from public.__test_scratch where key = 'discovery_profile'), now(),
+   'published', false, (select value from public.__test_scratch where key = 'discovery_profile')::uuid, now(),
    'Free entry for everyone.', 'https://example.org/register'),
   ('98200000-0000-4000-a000-000000000002', 'Unpublished Discovery Draft',
    'A draft event that must never be visible anonymously.', '2026-12-02', 'Lab 4',
-   'draft', false, (select value from public.__test_scratch where key = 'discovery_profile'), null, null, null)
+   'draft', false,
+   (select p.id from public.profiles p where p.username = 'discovery_author'),
+   null, null, null)
 on conflict (id) do nothing;
 
 -- Four posts: public, campus-only, deleted, and public inside a private club.
 insert into public.posts
   (id, author_id, kind, title, body, community_id, visibility, status, deleted_at)
 values
-  ('98300000-0000-4000-a000-000000000001', (select value from public.__test_scratch where key = 'discovery_profile'), 'post',
+  ('98300000-0000-4000-a000-000000000001', (select value from public.__test_scratch where key = 'discovery_profile')::uuid, 'post',
    'Public club announcement', 'Everyone may read this announcement.',
    '98100000-0000-4000-a000-000000000001', 'public', 'published', null),
-  ('98300000-0000-4000-a000-000000000002', (select value from public.__test_scratch where key = 'discovery_profile'), 'post',
+  ('98300000-0000-4000-a000-000000000002', (select value from public.__test_scratch where key = 'discovery_profile')::uuid, 'post',
    'Campus club announcement', 'Only campus accounts may read this.',
    '98100000-0000-4000-a000-000000000001', 'campus', 'published', null),
-  ('98300000-0000-4000-a000-000000000003', (select value from public.__test_scratch where key = 'discovery_profile'), 'post',
+  ('98300000-0000-4000-a000-000000000003', (select value from public.__test_scratch where key = 'discovery_profile')::uuid, 'post',
    'Deleted club announcement', 'This post was removed.',
    '98100000-0000-4000-a000-000000000001', 'public', 'published', now()),
-  ('98300000-0000-4000-a000-000000000004', (select value from public.__test_scratch where key = 'discovery_profile'), 'post',
+  ('98300000-0000-4000-a000-000000000004', (select value from public.__test_scratch where key = 'discovery_profile')::uuid, 'post',
    'Private club announcement', 'The parent club is not public.',
    '98100000-0000-4000-a000-000000000003', 'public', 'published', null)
 on conflict (id) do nothing;
@@ -278,7 +300,7 @@ select public.test_assert_denied(
 reset role;
 set role authenticated;
 select set_config('request.jwt.claim.role', 'authenticated', false);
-select set_config('request.jwt.claim.sub', (select value::text from public.__test_scratch where key = 'discovery_profile'), false);
+select set_config('request.jwt.claim.sub', (select value::text from public.__test_scratch where key = 'discovery_auth_user'), false);
 
 do $student$
 begin

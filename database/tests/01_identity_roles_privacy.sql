@@ -241,12 +241,30 @@ select set_config('request.jwt.claim.role', 'service_role', false);
 select set_config('request.jwt.claim.sub', '', false);
 
 -- ---------------------------------------------------------------------------
--- 8. The domain gate rejects foreign email addresses at insert time.
+-- 8. The domain gate classifies foreign email addresses at insert time.
 -- ---------------------------------------------------------------------------
-select public.test_assert_denied(
-  $sql$insert into auth.users (id, email) values ('b0000000-0000-4000-a000-000000000009', 'outsider@gmail.com')$sql$,
-  'a non-institutional email must be rejected by the auth trigger'
-);
+-- Migration 080 replaced outright rejection with classification: a personal
+-- address is provisioned as an external visitor (suite 24 covers that contract
+-- in full), and can never obtain student access. What must NOT change is that
+-- an institutional-looking domain still resolves only for the real institution.
+do $$
+declare
+  v_type public.account_type;
+  v_college uuid;
+begin
+  insert into auth.users (id, email)
+  values ('b0000000-0000-4000-a000-000000000009', 'outsider@gmail.com');
+
+  select pp.account_type, pp.college_id into v_type, v_college
+    from public.profile_private pp
+   where pp.auth_user_id = 'b0000000-0000-4000-a000-000000000009';
+
+  perform public.test_assert(v_type = 'visitor',
+    'a non-institutional email must be classified as an external visitor');
+  perform public.test_assert(v_college is null,
+    'a non-institutional email must not be attached to a college');
+end;
+$$;
 
 select public.test_assert(
   public.allowed_email_domain('someone@pccoepune.org'),

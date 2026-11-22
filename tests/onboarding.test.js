@@ -144,10 +144,36 @@ describe('guided profile form', () => {
     for (const field of ['username', 'display_name', 'branch', 'year', 'division', 'bio', 'show_branch_year', 'accept_rules']) {
       expect(source).toContain(`field: '${field}'`);
     }
-    expect(source).toContain('validate(values, onboardingSchema)');
+    // Both schemas are wired: the institutional one is still the default, and
+    // an external account is validated against the shorter visitor contract.
+    expect(source).toContain('isVisitor ? visitorOnboardingSchema : onboardingSchema');
     expect(source).toContain('completeOnboarding');
     expect(source).toContain('localStorage');
     expect(source).toContain('Skip for now');
+  });
+
+  it('omits the institutional questions for an external account', () => {
+    state.form = { pending: false, error: null, fieldErrors: null };
+    const visitorHtml = htmlOf(React.createElement(OnboardingForm, { accountType: 'visitor' }));
+    const studentHtml = htmlOf(React.createElement(OnboardingForm, { accountType: 'student' }));
+
+    // A visitor walks a shorter flow: name, username, bio, privacy-free, rules.
+    expect(visitorHtml).toContain('STEP 1 / 4');
+    expect(studentHtml).toContain('STEP 1 / 8');
+    // Neither flow asks a visitor for a branch/year/division at any point.
+    expect(visitorHtml).not.toContain('Which branch are you in?');
+    expect(visitorHtml).not.toContain('What year are you in?');
+    expect(visitorHtml).not.toContain('Do you have a division?');
+    // The student flow is unchanged.
+    const source = fs.readFileSync('components/auth/OnboardingForm.js', 'utf8');
+    expect(source).toContain('Which branch are you in?');
+  });
+
+  it('does not prefill a visitor draft from a student draft', () => {
+    const source = fs.readFileSync('components/auth/OnboardingForm.js', 'utf8');
+    // The draft key is account-type scoped, so one browser cannot carry a
+    // student's answers into an external account's flow.
+    expect(source).toContain("isVisitor ? 'visitor' : 'student'");
   });
 
   it('still displays submission errors and disables pending submission', () => {

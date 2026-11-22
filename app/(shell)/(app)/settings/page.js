@@ -10,6 +10,7 @@ import { ProfileActions } from '@/components/profile/ProfileActions';
 import { FileUpload } from '@/components/storage/FileUpload';
 import { updateProfile, changeUsername, deactivateAccount, reactivateAccount } from '@/lib/actions/profile';
 import { markAllNotificationsRead } from '@/lib/actions/notifications';
+import { isVisitor } from '@/lib/permissions/authorization';
 import { formatDate, daysBetween } from '@/lib/utils';
 
 export const metadata = { title: 'Settings' };
@@ -40,6 +41,14 @@ export default async function SettingsPage({ searchParams }) {
 
   // The session load already read this row (see lib/auth/session.js) — no second read.
   const profile = user.profile;
+
+  // An external account has no academic identity: branch, year, division and
+  // PRN are institutional fields. Offering them would be a form the database
+  // silently discards (see guard_visitor_profile_fields, migration 081).
+  const visitor = isVisitor({ accountType: user.accountType });
+  const grantedPermissions = visitor && tab === 'profile'
+    ? (await supabase.from('visitor_permission_grants').select('permission_key').order('permission_key')).data || []
+    : [];
   const storageUsage = tab === 'profile' ? await supabase.rpc('storage_account_usage', { p_user: profile.id }) : null;
   const uploadEnabled = !storageUsage?.error && Boolean(storageUsage?.data?.[0]?.upload_enabled);
   const uploadAvailable = process.env.CAMPUS_PROFILE_UPLOADS_ENABLED === '1' && !storageUsage?.error;
@@ -86,6 +95,24 @@ export default async function SettingsPage({ searchParams }) {
 
       {tab === 'profile' ? (
         <>
+        {visitor ? (
+          <Card className="flex flex-col gap-1.5 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[0.8125rem] font-semibold">Account type</span>
+              <span className="chip" data-active="true">Visitor</span>
+            </div>
+            <p className="text-2xs text-muted">
+              You sign in with {user.email || 'an external email address'}, which is not an institutional address.
+              You can read public content and manage this profile. Publishing is off by default; a Campus+ administrator
+              can grant individual permissions — your account type stays Visitor either way.
+            </p>
+            <p className="text-2xs text-muted">
+              {grantedPermissions.length
+                ? `Granted: ${grantedPermissions.map((row) => row.permission_key.replace(/_/g, ' ')).join(', ')}`
+                : 'No publishing permissions granted. Once granted, they apply immediately.'}
+            </p>
+          </Card>
+        ) : null}
         <FileUpload username={profile.username} name={profile.display_name || profile.username} enabled={uploadEnabled} available={uploadAvailable} />
         <ActionForm
           action={updateProfile}
@@ -95,10 +122,14 @@ export default async function SettingsPage({ searchParams }) {
           fields={[
             { name: 'display_name', label: 'Display name', required: true, maxLength: LIMITS.displayName.max, defaultValue: profile.display_name || '' },
             { name: 'bio', label: 'Bio', type: 'textarea', rows: 3, maxLength: LIMITS.bio.max, defaultValue: profile.bio || '', hint: 'Up to 280 characters. No contact details — people can message you here.' },
-            { name: 'branch', label: 'Branch', type: 'select', defaultValue: profile.branch || '', options: BRANCHES.map((branch) => ({ value: branch, label: branch })) },
-            { name: 'year', label: 'Year', type: 'select', defaultValue: profile.year || '', options: YEARS.map((year) => ({ value: year, label: year })) },
-            { name: 'division', label: 'Division', type: 'select', defaultValue: profile.division || '', options: DIVISIONS.map((division) => ({ value: division, label: division })) },
-            { name: 'show_branch_year', label: 'Show my branch and year', type: 'switch', hint: 'Visible on your profile and next to your posts.', defaultChecked: profile.show_branch_year !== false },
+            ...(visitor
+              ? []
+              : [
+                  { name: 'branch', label: 'Branch', type: 'select', defaultValue: profile.branch || '', options: BRANCHES.map((branch) => ({ value: branch, label: branch })) },
+                  { name: 'year', label: 'Year', type: 'select', defaultValue: profile.year || '', options: YEARS.map((year) => ({ value: year, label: year })) },
+                  { name: 'division', label: 'Division', type: 'select', defaultValue: profile.division || '', options: DIVISIONS.map((division) => ({ value: division, label: division })) },
+                  { name: 'show_branch_year', label: 'Show my branch and year', type: 'switch', hint: 'Visible on your profile and next to your posts.', defaultChecked: profile.show_branch_year !== false },
+                ]),
             { name: 'allow_dms_from_everyone', label: 'Allow any student to message me', type: 'switch', hint: 'Off means only people you have messaged before can start a conversation.', defaultChecked: profile.allow_dms_from_everyone !== false },
           ]}
         />

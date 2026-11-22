@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import { Button, Field, Input, Notice, Select, Switch, Textarea } from '@/components/ui';
 import { useFormAction } from '@/lib/forms';
-import { grantRole, revokeRole, setAccountStatus, setPlatformSetting, setFeatureFlag, setUploadPermission } from '@/lib/actions/admin';
+import { grantRole, revokeRole, setAccountStatus, setPlatformSetting, setFeatureFlag, setUploadPermission, setVisitorPermissions } from '@/lib/actions/admin';
 import { ACCOUNT_STATUS } from '@/lib/constants';
 
 const ACCOUNT_STATUS_LABELS = {
@@ -217,6 +217,74 @@ export function UploadPermissionForm({ userId, enabled }) {
       </Button>
       {change.error ? <Notice tone="danger">{change.error}</Notice> : null}
       {change.success ? <Notice tone="success">Upload permission updated.</Notice> : null}
+    </form>
+  );
+}
+
+/**
+ * Publishing permissions for one external account.
+ *
+ * A visitor holds only what an administrator has granted it, and two visitors
+ * routinely need different capabilities (one posts and comments, one posts
+ * only, one stays read-only). That is why this is a per-account checklist
+ * rather than a role: granting a role would apply to everyone holding it.
+ *
+ * The list rendered here is a convenience. `admin_set_visitor_permissions()`
+ * validates every key against `visitor_grantable_permission()` in the database,
+ * so an administrator who rewrites this form cannot grant `manage_users`.
+ */
+export function VisitorPermissionsForm({ userId, permissions = [], granted = [] }) {
+  const save = useFormAction(setVisitorPermissions, { resetOnSuccess: false });
+  const held = new Set(granted);
+  const groups = new Map();
+  for (const permission of permissions) {
+    const group = permission.group_name || 'General';
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group).push(permission);
+  }
+
+  return (
+    <form
+      className="flex flex-col gap-3"
+      action={(formData) => {
+        formData.set('user_id', userId);
+        save.run(formData);
+      }}
+    >
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-2xs font-semibold uppercase tracking-[0.12em] text-muted">
+          Publishing permissions
+        </legend>
+        {[...groups.entries()].map(([group, items]) => (
+          <div key={group} className="flex flex-col gap-1">
+            <p className="text-2xs text-muted">{group}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {items.map((permission) => (
+                <label key={permission.key} className="flex items-center gap-1.5 text-2xs">
+                  <input
+                    type="checkbox"
+                    name="permissions"
+                    value={permission.key}
+                    defaultChecked={held.has(permission.key)}
+                    className="size-3.5 accent-[var(--accent)]"
+                  />
+                  <span>{permission.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </fieldset>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="submit" size="sm" disabled={save.pending}>
+          {save.pending ? 'Saving…' : 'Save permissions'}
+        </Button>
+        <span className="text-2xs text-muted">
+          {held.size ? `${held.size} granted` : 'Read-only'} · account type stays Visitor
+        </span>
+        {save.error ? <Notice tone="danger">{save.error}</Notice> : null}
+        {save.success ? <Notice tone="success">Permissions saved.</Notice> : null}
+      </div>
     </form>
   );
 }

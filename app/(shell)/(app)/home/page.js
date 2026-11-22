@@ -1,9 +1,10 @@
 import { requireUser } from '@/lib/auth/session';
-import { can, toActor } from '@/lib/permissions/authorization';
+import { can, isInstitutional, isVisitor, toActor } from '@/lib/permissions/authorization';
 import { ROUTES } from '@/lib/constants';
 import { HomeFeedClient } from '@/components/home/HomeFeedClient';
 import { HomeAreas, HomeCoda } from '@/components/home/HomePulse';
 import { HomeFeatureTiles } from '@/components/home/HomeFeatureTiles';
+import { Notice } from '@/components/ui';
 
 export const metadata = { title: 'Home' };
 
@@ -28,6 +29,14 @@ export default async function HomePage() {
   const actor = toActor(user);
   const profile = user.profile;
   const userId = profile.id;
+
+  // External accounts read the public feed. The noticeboard shortcut points at
+  // a campus-internal surface, so it is not offered to them.
+  const institutional = isInstitutional(actor);
+  const visitor = isVisitor(actor);
+  const quickLinks = institutional
+    ? QUICK_LINKS
+    : QUICK_LINKS.filter((link) => link.href !== '/campus/noticeboard');
   const homeUser = {
     profile: {
       username: profile.username,
@@ -37,6 +46,13 @@ export default async function HomePage() {
 
   return (
     <div className="home-stage">
+      {visitor ? (
+        <Notice tone="neutral" icon="info">
+          You are signed in as a Visitor. You can read public content, follow clubs and events,
+          and manage your own profile. Publishing is disabled unless a Campus+ administrator
+          grants it to your account.
+        </Notice>
+      ) : null}
       <HomeFeedClient
         key={userId}
         user={homeUser}
@@ -44,9 +60,9 @@ export default async function HomePage() {
         currentUserId={userId}
         canPost={can(actor, 'create_posts')}
         canModerate={can(actor, 'remove_posts')}
-        heroFeatures={<HomeFeatureTiles division={profile.division} />}
+        heroFeatures={<HomeFeatureTiles division={profile.division} institutional={institutional} />}
         afterFeed={<HomeAreas />}
-        quickLinks={QUICK_LINKS}
+        quickLinks={quickLinks}
       />
       <HomeCoda>
         Campus+ is an unofficial student project — no algorithmic ranking, no AI, no advertising. Feed order is

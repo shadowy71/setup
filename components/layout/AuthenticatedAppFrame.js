@@ -1,10 +1,11 @@
 import { requireUser } from '@/lib/auth/session';
 import { getServerClient } from '@/lib/supabase/server';
-import { can, toActor } from '@/lib/permissions/authorization';
+import { can, isInstitutional, toActor } from '@/lib/permissions/authorization';
 import { ROUTES } from '@/lib/constants';
 import { getTimetableHref } from '@/lib/timetable/meta';
 import { toShellUser } from '@/lib/identity/shell-user';
 import { AppShell } from '@/components/layout/AppShell';
+import { VisitorNotice } from '@/components/auth/VisitorNotice';
 import { getUnreadMessageState } from '@/lib/data/messaging';
 
 // Every page in this group depends on the signed-in student, so nothing here is
@@ -42,6 +43,12 @@ export default async function AppLayout({ children }) {
     unread = notificationResult.count || 0;
     initialUnreadMessages = messageState.rows;
   }
+
+  // An external account signed in with a verified Google address outside every
+  // active college domain. It holds the Visitor role: public reads, its own
+  // profile, and nothing else unless an administrator grants it. That is a fact
+  // about the account, not a permission, so it drives what the shell offers.
+  const institutional = isInstitutional(actor);
 
   const createItems = [
     ...(can(actor, 'create_posts')
@@ -86,7 +93,7 @@ export default async function AppLayout({ children }) {
     { section: 'Navigation', label: 'Team finder', href: '/campus/teams', icon: 'users' },
     { section: 'Navigation', label: 'Gigs', href: ROUTES.gigs, icon: 'briefcase' },
     { section: 'Navigation', label: 'Clubs', href: ROUTES.clubs, icon: 'star' },
-    { section: 'Navigation', label: 'Noticeboard', href: '/campus/noticeboard', icon: 'megaphone' },
+    ...(institutional ? [{ section: 'Navigation', label: 'Noticeboard', href: '/campus/noticeboard', icon: 'megaphone' }] : []),
     { section: 'Navigation', label: 'Campus map', href: ROUTES.map, icon: 'mapPin', keywords: 'map campus buildings location grounds gates' },
     // Timetable is public; the saved profile division only personalises
     // where this shortcut lands (division page vs. selector).
@@ -121,9 +128,13 @@ export default async function AppLayout({ children }) {
       canModerate={canModerate}
       canAdmin={canAdmin}
       createItems={createItems}
+      institutional={institutional}
       paletteActions={paletteActions}
     >
       {children}
+      {/* Renders only for an external account, and only for the single
+          sign-in that the OAuth callback flagged. See VisitorNotice. */}
+      <VisitorNotice email={user.email || null} accountType={user.accountType} />
     </AppShell>
   );
 }

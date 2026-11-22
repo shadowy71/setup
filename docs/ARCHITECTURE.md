@@ -66,12 +66,25 @@ in Postgres (RLS policies, `has_permission()` and `SECURITY DEFINER` functions).
 
 ### Authentication
 
-Email one-time-code only (Supabase Auth). There are no passwords and no PRN
-anywhere. The institutional domain is checked **server-side** in the action
-(`lib/auth/domains.js`) and again in the database
-(`enforce_institutional_domain` trigger + `allowed_email_domain()`), so a client
-cannot bypass it. The public identity is always `@username`; the email address is
-never rendered.
+Google OAuth only (Supabase Auth, PKCE). There are no passwords, no one-time
+codes and no PRN anywhere; a session is created in exactly one place,
+`app/auth/callback/route.js`, after a server-side code exchange.
+
+Sign-in **classifies**, it does not filter. The `auth.users` provisioning trigger
+calls `classify_institutional_email()` against `colleges.email_domains` (active
+colleges only) and writes the result to `profile_private.account_type`:
+
+- domain match → **institutional**: `student` role, `college_id` set;
+- no match → **external**: `visitor` role, `college_id` null, no college.
+
+The classification is made once, in the database, from the address Google
+verified. The callback reads it back; it never decides it, and nothing about
+authorization depends on a query parameter or on client-supplied input. An
+external account is a first-class, restricted account — not an error state.
+
+The public identity is always `@username`; the email address is never rendered
+except to an administrator who manages users, and never copied out of
+`auth.users` into a public table.
 
 ---
 
