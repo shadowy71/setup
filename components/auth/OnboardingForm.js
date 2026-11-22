@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useFormAction } from '@/lib/forms';
 import { completeOnboarding } from '@/lib/actions/auth';
@@ -82,7 +82,9 @@ export function OnboardingForm({ storageId = 'preview', preview = false, account
   // An external account never sees the institutional questions. `preview` is the
   // sample flow, which deliberately shows the full student experience.
   const isVisitor = !preview && accountType === 'visitor';
-  const steps = stepsFor(isVisitor);
+  // Stable until the account type changes: hydration must not restore an old
+  // draft on every keystroke or step transition.
+  const steps = useMemo(() => stepsFor(isVisitor), [isVisitor]);
   // The storage key is account-type scoped: a browser that once held a student
   // draft must not prefill a visitor's flow (or vice versa).
   const storageKey = `campus:onboarding:v1:${preview ? 'preview' : `${storageId}:${isVisitor ? 'visitor' : 'student'}`}`;
@@ -105,7 +107,7 @@ export function OnboardingForm({ storageId = 'preview', preview = false, account
           if (typeof saved.values[key] === typeof INITIAL[key]) restored[key] = saved.values[key];
         }
         let index = Math.min(steps.length - 1, Math.max(0, Number.isInteger(saved.step) ? saved.step : 0));
-        for (let i = 0; i < index; i += 1) if (fieldError(steps[i].field, restored)) { index = i; break; }
+        for (let i = 0; i < index; i += 1) if (fieldError(steps[i].field, restored, isVisitor)) { index = i; break; }
         // Synchronize this account-scoped browser draft after hydration.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setValues(restored);
@@ -113,7 +115,7 @@ export function OnboardingForm({ storageId = 'preview', preview = false, account
       }
     } catch { /* Storage is an enhancement, not a requirement. */ }
     setReady(true);
-  }, [storageKey, steps]);
+  }, [storageKey, steps, isVisitor]);
 
   useEffect(() => {
     if (!ready || finished) return;
