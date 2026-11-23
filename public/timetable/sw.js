@@ -140,6 +140,27 @@
     return null;
   }
 
+  // lib/reminders/push-payload.js
+  function parsePushNotificationData(raw) {
+    let data = raw;
+    if (typeof raw === "string") {
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        data = null;
+      }
+    }
+    if (!data || typeof data !== "object") {
+      return { title: "Class in 10 minutes", body: "Your next class is starting soon.", url: "/timetable", tag: "" };
+    }
+    const title = String(data.title || "Class in 10 minutes").slice(0, 60);
+    const body = String(data.body || "Your next class is starting soon.").slice(0, 120);
+    const rawUrl = String(data.url || "/timetable");
+    const url = /^\/timetable(\/[a-r])?$/i.test(rawUrl) ? rawUrl : "/timetable";
+    const tag = String(data.tag || "").slice(0, 120);
+    return { title, body, url, tag };
+  }
+
   // lib/timetable/sw-entry.mjs
   var NAMES = cacheNames(SW_CACHE_VERSION);
   async function openCache(name) {
@@ -438,5 +459,50 @@ main{max-width:34rem;margin:0 auto}p{color:oklch(69% .026 295)}b{color:oklch(80%
         })()
       );
     }
+  });
+  self.addEventListener("push", (event) => {
+    let raw = null;
+    try {
+      raw = event.data ? event.data.text() : null;
+    } catch {
+      raw = null;
+    }
+    const notification = parsePushNotificationData(raw);
+    event.waitUntil(
+      self.registration.showNotification(notification.title, {
+        body: notification.body,
+        tag: notification.tag || void 0,
+        data: { url: notification.url },
+        icon: "/timetable/install/icon-192.png",
+        badge: "/timetable/install/icon-192.png"
+      })
+    );
+  });
+  self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const url = event.notification.data?.url || "/timetable";
+    event.waitUntil(
+      (async () => {
+        const clientsList = await self.clients.matchAll({ type: "window", includeControlled: true });
+        for (const client of clientsList) {
+          try {
+            const clientUrl = new URL(client.url);
+            if (clientUrl.pathname === url && "focus" in client) {
+              await client.focus();
+              return;
+            }
+          } catch {
+          }
+        }
+        for (const client of clientsList) {
+          if ("focus" in client) {
+            await client.focus();
+            if ("navigate" in client) await client.navigate(url);
+            return;
+          }
+        }
+        await self.clients.openWindow(url);
+      })()
+    );
   });
 })();

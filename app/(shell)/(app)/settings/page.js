@@ -12,6 +12,8 @@ import { updateProfile, changeUsername, deactivateAccount, reactivateAccount } f
 import { markAllNotificationsRead } from '@/lib/actions/notifications';
 import { isExternalContributor, isVisitor } from '@/lib/permissions/authorization';
 import { formatDate, daysBetween } from '@/lib/utils';
+import { ClassReminderSettings } from '@/components/reminders/ClassReminderSettings';
+import { isEligibleForClassReminders } from '@/lib/reminders/reminders';
 
 export const metadata = { title: 'Settings' };
 
@@ -30,8 +32,9 @@ const TABS = [
  * Profile, username, privacy, blocked users and account state — the preferences
  * that actually exist in the database. Notification controls are limited to
  * what the platform really does (in-app notifications, mark all read,
- * per-thread mute in chat); nothing here pretends to send email or push, and
- * no preference is stored that the system would not honour.
+ * per-thread mute in chat, and the optional personalized class-reminder
+ * popups with Web Push); nothing here pretends to send email, and no
+ * preference is stored that the system would not honour.
  */
 export default async function SettingsPage({ searchParams }) {
   const user = await requireUser();
@@ -191,12 +194,34 @@ export default async function SettingsPage({ searchParams }) {
 
       {tab === 'notifications' ? (
         <div className="flex flex-col gap-3">
+          <ClassReminderSettings
+            initialEnabled={profile.class_reminder_popups === true}
+            division={profile.division || null}
+            eligible={isEligibleForClassReminders({
+              accountType: user.accountType,
+              accountStatus: user.accountStatus,
+              division: profile.division,
+              classReminderPopups: profile.class_reminder_popups === true,
+              profileCompleted: profile.profile_completed === true,
+              username: profile.username || null,
+            }).eligible}
+            reason={isEligibleForClassReminders({
+              accountType: user.accountType,
+              accountStatus: user.accountStatus,
+              division: profile.division,
+              classReminderPopups: profile.class_reminder_popups === true,
+              profileCompleted: profile.profile_completed === true,
+              username: profile.username || null,
+            }).reason}
+            accountType={user.accountType}
+          />
           <Card className="flex flex-col gap-2 p-4">
             <h2 className="text-sm font-semibold">How Campus+ notifies you</h2>
             <p className="text-[0.8125rem] leading-relaxed text-muted">
-              Notifications are in-app only: replies, mentions, messages, marketplace interest, moderation
-              outcomes and official updates. Campus+ does not send email or push notifications, so there is
-              no preference to configure that the platform would honour.
+              Replies, mentions, messages, marketplace interest, moderation outcomes and official
+              updates are in-app only. Campus+ does not send email. The only push notifications are
+              the optional class reminders above — personalised to your profile division, never a
+              division-wide broadcast — and they require internet at delivery time.
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <LinkButton href={ROUTES.notifications} size="sm" variant="secondary">

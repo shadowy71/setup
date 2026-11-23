@@ -58,7 +58,8 @@
     "react-dom": "^19.3.0",
     "server-only": "^0.0.1",
     "sharp": "^0.35.5",
-    "three": "^0.164.0"
+    "three": "^0.164.0",
+    "web-push": "^4.0.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

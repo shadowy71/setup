@@ -32,7 +32,7 @@
 --   that already has the schema is refused by Postgres rather than half-applied.
 --   Take a database backup from the dashboard before the first run.
 --
--- Contents (84 files):
+-- Contents (85 files):
 --   01  20261005000001_001_extensions_and_enums.sql  (117 lines)
 --   02  20261005000002_002_identity_roles.sql  (589 lines)
 --   03  20261005000003_003_blocks.sql  (143 lines)
@@ -117,9 +117,10 @@
 --   82  20261122000003_082_visitor_year_and_college.sql  (534 lines)
 --   83  20261122000004_083_visitor_vs_contributor.sql  (370 lines)
 --   84  20261122000005_084_visitor_home_posts.sql  (58 lines)
+--   85  20261122000006_085_class_reminders.sql  (424 lines)
 
 -- ==========================================================================
--- FILE 01/84  20261005000001_001_extensions_and_enums.sql
+-- FILE 01/85  20261005000001_001_extensions_and_enums.sql
 -- ==========================================================================
 
 -- Campus+ migration 001 — extensions and enums
@@ -240,7 +241,7 @@ comment on function public.touch_updated_at() is
   'BEFORE UPDATE trigger that stamps updated_at. Attached to every mutable table.';
 
 -- ==========================================================================
--- FILE 02/84  20261005000002_002_identity_roles.sql
+-- FILE 02/85  20261005000002_002_identity_roles.sql
 -- ==========================================================================
 
 -- Campus+ migration 002 — identity roles
@@ -832,7 +833,7 @@ create trigger user_roles_no_escalation
 -- very first version of the view.
 
 -- ==========================================================================
--- FILE 03/84  20261005000003_003_blocks.sql
+-- FILE 03/85  20261005000003_003_blocks.sql
 -- ==========================================================================
 
 -- Campus+ migration 003 — blocks
@@ -979,7 +980,7 @@ comment on view public.public_profiles is
   'Public projection of profiles. Institutional email, auth ids and moderation state are structurally absent.';
 
 -- ==========================================================================
--- FILE 04/84  20261005000004_004_communities.sql
+-- FILE 04/85  20261005000004_004_communities.sql
 -- ==========================================================================
 
 -- Campus+ migration 004 — communities
@@ -1386,7 +1387,7 @@ create policy community_join_requests_cancel on public.community_join_requests
   for delete to authenticated using (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 05/84  20261005000005_005_social.sql
+-- FILE 05/85  20261005000005_005_social.sql
 -- ==========================================================================
 
 -- Campus+ migration 005 — social
@@ -2009,7 +2010,7 @@ comment on function public.record_mentions(text, uuid, text[]) is
   'Records @mentions for a post/comment/message. Blocks and inactive accounts are filtered server-side.';
 
 -- ==========================================================================
--- FILE 06/84  20261005000006_006_moderation_core.sql
+-- FILE 06/85  20261005000006_006_moderation_core.sql
 -- ==========================================================================
 
 -- Campus+ migration 006 — moderation core
@@ -2484,7 +2485,7 @@ create trigger notifications_guard_update
   for each row execute function public.guard_notification_update();
 
 -- ==========================================================================
--- FILE 07/84  20261005000007_007_messaging.sql
+-- FILE 07/85  20261005000007_007_messaging.sql
 -- ==========================================================================
 
 -- Campus+ migration 007 — messaging
@@ -3073,7 +3074,7 @@ create policy message_reads_update_self on public.message_reads
   with check (user_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 08/84  20261005000008_008_marketplace.sql
+-- FILE 08/85  20261005000008_008_marketplace.sql
 -- ==========================================================================
 
 -- Campus+ migration 008 — marketplace
@@ -3595,7 +3596,7 @@ create policy ratings_delete_own on public.ratings
   for delete to authenticated using (rater_id = public.current_profile_id());
 
 -- ==========================================================================
--- FILE 09/84  20261005000009_009_campus.sql
+-- FILE 09/85  20261005000009_009_campus.sql
 -- ==========================================================================
 
 -- Campus+ migration 009 — campus
@@ -4629,7 +4630,7 @@ create policy user_achievements_select on public.user_achievements
 -- Awarded rows are written by evaluate_achievements() only.
 
 -- ==========================================================================
--- FILE 10/84  20261005000010_010_random.sql
+-- FILE 10/85  20261005000010_010_random.sql
 -- ==========================================================================
 
 -- Campus+ migration 010 — random
@@ -5281,7 +5282,7 @@ comment on function public.sweep_random_state() is
   'Callable by any authenticated user (it only expires stale rows) and by the scheduled maintenance script.';
 
 -- ==========================================================================
--- FILE 11/84  20261005000011_011_platform.sql
+-- FILE 11/85  20261005000011_011_platform.sql
 -- ==========================================================================
 
 -- Campus+ migration 011 — platform
@@ -6021,7 +6022,7 @@ create policy feature_flags_manage on public.feature_flags
 -- rate_limits: intentionally no policies. Only the definer function touches it.
 
 -- ==========================================================================
--- FILE 12/84  20261005000012_012_auth_hooks.sql
+-- FILE 12/85  20261005000012_012_auth_hooks.sql
 -- ==========================================================================
 
 -- Campus+ migration 012 — auth hooks
@@ -6478,7 +6479,7 @@ create policy reserved_usernames_manage on public.reserved_usernames
   with check (public.has_permission('manage_platform_settings'));
 
 -- ==========================================================================
--- FILE 13/84  20261005000013_013_reference_data.sql
+-- FILE 13/85  20261005000013_013_reference_data.sql
 -- ==========================================================================
 
 -- Campus+ migration 013 — reference data
@@ -6752,7 +6753,7 @@ insert into public.platform_settings (key, value, description, category, is_publ
 on conflict (key) do nothing;
 
 -- ==========================================================================
--- FILE 14/84  20261005000014_014_realtime_and_grants.sql
+-- FILE 14/85  20261005000014_014_realtime_and_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 014 — realtime and grants
@@ -6965,7 +6966,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 15/84  20261005000015_015_column_privileges.sql
+-- FILE 15/85  20261005000015_015_column_privileges.sql
 -- ==========================================================================
 
 -- Campus+ migration 015 — column privileges
@@ -7193,7 +7194,7 @@ revoke update on public.reserved_usernames from authenticated, anon;
 grant all on all tables in schema public to service_role;
 
 -- ==========================================================================
--- FILE 16/84  20261005000016_016_staff_actions.sql
+-- FILE 16/85  20261005000016_016_staff_actions.sql
 -- ==========================================================================
 
 -- Campus+ migration 016 — staff actions
@@ -7900,7 +7901,7 @@ comment on function public.admin_set_platform_setting(text, jsonb) is
   'Admin/Super Admin entry point for platform configuration. Validates the value per key and writes an audit entry.';
 
 -- ==========================================================================
--- FILE 17/84  20261005000017_017_marketplace_hardening.sql
+-- FILE 17/85  20261005000017_017_marketplace_hardening.sql
 -- ==========================================================================
 
 -- Campus+ migration 017 — marketplace hardening
@@ -8098,7 +8099,7 @@ comment on view public.listing_interests_view is
   'Students who expressed interest in a listing. Visible only to the seller and staff (security_invoker + base-table RLS).';
 
 -- ==========================================================================
--- FILE 18/84  20261005000018_018_function_grants.sql
+-- FILE 18/85  20261005000018_018_function_grants.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8213,7 +8214,7 @@ grant select on public.random_session_view to authenticated;
 grant select on public.random_messages_view to authenticated;
 
 -- ==========================================================================
--- FILE 19/84  20261005000019_019_staff_visibility.sql
+-- FILE 19/85  20261005000019_019_staff_visibility.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8289,7 +8290,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 20/84  20261005000020_020_chat_inbox.sql
+-- FILE 20/85  20261005000020_020_chat_inbox.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -8383,7 +8384,7 @@ comment on function public.conversation_inbox(integer) is
   'Inbox read model (RLS-scoped): newest message plus the unread count within the newest 30 messages per visible conversation.';
 
 -- ==========================================================================
--- FILE 21/84  20261005000021_021_marketplace_and_security_fixes.sql
+-- FILE 21/85  20261005000021_021_marketplace_and_security_fixes.sql
 -- ==========================================================================
 
 -- Campus+ migration 021 — marketplace lifecycle fixes + security hardening
@@ -8721,7 +8722,7 @@ alter function public.content_moderation_permission(text) set search_path = publ
 -- correct fix is not to add it.
 
 -- ==========================================================================
--- FILE 22/84  20261005000022_022_random_views_invoker_fix.sql
+-- FILE 22/85  20261005000022_022_random_views_invoker_fix.sql
 -- ==========================================================================
 
 -- Campus+ migration 022 — restore random_session_view / random_messages_view
@@ -8794,7 +8795,7 @@ comment on view public.random_messages_view is
   'policy either.';
 
 -- ==========================================================================
--- FILE 23/84  20261005000023_023_random_chat_flag_retired.sql
+-- FILE 23/85  20261005000023_023_random_chat_flag_retired.sql
 -- ==========================================================================
 
 -- 023: Random Chat removed from the UI — reflect it in the feature flag.
@@ -8824,7 +8825,7 @@ set
 where key = 'random_chat';
 
 -- ==========================================================================
--- FILE 24/84  20261005000024_024_study_partners_and_discovery.sql
+-- FILE 24/85  20261005000024_024_study_partners_and_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 024 — study partners and discovery
@@ -9297,7 +9298,7 @@ comment on function public.global_search(text, text, integer, integer) is
   'Conventional PostgreSQL search across public entities. SECURITY INVOKER so RLS enforces blocks, visibility and privacy.';
 
 -- ==========================================================================
--- FILE 25/84  20261005000025_025_gigs_and_clubs.sql
+-- FILE 25/85  20261005000025_025_gigs_and_clubs.sql
 -- ==========================================================================
 
 -- Campus+ migration 025 — dedicated gigs and clubs
@@ -9591,7 +9592,7 @@ grant update (club_category)
   on public.communities to authenticated;
 
 -- ==========================================================================
--- FILE 26/84  20261024000001_026_messaging_live_read_model.sql
+-- FILE 26/85  20261024000001_026_messaging_live_read_model.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -9711,7 +9712,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 27/84  20261025000001_027_backup_change_capture.sql
+-- FILE 27/85  20261025000001_027_backup_change_capture.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -10977,7 +10978,7 @@ comment on function public.backup_complete_batch(text, uuid, text, text, bigint,
   'Sole writer of the durable checkpoint; requires a live lease and is called only after a verified Drive download.';
 
 -- ==========================================================================
--- FILE 28/84  20261025000002_028_backup_admin_processing.sql
+-- FILE 28/85  20261025000002_028_backup_admin_processing.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11304,7 +11305,7 @@ comment on function public.backup_record_run(text, text, jsonb) is
   'Audited, permission-checked, secret-free log of an admin-triggered backup run.';
 
 -- ==========================================================================
--- FILE 29/84  20261026000001_029_feed_realtime_delivery.sql
+-- FILE 29/85  20261026000001_029_feed_realtime_delivery.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11421,7 +11422,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 30/84  20261027000001_030_random_channel_authorization.sql
+-- FILE 30/85  20261027000001_030_random_channel_authorization.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -11614,7 +11615,7 @@ comment on function public.can_access_random_session is
   'can_access_own_random_session(uuid) instead.';
 
 -- ==========================================================================
--- FILE 31/84  20261028000001_031_club_governance.sql
+-- FILE 31/85  20261028000001_031_club_governance.sql
 -- ==========================================================================
 
 -- Campus+ migration 031 — club governance, requests and scoped management
@@ -12667,7 +12668,7 @@ grant execute on function public.remove_community_member(uuid, uuid) to authenti
 grant execute on function public.update_club_profile(uuid, jsonb) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 32/84  20261028000002_032_club_catalogue.sql
+-- FILE 32/85  20261028000002_032_club_catalogue.sql
 -- ==========================================================================
 
 -- Campus+ migration 032 — source-backed club catalogue
@@ -12881,7 +12882,7 @@ end;
 $$;
 
 -- ==========================================================================
--- FILE 33/84  20261029000001_033_unread_count_lookup.sql
+-- FILE 33/85  20261029000001_033_unread_count_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -12939,7 +12940,7 @@ revoke all on function public.messaging_unread_counts() from public, anon;
 grant execute on function public.messaging_unread_counts() to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 34/84  20261029000002_034_inbox_membership_lookup.sql
+-- FILE 34/85  20261029000002_034_inbox_membership_lookup.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13031,7 +13032,7 @@ revoke all on function public.conversation_inbox(integer) from public, anon;
 grant execute on function public.conversation_inbox(integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 35/84  20261029000003_035_feed_visibility_reconciliation.sql
+-- FILE 35/85  20261029000003_035_feed_visibility_reconciliation.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13087,7 +13088,7 @@ revoke all on function public.campus_feed_post_visibility(uuid[]) from public, a
 grant execute on function public.campus_feed_post_visibility(uuid[]) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 36/84  20261029000004_036_admin_dashboard_counts.sql
+-- FILE 36/85  20261029000004_036_admin_dashboard_counts.sql
 -- ==========================================================================
 
 -- Campus+ 036: one authorized, RLS-scoped Admin count snapshot
@@ -13151,7 +13152,7 @@ revoke all on function public.campus_admin_dashboard_counts() from anon;
 grant execute on function public.campus_admin_dashboard_counts() to authenticated;
 
 -- ==========================================================================
--- FILE 37/84  20261029000005_037_realtime_authorization_grants.sql
+-- FILE 37/85  20261029000005_037_realtime_authorization_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 037 — reassert least-privilege Realtime function grants
@@ -13187,7 +13188,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 38/84  20261101000001_038_post_pin_ordering.sql
+-- FILE 38/85  20261101000001_038_post_pin_ordering.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13505,7 +13506,7 @@ comment on index public.posts_feed_replica_identity_idx is
   'Realtime update identity: old id/pin/status only, so pin transitions are distinguishable from counter-only writes without full-row replica identity.';
 
 -- ==========================================================================
--- FILE 39/84  20261102000001_039_poll_author_may_vote.sql
+-- FILE 39/85  20261102000001_039_poll_author_may_vote.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13546,7 +13547,7 @@ comment on policy poll_votes_insert_self on public.poll_votes is
   'Any active student may vote once in an open published poll, including the poll author; duplicates remain blocked by the unique (post_id, user_id) constraint.';
 
 -- ==========================================================================
--- FILE 40/84  20261102000002_040_busiest_trending.sql
+-- FILE 40/85  20261102000002_040_busiest_trending.sql
 -- ==========================================================================
 
 -- =============================================================================
@@ -13770,7 +13771,7 @@ comment on function public.trending_posts(integer, integer) is
   'Deterministic recent-engagement trending score. Formula and defaults are published in lib/constants.js#TRENDING_FORMULA; bar normalization lives in lib/social/activity-scale.js. SECURITY INVOKER so RLS still decides visibility.';
 
 -- ==========================================================================
--- FILE 41/84  20261103000001_041_public_discovery.sql
+-- FILE 41/85  20261103000001_041_public_discovery.sql
 -- ==========================================================================
 
 -- Campus+ migration 041 — public discovery: clubs by slug, public events
@@ -14050,7 +14051,7 @@ end $$;
 drop table __anon_exec_before_041;
 
 -- ==========================================================================
--- FILE 42/84  20261105000001_042_ai_ml_branch.sql
+-- FILE 42/85  20261105000001_042_ai_ml_branch.sql
 -- ==========================================================================
 
 -- Rename only complete, structured branch values. Identifiers, divisions,
@@ -14094,7 +14095,7 @@ where regexp_replace(lower(branch), '[^a-z0-9]', '', 'g') in (
 ) and branch <> 'AI & ML';
 
 -- ==========================================================================
--- FILE 43/84  20261110000001_043_profile_storage_foundation.sql
+-- FILE 43/85  20261110000001_043_profile_storage_foundation.sql
 -- ==========================================================================
 
 -- Storage ledger foundation only. No file endpoints are enabled by this migration.
@@ -14230,7 +14231,7 @@ revoke all on function public.storage_account_usage(uuid) from public, anon;
 grant execute on function public.storage_account_usage(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 44/84  20261110000002_044_storage_admin_summary.sql
+-- FILE 44/85  20261110000002_044_storage_admin_summary.sql
 -- ==========================================================================
 
 -- Read-only operational view of Campus+ ledger rows, never the Drive account.
@@ -14261,7 +14262,7 @@ revoke all on function public.admin_storage_summary() from public, anon;
 grant execute on function public.admin_storage_summary() to authenticated;
 
 -- ==========================================================================
--- FILE 45/84  20261110000003_045_backup_capture_late_tables.sql
+-- FILE 45/85  20261110000003_045_backup_capture_late_tables.sql
 -- ==========================================================================
 
 -- Migration 027 installed capture before the club-request and storage tables
@@ -14270,7 +14271,7 @@ grant execute on function public.admin_storage_summary() to authenticated;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 46/84  20261110000004_046_profile_photo_lifecycle.sql
+-- FILE 46/85  20261110000004_046_profile_photo_lifecycle.sql
 -- ==========================================================================
 
 -- Profile photos use the existing ledger as the association. There is at most
@@ -14363,7 +14364,7 @@ revoke all on function public.storage_complete_profile_delete(uuid,uuid) from pu
 grant execute on function public.storage_complete_profile_delete(uuid,uuid) to service_role;
 
 -- ==========================================================================
--- FILE 47/84  20261112000001_047_profile_storage_v3.sql
+-- FILE 47/85  20261112000001_047_profile_storage_v3.sql
 -- ==========================================================================
 
 -- V3 keys are immutable and separate from legacy V2 keys. Existing rows stay V2.
@@ -14428,7 +14429,7 @@ revoke all on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,
 grant execute on function public.storage_reserve_profile_picture_v3(uuid,uuid,text,text,bigint,text) to service_role;
 
 -- ==========================================================================
--- FILE 48/84  20261112000002_048_post_attachments.sql
+-- FILE 48/85  20261112000002_048_post_attachments.sql
 -- ==========================================================================
 
 -- The existing storage ledger remains the single quota and operation ledger.
@@ -14552,7 +14553,7 @@ revoke all on function public.can_view_post_attachment(uuid) from public,anon;
 grant execute on function public.can_view_post_attachment(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 49/84  20261112000003_049_post_attachment_order.sql
+-- FILE 49/85  20261112000003_049_post_attachment_order.sql
 -- ==========================================================================
 
 -- Reorder only an exact snapshot of this owner's current ready attachments.
@@ -14584,7 +14585,7 @@ revoke all on function public.storage_reorder_post_attachments(uuid,uuid,uuid[])
 grant execute on function public.storage_reorder_post_attachments(uuid,uuid,uuid[]) to service_role;
 
 -- ==========================================================================
--- FILE 50/84  20261112000004_050_post_attachment_drafts.sql
+-- FILE 50/85  20261112000004_050_post_attachment_drafts.sql
 -- ==========================================================================
 
 -- Private, expiring upload drafts. Nothing is visible as a post until the
@@ -14758,7 +14759,7 @@ grant execute on function public.publish_post_with_draft(uuid,uuid,public.post_k
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 51/84  20261112000005_051_marketplace_attachments.sql
+-- FILE 51/85  20261112000005_051_marketplace_attachments.sql
 -- ==========================================================================
 
 insert into public.feature_flags(key,label,description,group_name,enabled) values ('marketplace_images','Marketplace images','Allow entitled users to attach images to marketplace listings.','marketplace',false) on conflict (key) do nothing;
@@ -14908,7 +14909,7 @@ grant execute on function public.can_view_marketplace_images(uuid) to authentica
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 52/84  20261112000006_052_team_request_integrity.sql
+-- FILE 52/85  20261112000006_052_team_request_integrity.sql
 -- ==========================================================================
 
 -- Team requests are private to the applicant and the team-post owner. Prevent
@@ -14937,7 +14938,7 @@ create trigger guard_team_post_request before insert or update on public.team_po
 for each row execute function public.guard_team_post_request();
 
 -- ==========================================================================
--- FILE 53/84  20261112000007_053_profile_achievements.sql
+-- FILE 53/85  20261112000007_053_profile_achievements.sql
 -- ==========================================================================
 
 -- Student-submitted profile achievements are distinct from system-awarded,
@@ -14994,7 +14995,7 @@ create trigger guard_profile_achievement_status before update on public.profile_
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 54/84  20261112000008_054_ride_kinds.sql
+-- FILE 54/85  20261112000008_054_ride_kinds.sql
 -- ==========================================================================
 
 -- Existing posts remain unclassified rather than being guessed as offers.
@@ -15003,7 +15004,7 @@ grant update (ride_kind) on public.ride_posts to authenticated;
 create index ride_posts_kind_date_idx on public.ride_posts (ride_kind, ride_date) where status = 'published';
 
 -- ==========================================================================
--- FILE 55/84  20261112000009_055_notice_delete.sql
+-- FILE 55/85  20261112000009_055_notice_delete.sql
 -- ==========================================================================
 
 -- Delete and audit as one operation; do not grant notice permissions to new roles.
@@ -15024,7 +15025,7 @@ revoke all on function public.delete_official_notice(uuid) from public,anon;
 grant execute on function public.delete_official_notice(uuid) to authenticated;
 
 -- ==========================================================================
--- FILE 56/84  20261112000010_056_event_rsvp_guard.sql
+-- FILE 56/85  20261112000010_056_event_rsvp_guard.sql
 -- ==========================================================================
 
 -- A previously saved RSVP cannot be changed after an event stops accepting
@@ -15036,7 +15037,7 @@ alter policy event_registrations_update_own on public.event_registrations
               and exists (select 1 from public.events e where e.id = event_id and e.status = 'published'));
 
 -- ==========================================================================
--- FILE 57/84  20261112000011_057_team_invitations.sql
+-- FILE 57/85  20261112000011_057_team_invitations.sql
 -- ==========================================================================
 
 -- Invitations are private, and all mutations run through narrowly scoped RPCs.
@@ -15118,7 +15119,7 @@ grant execute on function public.remove_team_member(uuid) to authenticated;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 58/84  20261112000012_058_team_project_link.sql
+-- FILE 58/85  20261112000012_058_team_project_link.sql
 -- ==========================================================================
 
 -- An optional association: existing team requests stay unchanged.
@@ -15139,7 +15140,7 @@ create trigger team_project_link_guard before insert or update of project_id on 
 for each row execute function public.guard_team_project_link();
 
 -- ==========================================================================
--- FILE 59/84  20261112000013_059_board_staff_visibility.sql
+-- FILE 59/85  20261112000013_059_board_staff_visibility.sql
 -- ==========================================================================
 
 -- Moderators can inspect hidden board reports without granting student access.
@@ -15147,7 +15148,7 @@ create policy housing_select_staff on public.housing_posts for select to authent
 create policy rides_select_staff on public.ride_posts for select to authenticated using (public.has_permission('moderate_all'));
 
 -- ==========================================================================
--- FILE 60/84  20261112000014_060_event_rsvp_capacity.sql
+-- FILE 60/85  20261112000014_060_event_rsvp_capacity.sql
 -- ==========================================================================
 
 -- Keep capacity accounting private even when attendee visibility is disabled.
@@ -15190,7 +15191,7 @@ for each row execute function public.sync_event_rsvp_capacity();
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 61/84  20261112000015_061_remove_storage_quota.sql
+-- FILE 61/85  20261112000015_061_remove_storage_quota.sql
 -- ==========================================================================
 
 -- Remove aggregate per-user storage limits while retaining operation reservations,
@@ -15333,7 +15334,7 @@ end $$;
 -- it no longer controls any upload path.
 
 -- ==========================================================================
--- FILE 62/84  20261112000016_062_lost_found_attachments.sql
+-- FILE 62/85  20261112000016_062_lost_found_attachments.sql
 -- ==========================================================================
 
 -- Private image links for lost-and-found reports; uploads use existing V3 drafts.
@@ -15424,7 +15425,7 @@ grant execute on function public.storage_complete_lost_found_image_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 63/84  20261112000017_063_housing_attachments.sql
+-- FILE 63/85  20261112000017_063_housing_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for housing posts; uploads use existing V3 drafts.
@@ -15515,7 +15516,7 @@ grant execute on function public.storage_complete_housing_attachment_delete(uuid
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 64/84  20261112000018_064_ride_attachments.sql
+-- FILE 64/85  20261112000018_064_ride_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for ride posts; uploads use existing V3 drafts.
@@ -15606,7 +15607,7 @@ grant execute on function public.storage_complete_ride_attachment_delete(uuid) t
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 65/84  20261112000019_065_team_attachments.sql
+-- FILE 65/85  20261112000019_065_team_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for team posts; uploads use existing V3 drafts.
@@ -15697,7 +15698,7 @@ grant execute on function public.storage_complete_team_attachment_delete(uuid) t
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 66/84  20261112000020_066_project_attachments.sql
+-- FILE 66/85  20261112000020_066_project_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for project posts; uploads use existing V3 drafts.
@@ -15788,7 +15789,7 @@ grant execute on function public.storage_complete_project_attachment_delete(uuid
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 67/84  20261112000021_067_gig_attachments.sql
+-- FILE 67/85  20261112000021_067_gig_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for gig posts; uploads use existing V3 drafts.
@@ -15889,7 +15890,7 @@ create trigger gig_retire_soft_deleted after update of status on public.gigs for
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 68/84  20261112000022_068_achievement_attachments.sql
+-- FILE 68/85  20261112000022_068_achievement_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for achievement posts; uploads use existing V3 drafts.
@@ -15982,7 +15983,7 @@ grant execute on function public.storage_complete_achievement_attachment_delete(
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 69/84  20261112000023_069_notice_attachments.sql
+-- FILE 69/85  20261112000023_069_notice_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for notice posts; uploads use existing V3 drafts.
@@ -16075,7 +16076,7 @@ grant execute on function public.storage_complete_notice_attachment_delete(uuid)
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 70/84  20261112000024_070_event_attachments.sql
+-- FILE 70/85  20261112000024_070_event_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for event posts; uploads use existing V3 drafts.
@@ -16168,7 +16169,7 @@ grant execute on function public.storage_complete_event_attachment_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 71/84  20261112000025_071_space_attachments.sql
+-- FILE 71/85  20261112000025_071_space_attachments.sql
 -- ==========================================================================
 
 -- Private attachment links for space posts; uploads use existing V3 drafts.
@@ -16282,7 +16283,7 @@ grant execute on function public.storage_complete_space_attachment_delete(uuid) 
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 72/84  20261112000026_072_notice_archive.sql
+-- FILE 72/85  20261112000026_072_notice_archive.sql
 -- ==========================================================================
 
 -- Campus+ migration 072 — noticeboard archive
@@ -16400,7 +16401,7 @@ grant all on public.notice_archive_entries to service_role;
 select public.backup_sync_triggers();
 
 -- ==========================================================================
--- FILE 73/84  20261112000027_073_pccoe_noticeboard_archive.sql
+-- FILE 73/85  20261112000027_073_pccoe_noticeboard_archive.sql
 -- ==========================================================================
 
 -- Campus+ migration 073 — PCCOE noticeboard archive (batch pccoe-noticeboard-2026-11)
@@ -16755,7 +16756,7 @@ end
 $import$;
 
 -- ==========================================================================
--- FILE 74/84  20261112000028_074_upload_access_default.sql
+-- FILE 74/85  20261112000028_074_upload_access_default.sql
 -- ==========================================================================
 
 -- Give current active profiles upload access and enable it for new accounts.
@@ -16794,7 +16795,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 75/84  20261112000029_075_return_pccoe_noticeboard_to_archive.sql
+-- FILE 75/85  20261112000029_075_return_pccoe_noticeboard_to_archive.sql
 -- ==========================================================================
 
 -- Campus+ migration 075 — return the PCCOE noticeboard batch to the archive
@@ -16839,7 +16840,7 @@ end
 $archive$;
 
 -- ==========================================================================
--- FILE 76/84  20261112000030_076_notice_archive_dates.sql
+-- FILE 76/85  20261112000030_076_notice_archive_dates.sql
 -- ==========================================================================
 
 -- Campus+ migration 076 — dates for noticeboard archive records
@@ -16902,7 +16903,7 @@ comment on column public.notice_archive_entries.date_note is
   'Where the date comes from, when that needs saying.';
 
 -- ==========================================================================
--- FILE 77/84  20261112000031_077_pccoe_noticeboard_dates.sql
+-- FILE 77/85  20261112000031_077_pccoe_noticeboard_dates.sql
 -- ==========================================================================
 
 -- Campus+ migration 077 — dates of the PCCOE noticeboard batch
@@ -17048,7 +17049,7 @@ end
 $dates$;
 
 -- ==========================================================================
--- FILE 78/84  20261112000032_078_klipy_gif_references.sql
+-- FILE 78/85  20261112000032_078_klipy_gif_references.sql
 -- ==========================================================================
 
 -- Add KLIPY GIF references without modifying existing rows, RLS or grants.
@@ -17134,7 +17135,7 @@ end
 $migration$;
 
 -- ==========================================================================
--- FILE 79/84  20261112000033_079_user_follows.sql
+-- FILE 79/85  20261112000033_079_user_follows.sql
 -- ==========================================================================
 
 -- Private, directional follow relationships between existing Campus+ profiles.
@@ -17199,7 +17200,7 @@ revoke all on function public.following_feed(integer, integer) from public, anon
 grant execute on function public.following_feed(integer, integer) to authenticated, service_role;
 
 -- ==========================================================================
--- FILE 80/84  20261122000001_080_external_accounts.sql
+-- FILE 80/85  20261122000001_080_external_accounts.sql
 -- ==========================================================================
 
 -- Campus+ migration 080 — external accounts and the Visitor role
@@ -17946,7 +17947,7 @@ grant execute on function public.complete_profile(text, text, text, text, text, 
 revoke execute on function public.complete_profile(text, text, text, text, text, text, boolean) from anon;
 
 -- ==========================================================================
--- FILE 81/84  20261122000002_081_visitor_permission_grants.sql
+-- FILE 81/85  20261122000002_081_visitor_permission_grants.sql
 -- ==========================================================================
 
 -- Campus+ migration 081 — per-account publishing grants for external users
@@ -18532,7 +18533,7 @@ comment on policy posts_update_author on public.posts is
   'Own posts only, re-checked against the same capability and scope rules as insert (migration 081).';
 
 -- ==========================================================================
--- FILE 82/84  20261122000003_082_visitor_year_and_college.sql
+-- FILE 82/85  20261122000003_082_visitor_year_and_college.sql
 -- ==========================================================================
 
 -- ============================================================================
@@ -19070,7 +19071,7 @@ begin
 end $$;
 
 -- ==========================================================================
--- FILE 83/84  20261122000004_083_visitor_vs_contributor.sql
+-- FILE 83/85  20261122000004_083_visitor_vs_contributor.sql
 -- ==========================================================================
 
 -- ============================================================================
@@ -19444,7 +19445,7 @@ comment on view public.public_profiles is
 grant select on public.public_profiles to authenticated;
 
 -- ==========================================================================
--- FILE 84/84  20261122000005_084_visitor_home_posts.sql
+-- FILE 84/85  20261122000005_084_visitor_home_posts.sql
 -- ==========================================================================
 
 -- Campus+ 084 — signed-in visitors may read published Home posts.
@@ -19504,6 +19505,434 @@ create policy comments_select_visible on public.comments
 
 comment on policy comments_select_visible on public.comments is
   'Published comments follow their readable parent post, including standalone campus posts visible to signed-in visitors (084).';
+
+-- ==========================================================================
+-- FILE 85/85  20261122000006_085_class_reminders.sql
+-- ==========================================================================
+
+-- Campus+ migration 085 — personalized class reminders
+-- Supabase CLI filename: 20261122000006_085_class_reminders.sql
+-- This file is part of the single authoritative migration history in supabase/migrations/.
+-- =============================================================================
+-- Campus+ 085 — personalized class reminders (no broadcasts, no anonymous subs)
+-- =============================================================================
+-- A student who signs in, has a division in their profile, and explicitly
+-- enables "Class reminder popups" receives a subtle reminder 10 minutes
+-- before each of their own classes. The division is always read from
+-- `profiles.division` for the authenticated profile — never from a URL,
+-- browser storage, or client-supplied value — and every reminder is
+-- addressed to one profile and delivered only to that profile's own
+-- registered devices.
+--
+-- What this migration adds:
+--   * `profile_private.class_reminder_popups` — the per-account opt-in,
+--     disabled by default, never client-writable directly (column
+--     privileges from migration 015 already revoke UPDATE on the table).
+--   * `push_subscriptions` — one row per browser push endpoint, owned by
+--     exactly one profile. Endpoints are unique, so signing in again (or
+--     switching accounts on the same browser) transfers the endpoint to the
+--     new owner instead of duplicating it. RLS restricts reads
+--     to the owner's own rows; writes use audited RPCs; endpoints and keys are never publicly
+--     readable.
+--   * `class_reminder_queue` — server-side materialisation of upcoming
+--     reminders, one row per (profile, class). The unique constraint makes
+--     duplicate scheduler executions harmless. No client access at all:
+--     only the service role (scheduler/dispatcher) and definer functions
+--     may read or write it.
+--   * Definer functions for the preference toggle, subscription upsert and
+--     deactivation, plus triggers that cancel future reminders the moment
+--     the profile (division, status, preference) changes. Delivery always
+--     re-checks the current profile before sending — a queued row is never
+--     trusted on its own.
+--
+-- Forward-only: no earlier migration is edited.
+-- =============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 1. Per-account preference
+-- ----------------------------------------------------------------------------
+
+alter table public.profile_private
+  add column if not exists class_reminder_popups boolean not null default false;
+
+comment on column public.profile_private.class_reminder_popups is
+  'Per-account opt-in for personalized class reminders (10 minutes before each class). Disabled by default; changed only through set_class_reminder_preference() so the change is audited and queued reminders are cancelled.';
+
+create index if not exists profile_private_class_reminder_idx
+  on public.profile_private (class_reminder_popups, account_type, account_status)
+  where class_reminder_popups = true;
+
+-- ----------------------------------------------------------------------------
+-- 2. Push subscriptions (one endpoint, one owner)
+-- ----------------------------------------------------------------------------
+
+create table public.push_subscriptions (
+  id              uuid primary key default gen_random_uuid(),
+  profile_id      uuid not null references public.profiles (id) on delete cascade,
+  endpoint        text not null unique
+                  check (length(endpoint) between 1 and 2000 and endpoint like 'https://%'),
+  p256dh          text not null check (length(p256dh) between 1 and 500),
+  auth            text not null check (length(auth) between 1 and 500),
+  user_agent      text check (user_agent is null or length(user_agent) <= 500),
+  is_active       boolean not null default true,
+  failure_count   integer not null default 0 check (failure_count >= 0),
+  last_success_at timestamptz,
+  last_failure_at timestamptz,
+  last_error      text check (last_error is null or length(last_error) <= 500),
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create index push_subscriptions_profile_active_idx
+  on public.push_subscriptions (profile_id) where is_active = true;
+
+create trigger push_subscriptions_touch before update on public.push_subscriptions
+  for each row execute function public.touch_updated_at();
+
+comment on table public.push_subscriptions is
+  'Web Push endpoints owned by exactly one profile. One user may have many devices; one endpoint belongs to one profile at a time (unique endpoint, upsert transfers ownership on account switch). RLS restricts reads to the owner; mutations use RPCs or the service role.';
+
+alter table public.push_subscriptions enable row level security;
+
+create policy push_subscriptions_select_own on public.push_subscriptions
+  for select to authenticated using (profile_id = public.current_profile_id());
+create policy push_subscriptions_insert_own on public.push_subscriptions
+  for insert to authenticated with check (profile_id = public.current_profile_id());
+create policy push_subscriptions_update_own on public.push_subscriptions
+  for update to authenticated
+  using (profile_id = public.current_profile_id())
+  with check (profile_id = public.current_profile_id());
+create policy push_subscriptions_delete_own on public.push_subscriptions
+  for delete to authenticated using (profile_id = public.current_profile_id());
+
+-- Explicit grants (RLS still restricts rows). The endpoint and keys are
+-- readable only by the owner through these policies — never by anon.
+revoke all on public.push_subscriptions from anon, public;
+grant select on public.push_subscriptions to authenticated;
+revoke insert, update, delete on public.push_subscriptions from authenticated;
+grant all on public.push_subscriptions to service_role;
+
+-- ----------------------------------------------------------------------------
+-- 3. Reminder queue (server-only)
+-- ----------------------------------------------------------------------------
+
+create table public.class_reminder_queue (
+  id            uuid primary key default gen_random_uuid(),
+  profile_id    uuid not null references public.profiles (id) on delete cascade,
+  division      text not null check (division ~ '^[A-R]$'),
+  event_key     text not null check (length(event_key) between 1 and 200),
+  event_day     text not null check (event_day in ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')),
+  event_date    date not null,
+  class_start_at timestamptz not null,
+  reminder_at   timestamptz not null,
+  subject       text check (subject is null or length(subject) <= 80),
+  time_label    text check (time_label is null or length(time_label) <= 40),
+  kind          text not null default 'standard' check (kind in ('standard', 'batch')),
+  status        text not null default 'pending'
+                check (status in ('pending', 'delivered', 'skipped', 'cancelled', 'failed')),
+  skipped_reason text check (skipped_reason is null or length(skipped_reason) <= 80),
+  delivered_at  timestamptz,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  constraint class_reminder_queue_times_valid check (reminder_at < class_start_at),
+  constraint class_reminder_queue_unique unique (profile_id, event_key)
+);
+
+create index class_reminder_queue_due_idx
+  on public.class_reminder_queue (reminder_at) where status = 'pending';
+create index class_reminder_queue_profile_idx
+  on public.class_reminder_queue (profile_id, reminder_at) where status = 'pending';
+
+create trigger class_reminder_queue_touch before update on public.class_reminder_queue
+  for each row execute function public.touch_updated_at();
+
+comment on table public.class_reminder_queue is
+  'Server-materialised class reminders, one per (profile, class). Written only by the scheduler (service role); read only by the dispatcher, which re-checks the current profile before delivery. No client access.';
+
+alter table public.class_reminder_queue enable row level security;
+
+-- No policies for authenticated: the queue is never client-readable. The
+-- service role bypasses RLS for scheduling/delivery; definer functions run
+-- as the owner and can maintain it.
+revoke all on public.class_reminder_queue from anon, public, authenticated;
+grant all on public.class_reminder_queue to service_role;
+
+-- ----------------------------------------------------------------------------
+-- 4. Cancellation helper
+-- ----------------------------------------------------------------------------
+
+create or replace function public.cancel_future_class_reminders(p_profile uuid)
+returns integer
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_count integer;
+begin
+  if p_profile is null then
+    return 0;
+  end if;
+  update public.class_reminder_queue
+     set status = 'cancelled',
+         skipped_reason = 'profile-changed',
+         updated_at = now()
+   where profile_id = p_profile
+     and status = 'pending'
+     and reminder_at > now();
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+comment on function public.cancel_future_class_reminders(uuid) is
+  'Cancels every future pending reminder for one profile. Called by the preference toggle and by the profile-change triggers; the scheduler reconciles the new set afterwards.';
+
+revoke all on function public.cancel_future_class_reminders(uuid) from public, anon, authenticated;
+grant execute on function public.cancel_future_class_reminders(uuid) to service_role;
+
+-- ----------------------------------------------------------------------------
+-- 5. Preference toggle (the only way to change the opt-in)
+-- ----------------------------------------------------------------------------
+
+create or replace function public.set_class_reminder_preference(p_enabled boolean)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_me uuid := public.current_profile_id();
+  v_type public.account_type;
+begin
+  if v_me is null then
+    raise exception 'Not authenticated' using errcode = '42501';
+  end if;
+  if not public.is_active_profile(v_me) then
+    raise exception 'Account is not active' using errcode = '42501';
+  end if;
+  select pp.account_type into v_type
+    from public.profile_private pp where pp.profile_id = v_me;
+  if v_type is distinct from 'student' then
+    raise exception 'Class reminders are available to institutional students only.' using errcode = '42501';
+  end if;
+
+  update public.profile_private
+     set class_reminder_popups = coalesce(p_enabled, false),
+         updated_at = now()
+   where profile_id = v_me;
+
+  if coalesce(p_enabled, false) = false then
+    -- Disabling cancels future reminders and deactivates push delivery.
+    perform public.cancel_future_class_reminders(v_me);
+    update public.push_subscriptions
+       set is_active = false, updated_at = now()
+     where profile_id = v_me and is_active = true;
+
+  end if;
+
+  perform public.log_audit(
+    'account.class_reminder_preference_changed', 'user', v_me::text,
+    jsonb_build_object('enabled', coalesce(p_enabled, false)),
+    false, null, 'private'
+  );
+  return coalesce(p_enabled, false);
+end;
+$$;
+
+comment on function public.set_class_reminder_preference(boolean) is
+  'The only way to change the class-reminder opt-in. Derives the profile from the session, refuses non-students, cancels future reminders and deactivates push on disable, and audits the change.';
+
+revoke all on function public.set_class_reminder_preference(boolean) from public, anon;
+grant execute on function public.set_class_reminder_preference(boolean) to authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- 6. Subscription upsert / deactivation (session-derived ownership)
+-- ----------------------------------------------------------------------------
+
+create or replace function public.upsert_push_subscription(
+  p_endpoint text,
+  p_p256dh text,
+  p_auth text,
+  p_user_agent text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_me uuid := public.current_profile_id();
+  v_type public.account_type;
+  v_enabled boolean;
+  v_division text;
+  v_id uuid;
+begin
+  if v_me is null then
+    raise exception 'Not authenticated' using errcode = '42501';
+  end if;
+  if not public.is_active_profile(v_me) then
+    raise exception 'Account is not active' using errcode = '42501';
+  end if;
+  select pp.account_type, pp.class_reminder_popups into v_type, v_enabled
+    from public.profile_private pp where pp.profile_id = v_me;
+  if v_type is distinct from 'student' then
+    raise exception 'Class reminders are available to institutional students only.' using errcode = '42501';
+  end if;
+  if coalesce(v_enabled, false) = false then
+    raise exception 'Class reminders are not enabled for this account.' using errcode = '42501';
+  end if;
+  select p.division into v_division from public.profiles p where p.id = v_me;
+  if v_division is null or upper(btrim(v_division)) not in
+     ('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R') then
+    raise exception 'Add your division in Settings → Profile before enabling class reminders.' using errcode = '42501';
+  end if;
+
+  if p_endpoint is null or length(p_endpoint) not between 1 and 2000 or p_endpoint not like 'https://%' then
+    raise exception 'Invalid push endpoint.' using errcode = '22023';
+  end if;
+  if p_p256dh is null or length(p_p256dh) not between 1 and 500 then
+    raise exception 'Invalid push keys.' using errcode = '22023';
+  end if;
+  if p_auth is null or length(p_auth) not between 1 and 500 then
+    raise exception 'Invalid push keys.' using errcode = '22023';
+  end if;
+
+  -- One endpoint, one owner: re-signing in (or switching accounts on the
+  -- same browser) transfers the endpoint to the current profile and
+  -- reactivates it, instead of creating a duplicate.
+  insert into public.push_subscriptions (profile_id, endpoint, p256dh, auth, user_agent, is_active, failure_count)
+  values (v_me, p_endpoint, p_p256dh, p_auth, left(coalesce(p_user_agent, ''), 500), true, 0)
+  on conflict (endpoint) do update
+    set profile_id = excluded.profile_id,
+        p256dh = excluded.p256dh,
+        auth = excluded.auth,
+        user_agent = excluded.user_agent,
+        is_active = true,
+        failure_count = 0,
+        last_error = null,
+        updated_at = now()
+  returning id into v_id;
+
+  perform public.log_audit(
+    'account.push_subscription_created', 'user', v_me::text,
+    jsonb_build_object('endpoint_present', true),
+    false, null, 'private'
+  );
+  return v_id;
+end;
+$$;
+
+comment on function public.upsert_push_subscription(text, text, text, text) is
+  'Creates or transfers a Web Push subscription for the signed-in profile. Ownership is derived from the session; the target profile is never accepted from the client. Requires an active student account with a valid division and the opt-in enabled.';
+
+revoke all on function public.upsert_push_subscription(text, text, text, text) from public, anon;
+grant execute on function public.upsert_push_subscription(text, text, text, text) to authenticated, service_role;
+
+create or replace function public.deactivate_push_subscription(p_endpoint text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_me uuid := public.current_profile_id();
+  v_count integer;
+begin
+  if v_me is null or p_endpoint is null then
+    return false;
+  end if;
+  -- Ownership is checked here, not trusted from the client: only the
+  -- current profile's own endpoint can be deactivated.
+  update public.push_subscriptions
+     set is_active = false, updated_at = now()
+   where endpoint = p_endpoint and profile_id = v_me and is_active = true;
+  get diagnostics v_count = row_count;
+  if v_count > 0 then
+    perform public.log_audit(
+      'account.push_subscription_removed', 'user', v_me::text,
+      jsonb_build_object('endpoint_present', true),
+      false, null, 'private'
+    );
+  end if;
+  return v_count > 0;
+end;
+$$;
+
+comment on function public.deactivate_push_subscription(text) is
+  'Deactivates one device subscription for the signed-in profile (logout / preference off). The endpoint must belong to the caller; another account''s endpoint is never touched.';
+
+revoke all on function public.deactivate_push_subscription(text) from public, anon;
+grant execute on function public.deactivate_push_subscription(text) to authenticated, service_role;
+
+-- ----------------------------------------------------------------------------
+-- 7. Live revocation triggers
+-- ----------------------------------------------------------------------------
+
+create or replace function public.on_profile_division_changed()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  -- A division change (O → P) or removal (→ NULL) obsoletes every future
+  -- reminder queued for the old division. The scheduler materialises the
+  -- new set on its next run; the dispatcher re-checks before delivery, so
+  -- no stale O reminder can fire after the change.
+  if old.division is distinct from new.division then
+    perform public.cancel_future_class_reminders(new.id);
+  end if;
+  return new;
+end;
+$$;
+
+comment on function public.on_profile_division_changed() is
+  'Cancels future class reminders when the profile division changes or is removed.';
+
+drop trigger if exists profiles_division_reminder_guard on public.profiles;
+create trigger profiles_division_reminder_guard
+  after update of division on public.profiles
+  for each row execute function public.on_profile_division_changed();
+
+create or replace function public.on_profile_private_reminder_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  -- Suspension / ban / deactivation stops future reminders and push.
+  if new.account_status in ('suspended', 'banned', 'deactivated', 'deleted') then
+    perform public.cancel_future_class_reminders(new.profile_id);
+    update public.push_subscriptions
+       set is_active = false, updated_at = now()
+     where profile_id = new.profile_id and is_active = true;
+  end if;
+  -- Disabling the preference (by any path, not only the RPC) stops delivery.
+  if new.class_reminder_popups = false
+     and old.class_reminder_popups is distinct from false then
+    perform public.cancel_future_class_reminders(new.profile_id);
+    update public.push_subscriptions
+       set is_active = false, updated_at = now()
+     where profile_id = new.profile_id and is_active = true;
+  end if;
+  return new;
+end;
+$$;
+
+comment on function public.on_profile_private_reminder_guard() is
+  'Cancels future reminders and deactivates push when an account is suspended or the preference is disabled.';
+
+drop trigger if exists profile_private_reminder_guard on public.profile_private;
+create trigger profile_private_reminder_guard
+  after update of account_status, class_reminder_popups on public.profile_private
+  for each row execute function public.on_profile_private_reminder_guard();
+
+-- Trigger functions are not callable by API roles.
+revoke all on function public.on_profile_division_changed() from public, anon, authenticated;
+revoke all on function public.on_profile_private_reminder_guard() from public, anon, authenticated;
+select public.backup_sync_triggers();
 
 -- ==========================================================================
 -- VERIFICATION — reports whether the install is complete (no changes made)
