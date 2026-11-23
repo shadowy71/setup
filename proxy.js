@@ -53,7 +53,7 @@ const PUBLIC_PATHS = ['/login', '/login/verify', '/auth', '/setup', '/legal', '/
  * exact path through and the page itself answers 404 outside development.
  * It carries only sample data and grants no access to `/home` or any API.
  */
-const PUBLIC_EXACT_PATHS = ['/clubs', '/campus/events', '/campus/clubs', '/sitemap.xml', '/home-preview'];
+const PUBLIC_EXACT_PATHS = ['/clubs', '/campus/events', '/campus/clubs', '/sitemap.xml', '/home-preview', '/api/reminders/schedule', '/api/reminders/dispatch'];
 
 /** Protected single-segment children of `/clubs`. Static routes win in Next,
  * but the proxy must agree with that decision, not guess. */

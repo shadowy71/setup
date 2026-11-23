@@ -138,7 +138,7 @@ describe('placement: the install action belongs to the timetable and nowhere els
         fs.readFileSync(file, 'utf8').includes('registerTimetableWorker(')
       );
     }).map(relative);
-    expect(callers).toEqual(['components/timetable/TimetableOfflineProvider.js', 'lib/timetable/offline-install.js']);
+    expect(callers).toEqual(['components/timetable/TimetableOfflineProvider.js', 'lib/push/subscribe.js', 'lib/timetable/offline-install.js']);
   });
 });
 

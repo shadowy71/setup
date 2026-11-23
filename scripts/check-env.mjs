@@ -103,6 +103,16 @@ const checks = [
     hint: 'Legacy alias, still accepted by the endpoints. Set it to the SAME value as CRON_SECRET or remove it.',
     validate: (v) => (v.length >= 24 ? true : 'use at least 24 random characters'),
   },
+  {
+    key: 'VAPID_PUBLIC_KEY',
+    required: false,
+    hint: 'Web Push for class reminders (see docs/CLASS-REMINDERS.md). Without it, push is disabled; in-app popups still work.',
+  },
+  {
+    key: 'VAPID_PRIVATE_KEY',
+    required: false,
+    hint: 'Server-only VAPID secret for class-reminder Web Push. Never NEXT_PUBLIC_*.',
+  },
 ];
 
 for (const check of checks) {

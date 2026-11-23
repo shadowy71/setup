@@ -6,6 +6,7 @@ import { getTimetableHref } from '@/lib/timetable/meta';
 import { toShellUser } from '@/lib/identity/shell-user';
 import { AppShell } from '@/components/layout/AppShell';
 import { VisitorNotice } from '@/components/auth/VisitorNotice';
+import { ClassReminderHost } from '@/components/reminders/ClassReminderHost';
 import { getUnreadMessageState } from '@/lib/data/messaging';
 
 // Every page in this group depends on the signed-in student, so nothing here is
@@ -135,6 +136,10 @@ export default async function AppLayout({ children }) {
       {/* Renders only for an external account, and only for the single
           sign-in that the OAuth callback flagged. See VisitorNotice. */}
       <VisitorNotice email={user.email || null} accountType={user.accountType} />
+      {/* Personalized class-reminder popup (10 minutes before each class).
+          Renders nothing unless the account is an eligible, opted-in
+          student with a profile division. See ClassReminderHost. */}
+      <ClassReminderHost />
     </AppShell>
   );
 }
