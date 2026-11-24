@@ -16,6 +16,7 @@ import { getPostDraft, putPostDraft, deletePostDraft } from '@/lib/media/post-dr
 import { Button, Checkbox, Field, Input, Notice, Select, Switch, Textarea, LinkButton } from '@/components/ui';
 import { GifPicker, GifAttachment } from '@/components/media/GifPicker';
 import { useFormAction } from '@/lib/forms';
+import { signalReminders } from '@/lib/reminders/browser';
 
 export function ActionForm({
   action,
@@ -39,6 +40,7 @@ export function ActionForm({
   spaceAttachments = null,
   spaceImagesOnly = false,
   achievementAttachments = null,
+  reminderProfileId = null,
   gigAttachments = null,
   teamAttachments = null,
   rideAttachments = null,
@@ -81,7 +83,7 @@ export function ActionForm({
   const { run, pending, error, fieldErrors, success } = useFormAction(action, {
     resetOnSuccess,
     redirectTo,
-    onSuccess: () => { if (draft.current && storageKey) deletePostDraft(storageKey).catch(() => {}); draft.current=null; created.current=false; uploaded.current.clear(); setImages([]); setDraftId(null); },
+    onSuccess: () => { if (reminderProfileId) signalReminders('changed', reminderProfileId); if (draft.current && storageKey) deletePostDraft(storageKey).catch(() => {}); draft.current=null; created.current=false; uploaded.current.clear(); setImages([]); setDraftId(null); },
   });
 
   const gifField = fields.find((field) => field.type === 'gif');

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { BLOCKED_STATUSES, getCurrentUser } from '@/lib/auth/session';
 import { getDivisionTimetable } from '@/lib/timetable';
+import { normalizeDivision } from '@/lib/timetable/meta';
 import {
-  CLASS_REMINDER_HORIZON_DAYS,
   buildRemindersForDivision,
   getCampusDates,
   isEligibleForClassReminders,
@@ -47,24 +47,37 @@ export async function GET() {
       username: profile.username || null,
     });
 
+    const now = new Date();
     let reminders = [];
     if (eligibility.eligible) {
-      const now = new Date();
-      const dates = getCampusDates(now, CLASS_REMINDER_HORIZON_DAYS).map(({ dateKey, weekday }) => {
+      const dates = getCampusDates(now, 1).map(({ dateKey, weekday }) => {
         const probe = new Date(`${dateKey}T06:30:00.000Z`); // noon IST
         const timetable = getDivisionTimetable(profile.division, { at: probe });
         const day = timetable?.days?.find((entry) => entry.day === weekday);
         return { dateKey, weekday, events: day?.events || [] };
       });
       reminders = buildRemindersForDivision({ division: profile.division, dates, now, includeDue: true });
+      const events = new Map(dates.flatMap(({ dateKey, weekday, events }) =>
+        events.map((event) => [`${dateKey}|${weekday}|${event.id}`, event])));
+      reminders = reminders.map((reminder) => {
+        const event = events.get(reminder.event_key);
+        return {
+          ...reminder,
+          start_label: event?.time?.fromLabel || '',
+          // The printed third line carries room allocations, potentially one per batch.
+          location: event?.lines?.length >= 3 ? String(event.lines[2]).slice(0, 100) : '',
+        };
+      });
     }
 
     return NextResponse.json(
       {
         ok: true,
+        profileId: profile.id,
+        dateKey: getCampusDates(now, 1)[0].dateKey,
         eligible: eligibility.eligible,
         reason: eligibility.reason,
-        division: profile.division || null,
+        division: normalizeDivision(profile.division),
         classReminderPopups: profile.class_reminder_popups === true,
         reminders,
       },
